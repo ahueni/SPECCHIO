@@ -1,6 +1,6 @@
     <?php
 	global $server_address, $server_directory;	
-	print("<form action = \"http://$server_address/$server_directory/create_institute.php\" method=\"post\" accept-charset=\"UTF-8\">");
+	print("<form action = \"http://$server_address$server_directory/create_institute.php\" method=\"post\" accept-charset=\"UTF-8\">");
 	?>
 
     <table class="labelled">
