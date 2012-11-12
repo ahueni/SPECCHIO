@@ -1,0 +1,149 @@
+
+        
+        
+        
+.column-in{
+        margin:0; 
+        padding:0px;
+        }
+        
+.column-in2, .column-in3 {
+        margin: 0px; 
+        padding: 5px;
+        }
+        
+.column-in2 a img{
+        border: 0px;
+        margin: 3px 20px;
+        }        
+        
+div.spacer {
+        clear: both;
+        border: 0px solid #000000;
+        }
+        
+.header-in {
+        margin:0; 
+        padding:0px;
+        }
+        
+.header-in
+        {
+        padding-top: 40px;
+        }
+        
+.cleaner {
+        clear:both;
+        height:1px;
+        font-size:1px;
+        border:none;
+        margin:0; padding:0;
+        background:transparent;
+        }
+        
+h1,h2,h3,h4 { 
+        margin: 0.2em 0 
+        }
+        
+p       { 
+        margin: 3px 
+        }
+        
+a       {  }
+
+
+    /**** Menu box ****/        
+        
+.menu0, .menu1, .menu1b, .menu2, .menur, a.mainrefs, a.forum_menu, a.sampmenu
+	{
+        display: block;
+        }
+
+a.menu0, a.menu1, .menu1b, a.menu2, a.forum_menu
+        {
+        margin-top: 3px;
+        width: 130px;
+        padding-left: 10px;
+        }
+                
+a.mainrefs
+	{        
+        margin-top: 25px;
+        padding-left: 10px;
+	}
+
+a.menu0, a.menu1, .menu1b, a.menu2, a.menur, a.mainrefs
+	{
+        }   
+        
+a.menu0:visited, a.menu1:visited, .menu1b:visited, a.menu2:visited, a.menur:visited
+	{
+	}
+
+a.menu0:hover, a.menu1:hover, .menu1b:hover, a.menu2:hover, a.menur:hover 
+	{
+	}
+  
+a.menu0:link, a.menu1:link, .menu1b:link, a.menu2:link, a.menur:link  
+	{
+	} 
+
+.menu0
+        {
+	}
+
+.menu1
+	{
+	}
+
+.menu2
+	{
+        }
+        
+.menur
+	{
+	}            
+        
+    /**** Sample navigation ****/
+
+
+.samplelink, .samplenav
+	{
+        display: block;
+        }
+        
+a.samplelink, a.samplenav, .samplenav, a.sampmenu, a.sampmenu:hover
+        {
+        margin-right: 5px;
+        margin-top: 3px;
+        width: 110px;
+        padding: 3px;
+        padding-left: 10px;        
+        }
+            
+    /**** Menu bar 1 elements ****/
+        
+div.float{
+        display: inline-block;
+        float: right;
+        }
+        
+span.floatright{
+        display: inline-block;
+        float: right;
+        }
+
+span.status{
+        display: inline-block;
+        float: left;
+        margin-left: 50px;
+        }        
+        
+table.export td.header
+        { 
+        padding: 10px;        
+        }
+td.centered
+        {
+        text-align: center;
+        }        
