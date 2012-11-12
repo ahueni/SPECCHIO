@@ -11,7 +11,7 @@
 <!--
 
 
-   location.href = "http://localhost/specchio_web/specchio_admin/index.php";
+   location.href = "index.php";
 
 
 //-->
