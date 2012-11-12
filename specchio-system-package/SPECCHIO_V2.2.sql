@@ -458,9 +458,9 @@ UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES' */ ;
 DELIMITER ;;
@@ -1294,9 +1294,9 @@ UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES' */ ;
 DELIMITER ;;
@@ -2202,9 +2202,9 @@ UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES' */ ;
 DELIMITER ;;
@@ -2409,9 +2409,9 @@ UNLOCK TABLES;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`sdb_admin`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `hierarchy_level_x_spectrum_view` AS select `hierarchy_level_x_spectrum`.`hierarchy_level_id` AS `hierarchy_level_id`,`hierarchy_level_x_spectrum`.`spectrum_id` AS `spectrum_id`,`hierarchy_level_x_spectrum`.`user_id` AS `user_id` from `hierarchy_level_x_spectrum` where (`hierarchy_level_x_spectrum`.`user_id` = (select `specchio_user`.`user_id` from `specchio_user` where (`specchio_user`.`user` = (select substring_index((select user()),'@',1))))) */;
@@ -2561,9 +2561,9 @@ UNLOCK TABLES;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`sdb_admin`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `eav_view` AS select `eav`.`eav_id` AS `eav_id`,`eav`.`attribute_id` AS `attribute_id`,`eav`.`int_val` AS `int_val`,`eav`.`double_val` AS `double_val`,`eav`.`string_val` AS `string_val`,`eav`.`binary_val` AS `binary_val`,`eav`.`datetime_val` AS `datetime_val`,`eav`.`user_id` AS `user_id`,`eav`.`unit_id` AS `unit_id` from `eav` where (`eav`.`user_id` = (select `specchio_user`.`user_id` from `specchio_user` where (`specchio_user`.`user` = (select substring_index((select user()),'@',1))))) */;
@@ -2660,7 +2660,7 @@ UNLOCK TABLES;
 /*!50001 SET character_set_results     = utf8 */;
 /*!50001 SET collation_connection      = utf8_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`sdb_admin`@`%` SQL SECURITY DEFINER */
+/*!50013 DEFINER=`sdb_admin`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `spectrum_view` AS select `spectrum`.`spectrum_id` AS `spectrum_id`,`spectrum`.`goniometer_id` AS `goniometer_id`,`spectrum`.`target_homogeneity_id` AS `target_homogeneity_id`,`spectrum`.`foreoptic_id` AS `foreoptic_id`,`spectrum`.`illumination_source_id` AS `illumination_source_id`,`spectrum`.`sampling_environment_id` AS `sampling_environment_id`,`spectrum`.`measurement_type_id` AS `measurement_type_id`,`spectrum`.`measurement_unit_id` AS `measurement_unit_id`,`spectrum`.`sampling_geometry_id` AS `sampling_geometry_id`,`spectrum`.`environmental_condition_id` AS `environmental_condition_id`,`spectrum`.`position_id` AS `position_id`,`spectrum`.`landcover_id` AS `landcover_id`,`spectrum`.`number` AS `number`,`spectrum`.`measurement` AS `measurement`,`spectrum`.`file_comment` AS `file_comment`,`spectrum`.`date` AS `date`,`spectrum`.`file_name` AS `file_name`,`spectrum`.`internal_average_cnt` AS `internal_average_cnt`,`spectrum`.`is_reference` AS `is_reference`,`spectrum`.`hierarchy_level_id` AS `hierarchy_level_id`,`spectrum`.`sensor_id` AS `sensor_id`,`spectrum`.`file_format_id` AS `file_format_id`,`spectrum`.`campaign_id` AS `campaign_id`,`spectrum`.`instrument_id` AS `instrument_id`,`spectrum`.`loading_date` AS `loading_date`,`spectrum`.`required_quality_level_id` AS `required_quality_level_id`,`spectrum`.`quality_level_id` AS `quality_level_id`,`spectrum`.`user_id` AS `user_id`,`spectrum`.`reference_id` AS `reference_id` from `spectrum` where (`spectrum`.`user_id` = (select `specchio_user`.`user_id` AS `user_id` from `specchio_user` where (`specchio_user`.`user` = convert(convert((select substring_index((select user() AS `user()`),_utf8'@',1) AS `SUBSTRING_INDEX((select user()), '@', 1)`) using latin1) using utf8)))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -2732,9 +2732,9 @@ UNLOCK TABLES;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`sdb_admin`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `spectrum_x_eav_view` AS select `spectrum_x_eav`.`spectrum_id` AS `spectrum_id`,`spectrum_x_eav`.`eav_id` AS `eav_id`,`spectrum_x_eav`.`user_id` AS `user_id` from `spectrum_x_eav` where (`spectrum_x_eav`.`user_id` = (select `specchio_user`.`user_id` from `specchio_user` where (`specchio_user`.`user` = (select substring_index((select user()),'@',1))))) */;
