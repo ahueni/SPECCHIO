@@ -36,7 +36,7 @@
 
 	//include "db_and_common_functions.php";
  	// connect to database
- 	connect_to_specchio();
+ 	connect_to_specchio_with_cookies();
 	
 	$query = "SELECT c.name, c.description, count(s.spectrum_id) FROM campaign c, spectrum s where s.campaign_id = c.campaign_id group by c.campaign_id order by name";
 	//print($query);

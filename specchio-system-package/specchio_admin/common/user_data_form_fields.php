@@ -46,7 +46,7 @@
 
 	//include "db_and_common_functions.php";
  	// connect to database
- 	connect_to_specchio();
+ 	connect_to_specchio_with_cookies();
 	
 	$query = "SELECT institute_id, name, department FROM institute order by name";
 	//print($query);
