@@ -552,6 +552,11 @@ function create_user_account($schemas, $utitle, $first_name, $last_name, $uemail
 	// create user name
     //$user  = "dummy";
     $user = create_username($first_name, $last_name);
+
+    
+    // create an automatic password
+    $pw = create_password();
+ 	//print ($pw);
  	
  	//print ("<br>");
 // 	print("user name: ") ;
@@ -562,31 +567,36 @@ function create_user_account($schemas, $utitle, $first_name, $last_name, $uemail
  	// create insert statement
   		foreach($schemas as $j => $schema)
 		{
- 	
-		 	$query = "insert into $schema.specchio_user (user, first_name, last_name, title, email, www, institute_id) " .
+
+			// insert specchio user
+		 	$query = "insert into $schema.specchio_user (user, first_name, last_name, title, email, www, institute_id, password) " .
 					"values (" . quote_c($user) . quote_c($first_name) . quote_c($last_name) .
 		            quote_c($utitle) . quote_c($uemail) . quote_c($uwww) .
 		            "(select institute_id from $schema.institute where name = (select name from " .
-		            "$database.institute where institute_id = " . $uinstitute . ") limit 1)" . ")";
-			
+		            "$database.institute where institute_id = " . $uinstitute . ") limit 1)" . 
+		 			", md5(" . quote($pw) . ")" . ")";
 			//print_nl($query);	
-			
-		    // insert specchio user
 		    if(1==1)
-		  {
-		    $result = mysql_query($query);
-		    if (!$result) {
-		       die('Invalid query: ' . mysql_error());
-		    }
-		  }
+		  	{
+		    	$result = mysql_query($query);
+		    	if (!$result) {
+		       		die('Invalid query: ' . mysql_error());
+		    	}
+		  	}
+		  	
+		  	// insert specchio user group
+		  	$query = "insert into $schema.specchio_user_group (user, group_name) values (" . quote_c($user) . quote("user") . ")";
+		    if(1==1)
+		  	{
+		    	$result = mysql_query($query);
+		    	if (!$result) {
+		       		die('Invalid query: ' . mysql_error());
+		    	}
+		  	}
+		  	
 		}
-
-    
-    // create an automatic password
-    $pw = create_password();
     
     print ("<br>");
- 	//print ($pw);
  	
  	// get the IP
  	//$ip=@$REMOTE_ADDR; 
