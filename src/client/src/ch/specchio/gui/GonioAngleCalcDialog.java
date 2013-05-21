@@ -424,7 +424,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 				} else {
 					JOptionPane.showMessageDialog(
 							this,
-							"Gonio angle calculation is ony meaninfgful 66 or less spectra. No calculation will be performed on this selection.",
+							"Gonio angle calculation is only meaninfgful 66 or less spectra. No calculation will be performed on this selection.",
 							"Too many spectra",
 							JOptionPane.INFORMATION_MESSAGE
 						);
