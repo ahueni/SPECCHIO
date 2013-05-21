@@ -1,0 +1,10 @@
+# Database connections
+# Attention: be careful to keep this file local if you specify your password!
+#
+# Order of fields: protocol, server, port, path, user_name, password
+# Note: apart from the server name, any of the fields can be left blank
+#
+# Examples:
+#   https, www.specchio.ch, 8181, /specchio, your_user_name, your_password
+#   https, www.specchio.ch, 8181, /specchio, , 
+#   https, www.specchio.ch, 8181, /specchio_test, , 

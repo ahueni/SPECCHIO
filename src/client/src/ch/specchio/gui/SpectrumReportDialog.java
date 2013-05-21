@@ -1,0 +1,296 @@
+package ch.specchio.gui;
+
+import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.metadata.MDE_Controller;
+import ch.specchio.plots.swing.SpectralLinePlot;
+import ch.specchio.plots.swing.SpectralPlot;
+import ch.specchio.spaces.Space;
+import ch.specchio.spaces.SpectralSpace;
+
+
+/**
+ * Spectrum report dialogue.
+ */
+public class SpectrumReportDialog extends JFrame implements ActionListener, ChangeListener, ListSelectionListener {
+
+	/** serialisation version identifier */
+	private static final long serialVersionUID = 1L;
+	
+	/** client object */
+	private SPECCHIOClient specchioClient;
+	
+	/** metadata controller */
+	private MDE_Controller mdec;
+	
+	/** an enumeration of the spectrum identifiers in the dialogue */
+	private List<Integer> spectrumEnum;
+	
+	/** the unloaded spaces corresponding to the indices of the spectrum enumeration */
+	private List<Space> spectrumEnumSpaces;
+	
+	/** mapping of unloaded space objects to their loaded versions */
+	private Hashtable<Space, SpectralSpace> loadedSpaces;
+	
+	/** mapping of loaded spaces to plot objects */
+	private Hashtable<SpectralSpace, SpectralPlot> spectralPlots;
+	
+	/** spectrum chart panel */
+	private JPanel spectralPlotPanel;
+	
+	/** spectrum selection spinner */
+	private JSpinner spectrumSpinner;
+	
+	/** the category selection panel */
+	private SpectrumMetadataCategoryList categoryList;
+	
+	/** spectrum metadata panel */
+	private SpectrumMetadataPanel spectrumMetadataPanel;
+	
+	/** the "dismiss" button */
+	private JButton dismissButton;
+	
+	/** the width of the spectrum plot */
+	private static final int PLOT_WIDTH = 300;
+	
+	/** the height of the spectrum plot */
+	private static final int PLOT_HEIGHT = 200;
+	
+	/** text for the "dismiss" button */
+	private static final String DISMISS = "Dismiss";
+	
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param specchioClient	client object
+	 * @param spaces			the spaces to be displayed in the dialogue
+	 * 
+	 * @throws SPECCHIOClientException	error contacting the server
+	 */
+	public SpectrumReportDialog(SPECCHIOClient specchioClient, ArrayList<Space> spaces) throws SPECCHIOClientException {
+		
+		// initialise member variables
+		this.specchioClient = specchioClient;
+		
+		// enumerate the spectrum identifiers in all spaces
+		spectrumEnum = new ArrayList<Integer>();
+		spectrumEnumSpaces = new ArrayList<Space>();
+		loadedSpaces = new Hashtable<Space, SpectralSpace>();
+		spectralPlots = new Hashtable<SpectralSpace, SpectralPlot>();
+		for (Space space : spaces) {
+			for (Integer id : space.getSpectrumIds()) {
+				spectrumEnum.add(id);
+				spectrumEnumSpaces.add(space);
+			}
+		}
+		
+		// set up a metadata controller and form
+		mdec = new MDE_Controller(specchioClient);
+		
+		// set up the root panel with a vertical box layout
+		JPanel rootPanel = new JPanel();
+		rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
+		getContentPane().add(rootPanel);
+		
+		// add the spectral plot panel, forcing it to be slightly bigger than the plot itself because the plot draws outside its boundaries
+		spectralPlotPanel = new JPanel();
+		spectralPlotPanel.setMinimumSize(new java.awt.Dimension(PLOT_WIDTH + 50, PLOT_HEIGHT + 50));
+		rootPanel.add(spectralPlotPanel);
+		
+		if (spectrumEnum.size() > 1) {
+			// create a panel for the spinner
+			JPanel spectrumSpinnerPanel = new JPanel();
+			rootPanel.add(spectrumSpinnerPanel);
+			
+			// add the spectrum selector
+			spectrumSpinner = new JSpinner(new SpinnerNumberModel(1, 1, spectrumEnum.size(), 1));
+			((JSpinner.DefaultEditor)spectrumSpinner.getEditor()).getTextField().setEditable(false);
+			spectrumSpinner.addChangeListener(this);
+			spectrumSpinnerPanel.add(spectrumSpinner);
+			
+			// add a label for the spinner
+			JLabel spectrumSpinnerLabel = new JLabel(" of " + spectrumEnum.size() + " spectra");
+			spectrumSpinnerPanel.add(spectrumSpinnerLabel);
+		}
+		
+		// add the category selector
+		categoryList = new SpectrumMetadataCategoryList(mdec.getFormFactory(), 3);
+		categoryList.addListSelectionListener(this);
+		rootPanel.add(categoryList);
+		
+		// add the spectrum metadata panel
+		spectrumMetadataPanel = new SpectrumMetadataPanel(this, specchioClient);
+		spectrumMetadataPanel.setEditable(false);
+		JScrollPane spectrumMetadataScroller = new JScrollPane(spectrumMetadataPanel);
+		spectrumMetadataScroller.getVerticalScrollBar().setUnitIncrement(10);
+		rootPanel.add(spectrumMetadataScroller);
+		
+		// create a panel for the buttons
+		JPanel buttonPanel = new JPanel();
+		rootPanel.add(buttonPanel);
+		
+		// add the "dismiss" button
+		dismissButton = new JButton(DISMISS);
+		dismissButton.setActionCommand(DISMISS);
+		dismissButton.addActionListener(this);
+		buttonPanel.add(dismissButton);
+		
+		// display the first spectrum
+		if (spectrumEnum.size() > 0) {
+			setDisplayedIndex(1);
+		}
+		
+		// lay out the dialogue
+		pack();
+		
+	}
+	
+	
+	/**
+	 * Button handler.
+	 * 
+	 * @param event	the event generated by the button
+	 */
+	public void actionPerformed(ActionEvent event) {
+		
+		if (DISMISS.equals(event.getActionCommand())) {
+			
+			// dismiss the dialogue
+			setVisible(false);
+			
+		}
+		
+	}
+	
+	
+	/**
+	 * Handler for ending a potentially long-running operation.
+	 */
+	private void endOperation() {
+		
+		// change the cursor to its default start
+		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		
+	}
+	
+	
+	/**
+	 * Set the currently-displayed spectrum.
+	 * 
+	 * @param index		the position of the spectrum in the spectrumId enumeration
+	 */
+	private void setDisplayedIndex(int index) {
+		
+		startOperation();
+		try {
+			
+			// get the space and spectrum identifier to which this index refers
+			Space space = spectrumEnumSpaces.get(index - 1);
+			Integer spectrumId = spectrumEnum.get(index - 1);
+			
+			// get the loaded space object for this spectrum
+			if (!loadedSpaces.containsKey(space)) {
+				// need to load the space from the server
+				loadedSpaces.put(space, (SpectralSpace)specchioClient.loadSpace(space));
+			}
+			SpectralSpace ss = loadedSpaces.get(space);
+			
+			// plot the spectrum
+			spectralPlotPanel.removeAll();
+			if (!spectralPlots.containsKey(ss)) {
+				// need to build the plot object for this space
+				spectralPlots.put(ss, new SpectralLinePlot(ss, PLOT_WIDTH, PLOT_HEIGHT, null));
+			}
+			SpectralPlot sp = spectralPlots.get(ss);
+			sp.plot(spectrumId);
+			spectralPlotPanel.add(sp);
+			
+			// change the selected spectra
+			ArrayList<Integer> spectrumIdList = new ArrayList<Integer>();
+			spectrumIdList.add(spectrumId);
+			mdec.set_spectrum_ids(spectrumIdList);
+
+			// tell the metadata panel to display the new spectrum
+			spectrumMetadataPanel.setForm(mdec.getForm());
+			
+			// force re-draw
+			validate();
+			this.repaint();
+			
+		}
+		catch (SPECCHIOClientException ex) {
+			// error contacting the server
+			ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
+			error.setVisible(true);
+		}
+		endOperation();
+		
+	}
+	
+	
+	/**
+	 * Handler for starting a potentially long-running operation.
+	 */
+	private void startOperation() {
+		
+		// change the cursor to its "wait" state
+		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		
+	}
+	
+	
+	/**
+	 * Slider handler.
+	 * 
+	 * @param event	the event generated by the slider
+	 */
+	public void stateChanged(ChangeEvent event) {
+	
+		// display the spectrum corresponding to the position of the slider
+		setDisplayedIndex((Integer)spectrumSpinner.getValue());
+		
+	}
+	
+	
+	/**
+	 * Category selection handler.
+	 * 
+	 * @param event	the event generated by the category list
+	 */
+	public void valueChanged(ListSelectionEvent event) {
+		
+		try {
+			// change the form displayed by the metadata panel
+			mdec.set_form_descriptor(categoryList.getFormDescriptor());
+			spectrumMetadataPanel.setForm(mdec.getForm());
+		}
+		catch (SPECCHIOClientException ex) {
+			// error contacting the server
+			ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
+			error.setVisible(true);
+		}
+		
+	}
+
+}

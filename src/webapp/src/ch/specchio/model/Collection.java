@@ -1,0 +1,130 @@
+package ch.specchio.model;
+
+import java.util.ArrayList;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+@XmlType(propOrder = { "identifier", "dates", "name", "location", "relatedObjectList", "subjectList", "description", "coverage", "relatedInfoList", "rights", "citationInfo" })
+public class Collection {
+	
+	@XmlAttribute(name="type")
+	private String type;
+
+	@XmlAttribute(name="dateModified")
+	private String dateModified;
+	
+	private Identifier identifier;
+	
+	private Dates dates;
+	
+	private Name name;
+	
+	private Location location;
+	
+	// XmlElement sets the name of the entities
+	@XmlElement(name = "relatedObject")
+	private ArrayList<RelatedObject> relatedObjectList;
+	
+	// XmlElement sets the name of the entities
+	@XmlElement(name = "subject")
+	private ArrayList<Subject> subjectList;
+	
+	private Description description;
+	
+	private Coverage coverage;
+	
+	// XmlElement sets the name of the entities
+	@XmlElement(name = "relatedInfo")
+	private ArrayList<RelatedInfo> relatedInfoList;
+	
+	private Rights rights;
+	
+	private CitationInfo citationInfo;
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public void setDateModified(String dateModified) {
+		this.dateModified = dateModified;
+	}
+
+	public Identifier getIdentifier() {
+		return identifier;
+	}
+
+	public void setIdentifier(Identifier identifier) {
+		this.identifier = identifier;
+	}
+
+	public Name getName() {
+		return name;
+	}
+
+	public void setName(Name name) {
+		this.name = name;
+	}
+
+	public Location getLocation() {
+		return location;
+	}
+
+	public void setLocation(Location location) {
+		this.location = location;
+	}
+	
+	public Description getDescription() {
+		return description;
+	}
+
+	public void setDescription(Description description) {
+		this.description = description;
+	}
+
+	public Coverage getCoverage() {
+		return coverage;
+	}
+
+	public void setCoverage(Coverage coverage) {
+		this.coverage = coverage;
+	}
+
+	public void setRelatedObjectList(ArrayList<RelatedObject> relatedObjectList) {
+		this.relatedObjectList = relatedObjectList;
+	}
+
+	public void setSubjectList(ArrayList<Subject> subjectList) {
+		this.subjectList = subjectList;
+	}
+
+	public void setRelatedInfoList(ArrayList<RelatedInfo> relatedInfoList) {
+		this.relatedInfoList = relatedInfoList;
+	}
+
+	public Rights getRights() {
+		return rights;
+	}
+
+	public void setRights(Rights rights) {
+		this.rights = rights;
+	}
+
+	public CitationInfo getCitationInfo() {
+		return citationInfo;
+	}
+
+	public void setCitationInfo(CitationInfo citationInfo) {
+		this.citationInfo = citationInfo;
+	}
+
+	public Dates getDates() {
+		return dates;
+	}
+
+	public void setDates(Dates dates) {
+		this.dates = dates;
+	}
+
+}

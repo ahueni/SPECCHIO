@@ -1,0 +1,2 @@
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://ands.org.au/standards/rif-cs/registryObjects", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED, location="http://ands.org.au/standards/rif-cs/registryObjects http://services.ands.org.au/documentation/rifcs/schema/registryObjects.xsd", xmlns={@javax.xml.bind.annotation.XmlNs(prefix="xsi", namespaceURI="http://www.w3.org/2001/XMLSchema-instance") } )
+package ch.specchio.model;

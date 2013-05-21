@@ -1,0 +1,8 @@
+#
+# MimetypesFileMap.getContentType() returns "application/octet-stream" for
+# just about anything on Windows, so we need to define a few common MIME
+# types here in order to recognise them.
+#
+image/jpeg jpg jpeg
+image/gif gif
+image/png png

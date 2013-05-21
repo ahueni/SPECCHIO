@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+  <display-name>ch.specchio.service</display-name>
+  <context-param>
+  	<param-name>ANDSXMLFileLocation</param-name>
+	<param-value>/tmp/specchio_data/files/rifcs</param-value>
+  </context-param>
+  <servlet>
+    <servlet-name>Jersey</servlet-name>
+    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+    <init-param>
+      <param-name>com.sun.jersey.config.property.packages</param-name>
+      <param-value>ch.specchio.services</param-value>
+    </init-param>
+    <init-param>
+    	<param-name>au.org.ands.researchdata</param-name>
+    	<param-value>enabled</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Jersey</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </servlet-mapping>
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>specchioRealm</realm-name>
+  </login-config>
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>SPECCHIO Web Services</web-resource-name>
+      <description/>
+      <url-pattern>/ands/*</url-pattern>
+      <url-pattern>/browser/*</url-pattern>
+      <url-pattern>/campaign/*</url-pattern>
+      <url-pattern>/instrumentation/*</url-pattern>
+      <url-pattern>/metadata/*</url-pattern>
+      <url-pattern>/spectral_file/*</url-pattern>
+      <url-pattern>/spectrum/*</url-pattern>
+      <url-pattern>/user/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>admin</role-name>
+      <role-name>user</role-name>
+    </auth-constraint>
+  </security-constraint>
+</web-app>
