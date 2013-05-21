@@ -1,3 +1,6 @@
 # ignore compiled files created by Eclipse
 bin/
 build/
+
+# ignore Eclipse metadata
+.metadata
