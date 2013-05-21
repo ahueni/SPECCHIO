@@ -9,10 +9,12 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -276,25 +278,24 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			// only give it a try if string not empty
 			if(!gapString.equals(""))
 			{
-				gapString = gapString.replace(" ", "");	
-				String[] tokens = gapString.split(",");
-				
-				// insert dummies into position list
-				for(int i=0; i < tokens.length; i++)
-				{
-					int no = Integer.valueOf(tokens[i]);
-					if (no < selectedSpectra.size()) {
-						selectedSpectra.add(no - 1, null);
-					}
-					if (no < calculatedAngles.size()) {
-						calculatedAngles.add(no - 1, null);
+				try {
+					
+					// get the list of gaps
+					gapString = gapString.replace(" ", "");	
+					String[] tokens = gapString.split(",");
+					int[] gaps = new int[tokens.length];
+					for (int i = 0; i < tokens.length; i++) {
+						gaps[i] = Integer.valueOf(tokens[i]) - 1;
 					}
 					
+					// re-calculate the angles with the gaps
+					GonioAngleCalcThread thread = new GonioAngleCalcThread(selectedSpectra, gaps);
+					thread.start();
 				}
-				
-				// update display
-				dummiesField.setText(Integer.toString(selectedSpectra.size()));
-				selectionUpdated();
+				catch (NumberFormatException ex) {
+					// bad number format
+					JOptionPane.showMessageDialog(this, "The gap positions must be specified as a list of integers separated by commas", "Error", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 			
 		} else if (CALCULATE.equals(event.getActionCommand())) {
@@ -318,9 +319,10 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	 * 
 	 * @param angles	the angles that were calculated by the thread
 	 */
-	private void anglesCalculated(List<CelestialAngle> angles) {
+	private void anglesCalculated(List<Spectrum> spectra, List<CelestialAngle> angles) {
 		
-		// save a reference to the list for later
+		// save a reference to the lists for later
+		selectedSpectra = spectra;
 		calculatedAngles = angles;
 		
 		// update the list box
@@ -373,6 +375,9 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			// increment counter
 			i++;
 		}
+		
+		// update the gaps + dummies field
+		dummiesField.setText(Integer.toString(i));
 		
 		// enable the "apply" button
 		submitButton.setEnabled(true);
@@ -462,25 +467,57 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	private class GonioAngleCalcThread extends Thread {
 		
 		/** the spectra for which angles are to be calculated */
-		private Spectrum spectra[];
+		private List<Spectrum> spectra;
 		
 		/** the list of calculated angles */
 		private List<CelestialAngle> angles;
 		
 		/**
-		 * Constructor.
+		 * Constructor with gaps.
+		 * 
+		 * @param spectraIn	the spectra for which angles are to be calculated
+		 * @param gapsIn the location of any gaps in the input spectra
+		 */
+		public GonioAngleCalcThread(List<Spectrum> spectraIn, int gapsIn[]) {
+			
+			super();
+			
+			// initialise member variables
+			angles = new ArrayList<CelestialAngle>(spectraIn.size() + gapsIn.length);
+			
+			// build a set of gaps for easier membership checking
+			Set<Integer> gaps = new HashSet<Integer>();
+			for (int gap : gapsIn) {
+				gaps.add(gap);
+			}
+			
+			// build a list of spectra with nulls for the gaps
+			int i = 0;
+			spectra = new ArrayList<Spectrum>(spectraIn.size() + gapsIn.length);
+			for (Spectrum s : spectraIn) {
+				
+				// fill gaps with nulls
+				while (gaps.contains(i)) {
+					spectra.add(null);
+					i++;
+				}
+				
+				// append the spectrum in the first non-gap position
+				spectra.add(s);
+				i++;
+				
+			}
+			
+		}
+		
+		/**
+		 * Constructor without gaps.
 		 * 
 		 * @param spectraIn	the spectra for which angles are to be calculated
 		 */
 		public GonioAngleCalcThread(List<Spectrum> spectraIn) {
 			
-			super();
-			
-			// save input parameters for later
-			spectra = spectraIn.toArray(new Spectrum[spectraIn.size()]);
-			
-			// initialise member variables
-			angles = new ArrayList<CelestialAngle>(spectraIn.size());
+			this(spectraIn, new int[0]);
 			
 		}
 		
@@ -502,11 +539,11 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			
 			// update angles for each position
 			int cnt = 0;
-			double tot = new Double(spectra.length);
+			double tot = new Double(spectra.size());
 				
 			// calculate the new angle for each spectrum
-			while (cnt < spectra.length && angle.azimuth <= 330) {
-				while (cnt < spectra.length && angle.zenith >= 0 && angle.zenith <= 75) {
+			while (cnt < spectra.size() && angle.azimuth <= 330) {
+				while (cnt < spectra.size() && angle.zenith >= 0 && angle.zenith <= 75) {
 					
 					angles.add(new CelestialAngle(angle));
 					
@@ -541,7 +578,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			pr.setVisible(false);
 			
 			// notify the dialogue that angles have been calculated
-			anglesCalculated(angles);
+			anglesCalculated(spectra, angles);
 			
 		}
 		
