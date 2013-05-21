@@ -1,0 +1,3 @@
+# ignore compiled files created by Eclipse
+bin/
+build/
