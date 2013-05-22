@@ -55,8 +55,6 @@ public class XLS_FileLoader extends SpectralFileLoader {
 				String value = col1[r].getContents();
 				wvls[r-1] = Float.valueOf(value);
 			}
-
-			//f.addWvls(tmp);
 			
 			f.addNumberOfChannels(wvls.length);
 			
@@ -77,9 +75,10 @@ public class XLS_FileLoader extends SpectralFileLoader {
 			f.setMeasurements(spectra);
 			
 			
-		} catch (BiffException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (BiffException ex) {
+			throw new IOException(ex);
+		} catch (NumberFormatException ex) {
+			throw new IOException("Invalid number format (" + ex.getMessage() + ")", ex);
 		}
 		
 		return f;
