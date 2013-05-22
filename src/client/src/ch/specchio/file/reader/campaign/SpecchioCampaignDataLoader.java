@@ -355,7 +355,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				}
 	
 				// cx for TXT (kneub format) files
-				else if (exts.contains("txt")) {
+				else if (exts.contains("txt") || exts.contains("TXT")) {
 					loader = new TXT_FileLoader();
 				}
 	
