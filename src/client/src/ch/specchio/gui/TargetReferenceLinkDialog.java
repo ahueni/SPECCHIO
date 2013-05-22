@@ -3,6 +3,7 @@ package ch.specchio.gui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -459,6 +460,12 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			targetList = new TargetReferenceList(TARGETS);
 			add(targetList, BorderLayout.EAST);
 			
+			// make the lists prefer to be half the width of the panel
+			Dimension preferredSize = getPreferredSize();
+			preferredSize.width /= 2;
+			referenceList.setPreferredSize(preferredSize);
+			targetList.setPreferredSize(preferredSize);
+			
 		}
 		
 		
@@ -561,6 +568,13 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			linkButton.setEnabled(false);
 			buttonPanel.add(linkButton);
 			
+			// make the lists prefer to be half the width of the panel
+			Dimension preferredSize = getPreferredSize();
+			preferredSize.width /= 2;
+			preferredSize.height -= buttonPanel.getPreferredSize().height;
+			referenceList.setPreferredSize(preferredSize);
+			targetList.setPreferredSize(preferredSize);
+			
 		}
 		
 		
@@ -644,6 +658,9 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			
 			super();
 			
+			// set up border layout
+			setLayout(new BorderLayout());
+			
 			// add a titled border
 			setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), title));
 			
@@ -653,7 +670,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			
 			// put the list inside a scroll pane
 			JScrollPane scroller = new JScrollPane(list);
-			add(scroller);
+			add(scroller, BorderLayout.CENTER);
 			
 		}
 		
