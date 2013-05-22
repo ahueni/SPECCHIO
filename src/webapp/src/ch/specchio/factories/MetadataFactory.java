@@ -527,9 +527,9 @@ public class MetadataFactory extends SPECCHIOFactory {
 		// bulk reading of metaparameters
 		try {
 			getEavServices().metadata_bulk_loader(md, metaparameter_ids);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
 		}
 
 		return md;

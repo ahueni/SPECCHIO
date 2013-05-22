@@ -33,6 +33,7 @@ public class EAVDBServices extends Thread {
 	private static Hashtable<String, ArrayList<MetaParameter>> known_metaparameters_hash = new Hashtable<String, ArrayList<MetaParameter>>();
 	
 	private String primary_x_eav_tablename = "frame_x_eav";
+	private String primary_x_eav_viewname = "frame_x_eav_view";
 	private String primary_id_name = "frame_id";
 	private String eav_view_name = "eav"; //required for SPECCHIO as inserts work on the view
 	
@@ -414,9 +415,10 @@ public class EAVDBServices extends Thread {
 	}
 		
 	
-	public void set_primary_x_eav_tablename(String primary_x_eav_tablename, String primary_id_name, String primary_table_name)
+	public void set_primary_x_eav_tablename(String primary_x_eav_tablename, String primary_x_eav_viewname, String primary_id_name, String primary_table_name)
 	{
 		this.primary_x_eav_tablename = primary_x_eav_tablename;
+		this.primary_x_eav_viewname = primary_x_eav_viewname;
 		this.primary_id_name = primary_id_name;
 	}
 	
@@ -455,7 +457,7 @@ public class EAVDBServices extends Thread {
 	
 	synchronized public void insert_primary_x_eav(int frame_id, Integer[] eav_ids)
 	{	
-		String query = "insert into " + primary_x_eav_tablename + " (" + primary_id_name + ", eav_id) values ";
+		String query = "insert into " + primary_x_eav_viewname + " (" + primary_id_name + ", eav_id) values ";
 		ArrayList<String> value_strings = new ArrayList<String>();
 		
 		// build multi insert string
@@ -483,7 +485,7 @@ public class EAVDBServices extends Thread {
 	synchronized public void insert_primary_x_eav(Integer[] frame_ids, Integer[] eav_ids) throws SQLException
 	{			
 
-		String query = "insert into " + primary_x_eav_tablename + " (" + primary_id_name + ", eav_id) values ";
+		String query = "insert into " + primary_x_eav_viewname + " (" + primary_id_name + ", eav_id) values ";
 		ArrayList<String> value_strings = new ArrayList<String>();
 		
 		// build multi insert string
@@ -1388,7 +1390,7 @@ public class EAVDBServices extends Thread {
 	public void delete_primary_x_eav(Integer frame_id, ArrayList<Integer> eav_ids) {
 		
 		//String cmd = "delete from frame_x_eav where frame_id = " + frame_id + " or eav_id in (" + SQL.conc_ids(eav_ids) + ")";
-		String cmd = "delete from " + this.primary_x_eav_tablename + " where " + this.primary_id_name + " = " + frame_id + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
+		String cmd = "delete from " + this.primary_x_eav_viewname + " where " + this.primary_id_name + " = " + frame_id + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
 		
 		try {
 			Statement stmt = SQL.createStatement();
@@ -1404,7 +1406,7 @@ public class EAVDBServices extends Thread {
 	public void delete_primary_x_eav(ArrayList<Integer> frame_ids, ArrayList<Integer> eav_ids) {
 		
 		//String cmd = "delete from frame_x_eav where frame_id = " + frame_id + " or eav_id in (" + SQL.conc_ids(eav_ids) + ")";
-		String cmd = "delete from " + this.primary_x_eav_tablename + " where " + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids) +")" + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
+		String cmd = "delete from " + this.primary_x_eav_viewname + " where " + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids) +")" + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
 		
 		try {
 			Statement stmt = SQL.createStatement();
