@@ -129,6 +129,16 @@ public interface SPECCHIOClient {
 	 * @param picture_id	the picture identifier
 	 */
 	public void deleteReferencePicture(int picture_id) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Delete target-reference links from the database.
+	 * 
+	 * @param target_id		the target identifier
+	 * 
+	 * @return the number of links deleted
+	 */
+	public int deleteTargetReferenceLinks(int target_id) throws SPECCHIOClientException;
 
 
 	/**

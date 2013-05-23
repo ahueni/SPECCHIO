@@ -288,6 +288,20 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		getString("instrumentation", "deletePicture", Integer.toString(picture_id));
 		
 	}
+	
+	
+	/**
+	 * Delete a target-reference link from the database.
+	 * 
+	 * @param target_id		the target identifier
+	 * 
+	 * @return the number of links deleted
+	 */
+	public int deleteTargetReferenceLinks(int target_id) throws SPECCHIOWebClientException {
+		
+		return getInteger("spectrum", "deleteTargetReferenceLinks", Integer.toString(target_id));
+				
+	}
 
 
 	/**

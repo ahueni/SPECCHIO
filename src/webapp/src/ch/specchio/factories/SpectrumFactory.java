@@ -175,6 +175,35 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Delete target-reference links.
+	 * 
+	 * @param target_id	the target identifier
+	 * 
+	 * @return the number of links deleted
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public int deleteTargetReferenceLinks(int target_id) throws SPECCHIOFactoryException {
+		
+		int n = 0;
+		
+		try {
+			Statement stmt = getStatementBuilder().createStatement();
+			String query = "delete from spectrum_datalink_view where spectrum_id=" + Integer.toString(target_id);
+			n = stmt.executeUpdate(query);
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		return n;
+		
+	}
+	
+	
+	/**
 	 * Helper method for countIdsMatchQuery() and getIdsMatchingQuery().
 	 * 
 	 * @param query	the query
