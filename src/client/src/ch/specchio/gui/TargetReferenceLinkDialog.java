@@ -800,6 +800,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				if (mp != null) {
 					sbuf.append(mp.getValue().toString());
 				}
+				sbuf.append(" (ID: " + Integer.toString(id) + ")");
 				string = sbuf.toString();
 				
 			}
