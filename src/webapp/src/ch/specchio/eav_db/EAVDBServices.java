@@ -1122,7 +1122,7 @@ public class EAVDBServices extends Thread {
 			
 		Object int_val, double_val, string_val;
 		Long taxonomy_id;
-		String datetime;
+		Object datetime_val;
 		Blob binary_val;
 		
 		MetaParameter mp = null;
@@ -1132,7 +1132,7 @@ public class EAVDBServices extends Thread {
 			double_val = rs.getObject(ind++);
 			string_val = rs.getObject(ind++);
 			binary_val = rs.getBlob(ind++);
-			datetime =  rs.getString(ind++);
+			datetime_val =  rs.getObject(ind++);
 			taxonomy_id = rs.getLong(ind++);
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
@@ -1170,9 +1170,11 @@ public class EAVDBServices extends Thread {
 				}	
 					
 			}
-			else if (datetime != null)
+			else if (datetime_val != null)
 			{
-				mp = MetaParameter.newInstance(category_name, category_value, SQL.get_java_date_time(datetime));
+				Date d = new Date();
+				d.setTime(((Timestamp) datetime_val).getTime());
+				mp = MetaParameter.newInstance(category_name, category_value, d);
 			}
 			else if (taxonomy_id != null)
 			{
@@ -1253,7 +1255,6 @@ public class EAVDBServices extends Thread {
 			}	
 			else if (datetime_val != null)
 			{
-				//mp = MetaParameter.newInstance(category_name, category_value, SQL.get_java_date_time(datetime_val));
 				Date d = new Date();
 				d.setTime(((Timestamp) datetime_val).getTime());
 				mp = MetaParameter.newInstance(category_name, category_value, d);
