@@ -65,7 +65,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	// otherwise parent_id is the hierarchy_level_id of the parent directory
 	// The dir is a File object that points to the directory on the
 	// file system to be read
-	void load_directory(int parent_id, File dir, boolean parent_garbage_flag) throws SPECCHIOClientException, IOException {
+	void load_directory(int parent_id, File dir, boolean parent_garbage_flag) throws SPECCHIOClientException, FileNotFoundException {
 		int hierarchy_id = 0;
 		ArrayList<File> files, directories;
 		SpectralFile spec_file;
@@ -157,49 +157,56 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				ListIterator<File> file_li = files.listIterator();
 				
 				while(file_li.hasNext()) {
+					File file = file_li.next();
+					
+					try {
 
-					// the loader can return null, e.g. if ENVI files are
-					// read
-					// and a body (*.slb) is passed.
-					// In such a case no spectrum is inserted.
-					spec_file = sfl.load(file_li.next());
-					if (spec_file != null)
-					{
-						spec_file.setGarbageIndicator(is_garbage);
-						int ids[] = insert_spectral_file(spec_file, parent_id);
-						if(ids != null)
+						// the loader can return null, e.g. if ENVI files are
+						// read
+						// and a body (*.slb) is passed.
+						// In such a case no spectrum is inserted.
+						spec_file = sfl.load(file);
+						if (spec_file != null)
 						{
-							spectrum_counter += ids.length;
-						}
-						
-						// check on file errors
-						if(spec_file.getFileErrors().size() > 0)
-						{
-							// concatenate all errors into one message
-							StringBuffer buf = new StringBuffer("Errors found in : " + spec_file.getFilename());
-							boolean first = true;
-							for (String error : spec_file.getFileErrors()) {
-								if (!first) {
-									buf.append(", ");
-								} else {
-									first = false;
-								}
-								buf.append(error);
+							spec_file.setGarbageIndicator(is_garbage);
+							int ids[] = insert_spectral_file(spec_file, parent_id);
+							if(ids != null)
+							{
+								spectrum_counter += ids.length;
 							}
 							
-							// add the message to the list of all errors
-							this.file_errors.add(buf.toString());
+							// check on file errors
+							if(spec_file.getFileErrors().size() > 0)
+							{
+								// concatenate all errors into one message
+								StringBuffer buf = new StringBuffer("Errors found in : " + spec_file.getFilename());
+								boolean first = true;
+								for (String error : spec_file.getFileErrors()) {
+									if (!first) {
+										buf.append(", ");
+									} else {
+										first = false;
+									}
+									buf.append(error);
+								}
+								
+								// add the message to the list of all errors
+								this.file_errors.add(buf.toString());
+								
+							}
+							else
+							{
+								successful_file_counter++;
+							}
+						}
+								
+						file_counter++;
 							
-						}
-						else
-						{
-							successful_file_counter++;
-						}
+						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
 					}
-							
-					file_counter++;
-						
-					listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
+					catch (IOException ex) {
+						listener.campaignDataLoadError(file + ": " + ex.getMessage());
+					}
 				}
 			} else {
 				listener.campaignDataLoadError(
@@ -355,7 +362,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				}
 	
 				// cx for TXT (kneub format) files
-				else if (exts.contains("txt")) {
+				else if (exts.contains("txt") || exts.contains("TXT")) {
 					loader = new TXT_FileLoader();
 				}
 	

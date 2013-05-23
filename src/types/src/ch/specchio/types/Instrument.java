@@ -90,7 +90,7 @@ public class Instrument {
 	
 	@XmlElement(name="sensor")
 	public Sensor getSensor() { return this.sensor; }
-	public void setSensor(Sensor sensor) { this.sensor = sensor; this.sensor_id = sensor.getSensorId(); }
+	public void setSensor(Sensor sensor) { this.sensor = sensor; this.sensor_id = (sensor != null)? sensor.getSensorId() : 0; }
 	
 	@XmlElement(name="sensor_id")
 	public int getSensorId() { return this.sensor_id; }

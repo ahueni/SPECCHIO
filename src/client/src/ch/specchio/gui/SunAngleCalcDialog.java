@@ -233,6 +233,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 
 			// calculate angles for each identifier
 			int cnt = 0;
+			int progress = 0;
 			double tot = new Double(spectrumIds.length);
 			try {
 				
@@ -279,10 +280,13 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						zenithParameter.setValue(new Double(angle.zenith));
 						specchioClient.updateEavMetadata(zenithParameter, updateIds);
 						
+						// udpate counter
+						cnt++;
+						
 					}
 					
 					// update progress meter
-					pr.set_progress(++cnt * 100.0 / tot);
+					pr.set_progress(++progress * 100.0 / tot);
 					
 				}
 				
@@ -294,14 +298,22 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 			}
 			catch (ClassCastException ex) {
 				// invalid data stored in the database
-				ErrorDialog error = new ErrorDialog((Frame)SunAngleCalcDialog.this.getOwner(), "Error", "The database contains invalid date for one or more of these spectra.", ex);
+				ErrorDialog error = new ErrorDialog((Frame)SunAngleCalcDialog.this.getOwner(), "Error", "The database contains invalid data for one or more of these spectra.", ex);
 				error.setVisible(true);
 			}
 			
-			// show a success message
+			// show a completion message
+			StringBuffer message = new StringBuffer();
 			if (cnt > 0) {
-				JOptionPane.showMessageDialog(SunAngleCalcDialog.this, "Sun angles of " + Integer.toString(cnt) + " spectra successfully processed.");
+				message.append("Sun angles computed for " + Integer.toString(cnt) + " spectra.");
+				if (cnt < progress) {
+					message.append("\n" + Integer.toString(progress - cnt) + " of the selected spectra do not have longitude, latitude or acquisition time data.");
+					message.append("\nSun angles cannot be computed for these spectra.");
+				}
+			} else {
+				message.append("No longitude, latitude or acquisition time data found. No sun angles could be computed.");
 			}
+			JOptionPane.showMessageDialog(SunAngleCalcDialog.this, message, "Calculation complete", JOptionPane.INFORMATION_MESSAGE);
 			
 			pr.setVisible(false);
 		}

@@ -187,51 +187,41 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	// check all fields for multiple updates and ask user if it should be applied
 	private void updateChangedFields() throws SPECCHIOClientException
 	{
-		SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog();
 		
-		ArrayList<MD_Field> undecided_fields = new ArrayList<MD_Field>();
-		
-		ListIterator<MD_Field> li = changed_fields.listIterator();
-		
-		while(li.hasNext())
-		{
-			MD_Field field = li.next();
-			
-			if(field.getNoOfSharingRecords() == 1 || field.getNoOfSharingRecords() == field.getSelectedRecords())
-			{
-				mdec.update(field);
+		// see if any of the metadata to be changed is shared between record
+		ArrayList<MD_Field> shared_fields = new ArrayList<MD_Field>();
+		for (MD_Field field : changed_fields) {
+			if (field.getNoOfSharingRecords() != 1 && field.getNoOfSharingRecords() != field.getSelectedRecords()) {
+				shared_fields.add(field);
 			}
-			else
-			{
-				int decision = shared_decision_dialog.cx_shared_operation(SharedMD_Dialog.UPDATE, field);
-				
-				if(decision == SharedMD_Dialog.APPLY_TO_ALL)
-				{
+		}
+		
+		int shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
+		if (shared_fields.size() > 0) {
+			// ask the user what to do with the shared fields
+			SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.UPDATE, shared_fields);
+			shared_decision_dialog.setVisible(true);
+			shared_field_opt = shared_decision_dialog.getSelectedAction();
+		}
+		
+		if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
+			
+			// perform updates
+			for (MD_Field field : changed_fields) {
+				if (shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL) {
 					mdec.update(field);
-				}
-				else if (decision == SharedMD_Dialog.APPLY_TO_SELECTION)
-				{
+				} else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION) {
 					mdec.update_selection(field);
 				}
-				else
-				{
-					// remember the undecided fields ...
-					undecided_fields.add(field);
-				}
-				
 			}
+			
+			// reset changed lists
+			changed_fields.clear();
+			added_fields.clear();
 			
 		}
 		
-		
-		changed_fields.clear();
-		added_fields.clear(); // there should be no added undecided fields by definition
-		
-		if(undecided_fields.size() > 0)
-		{
-			changed_fields.addAll(undecided_fields);
-		}
-		
+		// update button states
 		setUpdateResetButtonsState();
 		
 	}
@@ -239,56 +229,56 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	// check all fields for multiple updates and ask user if it should be applied
 	private void removeFields() throws SPECCHIOClientException
 	{
-		SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog();
 		
-		ArrayList<MD_Field> undecided_fields = new ArrayList<MD_Field>();
-		
-		ListIterator<MD_Field> li = removed_fields.listIterator();
-		
-		while(li.hasNext())
-		{
-			MD_Field field = li.next();
-			
-			if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() == 1)
-			{
-				mdec.remove(field);
+		// see if any of the metadata to be changed is shared between record
+		ArrayList<MD_Field> shared_fields = new ArrayList<MD_Field>();
+		for (MD_Field field : removed_fields) {
+			if (field.getNoOfSharingRecords() > 1) {
+				shared_fields.add(field);
 			}
-			else if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() > 1)
-			{
-				// multiple metaparameters need removing (different parameters per spectrums)
-				mdec.remove_all_mps_of_attribute(field);				
-			}
-			else
-			{
-				int decision = shared_decision_dialog.cx_shared_operation(SharedMD_Dialog.DELETE, field);
+		}
+		
+		int shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
+		if (shared_fields.size() > 0) {
+			// ask the user what to do with the shared fields
+			SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.DELETE, shared_fields);
+			shared_decision_dialog.setVisible(true);
+			shared_field_opt = shared_decision_dialog.getSelectedAction();
+		}
+		
+		
+		if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
+			for (MD_Field field : removed_fields) {
 				
-				if(decision == SharedMD_Dialog.APPLY_TO_ALL)
+				if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() == 1)
 				{
 					mdec.remove(field);
 				}
-				else if (decision == SharedMD_Dialog.APPLY_TO_SELECTION)
+				else if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() > 1)
 				{
-					mdec.remove_selection(field);
+					// multiple metaparameters need removing (different parameters per spectrums)
+					mdec.remove_all_mps_of_attribute(field);				
 				}
 				else
 				{
-					// remember the undecided fields ...
-					undecided_fields.add(field);
+					if(shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL)
+					{
+						mdec.remove(field);
+					}
+					else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION)
+					{
+						mdec.remove_selection(field);
+					}
+					
 				}
 				
 			}
 			
-		}
-		
-		
-		removed_fields.clear();
-		
-		if(undecided_fields.size() > 0)
-		{
-			removed_fields.addAll(undecided_fields);
+			// reset the list of deleted fields
+			removed_fields.clear();
 		}
 
-		
+		// update button states
 		setUpdateResetButtonsState();
 		
 	}	

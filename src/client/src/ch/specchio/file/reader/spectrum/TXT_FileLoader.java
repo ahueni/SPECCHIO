@@ -165,7 +165,7 @@ public class TXT_FileLoader extends SpectralFileLoader {
 	
 
 	
-	Float[][] read_data(BufferedReader d, SpectralFile f)
+	Float[][] read_data(BufferedReader d, SpectralFile f) throws IOException
 	{
 		int spec_cnt = 0;
 		
@@ -231,9 +231,8 @@ public class TXT_FileLoader extends SpectralFileLoader {
 				
 			}
 			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (NumberFormatException ex) {
+			throw new IOException("Invalid number format (" + ex.getMessage() + ")", ex);
 		}
 		
 		Float[][] fl = new Float[f.getNumberOfSpectra()][spectra[0].size()];

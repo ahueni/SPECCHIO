@@ -9,10 +9,12 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -54,10 +56,13 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	/** zenith attribute to be filled in by this dialogue */
 	private attribute zenithAttribute;
 	
-	/** the selected spectra download from the server */
+	/** the selected spectra downloaded from the server */
 	private List<Spectrum> selectedSpectra;
 	
-	/** the angles calculated for the selected spectra */
+	/** the list of spectra for which angles have been calculated */
+	private List<Spectrum> calculatedSpectra;
+	
+	/** the angles calculated for the spectra */
 	private List<CelestialAngle> calculatedAngles;
 	
 	/** spectral data browser */
@@ -87,9 +92,6 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	/** text field for the dummies */
 	private JTextField dummiesField;
 	
-	/** the "insert gaps" button */
-	private JButton insertGapsButton;
-	
 	/** the list field */
 	private JList listField;
 	
@@ -104,9 +106,6 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	
 	/** "dismiss" button */
 	private JButton dismissButton;
-	
-	/** text for the "insert gaps" button */
-	private static final String INSERT_GAPS = "Insert gaps";
 	
 	/** text for the "calculate" button */
 	private static final String CALCULATE = "Calculate";
@@ -132,6 +131,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 		
 		// initialise member variables
 		selectedSpectra = new ArrayList<Spectrum>();
+		calculatedSpectra = new ArrayList<Spectrum>();
 		calculatedAngles = new ArrayList<CelestialAngle>();
 		
 		// get a reference to the application's client object
@@ -206,14 +206,6 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 		selectionPanel.add(dummiesField, constraints);
 		constraints.gridy++;
 		
-		// add the "insert gaps" button
-		constraints.gridx = 1;
-		insertGapsButton = new JButton(INSERT_GAPS);
-		insertGapsButton.setActionCommand(INSERT_GAPS);
-		insertGapsButton.addActionListener(this);
-		selectionPanel.add(insertGapsButton, constraints);
-		constraints.gridy++;
-		
 		// add the list field
 		constraints.gridx = 1;
 		listModel = new DefaultListModel();
@@ -266,42 +258,40 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 		if (SUBMIT.equals(event.getActionCommand())) {
 			
 			// launch a thread to perform the update
-			GonioAngleUpdateThread thread = new GonioAngleUpdateThread(selectedSpectra, calculatedAngles);
+			GonioAngleUpdateThread thread = new GonioAngleUpdateThread(calculatedSpectra, calculatedAngles);
 			thread.start();
-			
-		} else if (INSERT_GAPS.equals(event.getActionCommand())) {
-			
-			String gapString = gapsField.getText();
-			
-			// only give it a try if string not empty
-			if(!gapString.equals(""))
-			{
-				gapString = gapString.replace(" ", "");	
-				String[] tokens = gapString.split(",");
-				
-				// insert dummies into position list
-				for(int i=0; i < tokens.length; i++)
-				{
-					int no = Integer.valueOf(tokens[i]);
-					if (no < selectedSpectra.size()) {
-						selectedSpectra.add(no - 1, null);
-					}
-					if (no < calculatedAngles.size()) {
-						calculatedAngles.add(no - 1, null);
-					}
-					
-				}
-				
-				// update display
-				dummiesField.setText(Integer.toString(selectedSpectra.size()));
-				selectionUpdated();
-			}
 			
 		} else if (CALCULATE.equals(event.getActionCommand())) {
 			
+			try {
+			// see if we should insert any gaps
+			int[] gaps = null;
+			String gapString = gapsField.getText();
+			if(!gapString.equals("")) {
+				
+				// convert the string into an array of integers
+				gapString = gapString.replace(" ", "");	
+				String[] tokens = gapString.split(",");
+				gaps = new int[tokens.length];
+				for (int i = 0; i < tokens.length; i++) {
+					gaps[i] = Integer.valueOf(tokens[i]) - 1;
+				}
+				
+			}
+			
 			// launch a thread to perform the calculation
-			GonioAngleCalcThread thread = new GonioAngleCalcThread(selectedSpectra);
+			GonioAngleCalcThread thread = new GonioAngleCalcThread(selectedSpectra, gaps);
 			thread.start();
+			}
+			catch (NumberFormatException ex) {
+				// could not parse the gaps field
+				JOptionPane.showMessageDialog(
+						this,
+						"The gaps must be specified as a list of integers separated by commas.",
+						"Error",
+						JOptionPane.ERROR_MESSAGE
+					);
+			}
 		
 		} else if (DISMISS.equals(event.getActionCommand())) {
 			
@@ -318,25 +308,16 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	 * 
 	 * @param angles	the angles that were calculated by the thread
 	 */
-	private void anglesCalculated(List<CelestialAngle> angles) {
+	private void anglesCalculated(List<Spectrum> spectra, List<CelestialAngle> angles) {
 		
-		// save a reference to the list for later
+		// save a reference to the lists for later
+		calculatedSpectra = spectra;
 		calculatedAngles = angles;
 		
-		// update the list box
-		selectionUpdated();
-		
-	}
-	
-	
-	/**
-	 * Handle a change in the selection.
-	 */
-	private void selectionUpdated() {
-		
+		// populate the list box with the calculated angles
 		listModel.clear();
 		ListIterator<CelestialAngle> angleIterator = calculatedAngles.listIterator();
-		ListIterator<Spectrum> spectrumIterator = selectedSpectra.listIterator();
+		ListIterator<Spectrum> spectrumIterator = calculatedSpectra.listIterator();
 		int i = 0;
 		while (angleIterator.hasNext() && spectrumIterator.hasNext()) {
 			
@@ -374,6 +355,9 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			i++;
 		}
 		
+		// update the gaps + dummies field
+		dummiesField.setText(Integer.toString(i));
+		
 		// enable the "apply" button
 		submitButton.setEnabled(true);
 		
@@ -389,6 +373,11 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 		
 		// save a reference to the list for later
 		selectedSpectra = spectra;
+		
+		// enable the "calculate" button if there aren't too many spectra
+		if (spectra.size() <= 66) {
+			calculateButton.setEnabled(true);
+		}
 		
 	}
 	
@@ -406,6 +395,14 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			spectral_node_object sn = sdb.get_selected_node();
 			List<Integer> spectrumIds = sdb.get_selected_spectrum_ids();
 			
+			// clear the current list of spectra
+			listModel.clear();
+			dummiesField.setText(null);
+			
+			// disable the "calculate" and "submit" buttons until the selection thread has finished
+			submitButton.setEnabled(false);
+			calculateButton.setEnabled(false);
+			
 			// only accept hierarchy selections
 			if (sn instanceof hierarchy_node) {
 				
@@ -419,32 +416,25 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 					numSelectedField.setText(null);
 				}
 				
-				// enable the "calculate" buttons
-				if(spectrumIds.size() <= 66)
-				{
-					// launch a thread to populate the list box
+				// launch a thread to populate the list box if there aren't too many spectra
+				if(spectrumIds.size() <= 66) {
 					GonioAngleSelectThread thread = new GonioAngleSelectThread(spectrumIds);
 					thread.start();
 					
-					calculateButton.setEnabled(true);
+				} else {
+					JOptionPane.showMessageDialog(
+							this,
+							"Gonio angle calculation is only meaninfgful 66 or less spectra. No calculation will be performed on this selection.",
+							"Too many spectra",
+							JOptionPane.INFORMATION_MESSAGE
+						);
 				}
-				else
-				{
-					submitButton.setEnabled(false);
-					calculateButton.setEnabled(false);				
-				}
-				
-				// update the list selection
-				selectionUpdated();
 				
 			} else {
 				
 				// clear the selection fields
 				selectedHierarchyField.setText(null);
 				numSelectedField.setText(null);
-				submitButton.setEnabled(false);
-				calculateButton.setEnabled(false);
-				selectionUpdated();
 				
 			}
 			
@@ -462,25 +452,54 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	private class GonioAngleCalcThread extends Thread {
 		
 		/** the spectra for which angles are to be calculated */
-		private Spectrum spectra[];
+		private List<Spectrum> spectra;
 		
 		/** the list of calculated angles */
 		private List<CelestialAngle> angles;
 		
 		/**
-		 * Constructor.
+		 * Constructor with gaps.
 		 * 
 		 * @param spectraIn	the spectra for which angles are to be calculated
+		 * @param gapsIn the location of any gaps in the input spectra (may be null)
 		 */
-		public GonioAngleCalcThread(List<Spectrum> spectraIn) {
+		public GonioAngleCalcThread(List<Spectrum> spectraIn, int gapsIn[]) {
 			
 			super();
 			
-			// save input parameters for later
-			spectra = spectraIn.toArray(new Spectrum[spectraIn.size()]);
+			// work out the probable length of the output list
+			int capacity = spectraIn.size();
+			if (gapsIn != null) {
+				capacity += gapsIn.length;
+			}
 			
 			// initialise member variables
-			angles = new ArrayList<CelestialAngle>(spectraIn.size());
+			angles = new ArrayList<CelestialAngle>(capacity);
+			
+			// build a set of gaps for easier membership checking
+			Set<Integer> gaps = new HashSet<Integer>();
+			if (gapsIn != null) {
+				for (int gap : gapsIn) {
+					gaps.add(gap);
+				}
+			}
+			
+			// build a list of spectra with nulls for the gaps
+			int i = 0;
+			spectra = new ArrayList<Spectrum>(capacity);
+			for (Spectrum s : spectraIn) {
+				
+				// fill gaps with nulls
+				while (gaps.contains(i)) {
+					spectra.add(null);
+					i++;
+				}
+				
+				// append the spectrum in the first non-gap position
+				spectra.add(s);
+				i++;
+				
+			}
 			
 		}
 		
@@ -502,11 +521,11 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			
 			// update angles for each position
 			int cnt = 0;
-			double tot = new Double(spectra.length);
+			double tot = new Double(spectra.size());
 				
 			// calculate the new angle for each spectrum
-			while (cnt < spectra.length && angle.azimuth <= 330) {
-				while (cnt < spectra.length && angle.zenith >= 0 && angle.zenith <= 75) {
+			while (cnt < spectra.size() && angle.azimuth <= 330) {
+				while (cnt < spectra.size() && angle.zenith >= 0 && angle.zenith <= 75) {
 					
 					angles.add(new CelestialAngle(angle));
 					
@@ -541,7 +560,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			pr.setVisible(false);
 			
 			// notify the dialogue that angles have been calculated
-			anglesCalculated(angles);
+			anglesCalculated(spectra, angles);
 			
 		}
 		

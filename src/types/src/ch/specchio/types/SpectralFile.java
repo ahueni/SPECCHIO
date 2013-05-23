@@ -640,7 +640,7 @@ public class SpectralFile {
 	@XmlElement(name="wvls")
 	public ArrayList<Float[]> getWvls() { return this.wvls; }
 	public void setWvls(ArrayList<Float[]> wvls) { this.wvls = wvls; }
-	public Float[] getWvls(int i) { return this.wvls.get(i); }
+	public Float[] getWvls(int i) { return (i < wvls.size())? this.wvls.get(i) : this.wvls.get(0); }
 	public void setWvls(int i, Float[] wvls) { this.wvls.set(i, wvls); }
 	public void addWvls(Float[] wvls) { this.wvls.add(wvls); }
 

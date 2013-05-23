@@ -36,6 +36,29 @@ public class SpectrumService extends SPECCHIOService {
 	
 	
 	/**
+	 * Delete target-reference links.
+	 * 
+	 * @param target_id	the target identifier
+	 * 
+	 * @return the number of links deleted
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@GET
+	@Path("deleteTargetReferenceLinks/{target_id: [0-9]+}")
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger deleteTargetReferenceLinks(@PathParam("target_id") int target_id)throws SPECCHIOFactoryException {
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
+		int n = factory.deleteTargetReferenceLinks(target_id);
+		factory.dispose();
+		
+		return new XmlInteger(n);
+		
+	}
+	
+	
+	/**
 	 * Get the name of the file from which a spectrum was loaded.
 	 * 
 	 * @param spectrum_id	the spectrum identifier

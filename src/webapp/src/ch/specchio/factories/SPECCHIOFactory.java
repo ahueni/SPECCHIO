@@ -200,7 +200,7 @@ public class SPECCHIOFactory {
 		
 		// set up EAV services
 		this.eav = new EAVDBServices(getStatementBuilder(), getAttributes(), getDatabaseUserName());
-		this.eav.set_primary_x_eav_tablename("spectrum_x_eav_view", "spectrum_id", "spectrum");
+		this.eav.set_primary_x_eav_tablename("spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
 		this.eav.set_eav_view_name("eav_view");
 		
 	}
