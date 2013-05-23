@@ -160,6 +160,66 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 	
 	
 	/**
+	 * Handler for completion of a link creation operation.
+	 * 
+	 * @param targetIds		the identifiers of the target spectra
+	 * @param referenceIds	the identifiers of the reference spectra
+	 * @param numCreated	the number of links created
+	 */
+	private void linksChanged(List<Integer> targetIds, List<Integer> referenceIds, int numCreated) {
+		
+		// report success the outcome the user
+		JOptionPane.showMessageDialog(
+				this,
+				"Datalinks for " + Integer.toString(numCreated) + " out of " + targetIds.size() + " spectra successfully created.",
+				"Links created",
+				JOptionPane.INFORMATION_MESSAGE
+			);
+		
+		// refresh target and reference lists
+		try {
+			targetsChanged();
+			referencesChanged();
+		}
+		catch (SPECCHIOClientException ex) {
+			// error contacting the server
+			ErrorDialog error = new ErrorDialog(TargetReferenceLinkDialog.this, "Error", ex.getUserMessage(), ex);
+			error.setVisible(true);
+		}
+			
+		
+	}
+	
+	
+	/**
+	 * Handler for a change in the target selection.
+	 * 
+	 * @throws SPECCHIOClientException	error contacting the server
+	 */
+	private void targetsChanged() throws SPECCHIOClientException {
+		
+		ArrayList<Integer> ids = targetPanel.getSelectedIds();
+		existingLinkPanel.setTargetIds(ids);
+		newLinkPanel.setTargetIds(ids);
+		
+	}
+	
+	
+	/**
+	 * Handler for a change in the reference selection.
+	 * 
+	 * @throws SPECCHIOClientException	error contacting the server
+	 */
+	private void referencesChanged() throws SPECCHIOClientException {
+		
+		ArrayList<Integer> ids = referencePanel.getSelectedIds();
+		existingLinkPanel.setReferenceIds(ids);
+		newLinkPanel.setReferenceIds(ids);
+		
+	}
+	
+	
+	/**
 	 * Handler for starting a potentially long-running operation.
 	 */
 	private void startOperation() {
@@ -186,16 +246,12 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				if (source == targetPanel) {
 					
 					// update target selection
-					ArrayList<Integer> ids = targetPanel.getSelectedIds();
-					existingLinkPanel.setTargetIds(ids);
-					newLinkPanel.setTargetIds(ids);
+					targetsChanged();
 					
 				} else if (source == referencePanel) {
 					
 					// update reference selection
-					ArrayList<Integer> ids = referencePanel.getSelectedIds();
-					existingLinkPanel.setReferenceIds(ids);
-					newLinkPanel.setReferenceIds(ids);
+					referencesChanged();
 					
 				}
 				
@@ -892,10 +948,8 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				
 				pr.setVisible(false);
 				
-				JOptionPane.showMessageDialog(
-						null,
-						"Datalinks for " + Integer.toString(num) + " out of " + targetIds.size() + " spectra successfully created."
-					);
+				// notify the dialogue that links have been created
+				TargetReferenceLinkDialog.this.linksChanged(targetIds, referenceIds, num);
 			
 			} catch (SPECCHIOClientException ex) {
 				ErrorDialog error = new ErrorDialog(
