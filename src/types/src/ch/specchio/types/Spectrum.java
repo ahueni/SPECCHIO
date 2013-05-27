@@ -19,16 +19,9 @@ public class Spectrum
 	/** spectrum metadata fields */
 	public static final String[] METADATA_FIELDS = {
 		"sensor_id",
-		"landcover_id",
 		"file_format_id",
 		"instrument_id", 
 		"measurement_unit_id",
-		"measurement_type_id",
-		"illumination_source_id",
-		"sampling_environment_id",
-		"quality_level_id",
-		"required_quality_level_id",
-		"goniometer_id",
 		"reference_id"
 	};
 	
