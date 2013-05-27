@@ -267,8 +267,8 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 				}
 				else
 				{
-					first_table_pos =table_values.indexOf(db_val);
-					last_table_pos =table_values.lastIndexOf(db_val);					
+					first_table_pos =table_values.indexOf(db_val.toString());
+					last_table_pos =table_values.lastIndexOf(db_val.toString());					
 				}
 
 				
