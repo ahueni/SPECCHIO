@@ -397,7 +397,7 @@ INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`
 
 -- data portal
 INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Data Usage Policy', '', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'string_val');
-
+INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Digital Object Identifier', '', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'string_val');
 
 
 -- remove obsolete categories and attributes of V2.2
@@ -407,25 +407,25 @@ INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `defaul
 -- IN WORK
 -- *******
 
---Integration time
+-- Integration time
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Integration Time') where attribute_id = (select attribute_id from attribute where binary name = 'Integration time');
---Number of internal scans (probably not existing in the current online system)
+-- Number of internal scans (probably not existing in the current online system)
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Number of internal Scans') where attribute_id = (select attribute_id from attribute where binary name = 'Number of internal scans');
---Spectrum number
+-- Spectrum number
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Spectrum Number') where attribute_id = (select attribute_id from attribute where binary name = 'Spectrum number');
---"Capturing Software Name"
+-- "Capturing Software Name"
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Capturing Software Name') where attribute_id = (select attribute_id from attribute where binary name = '');
---"Capturing Software Version"
+-- "Capturing Software Version"
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Capturing Software Version') where attribute_id = (select attribute_id from attribute where binary name = '');
---"UniSpec Spectral Resampling"
+--  "UniSpec Spectral Resampling"
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'UniSpec Spectral Resampling') where attribute_id = (select attribute_id from attribute where binary name = '');
---"Instrument Channel"
+-- "Instrument Channel"
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Instrument Channel') where attribute_id = (select attribute_id from attribute where binary name = '');
---"Processing Level"
+-- "Processing Level"
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Processing Level') where attribute_id = (select attribute_id from attribute where binary name = '');
---"File Version"
+-- "File Version"
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'File Version') where attribute_id = (select attribute_id from attribute where binary name = '');
---Dark Current Correction
+-- Dark Current Correction
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Dark Current Correction') where attribute_id = (select attribute_id from attribute where binary name = '');
 
 
@@ -437,11 +437,11 @@ update eav set attribute_id = (select attribute_id from attribute where binary n
 --  insert spectrum_x_eav entries
 
 -- >> insert from instrument_setting into EAV
---Number of internal scans -> Number of internal Scans
---Gain_SWIR1
---Gain_SWIR2
---Offset_SWIR1
---Offset_SWIR2
+-- Number of internal scans -> Number of internal Scans
+-- Gain_SWIR1
+-- Gain_SWIR2
+-- Offset_SWIR1
+-- Offset_SWIR2
 
 -- >> insert from spectrum into EAV (spectrum.column -> EAV attribute name)
 -- internal_average_cnt -> Number of internal Scans  (to be checked: is this ever filled in V2.2?)
@@ -452,7 +452,7 @@ update eav set attribute_id = (select attribute_id from attribute where binary n
 -- file_name -> File Name
 
 -- >> insert from foreoptic into EAV
---- foreoptic.degree -> FOV 	int_val
+-- foreoptic.degree -> FOV 	int_val
 
 -- >> insert from environmental_condition
 -- ambient_temperature -> 'Ambient Temperature' double_val
