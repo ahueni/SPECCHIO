@@ -1,5 +1,6 @@
 package ch.specchio.gui;
 
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -7,6 +8,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -16,11 +20,30 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import ch.specchio.client.SPECCHIOClientException;
 
 public class ErrorDialog extends JDialog implements ActionListener {
 
 	/** serialisation ID */
 	private static final long serialVersionUID = 1L;
+	
+	/** the exception being displayed */
+	private Exception exception;
 	
 	/** constraints for laying out the dialogue */
 	private GridBagConstraints constraints;
@@ -96,6 +119,9 @@ public class ErrorDialog extends JDialog implements ActionListener {
 	 */
 	private void init(String message, Exception ex) {
 		
+		// save the input parameters for later
+		exception = ex;
+		
 		// create a panel with a grid bag layout to contain all of the components
 		constraints = new GridBagConstraints();
 		constraints.insets = new Insets(5, 5, 5, 5);
@@ -129,7 +155,7 @@ public class ErrorDialog extends JDialog implements ActionListener {
 		constraints.anchor = GridBagConstraints.EAST;
 		panel.add(dismissButton, constraints);
 		
-		if (ex != null) {
+		if (exception != null) {
 			
 			// create a button for requesting further details beneath the message
 			detailsButton = new JButton(GET_DETAILS);
@@ -143,13 +169,9 @@ public class ErrorDialog extends JDialog implements ActionListener {
 			panel.add(detailsButton, constraints);
 			
 			// create the details text area but don't display it yet
-			detailsArea = new JTextArea(ex.getMessage());
-			for (StackTraceElement elem : ex.getStackTrace()) {
-				detailsArea.append("\n  " + elem.toString());
-			}
+			detailsArea = new JTextArea(25, 80);
 			detailsPane = new JScrollPane(detailsArea);
 			detailsPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-			detailsPane.setMinimumSize(detailsArea.getPreferredSize());
 			constraints.gridx = 1;
 			constraints.gridy = 2;
 			constraints.gridheight = 1;
@@ -159,6 +181,81 @@ public class ErrorDialog extends JDialog implements ActionListener {
 		}
 		
 		pack();
+		
+	}
+	
+	
+	/**
+	 * Format the details text area.
+	 * 
+	 * @param ex	the exception whose details are to be displayed
+	 */
+	private void initDetailsArea(Exception ex) {
+
+		if (ex instanceof SPECCHIOClientException) {
+			// use the details message stored inside the exception
+			String details = ((SPECCHIOClientException)ex).getDetails();
+					
+			if (details != null && details.length() > 0 && details.charAt(0) == '<') {
+				
+				// the details message may contain an XHTML response from the web server; try to parse it
+				try {
+					// try to parse the document as XML
+					StringReader reader = new StringReader(details);
+					DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
+					Document document = documentBuilder.parse(new InputSource(reader));
+					reader.close();
+					
+					// now output it to a string with nice indenting
+					StringWriter writer = new StringWriter();
+					TransformerFactory transformerFactory = TransformerFactory.newInstance();
+					Transformer transformer = transformerFactory.newTransformer();
+					transformer.setOutputProperty(OutputKeys.METHOD, "html");
+					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+					transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+					transformer.transform(new DOMSource(document), new StreamResult(writer));
+					writer.close();
+					
+					// display it in the text area
+					detailsArea.setText(writer.toString());
+				
+				}
+				catch (IOException ex2) {
+					// not sure why this would happen; display the unparsed message
+					detailsArea.setText(details);
+				}
+				catch (ParserConfigurationException ex2) {
+					// could not find an XML parser; display the error and the unparsed message
+					detailsArea.setText(ex2.getMessage() + "\n" + details);
+				}
+				catch (SAXException ex2) {
+					// not a valid XML document; assume the details are in plain text
+					detailsArea.setText(details);
+				}
+				catch (TransformerConfigurationException ex2) {
+					// could not an XML transformer; display the error and the unparsed message
+					detailsArea.setText(ex2.getMessage() + "\n" + details);
+				}
+				catch (TransformerException ex2) {
+					// transformation failed; display the error the unparsed message
+					detailsArea.setText(ex2.getMessage() + "\n" + details);
+				}
+				
+			} else {
+				
+				// display the details message
+				detailsArea.setText(details);
+				
+			}
+			
+		} else {
+			// show the stack trace
+			detailsArea.append(ex.getMessage());
+			for (StackTraceElement elem : ex.getStackTrace()) {
+				detailsArea.append("\n  " + elem.toString());
+			}
+		}
 		
 	}
 	
@@ -176,6 +273,13 @@ public class ErrorDialog extends JDialog implements ActionListener {
 			// re-label the button
 			detailsButton.setText(REMOVE_DETAILS);
 			detailsButton.setActionCommand(REMOVE_DETAILS);
+			
+			// make sure the details area is initialised
+			if (detailsArea.getText().length() == 0) {
+				startOperation();
+				initDetailsArea(exception);
+				endOperation();
+			}
 			
 			// re-draw the panel
 			pack();
@@ -202,6 +306,28 @@ public class ErrorDialog extends JDialog implements ActionListener {
 			setVisible(false);
 			
 		}
+		
+	}
+	
+	
+	/**
+	 * Handler for ending a potentially long-running operation.
+	 */
+	private void endOperation() {
+		
+		// change the cursor to its default start
+		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		
+	}
+	
+	
+	/**
+	 * Handler for starting a potentially long-running operation.
+	 */
+	private void startOperation() {
+		
+		// change the cursor to its "wait" state
+		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		
 	}
 

@@ -1,5 +1,8 @@
 package ch.specchio.client;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 
@@ -25,6 +28,7 @@ public class SPECCHIOWebClientException extends SPECCHIOClientException {
 		
 		super(ex.getMessage(), ex);
 		
+		// get a friendly error message for the exception
 		if (ex.getCause() instanceof ConnectException) {
 			userMessage = "Could not connect to the server. Please check that the server is running at the server and port specified.";
 		} else if (ex.getCause() instanceof UnknownHostException) {
@@ -47,7 +51,26 @@ public class SPECCHIOWebClientException extends SPECCHIOClientException {
 		
 		super(ex.getMessage(), ex);
 		
+		// the user message is the same as the technical message
 		userMessage = ex.getMessage();
+		
+		// copy the response body into the detailed message
+		StringBuffer sbuf = new StringBuffer();
+		try {
+			char b[] = new char[1024];
+			Reader reader = new InputStreamReader(ex.getResponse().getEntityInputStream());
+			int n = reader.read(b, 0, b.length);
+			while (n >= 0) {
+				sbuf.append(b, 0, n);
+				n = reader.read(b, 0, b.length);
+			}
+			reader.close();
+		}
+		catch (IOException ex2) {
+			// not sure why this would happen; nothing we can do about it anyway
+			sbuf.append("\n " + ex2.getMessage());
+		}
+		details = sbuf.toString();
 		
 	}
 	
@@ -61,6 +84,8 @@ public class SPECCHIOWebClientException extends SPECCHIOClientException {
 		
 		super(message);
 		
+		// use the default messages
+		details = super.getDetails();
 		userMessage = message;
 		
 	}

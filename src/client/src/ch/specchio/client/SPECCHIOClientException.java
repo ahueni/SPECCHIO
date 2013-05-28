@@ -6,21 +6,11 @@ public class SPECCHIOClientException extends Exception {
 	/** serialisation version ID */
 	private static final long serialVersionUID = 1L;
 	
+	/** the detailed message */
+	protected String details;
+	
 	/** the ultimate cause of the exception */
 	protected Throwable cause;
-	
-	
-	/**
-	 * Constructor for re-throwing an exception.
-	 */
-	public SPECCHIOClientException(Exception ex) {
-		
-		super(ex);
-		
-		cause = ex.getCause();
-		setStackTrace(ex.getStackTrace());
-		
-	}
 	
 	
 	/**
@@ -30,8 +20,21 @@ public class SPECCHIOClientException extends Exception {
 		
 		super(message, ex);
 		
-		cause = ex.getCause();
-		setStackTrace(ex.getStackTrace());
+		// initialise member variables
+		init(ex);
+		
+	}
+	
+	
+	/**
+	 * Constructor for re-throwing an exception.
+	 */
+	public SPECCHIOClientException(Exception ex) {
+		
+		super(ex);
+		
+		// initialise member variables
+		init(ex);
 		
 	}
 	
@@ -44,6 +47,47 @@ public class SPECCHIOClientException extends Exception {
 	public SPECCHIOClientException(String message) {
 		
 		super(message);
+		
+		// initialise member variables
+		init(null);
+		
+	}
+	
+	
+	/**
+	 * Initialise member variables.
+	 * 
+	 * @param ex	the cause
+	 */
+	private void init(Exception ex) {
+		
+		// set the cause
+		if (ex != null) {
+			cause = ex.getCause();
+			setStackTrace(ex.getStackTrace());
+		} else {
+			cause = null;
+		}
+		
+		// put the stack trace into the detailed message
+		StringBuffer sbuf = new StringBuffer();
+		sbuf.append((ex != null)? ex.getMessage() : getMessage());
+		for (StackTraceElement elem : getStackTrace()) {
+			sbuf.append("\n  " + elem.toString());
+		}
+		details = sbuf.toString();
+		
+	}
+	
+	
+	/**
+	 * Get a detailed error message.
+	 * 
+	 * @return the stack trace
+	 */
+	public String getDetails() {
+		
+		return details;
 		
 	}
 	
