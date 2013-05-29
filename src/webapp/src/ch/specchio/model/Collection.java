@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType(propOrder = { "identifier", "dates", "name", "location", "relatedObjectList", "subjectList", "description", "coverage", "relatedInfoList", "rights", "citationInfo" })
+@XmlType(propOrder = { "identifierList", "dates", "name", "location", "relatedObjectList", "subjectList", "description", "coverage", "relatedInfoList", "rights", "citationInfo" })
 public class Collection {
 	
 	@XmlAttribute(name="type")
@@ -15,7 +15,9 @@ public class Collection {
 	@XmlAttribute(name="dateModified")
 	private String dateModified;
 	
-	private Identifier identifier;
+	// XmlElement sets the name of the entities
+	@XmlElement(name = "identifier")
+	private ArrayList<Identifier> identifierList;
 	
 	private Dates dates;
 	
@@ -51,14 +53,10 @@ public class Collection {
 		this.dateModified = dateModified;
 	}
 
-	public Identifier getIdentifier() {
-		return identifier;
+	public void setIdentifierList(ArrayList<Identifier> identifierList) {
+		this.identifierList = identifierList;
 	}
-
-	public void setIdentifier(Identifier identifier) {
-		this.identifier = identifier;
-	}
-
+	
 	public Name getName() {
 		return name;
 	}
