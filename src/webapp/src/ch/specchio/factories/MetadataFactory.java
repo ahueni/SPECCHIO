@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +15,7 @@ import ch.specchio.types.ConflictInfo;
 import ch.specchio.types.ConflictStruct;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.TaxonomyNodeObject;
@@ -594,10 +594,15 @@ public class MetadataFactory extends SPECCHIOFactory {
 				{
 					Object o = rs.getObject(1);
 					if (o != null) {
-						MetaParameter mp = MetaParameter.newInstance(attr);
-						
-						mp.setValue(o);
-						mp_list.add(mp);
+						try {
+							MetaParameter mp = MetaParameter.newInstance(attr);
+							mp.setValue(o);
+							mp_list.add(mp);
+						}
+						catch (MetaParameterFormatException ex) {
+							// should never happen but we'll log an error just in case
+							System.err.println("Metaparameter format exception when converting " + attr.getDefaultStorageField() + " attribute.");
+						}
 					}
 				}
 				rs.close();						

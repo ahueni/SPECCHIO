@@ -6,12 +6,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -27,6 +24,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.spectral_node_object;
 
@@ -196,6 +194,11 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 				ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
 				error.setVisible(true);
 			}
+			catch (MetaParameterFormatException ex) {
+				// the time shift attribute has the wrong type
+				ErrorDialog error = new ErrorDialog(this, "Error", "The time shift attribute has the wrong type. Please contact your system administrator.", ex);
+				error.setVisible(true);
+			}
 			endOperation();
 			
 		} else if (CANCEL.equals(event.getActionCommand())) {
@@ -228,7 +231,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 	 *
 	 * @throws SPECCHIOClientException	error contacting the server
 	 */
-	private int shiftTime(double shift) throws SPECCHIOClientException {
+	private int shiftTime(double shift) throws SPECCHIOClientException, MetaParameterFormatException {
 		
 		ArrayList<Integer> updatedIds = new ArrayList<Integer>();
 		

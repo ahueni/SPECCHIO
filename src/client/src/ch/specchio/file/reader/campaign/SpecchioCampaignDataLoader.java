@@ -8,6 +8,7 @@ import java.util.ListIterator;
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.file.reader.spectrum.*;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
 
 public class SpecchioCampaignDataLoader extends CampaignDataLoader {
@@ -205,6 +206,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
 					}
 					catch (IOException ex) {
+						listener.campaignDataLoadError(file + ": " + ex.getMessage());
+					}
+					catch (MetaParameterFormatException ex) {
 						listener.campaignDataLoadError(file + ": " + ex.getMessage());
 					}
 				}
@@ -417,6 +421,8 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (MetaParameterFormatException e) {
 			e.printStackTrace();
 		}
 		

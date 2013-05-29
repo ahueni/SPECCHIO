@@ -44,8 +44,10 @@ public abstract class MetaFile extends MetaParameter {
 	 * 
 	 * @param category_name		the category name
 	 * @param category_value	the category value
+	 * 
+	 * @throws MetaParameterFormatException	meta_value cannot be assigned to a file meta-parameter
 	 */
-	protected MetaFile(String category_name, String category_value, Object meta_value) {
+	protected MetaFile(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException {
 		
 		super(category_name, category_value, meta_value);
 		setDefaultStorageField("binary_val");
@@ -70,21 +72,6 @@ public abstract class MetaFile extends MetaParameter {
 	 * @throws IOException	read error
 	 */
 	public abstract void readValue(InputStream is, String mimeType) throws IOException;
-	
-	
-	/**
-	 * Set the value of the meta-parameter from a string. Always throws an exception
-	 * because this does not make sense for file types.
-	 * 
-	 * @param s	the string
-	 * 
-	 * @throws MetaParameterFormatException	always thrown
-	 */
-	public void setValueFromString(String s) throws MetaParameterFormatException {
-		
-		throw new MetaParameterFormatException("Cannot convert a string into a file type.");
-		
-	}
 	
 	
 	/**

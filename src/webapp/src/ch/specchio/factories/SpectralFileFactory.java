@@ -18,6 +18,7 @@ import java.util.TimeZone;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectrumDataLink;
@@ -866,6 +867,10 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			}
 			catch (SQLException ex) {
 				// database error
+				throw new SPECCHIOFactoryException(ex);
+			}
+			catch (MetaParameterFormatException ex) {
+				// a metaparameter object has the wrong type
 				throw new SPECCHIOFactoryException(ex);
 			}
 		}

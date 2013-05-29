@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
@@ -99,7 +100,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 	}
 
-	public SpectralFile load(File file) throws IOException {
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException {
 		
 		 smd = new Metadata();
 		
@@ -297,7 +298,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	}
 
 	public void read_ASD_spectrum_file_header(DataInputStream in,
-			SpectralFile hdr) throws IOException {
+			SpectralFile hdr) throws IOException, MetaParameterFormatException {
 
 		//hdr.instr_set = new InstrumentSettings();
 		//EAVDBServices.getInstance();

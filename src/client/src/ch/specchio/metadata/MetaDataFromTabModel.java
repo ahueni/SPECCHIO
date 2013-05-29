@@ -12,7 +12,10 @@ import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.types.Category;
 import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.attribute;
+import jxl.BooleanCell;
 import jxl.Cell;
+import jxl.DateCell;
+import jxl.NumberCell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
@@ -198,15 +201,35 @@ public class MetaDataFromTabModel {
 		this.matching_col_db_values = matching_col_db_values;
 	}
 
-	public ArrayList<String> getValuesOfTableColumn(int col) {
+	public ArrayList<Object> getValuesOfTableColumn(int col) {
 		
 		Cell[] column = this.getCurrentSheet().getColumn(col);
 		
-		ArrayList<String> values = new ArrayList<String>();
+		ArrayList<Object> values = new ArrayList<Object>();
 		
 		for(int i = 1; i < column.length; i++)
-		{			
-			values.add(column[i].getContents());
+		{
+			Object value;
+			if (column[i] instanceof NumberCell)
+			{
+				// assume it's a double for now
+				value = new Double(((NumberCell)column[i]).getValue());
+			}
+			else if (column[i] instanceof DateCell)
+			{
+				value = ((DateCell)column[i]).getDate();
+			}
+			else if (column[i] instanceof BooleanCell)
+			{
+				value = ((BooleanCell)column[i]).getValue();
+			}
+			else
+			{
+				// fall back to string value
+				value = column[i].getContents();
+			}
+			
+			values.add(value);
 		}
 		
 		return values;
@@ -338,7 +361,7 @@ public class MetaDataFromTabModel {
 		if(matching_is_set)
 		{
 			
-			 ArrayList<String> matching_values = getValuesOfTableColumn(getMatching_col());
+			 ArrayList<Object> matching_values = getValuesOfTableColumn(getMatching_col());
 			
 			if(matching_values.size() > 0)
 			{

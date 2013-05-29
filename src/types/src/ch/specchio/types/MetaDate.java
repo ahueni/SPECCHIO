@@ -23,7 +23,7 @@ public class MetaDate extends MetaParameter {
 	}
 	
 
-	protected MetaDate(String category_name, String category_value, Object meta_value) {
+	protected MetaDate(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException {
 		super(category_name, category_value, meta_value);
 		setUnitName("Date");
 		setDefaultStorageField("datetime_val");
@@ -49,14 +49,25 @@ public class MetaDate extends MetaParameter {
 	
 	
 	@Override
-	public void setValue(Object value)
+	public void setValue(Object value) throws MetaParameterFormatException
 	{
-		if (value instanceof XMLGregorianCalendar) {
+		if (value instanceof Date) {
+			super.setValue(value);
+		} else if (value instanceof XMLGregorianCalendar) {
 			// Jersey (de-)serialises dates as XMLGregorianCalendar objects, but we want a Date object
 			XmlDateAdapter adapter = new XmlDateAdapter();
 			super.setValue(adapter.unmarshal((XMLGregorianCalendar)value));
+		} else if (value instanceof String) {
+			try {
+				DateFormat format = DateFormat.getDateInstance();
+				setValue(format.parse((String)value));
+			}
+			catch (ParseException ex) {
+				// malformed date
+				throw new MetaParameterFormatException(ex);
+			}
 		} else {
-			super.setValue(value);
+			throw new MetaParameterFormatException("Cannot assign object of type " + value.getClass() + " to a MetaDate parameter.");
 		}
 		
 	}
@@ -65,22 +76,13 @@ public class MetaDate extends MetaParameter {
 	@Override
 	public void setEmptyValue()
 	{
-		setValue(new Date());
-	}
-	
-	
-	@Override
-	public void setValueFromString(String s) throws MetaParameterFormatException {
-		
 		try {
-			DateFormat format = DateFormat.getDateInstance();
-			setValue(format.parse(s));
+			setValue(new Date());
 		}
-		catch (ParseException ex) {
-			// malformed date
-			throw new MetaParameterFormatException(ex);
+		catch (MetaParameterFormatException ex) {
+			// never happens
+			ex.printStackTrace();
 		}
-		
 	}
 		
 	
@@ -100,19 +102,29 @@ public class MetaDate extends MetaParameter {
 	public String valueAsString(String format_specifier) {
 		
 		if (getValue() != null) {
-			TimeZone tz = TimeZone.getTimeZone("UTC");
-			Calendar cal = Calendar.getInstance(tz);
-
-			SimpleDateFormat formatter = new SimpleDateFormat(format_specifier);
-			//formatter.setTimeZone(tz);
-		
-			cal.setTime((Date)getValue());
-		
-			//return formatter.format(cal.getTime());
-			return formatter.format((Date)getValue());
+			return formatDate((Date)getValue(), format_specifier);
 		} else {
 			return "null";
 		}
+		
+	}
+	
+	
+	public static String formatDate(Date date) {
+		
+		return formatDate(date, DEFAULT_DATE_FORMAT);
+		
+	}
+	
+	
+	public static String formatDate(Date date, String format_specifier) {
+		
+		TimeZone tz = TimeZone.getTimeZone("UTC");
+		Calendar cal = Calendar.getInstance(tz);
+		SimpleDateFormat formatter = new SimpleDateFormat(format_specifier);
+		cal.setTime(date);
+	
+		return formatter.format(date);
 		
 	}
 

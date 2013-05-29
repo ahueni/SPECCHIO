@@ -8,6 +8,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
@@ -129,11 +130,17 @@ public class MDE_Controller {
 		
 		if(field instanceof MD_EAV_Field)
 		{
-			MD_EAV_Field eav_field = (MD_EAV_Field) field;
-			MetaParameter mp = eav_field.getMetaParameter();
-			mp.setValue(field.getNewValue());
-			int eav_id = specchio_client.updateEavMetadata(mp, ids);
-			eav_field.setEavId(eav_id);
+			try {
+				MD_EAV_Field eav_field = (MD_EAV_Field) field;
+				MetaParameter mp = eav_field.getMetaParameter();
+				mp.setValue(field.getNewValue());
+				int eav_id = specchio_client.updateEavMetadata(mp, ids);
+				eav_field.setEavId(eav_id);
+			}
+			catch (MetaParameterFormatException ex) {
+				// should never happen
+				ex.printStackTrace();
+			}
 			
 		}	
 		
@@ -165,11 +172,17 @@ public class MDE_Controller {
 		
 		if(field instanceof MD_EAV_Field)
 		{
-			MD_EAV_Field eav_field = (MD_EAV_Field) field;
-			MetaParameter mp = eav_field.getMetaParameter();
-			mp.setValue(field.getNewValue());
-			int eav_id = specchio_client.updateEavMetadata(mp, ids, mp);
-			eav_field.setEavId(eav_id);
+			try {
+				MD_EAV_Field eav_field = (MD_EAV_Field) field;
+				MetaParameter mp = eav_field.getMetaParameter();
+				mp.setValue(field.getNewValue());
+				int eav_id = specchio_client.updateEavMetadata(mp, ids, mp);
+				eav_field.setEavId(eav_id);
+			}
+			catch (MetaParameterFormatException ex) {
+				// should never happen
+				ex.printStackTrace();
+			}
 		}
 	}
 	

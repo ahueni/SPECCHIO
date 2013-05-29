@@ -12,6 +12,7 @@ import ch.specchio.file.reader.spectrum.TXT_FileLoader;
 import ch.specchio.file.reader.spectrum.UniSpec_SPU_FileLoader;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.types.Calibration;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
 
 public class CalibrationFileLoader {
@@ -21,7 +22,7 @@ public class CalibrationFileLoader {
 	}
 	
 	
-	public Calibration loadFile(File file) throws IOException {
+	public Calibration loadFile(File file) throws IOException, MetaParameterFormatException {
 		
 		Calibration cal = new Calibration();
 		boolean file_loaded = false;

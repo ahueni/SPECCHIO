@@ -12,6 +12,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 
@@ -26,7 +27,7 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 	}
 
 	@Override
-	public SpectralFile load(File file) throws IOException {
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException {
 		
 		if (file.getName().contains("FullSpec_index_manual"))
 			return null; // ignore info files		
@@ -100,7 +101,7 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 		return spec_file;
 	}
 
-	private void get_metadata(File metadata_compilation_filename, SpectralFile spec_file) 
+	private void get_metadata(File metadata_compilation_filename, SpectralFile spec_file) throws MetaParameterFormatException
 	{
 		String line;
 		boolean found_entry = false;

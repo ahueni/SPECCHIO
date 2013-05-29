@@ -11,6 +11,7 @@ import java.util.TimeZone;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
@@ -34,7 +35,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 	}
 
 	@Override
-	public SpectralFile load(File file) throws IOException {
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException {
 
 		if (file.getName().contains("Info"))
 			return null; // ignore info files
@@ -879,7 +880,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 		return hdf5_fgi_file;
 	}
 
-	protected void fill_eav() {
+	protected void fill_eav() throws MetaParameterFormatException{
 
 //		String previous_BRF_HDRF_status = "unknown";
 //		String previous_polarization_status = "unknown";

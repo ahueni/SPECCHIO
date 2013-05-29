@@ -44,6 +44,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import jxl.Cell;
+import jxl.DateCell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
 
@@ -52,6 +53,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.metadata.MetaDataFromTabController;
 import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.types.Category;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.attribute;
 
 public class MetaDataFromTabView extends JFrame implements ActionListener, TreeSelectionListener, DocumentListener {
@@ -929,7 +931,6 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 				table_model.addRow(new Object[]{});
 				
 				Cell cell = sheet.getCell(column, r);
-				
 				table_model.setValueAt(cell.getContents(), r-1, 0);
 		}
 		

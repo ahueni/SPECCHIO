@@ -13,8 +13,8 @@ import java.util.Hashtable;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
-import ch.specchio.client.SPECCHIOClientFactory;
 import ch.specchio.gui.SPECCHIOApplication;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.attribute;
 
@@ -45,7 +45,7 @@ public abstract class SpectralFileLoader {
 	}
 
 	
-	abstract public SpectralFile load(File file) throws IOException;
+	abstract public SpectralFile load(File file) throws IOException, MetaParameterFormatException;
 	
 	// read a number of bytes from the binary file and return them as string
 	protected String read_string(DataInputStream in, int no_of_chars) throws IOException

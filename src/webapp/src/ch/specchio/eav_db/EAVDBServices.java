@@ -18,6 +18,7 @@ import java.util.Hashtable;
 import java.util.ListIterator;
 
 import ch.specchio.types.MetaDate;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.attribute;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.Metadata;
@@ -1144,46 +1145,52 @@ public class EAVDBServices extends Thread {
 			String category_name = rs.getString(ind++);
 			String category_value = rs.getString(ind++);
 			
-			if (int_val != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, int_val);
+			try {
+				if (int_val != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, int_val);
+				}
+				else if (double_val != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, double_val);
+				}
+				else if (string_val != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, string_val);
+				}
+				else if (binary_val != null)
+				{
+					try {
+						ObjectInputStream ois = new ObjectInputStream(binary_val.getBinaryStream());
+						mp = MetaParameter.newInstance(category_name, category_value, ois.readObject());
+					} catch (IOException e) {
+						// don't know why this might happen
+						throw new SQLException(e);
+					} catch (ClassNotFoundException e) {
+						// unrecognised type found in the database; should never happen
+						throw new SQLException(e);
+					}	
+						
+				}
+				else if (datetime_val != null)
+				{
+					Date d = new Date();
+					d.setTime(((Timestamp) datetime_val).getTime());
+					mp = MetaParameter.newInstance(category_name, category_value, d);
+				}
+				else if (taxonomy_id != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, taxonomy_id);
+				}			
+				else
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, null);
+					System.out.println("EAV Null value read from DB!");
+				}
 			}
-			else if (double_val != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, double_val);
-			}
-			else if (string_val != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, string_val);
-			}
-			else if (binary_val != null)
-			{
-				try {
-					ObjectInputStream ois = new ObjectInputStream(binary_val.getBinaryStream());
-					mp = MetaParameter.newInstance(category_name, category_value, ois.readObject());
-				} catch (IOException e) {
-					// don't know why this might happen
-					throw new SQLException(e);
-				} catch (ClassNotFoundException e) {
-					// unrecognised type found in the database; should never happen
-					throw new SQLException(e);
-				}	
-					
-			}
-			else if (datetime_val != null)
-			{
-				Date d = new Date();
-				d.setTime(((Timestamp) datetime_val).getTime());
-				mp = MetaParameter.newInstance(category_name, category_value, d);
-			}
-			else if (taxonomy_id != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, taxonomy_id);
-			}			
-			else
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, null);
-				System.out.println("EAV Null value read from DB!");
+			catch (MetaParameterFormatException e) {
+				// should never happen but let's re-throw it as an SQLException just in case
+				throw new SQLException(e);
 			}
 			
 			mp.setEavId(eav_id);
@@ -1237,55 +1244,61 @@ public class EAVDBServices extends Thread {
 			String category_name = rs.getString(ind++);
 			String category_value = rs.getString(ind++);
 			
-			if (int_val != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, int_val);
-			}
-			else if (double_val != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, double_val);
-			}
-			else if (string_val != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, string_val);
-			}
-			else if (taxonomy_id != null)
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, taxonomy_id);
-			}	
-			else if (datetime_val != null)
-			{
-				Date d = new Date();
-				d.setTime(((Timestamp) datetime_val).getTime());
-				mp = MetaParameter.newInstance(category_name, category_value, d);
-			}
-			else if (binary_val != null)
-			{
-
-				// read the object from the database
-				Object value;
-				try {
-					ByteArrayInputStream bis = new ByteArrayInputStream(binary_val.getBytes(1, (int) binary_val.length()));
-					ObjectInputStream in = new ObjectInputStream(bis);
-					value = in.readObject();
-					in.close();
-				}		
-				catch (IOException e) {
-					// don't know what might cause this; re-throw it as an SQL exception
-					throw new SQLException(e);
+			try {
+				if (int_val != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, int_val);
 				}
-				catch (ClassNotFoundException e) {
-					// unrecognised class stored in the database; shouldn't happen in the ideal world
-					throw new SQLException(e);
+				else if (double_val != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, double_val);
 				}
-				
-				// create a meta-parameter object of the appropriate type
-				mp = MetaParameter.newInstance(category_name, category_value, value);
-				
+				else if (string_val != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, string_val);
+				}
+				else if (taxonomy_id != null)
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, taxonomy_id);
+				}	
+				else if (datetime_val != null)
+				{
+					Date d = new Date();
+					d.setTime(((Timestamp) datetime_val).getTime());
+					mp = MetaParameter.newInstance(category_name, category_value, d);
+				}
+				else if (binary_val != null)
+				{
+	
+					// read the object from the database
+					Object value;
+					try {
+						ByteArrayInputStream bis = new ByteArrayInputStream(binary_val.getBytes(1, (int) binary_val.length()));
+						ObjectInputStream in = new ObjectInputStream(bis);
+						value = in.readObject();
+						in.close();
+					}		
+					catch (IOException e) {
+						// don't know what might cause this; re-throw it as an SQL exception
+						throw new SQLException(e);
+					}
+					catch (ClassNotFoundException e) {
+						// unrecognised class stored in the database; shouldn't happen in the ideal world
+						throw new SQLException(e);
+					}
+					
+					// create a meta-parameter object of the appropriate type
+					mp = MetaParameter.newInstance(category_name, category_value, value);
+					
+				}
+				else
+				{
+					mp = MetaParameter.newInstance(category_name, category_value, null);
+				}
 			}
-			else
-			{
-				mp = MetaParameter.newInstance(category_name, category_value, null);
+			catch (MetaParameterFormatException e) {
+				// should never happen but let's re-throw it as an SQL exception just in case.
+				throw new SQLException(e);
 			}
 			
 			mp.setEavId(eav_id);

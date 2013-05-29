@@ -37,7 +37,7 @@ public abstract class MetaParameter {
 	}
 	
 	
-	protected MetaParameter(String category_name, String category_value, Object meta_value)
+	protected MetaParameter(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException
 	{
 		this.category_name = category_name;
 		this.category_value = category_value;
@@ -148,14 +148,14 @@ public abstract class MetaParameter {
 	}
 	
 	
-	public void setValue(Object value) {
+	public void setValue(Object value) throws MetaParameterFormatException {
 		
 		this.value = value;
 		
 	}
 	
 	
-	public void setValue(Object value, String unit_string)
+	public void setValue(Object value, String unit_string) throws MetaParameterFormatException
 	{
 		this.setValue(value);
 		this.setUnitName(unit_string);
@@ -171,12 +171,6 @@ public abstract class MetaParameter {
 	public static MetaParameter newInstance(attribute attr)
 	{
 		MetaParameter mp;
-		
-//		if(attr == null){
-//			int x = 1;
-//		}
-//		
-//		System.out.println("attr: " + attr.getName());
 		
 		// construct a meta-parameter of the type appropirate to the attribute
 		if (attr.default_storage_field.equals("datetime_val"))
@@ -197,7 +191,7 @@ public abstract class MetaParameter {
 	}
 	
 	
-	public static MetaParameter newInstance(String category_name, String category_value, Object meta_value)
+	public static MetaParameter newInstance(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException
 	{
 		MetaParameter mp;
 		
@@ -220,7 +214,7 @@ public abstract class MetaParameter {
 	}
 	
 	
-	public static MetaParameter newInstance(String category_name, String category_value)
+	public static MetaParameter newInstance(String category_name, String category_value) throws MetaParameterFormatException
 	{	
 		return newInstance(category_name, category_value, null);	
 	}
@@ -229,8 +223,6 @@ public abstract class MetaParameter {
 	public abstract boolean allows_multi_insert();
 	
 	public abstract void setEmptyValue();
-	
-	public abstract void setValueFromString(String s) throws MetaParameterFormatException;
 	
 	public abstract String valueAsString();
 

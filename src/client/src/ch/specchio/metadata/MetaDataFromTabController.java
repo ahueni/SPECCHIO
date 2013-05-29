@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -98,7 +99,7 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 					{
 						Enumeration<Integer> li = LUT.keys();
 
-						ArrayList<String> table_values = model.getValuesOfTableColumn(assigned_col);
+						ArrayList<Object> table_values = model.getValuesOfTableColumn(assigned_col);
 
 						// loop over all spectra in matching LUT
 						while(li.hasMoreElements())
@@ -108,16 +109,15 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 							Integer spectrum_id = model.getSpectrum_ids().get(spectrum_index);
 
 							Integer row = LUT.get(spectrum_index);
-							String table_value = table_values.get(row);
+							Object table_value = table_values.get(row);
 
-							//System.out.println(table_value);
 
 							// create new metaparameter for attribute
 							if(!table_value.equals(""))
 							{
 								try {
 									MetaParameter mp = MetaParameter.newInstance(attr);
-									mp.setValueFromString(table_value);
+									mp.setValue(table_value);
 			
 									ArrayList<Integer> ids = new ArrayList<Integer>();
 									ids.add(spectrum_id);
@@ -245,7 +245,7 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 		{
 			Hashtable<Integer, Integer> spectrum_to_table_val_matches = new Hashtable<Integer, Integer>();
 			
-			ArrayList<String> table_values = model.getValuesOfTableColumn(model.getMatching_col());
+			ArrayList<Object> table_values = model.getValuesOfTableColumn(model.getMatching_col());
 			
 			ArrayList<Object> matched_table_values = new ArrayList<Object>();
 			
@@ -255,20 +255,20 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 				int first_table_pos = -1;
 				int last_table_pos = -1;
 				
+				ArrayList<Integer> indices;
 				if(model.regexIsSet())
 				{
-					ArrayList<Integer> indices = getRegexMatchingIndices(table_values, db_val, model.getRegex_start(), model.getRegex_end());
-					
-					if(indices.size() > 0)
-					{
-						first_table_pos = indices.get(0);
-						last_table_pos = indices.get(indices.size()-1);						
-					}
+					indices = getRegexMatchingIndices(table_values, db_val, model.getRegex_start(), model.getRegex_end());
 				}
 				else
 				{
-					first_table_pos =table_values.indexOf(db_val.toString());
-					last_table_pos =table_values.lastIndexOf(db_val.toString());					
+					indices = getPlainMatchingIndices(table_values, db_val);
+				}
+				
+				if(indices.size() > 0)
+				{
+					first_table_pos = indices.get(0);
+					last_table_pos = indices.get(indices.size()-1);						
 				}
 
 				
@@ -305,13 +305,62 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 	}
 	
 	
-	private ArrayList<Integer> getRegexMatchingIndices(ArrayList<String> table_values, Object db_val, String regex_start, String regex_end)
+	private ArrayList<Integer> getPlainMatchingIndices(ArrayList<Object> table_values, Object db_val)
+	{
+		ArrayList<Integer> indices = new ArrayList<Integer>();
+		int i = 0;
+		for (Object table_value : table_values)
+		{
+			boolean match = false;
+			
+			if (db_val instanceof Integer) {
+				
+				if (table_value instanceof Number) {
+					match = ((Number)table_value).intValue() == ((Integer)db_val).intValue();
+				} else if (table_value instanceof String) {
+					match = table_value.equals(db_val.toString());
+				}
+				
+			} else if (db_val instanceof Double) {
+				
+				if (table_value instanceof Number) {
+					match = ((Number)table_value).doubleValue() == ((Double)db_val).doubleValue();
+				} else if (table_value instanceof String) {
+					match = table_value.equals(db_val.toString());
+				}
+				
+			} else if (db_val instanceof Date) {
+				
+				if (table_value instanceof Date) {
+					match = table_value.equals(db_val);
+				} else if (table_value instanceof String) {
+					// we could try to parse the date, but we have no idea what format to expect
+					match = false;
+				}
+				
+			} else if (db_val instanceof String) {
+				
+				match = table_value.equals(db_val);
+			}
+			
+			if (match) {
+				indices.add(i);
+			}
+			i++;
+		}
+		
+		return indices;
+		
+	}
+	
+	
+	private ArrayList<Integer> getRegexMatchingIndices(ArrayList<Object> table_values, Object db_val, String regex_start, String regex_end)
 	{
 		ArrayList<Integer> indices = new ArrayList<Integer>(); 
 		int i = 0;
-		for(String value : table_values)
+		for(Object value : table_values)
 		{
-			String regex = regex_start + value + regex_end;
+			String regex = regex_start + value.toString() + regex_end;
 			
 			if(db_val.toString().matches(regex)) indices.add(i);
 			

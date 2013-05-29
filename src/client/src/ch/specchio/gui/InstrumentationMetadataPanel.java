@@ -50,6 +50,7 @@ import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.CalibrationPlotsMetadata;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.Reference;
@@ -265,6 +266,14 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 			    	);
 			    }
 				catch (SPECCHIOClientException ex) {
+					JOptionPane.showMessageDialog(
+			    			SPECCHIOApplication.getInstance().get_frame(),
+			    			ex.getMessage(),
+			    			"Error",
+			    			JOptionPane.ERROR_MESSAGE
+			    		);
+			    }
+				catch (MetaParameterFormatException ex) {
 					JOptionPane.showMessageDialog(
 			    			SPECCHIOApplication.getInstance().get_frame(),
 			    			ex.getMessage(),

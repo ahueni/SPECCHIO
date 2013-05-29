@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.ListIterator;
 
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 
@@ -22,7 +23,7 @@ public class APOGEE_FileLoader extends SpectralFileLoader {
 	}
 	
 	
-	public SpectralFile load(File file) throws IOException 
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException
 	{
 		SpectralFile f = new SpectralFile();
 		f.setNumberOfSpectra(1); 
@@ -57,7 +58,7 @@ public class APOGEE_FileLoader extends SpectralFileLoader {
 	// reads the header line in order to get the number of spectra contained in this file
 	// or stores the spectra names (depending on the analyse flag)
 
-	public void read_header(BufferedReader d, SpectralFile f, boolean analyse) throws IOException
+	public void read_header(BufferedReader d, SpectralFile f, boolean analyse) throws IOException, MetaParameterFormatException
 	{
 		Metadata smd = new Metadata();
 		

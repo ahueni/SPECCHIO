@@ -16,7 +16,7 @@ public class MetaTaxonomy extends MetaParameter {
 	}
 	
 	
-	protected MetaTaxonomy(String category_name, String category_value, Object meta_value) {
+	protected MetaTaxonomy(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException {
 		
 		super(category_name, category_value, meta_value);
 		setDefaultStorageField("taxonomy_id");
@@ -42,15 +42,27 @@ public class MetaTaxonomy extends MetaParameter {
 	@Override
 	public void setEmptyValue() {
 		
-		setValue(new Long(0));
+		try {
+			setValue(new Long(0));
+		}
+		catch (MetaParameterFormatException ex) {
+			// never happens
+			ex.printStackTrace();
+		}
 		
 	}
 	
 	
 	@Override
-	public void setValueFromString(String s) throws MetaParameterFormatException {
+	public void setValue(Object value) throws MetaParameterFormatException {
 		
-		throw new MetaParameterFormatException("Conversion of strings into taxonomy elements is not supported.");
+		if (value instanceof Number) {
+			super.setValue(new Long(((Number)value).longValue()));
+		} else if (value instanceof String) {
+			throw new MetaParameterFormatException("Conversion of strings into taxonomy attributes is not supported.");
+		} else {
+			throw new MetaParameterFormatException("Cannot assign object of type " + value.getClass() + " to a MetaTaxonomy parameter.");
+		}
 		
 	}
 	

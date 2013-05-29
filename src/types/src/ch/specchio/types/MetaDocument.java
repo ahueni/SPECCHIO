@@ -32,7 +32,7 @@ public class MetaDocument extends MetaFile {
 	
 	
 	/** constructor from a category name and value */
-	protected MetaDocument(String category_name, String category_value, Object meta_value) {
+	protected MetaDocument(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException {
 		
 		super(category_name, category_value, meta_value);
 		
@@ -61,9 +61,15 @@ public class MetaDocument extends MetaFile {
 	@Override
 	public void readValue(InputStream is, String mimeType) throws IOException
 	{
-		PdfDocument pdf = new PdfDocument();
-		pdf.readDocument(is);
-		setValue(pdf);
+		try {
+			PdfDocument pdf = new PdfDocument();
+			pdf.readDocument(is);
+			setValue(pdf);
+		}
+		catch (MetaParameterFormatException ex) {
+			// never happens
+			ex.printStackTrace();
+		}
 	}
 	
 	
@@ -71,7 +77,24 @@ public class MetaDocument extends MetaFile {
 	@Override
 	public void setEmptyValue() {
 		
-		setValue(new PdfDocument());
+		try {
+			setValue(new PdfDocument());
+		}
+		catch (MetaParameterFormatException ex) {
+			// never happens
+			ex.printStackTrace();
+		}
+		
+	}
+	
+	
+	public void setValue(Object value) throws MetaParameterFormatException {
+		
+		if (supportsValue(value)) {
+			super.setValue(value);
+		} else {
+			throw new MetaParameterFormatException("Cannot assign object of type " + value.getClass() + " to a MetaDocument parameter.");
+		}
 		
 	}
 	

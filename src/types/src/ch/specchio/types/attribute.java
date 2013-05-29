@@ -5,6 +5,13 @@ import javax.xml.bind.annotation.*;
 @XmlRootElement(name="attribute")
 public class attribute {
 	
+	public static final String INT_VAL = "int_val";
+	public static final String DOUBLE_VAL = "double_val";
+	public static final String STRING_VAL = "string_val";
+	public static final String BINARY_VAL = "binary_val";
+	public static final String DATETIME_VAL = "datetime_val";
+	public static final String TAXONOMY_VAL = "taxonomy_id";
+	
 	@XmlElement public int id;
 	@XmlElement public String name;
 	@XmlElement public int category_id;

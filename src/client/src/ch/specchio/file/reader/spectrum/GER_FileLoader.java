@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 
@@ -26,7 +27,7 @@ public class GER_FileLoader extends SpectralFileLoader {
 	}
 
 
-	public SpectralFile load(File file) throws IOException
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException
 	{
 		smd = new Metadata();
 		
@@ -68,7 +69,7 @@ public class GER_FileLoader extends SpectralFileLoader {
 		return ger_file;
 	}
 	
-	public void read_GER_file(DataInputStream in, SpectralFile f) throws IOException
+	public void read_GER_file(DataInputStream in, SpectralFile f) throws IOException, MetaParameterFormatException
 	{
 		String line;
 		boolean hdr_ended = false;
@@ -93,7 +94,7 @@ public class GER_FileLoader extends SpectralFileLoader {
 		
 	}
 	
-	public boolean analyse_GER_file(String[] tokens, BufferedReader in, SpectralFile hdr)
+	public boolean analyse_GER_file(String[] tokens, BufferedReader in, SpectralFile hdr) throws MetaParameterFormatException
 	{
 		
 		String t1 = tokens[0];

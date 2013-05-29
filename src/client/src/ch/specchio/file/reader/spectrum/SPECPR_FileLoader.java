@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
@@ -25,7 +26,7 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 
 	}
 
-	public SpectralFile load(File file) throws IOException {
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException {
 
 		
 		

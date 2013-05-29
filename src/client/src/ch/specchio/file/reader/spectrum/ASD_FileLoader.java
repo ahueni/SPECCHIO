@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
@@ -31,7 +32,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		asd_file.setNumberOfSpectra(1);	
 	}
 
-	public SpectralFile load(File file) throws IOException
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException
 	{		
 		smd = new Metadata();
 		asd_file = new SpectralFile();
@@ -70,7 +71,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		return asd_file;
 	}
 	
-	public void read_ASD_header(DataInputStream in, SpectralFile hdr) throws IOException
+	public void read_ASD_header(DataInputStream in, SpectralFile hdr) throws IOException, MetaParameterFormatException
 	{
 		
 		// read the company name

@@ -59,6 +59,7 @@ import ch.specchio.types.MetaDocument;
 import ch.specchio.types.MetaFile;
 import ch.specchio.types.MetaImage;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaTaxonomy;
 import ch.specchio.types.SerialisableBufferedImage;
 import ch.specchio.types.TaxonomyNodeObject;
@@ -369,6 +370,10 @@ public class SpectrumMetadataPanel extends JPanel {
 					// error contacting the server
 					ErrorDialog error = new ErrorDialog(owner, "Could not create field", ex.getUserMessage(), ex);
 					error.setVisible(true);
+				}
+				catch (MetaParameterFormatException ex) {
+					// should never happen
+					ex.printStackTrace();
 				}
 				
 			}

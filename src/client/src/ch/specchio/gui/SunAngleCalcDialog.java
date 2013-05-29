@@ -25,6 +25,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.types.CelestialAngle;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaSimple;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
@@ -299,6 +300,11 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 			catch (ClassCastException ex) {
 				// invalid data stored in the database
 				ErrorDialog error = new ErrorDialog((Frame)SunAngleCalcDialog.this.getOwner(), "Error", "The database contains invalid data for one or more of these spectra.", ex);
+				error.setVisible(true);
+			}
+			catch (MetaParameterFormatException ex) {
+				// the parameter have the wrong type
+				ErrorDialog error = new ErrorDialog((Frame)SunAngleCalcDialog.this.getOwner(), "Error", "The illumination attributes have the wrong type. Please contact your system administrator.", ex);
 				error.setVisible(true);
 			}
 			

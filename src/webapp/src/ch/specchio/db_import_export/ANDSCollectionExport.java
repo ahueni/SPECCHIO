@@ -133,7 +133,7 @@ public class ANDSCollectionExport {
 		MetaParameter mp = MetaParameter.newInstance(attr);
 		int collectionId = metadataFactory.updateMetadata(mp, convertIntArray( rdaCollectionDescriptor.getSpectrumIds()));
 		String collectionIdString = COLLECTION_PREFIX + collectionId;
-		mp.setValueFromString(collectionIdString);
+		mp.setValue(collectionIdString);
 		metadataFactory.updateMetadata(mp, convertIntArray( rdaCollectionDescriptor.getSpectrumIds()));
 		
 		return collectionIdString;

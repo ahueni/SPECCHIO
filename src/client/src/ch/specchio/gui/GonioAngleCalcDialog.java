@@ -33,6 +33,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.types.CelestialAngle;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
@@ -719,6 +720,12 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 				ErrorDialog error = new ErrorDialog((Frame)GonioAngleCalcDialog.this.getOwner(), "Error", ex.getUserMessage(), ex);
 				error.setVisible(true);
 			}
+			catch (MetaParameterFormatException ex) {
+				// the attributes have the wrong type
+				ErrorDialog error = new ErrorDialog((Frame)GonioAngleCalcDialog.this.getOwner(), "Error", "The sensor parameters do not have the correct type. Please contact your system administrator.", ex);
+				error.setVisible(true);
+			}
+				
 			
 			// close progress report
 			pr.setVisible(false);
