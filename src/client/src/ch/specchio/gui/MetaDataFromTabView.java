@@ -382,8 +382,8 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 
 			matching_details_panel.removeAll();
 
-			// create table
-			DefaultTableModel table_model = new DefaultTableModel();
+			// create non-editable table
+			NonEditableTableModel table_model = new NonEditableTableModel();
 
 			// Create column
 			table_model.addColumn("Spectrum IDs");
@@ -884,7 +884,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		
 		// create table and add to panel
 		
-		DefaultTableModel table_model = new DefaultTableModel();
+		NonEditableTableModel table_model = new NonEditableTableModel();
 		
 		// Create column
 		Cell column_name_cell = sheet.getCell(column, 0);
