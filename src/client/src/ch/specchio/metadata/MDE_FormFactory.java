@@ -3,6 +3,7 @@ package ch.specchio.metadata;
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.types.Category;
+import ch.specchio.types.Spectrum;
 
 public class MDE_FormFactory {
 	
@@ -38,14 +39,14 @@ public class MDE_FormFactory {
 		
 		// add non-EAV fields to the container if appropriate
 		if (name.equals("General")) {
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, "measurement_unit_id", "Measurement Unit"));
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, "file_format_id", "File Format"));
+			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.MEASUREMENT_UNIT, "Measurement Unit"));
+			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.FILE_FORMAT, "File Format"));
 		} else if (name.equals("Instrument")) {
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, "sensor_id", "Sensor"));
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, "instrument_id", "Instrument"));
+			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.SENSOR, "Sensor"));
+			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.INSTRUMENT, "Instrument"));
 		}
 		 else if (name.equals("Instrumentation")) {
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, "reference_id", "Reference"));
+			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.REFERENCE, "Reference"));
 		}	
 		
 	}

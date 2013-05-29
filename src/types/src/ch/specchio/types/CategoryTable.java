@@ -29,5 +29,6 @@ public class CategoryTable {
 	public String get(int id) { return this.table.get(id); }
 	public Enumeration<Integer> keys() { return this.table.keys(); }
 	public void put(int id, String name) { this.table.put(id, name); }
+	public void remove(int id) { this.table.remove(id); }
 
 }

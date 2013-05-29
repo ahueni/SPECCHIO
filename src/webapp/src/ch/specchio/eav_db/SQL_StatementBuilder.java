@@ -189,6 +189,11 @@ public class SQL_StatementBuilder {
 		return str1;
    }
    
+   public synchronized String quote_identifier(String id)
+   {
+	   return "`" + id + "`";
+   }
+   
    public synchronized String quote_value(Object value) throws SQLException
    {
 	   if (value == null) {

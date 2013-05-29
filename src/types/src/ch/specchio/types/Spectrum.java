@@ -15,14 +15,19 @@ import javax.xml.bind.annotation.*;
 @XmlSeeAlso({ArrayList.class,SerialisableBufferedImage.class})
 public class Spectrum
 {
+	public static final String INSTRUMENT = "instrument";
+	public static final String SENSOR = "sensor";
+	public static final String MEASUREMENT_UNIT = "measurement_unit";
+	public static final String FILE_FORMAT = "file_format";
+	public static final String REFERENCE = "reference";
 	
 	/** spectrum metadata fields */
 	public static final String[] METADATA_FIELDS = {
-		"sensor_id",
-		"file_format_id",
-		"instrument_id", 
-		"measurement_unit_id",
-		"reference_id"
+		SENSOR,
+		FILE_FORMAT,
+		INSTRUMENT, 
+		MEASUREMENT_UNIT,
+		REFERENCE
 	};
 	
 	MetaDatatype<Integer> number;
@@ -417,7 +422,7 @@ public class Spectrum
 		try {
 			
 			// get getter method name
-			Method getter = getClass().getMethod(getAccessorName("get", field));
+			Method getter = getClass().getMethod(getAccessorName("get", field) + "Id");
 			
 			// invoke the method
 			id = (Integer)getter.invoke(this);
@@ -457,7 +462,7 @@ public class Spectrum
 		try {
 			
 			// get the getter name
-			Method getter = getClass().getMethod(getAccessorName("get", field.substring(0, field.length() - 3)));
+			Method getter = getClass().getMethod(getAccessorName("get", field));
 			
 			// invoke the method
 			value = getter.invoke(this);
@@ -494,7 +499,7 @@ public class Spectrum
 		try {
 			
 			// get setter method name
-			Method setter = getClass().getMethod(getAccessorName("set", field), Integer.TYPE);
+			Method setter = getClass().getMethod(getAccessorName("set", field) + "Id", Integer.TYPE);
 			
 			// invoke the method
 			setter.invoke(this, new Integer(id));

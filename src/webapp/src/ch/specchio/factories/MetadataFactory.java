@@ -79,7 +79,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			
 			for (int i=0;i<fieldnames.length;i++)
 			{
-				field_cnt_strings.add("count(distinct " + fieldnames[i] + ")");				
+				field_cnt_strings.add("count(distinct " + fieldnames[i] + "_id" + ")");				
 			}
 			
 			
@@ -491,16 +491,33 @@ public class MetadataFactory extends SPECCHIOFactory {
 	/**
 	 * Get a hash table mapping identifiers to names.
 	 * 
-	 * @param category	the categroy name
+	 * @param category	the category name
 	 * 
 	 * @returns a category table mapping identifiers to names
 	 * 
-	 * @throws SPECCHIOFactoryException	invalid value for primary_key
+	 * @throws SPECCHIOFactoryException	invalid value for category
 	 */
 	public CategoryTable getCategoryTable(String category) throws SPECCHIOFactoryException {
 		
-		return getDataCache().get_category_table(category);
+		CategoryTable table = new CategoryTable();
 		
+		try {
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			String query = "select " + SQL.quote_identifier(category + "_id") + ", name from " + SQL.quote_identifier(category);
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				table.put(rs.getInt(1), rs.getString(2));
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		return table;
 		
 	}
 	

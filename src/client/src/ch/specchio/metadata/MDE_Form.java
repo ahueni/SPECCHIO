@@ -94,7 +94,7 @@ public class MDE_Form {
 
 				Class<Spectrum>  aClass = Spectrum.class;
 				try {
-					java.lang.reflect.Field relevant_spectrum_field = aClass.getField(md_fields[i]);
+					java.lang.reflect.Field relevant_spectrum_field = aClass.getField(md_fields[i] + "_id");
 					
 					Integer value = (Integer) relevant_spectrum_field.get(s);
 					

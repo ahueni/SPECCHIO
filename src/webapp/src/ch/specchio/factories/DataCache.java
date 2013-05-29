@@ -1,21 +1,14 @@
 package ch.specchio.factories;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.ListIterator;
 
 import ch.specchio.constants.SensorType;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.spaces.MeasurementUnit;
-import ch.specchio.types.CategoryTable;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.ReferenceBrand;
@@ -35,7 +28,6 @@ public class DataCache {
 	ArrayList<SamplingEnvironmentStruct> sampling_environments;	
 	ArrayList<BeamGeometryStruct> beam_geometries;
 	ArrayList<ReferenceBrand> reference_brands;
-	Hashtable<String, CategoryTable> category_tables;
 	
 	
 	
@@ -55,7 +47,6 @@ public class DataCache {
 		load_sampling_environments();
 		load_measurement_types();
 		load_reference_brands();
-		load_category_tables();
 	}
 	
 	
@@ -176,13 +167,6 @@ public class DataCache {
 				if(s.getInstrumentId() == instrument_id && s.getCalibrationId() == calibration_id)
 					instrument = s;			
 			}
-			
-			// load it if not found in list
-//			if(instrument == null)
-//			{
-//				instrument = load_instrument(instrument_id, calibration_id);
-//				instruments.add(instrument);
-//			}
 		}
 				
 		return instrument;
@@ -202,14 +186,6 @@ public class DataCache {
 				if(s.getInstrumentNumber().get_value() != null && s.getInstrumentNumber().get_value().equals(serial_id) && s.getSensorId() == sensor_id)
 					instrument = s;			
 			}
-			
-			// load it if not found in list
-//			if(instrument == null)
-//			{
-//				// this should never happen unless a new instrument was added since the instatiation of this object
-//				instruments.clear();
-//				load_instruments();
-//			}
 
 				
 		return instrument;		
@@ -233,36 +209,10 @@ public class DataCache {
 				if(s.getInstrumentNumber().get_value() != null && s.getInstrumentNumber().get_value().equals(instrument_number) && s.getSensor().getManufacturerShortName().get_value().equals(company))
 					instrument = s;			
 			}
-			
-			// load it if not found in list
-//			if(instrument == null)
-//			{
-//				// this should never happen unless a new instrument was added since the instatiation of this object
-//				instruments.clear();
-//				load_instruments();
-//			}
 
 				
 		return instrument;		
 
-	}
-	
-	
-	public Hashtable<Integer, String> get_instrument_name_and_id_hash() {
-		
-		Hashtable<Integer, String> hash = new Hashtable<Integer, String>();
-		
-		ListIterator<Instrument> li = instruments.listIterator();
-		Instrument i;
-		
-		while(li.hasNext())
-		{
-			i = li.next();			
-			hash.put(i.getInstrumentId(), i.getInstrumentName().get_value());			
-		}
-		
-		
-		return hash;
 	}
 	
 	
@@ -463,110 +413,6 @@ public class DataCache {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}			
-
-	}
-
-	
-	private Instrument load_instrument(int instrument_id)
-	{
-		Instrument instrument = new Instrument();
-		
-		instrument.setValid(true);
-
-		try {
-			
-			instrument.setInstrumentId(instrument_id);
-			int institute_id = 0;
-						
-			// read information from database
-			String[] tables = new String[]{"instrument"};
-			String[] attr = new String[]{"name", "institute_id", "serial_number", "sensor_id"};
-
-			String query = SQL.assemble_sql_select_query(
-						SQL.conc_attributes(attr),
-						SQL.conc_tables(tables),
-						"instrument.instrument_id = " + Integer.toString(instrument_id));
-			
-			Statement stmt = SQL.createStatement();	
-			ResultSet rs = stmt.executeQuery(query);
-			while (rs.next()) {
-				instrument.setInstrumentName(rs.getString(1));
-				institute_id = rs.getInt(2);
-				instrument.setInstrumentNumber(rs.getString(3));
-				instrument.setSensorId(rs.getInt(4));
-			}
-			rs.close();
-			stmt.close();
-			
-			// load sensor
-			instrument.setSensor(load_sensor(instrument.getSensorId()));
-			
-			Institute inst = get_institute_by_id(institute_id);
-			if (inst != null) {
-				instrument.setInstrumentOwner(inst.toString());
-			}
-						
-			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		return instrument;
-	
-		
-	}
-	
-	// load a calibrated instrument
-	private Instrument load_instrument(int instrument_id, int calibration_id)
-	{
-		Instrument instrument = load_instrument(instrument_id);
-		instrument.setCalibrationId(calibration_id);
-		
-		Blob cal_data = null;
-		
-		// get calibration data from calibration file
-		String query = "select measurement from instrumentation_factors i, calibration c where c.calibration_id = " + Integer.toString(calibration_id) +
-		" and i.instrumentation_factors_id = c.cal_factors";
-		
-		try {
-			Statement stmt = SQL.createStatement();
-			ResultSet rs = stmt.executeQuery(query);
-			
-			while (rs.next()) {
-				cal_data = rs.getBlob(1);
-				
-				// copy into array
-				instrument.setAverageWavelengths(new double[instrument.getSensor().getNumberOfChannels().value]);	
-				InputStream binstream = cal_data.getBinaryStream();
-				DataInput dis = new DataInputStream(binstream);
-				
-				for(int i = 0; i < instrument.getSensor().getNumberOfChannels().value; i++)
-				{
-					try {
-						instrument.setAverageWavelength(i, dis.readFloat());
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}				
-				}
-				
-				binstream.close();				
-				
-			}
-			rs.close();			
-			
-			stmt.close();
-			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		return instrument;
 
 	}
 	
@@ -831,35 +677,6 @@ public class DataCache {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}			
-
-	}
-	
-	private Sensor load_sensor(int sensor_id) throws SQLException
-	{
-		Sensor sensor = new Sensor();
-		
-		sensor.setValid(true);
-		sensor.setSensorId(sensor_id);
-		
-		String query = "select name, no_of_channels, description, manufacturer_id, sensor_type_no from sensor where sensor_id = " + Integer.toString(sensor_id);
-		
-		Statement stmt = SQL.createStatement();
-		ResultSet rs = stmt.executeQuery(query);
-		
-		while (rs.next()) {
-			sensor.setName(rs.getString(1));
-			sensor.setNumberOfChannels(rs.getInt(2));
-			sensor.setDescription(rs.getString(3));
-			sensor.setManufacturerId(rs.getInt(4));
-			sensor.setSensorTypeNumber(rs.getInt(5));
-		}
-		rs.close();
-		
-		stmt.close();
-		
-		load_sensor_definition(sensor);
-		
-		return sensor;
 
 	}
 	
@@ -1250,54 +1067,6 @@ public class DataCache {
 			e.printStackTrace();
 		}			
 
-	}
-	
-	
-	public CategoryTable get_category_table(String category) {
-		
-		return category_tables.get(category);
-		
-	}
-	
-	
-	private void load_category_tables() {
-		
-		try {
-			
-			// the list of categories with tables
-			String[] categories = {
-					"sensor",
-					"instrument",
-					"measurement_unit",
-					"file_format",
-					"reference"
-			};
-			
-			// build the tables
-			Statement stmt = SQL.createStatement();
-			category_tables = new Hashtable<String, CategoryTable>();
-			for (String category : categories) {
-				
-				// populate the category table
-				CategoryTable table = new CategoryTable();
-				String query = "select " + category + "_id" + ", name from " + category;
-				ResultSet rs = stmt.executeQuery(query);
-				while (rs.next()) {
-					table.put(new Integer(rs.getInt(1)), rs.getString(2));
-				}
-				rs.close();
-				
-				// add the new category table to the cache
-				category_tables.put(category + "_id", table);
-			}
-			stmt.close();
-			
-		}
-		catch (SQLException e) {
-			// TODO
-			e.printStackTrace();
-		}
-		
 	}
 	
 

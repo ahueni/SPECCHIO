@@ -505,13 +505,17 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				s.setHierarchyLevelId(rs.getInt(2));
 			}
 			rs.close();
-				
-			query = "select "  + SQL.conc_cols(Spectrum.METADATA_FIELDS) + " from spectrum where spectrum_id = " + Integer.toString(spectrum_id);
+			
+			String id_fieldnames[] = new String[Spectrum.METADATA_FIELDS.length];
+			for (int i = 0; i < Spectrum.METADATA_FIELDS.length; i++) {
+				id_fieldnames[i] = Spectrum.METADATA_FIELDS[i] + "_id";
+			}
+			query = "select "  + SQL.conc_cols(id_fieldnames) + " from spectrum where spectrum_id = " + Integer.toString(spectrum_id);
 			rs = stmt.executeQuery(query);
 			int row_cnt = 1;
 			while (rs.next()) {
 				for (String fieldname : Spectrum.METADATA_FIELDS) {
-					s.setMetadataId(fieldname, rs.getInt(fieldname));
+					s.setMetadataId(fieldname, rs.getInt(fieldname + "_id"));
 				}
 				
 			}	
