@@ -199,7 +199,7 @@ public class DataCache {
 	{		
 		Instrument instrument = null;
 		Instrument s;
-		// search through sensor list
+		// search through instrument list
 		ListIterator<Instrument> li = instruments.listIterator();
 
 		
@@ -326,15 +326,12 @@ public class DataCache {
 					instr.setInstrumentName(s.getName().get_value() + " #" + spec_file.getInstrumentNumber() + " instrument");
 					instr.setSensorId(sensor_id);
 					instr.setInstrumentNumber(spec_file.getInstrumentNumber());
-
+					instr.setSensor(s);
 					instr.setAverageWavelengths(d_wvls);
-					//instr.setInstrumentOwner(instr_owner); // as a first guess, could use the institution of the current user
 
 					factory.insertInstrument(instr);
 					factory.updateInstrument(instr);
 					factory.dispose();
-					
-					load_instruments(); // ensure that instrument cache is updated
 					
 					instrument = get_instrument_by_serial_id(spec_file.getInstrumentNumber(), sensor_id);
 				}
@@ -572,7 +569,7 @@ public class DataCache {
 
 		if (spec_file.getCompany().equals("APOGEE")) {
 			
-			Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)], spec_file.getCompany());
+			Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
 
 			return s.getSensorId();
 
