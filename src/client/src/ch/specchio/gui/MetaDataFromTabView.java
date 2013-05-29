@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import java.util.ListIterator;
 
@@ -44,7 +45,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import jxl.Cell;
-import jxl.DateCell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
 
@@ -53,7 +53,6 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.metadata.MetaDataFromTabController;
 import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.types.Category;
-import ch.specchio.types.MetaDate;
 import ch.specchio.types.attribute;
 
 public class MetaDataFromTabView extends JFrame implements ActionListener, TreeSelectionListener, DocumentListener {
@@ -343,9 +342,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		
 		if(arg0.getActionCommand().equals("Insert Selected Metadata"))
 		{
-			boolean success = controller.insert();
-			
-			//if(success) JOptionPane.showMessageDialog(null,"Metadata insert has finished.");
+			controller.insert();
 		}
 		
 		
@@ -411,27 +408,31 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 				// get values for these spectra, if a matching column is selected
 				if(model.matchingColumnIsSet() && ids.size()>0  && model.validAttribute(model.getMatching_col()))	
 				{
-				
+
+					// initiate matching
 					ArrayList<Object> values = controller.getDbValuesforMatchingCol();
-									
-					r = 0;
-					for(Object value : values)
-					{
-						table_model.setValueAt(value, r++, 1);
-					}
-					
-					
-					// initiate matching and display matching row data
 					controller.match();
 					ArrayList<Object> matched_table_values = controller.getMatchedTableValues();
 					
+					// fill the table with matches
 					r = 0;
-					for(Object value : matched_table_values)
-					{
-						if(value != null)
-							table_model.setValueAt(value, r++, 2);
-						else
-							r++;
+					Iterator<Object> values_iter = values.iterator();
+					Iterator<Object> matched_table_values_iter = matched_table_values.iterator();
+					while (values_iter.hasNext()) {
+						Object value = values_iter.next();
+						Object matched_table_value = (matched_table_values_iter.hasNext())? matched_table_values_iter.next() : null;
+						table_model.setValueAt(value, r, 1);
+						
+						if (matched_table_value != null) {
+							Object matched_display_value = matched_table_value;
+							if (value instanceof Integer && matched_table_value instanceof Number) {
+								// make sure the match displays as an integer
+								matched_display_value = new Integer(((Number)matched_table_value).intValue());
+							}
+							table_model.setValueAt(matched_display_value, r, 2);
+						}
+						
+						r++;
 					}
 					
 				
@@ -875,41 +876,6 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 			box.addItem(item);		
 		}	
 	
-		
-	}
-	
-	private JTable getTabularDataTable(Sheet sheet)
-	{
-		
-		// create table and add to panel
-		
-		DefaultTableModel table_model = new DefaultTableModel();
-		
-		// Create columns
-		for(int i=0;i<sheet.getColumns();i++)
-		{
-			Cell column_name_cell = sheet.getCell(i, 0);
-			table_model.addColumn(column_name_cell.getContents());			
-		}
-		
-		// fill values
-		for(int r=1;r<sheet.getRows();r++)
-		{
-			for(int c=0;c<sheet.getColumns();c++)
-			{
-				
-				table_model.addRow(new Object[]{});
-				
-				Cell cell = sheet.getCell(c, r);
-				
-				table_model.setValueAt(cell.getContents(), r-1, c);
-			}
-		}
-		
-		JTable table = new JTable(table_model);
-		
-		
-		return table;
 		
 	}
 	
