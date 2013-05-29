@@ -184,7 +184,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		mdMatchingScrollPane.getHorizontalScrollBar().setUnitIncrement(10);
 		
 		add("West", new JScrollPane(control_panel));	
-		add("Center", new JScrollPane(mdMatchingScrollPane));
+		add("Center", mdMatchingScrollPane);
 		
 		pack();
 		
