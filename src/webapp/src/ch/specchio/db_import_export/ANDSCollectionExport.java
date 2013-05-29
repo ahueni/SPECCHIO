@@ -238,7 +238,7 @@ public class ANDSCollectionExport {
 			address.setPhysicalAddress(physicalAddress);
 			location.setAddress(address);
 
-			collection.setLocation(location);
+			collection.setLocation(location); 
 //			party.setType("person");
 //			party.setDateModified(new Date());
 //			party.setName(name);
