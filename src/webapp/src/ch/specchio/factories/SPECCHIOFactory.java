@@ -119,7 +119,7 @@ public class SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	private void configureCaches() throws SPECCHIOFactoryException {
+	private synchronized void configureCaches() throws SPECCHIOFactoryException {
 		
 		if (SPECCHIOFactory.attr == null || SPECCHIOFactory.cache == null) {
 			// need to populate at least one cache
