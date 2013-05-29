@@ -168,10 +168,40 @@ public class ANDSCollectionExport {
 			Collection collection = new Collection();
 			collection.setType("collection");
 			collection.setDateModified(sdf.format(new java.util.Date()));
+			
+			ArrayList<Identifier> identifierList = new ArrayList<Identifier>();
 			Identifier identifier = new Identifier();
 			identifier.setType("uri");
 			identifier.setValue("http://hdl.handle.net/102.100.100/9338");
-			collection.setIdentifier(identifier);
+			identifierList.add(identifier);
+			
+			Identifier doiIdentifier = new Identifier();	
+			int spectrumId = -1;
+			if( rdaCollectionDescriptor.getSpectrumIds().length > 0)
+			{
+				int [] spectrumIds = rdaCollectionDescriptor.getSpectrumIds();
+				for (int i=0; i < spectrumIds.length; i++)
+				{
+					System.out.println("spectrumIds is: " + spectrumIds[i]);
+					spectrumId = spectrumIds[i];
+				}
+			}
+			// check if doi has a value and if it does include it in the rif-cs collection file as an identifer
+			String doiIdentifierString = "";
+			try {
+				doiIdentifierString = (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Digital Object Identifier").getValue();
+			} catch (Exception e) {
+				// dont do anything, just means no data to retrieve
+			}
+			
+			if (doiIdentifierString != null && doiIdentifierString.length() > 0 )
+			{
+				doiIdentifier.setType("doi");
+				doiIdentifier.setValue( doiIdentifierString );
+				identifierList.add(doiIdentifier);
+			}
+			collection.setIdentifierList(identifierList);
+			
 			Date date = new Date();
 			date.setType("dateFrom");
 			date.setDateFormat("W3CDTF");
@@ -191,18 +221,6 @@ public class ANDSCollectionExport {
 			namePartList.add(namePart);
 			name.setNamePartList(namePartList);
 			collection.setName(name);
-			
-			int spectrumId = -1;
-			if( rdaCollectionDescriptor.getSpectrumIds().length > 0)
-			{
-				int [] spectrumIds = rdaCollectionDescriptor.getSpectrumIds();
-				for (int i=0; i < spectrumIds.length; i++)
-				{
-					System.out.println("spectrumIds is: " + spectrumIds[i]);
-					spectrumId = spectrumIds[i];
-				}
-			}
-			
 			Location location = new Location();
 			location.setDateFrom(sdf.format(fromToDateList.get(0)));
 			location.setDateTo(sdf.format(fromToDateList.get(fromToDateList.size()-1)));
