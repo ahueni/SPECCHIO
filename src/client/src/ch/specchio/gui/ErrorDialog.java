@@ -200,9 +200,17 @@ public class ErrorDialog extends JDialog implements ActionListener {
 				
 				// the details message may contain an XHTML response from the web server; try to parse it
 				try {
+					// create a document factory with all validation disabled (http://stackoverflow.com/questions/6204827/xml-parsing-too-slow)
+					DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
+					documentFactory.setNamespaceAware(false);
+					documentFactory.setValidating(false);
+					documentFactory.setFeature("http://xml.org/sax/features/namespaces", false);
+					documentFactory.setFeature("http://xml.org/sax/features/validation", false);
+					documentFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+					documentFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
 					// try to parse the document as XML
 					StringReader reader = new StringReader(details);
-					DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
 					DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
 					Document document = documentBuilder.parse(new InputSource(reader));
 					reader.close();
