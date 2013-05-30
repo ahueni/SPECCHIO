@@ -356,6 +356,8 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 					
 						// reload and focus on new instrument, this is always the last one inserted in the list
 						load_instruments();
+						instrument_combo.setSelectedIndex(-1);
+						instrument_data_group.setInstrument(null);
 					}
 				}
 				else
@@ -425,8 +427,10 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 						// delete the reference
 						specchio_client.deleteReference(c.id);
 					
-						// reload and focus on new instrument, this is always the last one inserted in the list
+						// reload references
 						load_references();
+						reference_combo.setSelectedIndex(-1);
+						reference_data_group.setReference(null);
 					}
 				}
 				else

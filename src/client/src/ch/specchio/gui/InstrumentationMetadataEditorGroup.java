@@ -253,14 +253,24 @@ class InstrumentMetadataGroup extends InstrumentationMetadataEditorGroup {
 		// populate the instrument metadata components
 		this.instrument_data.setInstrumentData(this.instrument);
 		
-		// populate the picture metadata
-		PictureTable pictures = specchio_client.getInstrumentPictures(instrument.getInstrumentId());
-		picture_data.setPictureTable(pictures);
-		
-		// populate the calibration list metadata
-		CalibrationMetadata[] cm = specchio_client.getInstrumentCalibrationMetadata(instrument.getInstrumentId());
-		cal_data.setCalibrationMetadata(cm);
-		cal_data.setObjectId(instrument.getInstrumentId());
+		if (instrument != null) {
+			
+			// populate the picture metadata
+			PictureTable pictures = specchio_client.getInstrumentPictures(instrument.getInstrumentId());
+			picture_data.setPictureTable(pictures);
+			
+			// populate the calibration list metadata
+			CalibrationMetadata[] cm = specchio_client.getInstrumentCalibrationMetadata(instrument.getInstrumentId());
+			cal_data.setCalibrationMetadata(cm);
+			cal_data.setObjectId(instrument.getInstrumentId());
+			
+		} else {
+			
+			picture_data.setPictureTable(null);
+			cal_data.setCalibrationMetadata(null);
+			cal_data.setObjectId(0);
+			
+		}
 		
 	}
 	
@@ -393,14 +403,24 @@ class ReferenceMetadataGroup extends InstrumentationMetadataEditorGroup {
 		this.reference = reference;
 		this.reference_data.setReferenceData(reference);
 		
-		// populate the picture metadata
-		PictureTable pictures = specchio_client.getReferencePictures(reference.getReferenceId());
-		picture_data.setPictureTable(pictures);
-		
-		// populate the calibration list metadata
-		CalibrationMetadata[] cm = specchio_client.getReferenceCalibrationMetadata(reference.getReferenceId());
-		cal_data.setCalibrationMetadata(cm);
-		cal_data.setObjectId(reference.getReferenceId());
+		if (reference != null) {
+			
+			// populate the picture metadata
+			PictureTable pictures = specchio_client.getReferencePictures(reference.getReferenceId());
+			picture_data.setPictureTable(pictures);
+			
+			// populate the calibration list metadata
+			CalibrationMetadata[] cm = specchio_client.getReferenceCalibrationMetadata(reference.getReferenceId());
+			cal_data.setCalibrationMetadata(cm);
+			cal_data.setObjectId(reference.getReferenceId());
+			
+		} else {
+			
+			picture_data.setPictureTable(null);
+			cal_data.setCalibrationMetadata(null);
+			cal_data.setObjectId(0);
+			
+		}
 		
 	}
 	

@@ -396,9 +396,11 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 		// remove the existing panels
 		clear();
 		
-		// add the new panels
-		for (int i = 0; i < cm.length; i++) {
-			addCalibrationMetadata(cm[i]);
+		if (cm != null) {
+			// add the new panels
+			for (int i = 0; i < cm.length; i++) {
+				addCalibrationMetadata(cm[i]);
+			}
 		}
 		
 		// re-draw
@@ -709,19 +711,31 @@ class InstrumentMetadataPanel extends InstrumentationMetadataPanel implements Ac
 	
 	public void setInstrumentData(Instrument instrument) {
 		
-		// fill fields with data from the new instrument
-		this.instrument_name.setText(instrument.getInstrumentName().value);
-		this.serial_no.setText(instrument.getInstrumentNumber().value);
-		this.instrument_owner.setSelectedIndex(0);
-		for (int i = 0; i < owners.length; i++) {
-			if (owners[i].toString().equals(instrument.getInstrumentOwner().value)) {
-				this.instrument_owner.setSelectedIndex(i + 1);
+		if (instrument != null) {
+			
+			// fill fields with data from the new instrument
+			this.instrument_name.setText(instrument.getInstrumentName().value);
+			this.serial_no.setText(instrument.getInstrumentNumber().value);
+			this.instrument_owner.setSelectedIndex(0);
+			for (int i = 0; i < owners.length; i++) {
+				if (owners[i].toString().equals(instrument.getInstrumentOwner().value)) {
+					this.instrument_owner.setSelectedIndex(i + 1);
+				}
 			}
-		}
-		for (int i = 0; i < sensors.length; i++) {
-			if (sensors[i].matches(instrument.getSensor())) {
-				this.sensor.setSelectedIndex(i);
+			for (int i = 0; i < sensors.length; i++) {
+				if (sensors[i].matches(instrument.getSensor())) {
+					this.sensor.setSelectedIndex(i);
+				}
 			}
+			
+		} else {
+			
+			// clear fields
+			this.instrument_name.setText(null);
+			this.serial_no.setText(null);
+			this.instrument_owner.setSelectedIndex(-1);
+			this.sensor.setSelectedIndex(-1);
+			
 		}
 		
 		// reset "changed" flag
@@ -933,14 +947,16 @@ class PictureMetadataPanel extends InstrumentationMetadataPanel implements Actio
 		// remove the existing pictures
 		picture_panel.removeAll();
 		
-		// add the new pictures
-		Enumeration<Integer> picture_ids = pictures.getIdEnumeration();
-		while (picture_ids.hasMoreElements()) {
-			Integer picture_id = picture_ids.nextElement();
-			Picture picture = pictures.get(picture_id);
-			ImageIcon ii = new ImageIcon(picture.getImageData());
-			FigureStruct fig = new FigureStruct(ii.getImage(), 300, 230, picture.getCaption(), picture_id);
-			add_figure(fig);
+		if (pictures != null) {
+			// add the new pictures
+			Enumeration<Integer> picture_ids = pictures.getIdEnumeration();
+			while (picture_ids.hasMoreElements()) {
+				Integer picture_id = picture_ids.nextElement();
+				Picture picture = pictures.get(picture_id);
+				ImageIcon ii = new ImageIcon(picture.getImageData());
+				FigureStruct fig = new FigureStruct(ii.getImage(), 300, 230, picture.getCaption(), picture_id);
+				add_figure(fig);
+			}
 		}
 		
 		// re-validate the panel
