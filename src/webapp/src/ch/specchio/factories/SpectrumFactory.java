@@ -1082,7 +1082,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			Statement stmt = getStatementBuilder().createStatement();
 			String valueString = (value != 0)? value.toString() : "null";
 			String query = getStatementBuilder().assemble_sql_update_query(
-					field + "=" + valueString,
+					field + "_id" + "=" + valueString,
 					(is_admin)? "spectrum" : "spectrum_view",
 					"spectrum_id in (" + getStatementBuilder().conc_ids(ids) + ")"
 				);
