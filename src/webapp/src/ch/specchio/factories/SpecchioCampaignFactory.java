@@ -255,14 +255,15 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 		try {
 			
 			// create an SQL statement
-			Statement stmt = getConnection().createStatement();
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
 			
 			// build a statement that will find any existing hierarchy nodes
 			id_and_op_struct p_id_and_op = new id_and_op_struct(parent_id);
 			String query = "SELECT hierarchy_level_id from hierarchy_level where "
 					+ "campaign_id = " + campaign_id
 					+ " and parent_level_id " + p_id_and_op.op + " " + p_id_and_op.id
-					+ " and name = '"+ name + "'";
+					+ " and name = " + SQL.quote_string(name);
 			
 			// execute the statement
 			int id = -1;

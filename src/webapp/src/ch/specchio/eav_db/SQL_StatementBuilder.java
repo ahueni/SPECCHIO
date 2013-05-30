@@ -42,7 +42,7 @@ public class SQL_StatementBuilder {
 	   // define escape sequences for quoting strings
 	   escapeSequences = new Hashtable<Character, String>();
 	   escapeSequences.put('\000', "\\0");
-	   escapeSequences.put('\'', "\\'");
+	   escapeSequences.put('\'', "\'\'");
 	   escapeSequences.put('\"', "\\\"");
 	   escapeSequences.put('\b', "\\b");
 	   escapeSequences.put('\n', "\\n");
