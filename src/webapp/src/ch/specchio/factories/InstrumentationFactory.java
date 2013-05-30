@@ -165,8 +165,16 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 	public void deleteReference(int reference_id) throws SPECCHIOFactoryException {
 		
 		try {	
+			// get SQL-building objects
 			Statement stmt = getStatementBuilder().createStatement();
-			String query = "delete from reference where reference_id = " + Integer.toString(reference_id);
+			String query;
+			
+			// delete the references's calibration data
+			query = "delete from calibration where reference_id = " + Integer.toString(reference_id);
+			stmt.executeUpdate(query);
+			
+			// delete the reference itself
+			query = "delete from reference where reference_id = " + Integer.toString(reference_id);
 			stmt.executeUpdate(query);
 			stmt.close();
 		}
