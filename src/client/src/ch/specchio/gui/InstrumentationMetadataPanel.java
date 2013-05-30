@@ -437,7 +437,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 		}
 		
 		private void maybeShowPopup(MouseEvent e) {
-			if (e.isPopupTrigger()) {
+			if (e.isPopupTrigger() && object_id != 0) {
 				Component c = e.getComponent();
 				if(c instanceof CalibrationMetadataPanel) {				
 					popup_source = (CalibrationMetadataPanel)e.getComponent();
