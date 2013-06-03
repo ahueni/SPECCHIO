@@ -47,10 +47,10 @@ public class QueryFormFactory {
 		
 		// add non-EAV fields to the container if appropriate
 		if (name.equals("General")) {
-			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "measurement_unit_id", "Measurement Unit"));
+			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "measurement_unit", "Measurement Unit"));
 		} else if (name.equals("Instrument")) {
-			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "sensor_id", "Sensor"));
-			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "instrument_id", "Instrument"));
+			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "sensor", "Sensor"));
+			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "instrument", "Instrument"));
 		}
 		
 	}
