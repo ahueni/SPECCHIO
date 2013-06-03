@@ -60,7 +60,7 @@ public class DataProcessor extends JFrame  implements ActionListener //, TreeSel
 	public DataProcessor(SPECCHIOClient specchio_client)
 	{
 	
-		super("Space Network Processor (Alpha Release)");
+		super("Space Network Processor");
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
