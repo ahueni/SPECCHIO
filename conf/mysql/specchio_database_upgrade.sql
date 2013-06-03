@@ -303,7 +303,7 @@ INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Azimuth Sensor Type', (select category_id from `specchio`.category where name = 'Instrumentation'), 'string_val', '');
 INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Integrating Sphere', '', (select category_id from `specchio`.`category` where name = 'Instrumentation'), 'taxonomy_id');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Light Source Parameters', (select category_id from `specchio`.category where name = 'Instrumentation'), 'string_val', 'Settings of artificial light source');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('White Reference Target', (select category_id from `specchio`.category where name = 'Instrumentation'), 'string_val', 'Description of white reference target');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('White Reference Panel Name', (select category_id from `specchio`.category where name = 'Instrumentation'), 'string_val', 'Description of white reference panel name');
 INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Contact Probe', '', (select category_id from `specchio`.`category` where name = 'Instrumentation'), 'taxonomy_id');
 
 
