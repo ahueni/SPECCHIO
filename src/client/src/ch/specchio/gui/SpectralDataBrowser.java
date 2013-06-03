@@ -6,10 +6,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.jws.WebParam.Mode;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -17,9 +19,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.ExpandVetoException;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -30,8 +37,9 @@ import ch.specchio.types.campaign_node;
 import ch.specchio.types.database_node;
 import ch.specchio.types.hierarchy_node;
 import ch.specchio.types.spectral_node_object;
+import ch.specchio.types.spectrum_node;
 
-public class SpectralDataBrowser extends JScrollPane implements ActionListener
+public class SpectralDataBrowser extends JScrollPane implements ActionListener, TreeWillExpandListener, TreeExpansionListener
 {
 	private static final long serialVersionUID = 1L;
 	public JTree tree;
@@ -113,10 +121,17 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener
 	
 	void build_tree(spectral_node_object node)
 	{
-		root = new SpectralDataBrowserNode(this, node);
+		root = new SpectralDataBrowserNode(this, node);	
 		// create tree using the above node as top node
-		tree = new JTree(root);	
+		tree = new JTree();	
+				
+		DefaultTreeModel model = new DefaultTreeModel(root);
+		root.setTree(model);
+		root.defineChildNodes();
+		tree.setModel(model);
 	
+		tree.addTreeWillExpandListener(this);
+		tree.addTreeExpansionListener(this);
 		tree_scroll_pane.getViewport().add(tree);
 		
 		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
@@ -177,7 +192,17 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener
 			for(int i = 0; i < paths.length; i++)
 			{
 				SpectralDataBrowserNode bn = (SpectralDataBrowserNode)paths[i].getLastPathComponent();
-				ids.addAll(specchio_client.getSpectrumIdsForNode(bn.getNode()));
+				spectral_node_object sn = bn.getNode();
+				
+	        	if(sn instanceof spectrum_node)
+	    		{
+	        		ids.add(sn.getId()); // avoid server call
+	    		}
+	        	else
+	        	{
+	        		ids.addAll(specchio_client.getSpectrumIdsForNode(bn.getNode()));
+	        	}
+				
 			}
 		}
 		
@@ -308,6 +333,8 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener
 		
 		/** the spectral data browser to which this node belongs */
 		private SpectralDataBrowser browser;
+		//private JTree tree;
+		private  TreeModel model;
 		
 		/** have this node's children been downloaded from the server? */
 		private boolean areChildrenDefined = false;
@@ -318,30 +345,46 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener
 		 * 
 		 * @param sn	the spectral node object for this tree node
 		 */
-		public SpectralDataBrowserNode(SpectralDataBrowser browser, spectral_node_object sn) {
+		public SpectralDataBrowserNode(SpectralDataBrowser browser, spectral_node_object sn) {		
+			this(browser, null, sn);			
+		}
 		
+		public void setTree(TreeModel model) {
+			this.model = model;	
+			
+			// set model in children
+			Enumeration list = this.children();
+			
+			while(list.hasMoreElements())
+			{
+				SpectralDataBrowserNode child = (SpectralDataBrowserNode) list.nextElement();
+				child.setTree(model);
+			}
+			
+		}
+
+		public SpectralDataBrowserNode(SpectralDataBrowser browser, TreeModel model, spectral_node_object sn) {
+			
 			this.browser = browser;
+			this.model = model;
 			this.areChildrenDefined = false;
 			super.setUserObject(sn);
 			
-		}
+			setAllowsChildren(true);
+			
+		}		
 		
+        @Override
+        public boolean isLeaf() {
+        	
+        	if(userObject instanceof spectrum_node)
+    		{
+        		return true;
+    		}
+        	
+            return false;
+        }		
 		
-		/**
-		 * Get the number of children of this node.
-		 * 
-		 * @return the number of children
-		 */
-		public int getChildCount() {
-			
-			// make sure that the children have been downloaded from the server
-			if (!areChildrenDefined) {
-				defineChildNodes();
-			}
-			
-			return super.getChildCount();
-			
-		}
 		
 		
 		/**
@@ -357,10 +400,24 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener
 					List<spectral_node_object> children =
 							browser.get_specchio_client().getChildrenOfNode((spectral_node_object)super.getUserObject());
 					
+					// set the flag that indicates that the children have been loaded
+				    areChildrenDefined = true;			
+				    
+				    setAllowsChildren(children.size() > 0);
+					
 					// insert the children into the JTree
 					for (int i = 0; i < children.size(); i++) {
-						SpectralDataBrowserNode treeChild = new SpectralDataBrowserNode(this.browser, children.get(i));
-						super.insert(treeChild, i);
+						SpectralDataBrowserNode treeChild = new SpectralDataBrowserNode(this.browser, model, children.get(i));
+						this.add(treeChild);
+					}
+					
+					if(model!=null)
+					{
+						
+						if (model instanceof DefaultTreeModel) {
+							DefaultTreeModel defaultModel = (DefaultTreeModel) model;
+							defaultModel.nodeStructureChanged(this);
+						}		
 					}
 					
 					// set the flag that indicates that the children have been loaded
@@ -397,6 +454,29 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener
 			return getNode().getId();
 		
 		}
+		
+	}
+
+
+	@Override
+	public void treeExpanded(TreeExpansionEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void treeWillCollapse(TreeExpansionEvent arg0)
+			throws ExpandVetoException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void treeWillExpand(TreeExpansionEvent arg0)
+			throws ExpandVetoException {
+
+		SpectralDataBrowserNode bn = (SpectralDataBrowserNode)arg0.getPath().getLastPathComponent();
+		bn.defineChildNodes();
 		
 	}
 
