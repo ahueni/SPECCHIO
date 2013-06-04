@@ -101,8 +101,8 @@ public class TXT_FileLoader extends SpectralFileLoader {
 			{
 				// the number of spectra is already know, ie. structures are setup
 				// now the names can be stored
+				// pseudo filename are taken from header
 				f.addSpectrumFilename(sp_name);
-				f.addSpectrumFilename(sp_name); // pseudo filenames are taken from header
 			}
 			
 			// overread spaces and read next name
