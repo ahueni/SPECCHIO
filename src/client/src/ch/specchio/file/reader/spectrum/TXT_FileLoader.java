@@ -23,19 +23,14 @@ public class TXT_FileLoader extends SpectralFileLoader {
 	
 	public SpectralFile load(File file) throws IOException
 	{
+		// reset member variables for this file
+		not_eof = true;
+		
 		SpectralFile f = new SpectralFile();
-		//f.set_no_of_spectra(2); 
 		
 		f.setPath(file.getAbsolutePath());		
 		f.setFilename(file.getName());
 		f.setFileFormatName(this.file_format_name);
-		
-		// spectrum number is contained in the extension
-		//f.spectra_numbers[0] = Integer.valueOf(f.ext);
-		//f.spectra_numbers[1] = Integer.valueOf(f.ext);
-		
-		//f.spectra_filenames[0] = f.filename(); // target name
-		//f.spectra_filenames[1] = f.filename(); // reference name
 		
 		f.setCompany("Unknown");
 		
