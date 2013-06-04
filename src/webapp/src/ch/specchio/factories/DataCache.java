@@ -260,9 +260,11 @@ public class DataCache {
 			Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no);
 			d_wvls = this.get_sensor(sensor_id).getAverageWavelengths();
 		}
+		if (d_wvls.length == 0) {
+			// no wavelengths to check
+			return null;
+		}
 		
-
-
 		while(li.hasNext() && instrument == null)
 		{
 			i = li.next();
