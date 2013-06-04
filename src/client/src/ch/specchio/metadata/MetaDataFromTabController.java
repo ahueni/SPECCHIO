@@ -313,34 +313,38 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 		{
 			boolean match = false;
 			
-			if (db_val instanceof Integer) {
+			if (table_value != null) {
 				
-				if (table_value instanceof Number) {
-					match = ((Number)table_value).intValue() == ((Integer)db_val).intValue();
-				} else if (table_value instanceof String) {
-					match = table_value.equals(db_val.toString());
-				}
-				
-			} else if (db_val instanceof Double) {
-				
-				if (table_value instanceof Number) {
-					match = ((Number)table_value).doubleValue() == ((Double)db_val).doubleValue();
-				} else if (table_value instanceof String) {
-					match = table_value.equals(db_val.toString());
-				}
-				
-			} else if (db_val instanceof Date) {
-				
-				if (table_value instanceof Date) {
+				if (db_val instanceof Integer) {
+					
+					if (table_value instanceof Number) {
+						match = ((Number)table_value).intValue() == ((Integer)db_val).intValue();
+					} else if (table_value instanceof String) {
+						match = table_value.equals(db_val.toString());
+					}
+					
+				} else if (db_val instanceof Double) {
+					
+					if (table_value instanceof Number) {
+						match = ((Number)table_value).doubleValue() == ((Double)db_val).doubleValue();
+					} else if (table_value instanceof String) {
+						match = table_value.equals(db_val.toString());
+					}
+					
+				} else if (db_val instanceof Date) {
+					
+					if (table_value instanceof Date) {
+						match = table_value.equals(db_val);
+					} else if (table_value instanceof String) {
+						// we could try to parse the date, but we have no idea what format to expect
+						match = false;
+					}
+					
+				} else if (db_val instanceof String) {
+					
 					match = table_value.equals(db_val);
-				} else if (table_value instanceof String) {
-					// we could try to parse the date, but we have no idea what format to expect
-					match = false;
 				}
 				
-			} else if (db_val instanceof String) {
-				
-				match = table_value.equals(db_val);
 			}
 			
 			if (match) {
@@ -360,9 +364,10 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 		int i = 0;
 		for(Object value : table_values)
 		{
-			String regex = regex_start + value.toString() + regex_end;
-			
-			if(db_val.toString().matches(regex)) indices.add(i);
+			if (value != null) {
+				String regex = regex_start + value.toString() + regex_end;
+				if(db_val.toString().matches(regex)) indices.add(i);
+			}
 			
 			i++;
 		}

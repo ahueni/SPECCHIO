@@ -14,6 +14,7 @@ import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.attribute;
 import jxl.BooleanCell;
 import jxl.Cell;
+import jxl.CellType;
 import jxl.DateCell;
 import jxl.NumberCell;
 import jxl.Sheet;
@@ -222,6 +223,10 @@ public class MetaDataFromTabModel {
 			else if (column[i] instanceof BooleanCell)
 			{
 				value = ((BooleanCell)column[i]).getValue();
+			}
+			else if (column[i].getType() == CellType.EMPTY)
+			{
+				value = null;
 			}
 			else
 			{
