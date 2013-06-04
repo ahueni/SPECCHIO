@@ -23,8 +23,6 @@ public class TXT_FileLoader extends SpectralFileLoader {
 	
 	public SpectralFile load(File file) throws IOException
 	{
-		// reset member variables for this file
-		not_eof = true;
 		
 		SpectralFile f = new SpectralFile();
 		
@@ -46,6 +44,7 @@ public class TXT_FileLoader extends SpectralFileLoader {
 		BufferedReader d = new BufferedReader(new InputStreamReader(data_in));
 		
 		// analyse header to get no of spectra
+		not_eof = true;
 		read_header(d, f, true);
 		d.close();
 		
@@ -54,6 +53,7 @@ public class TXT_FileLoader extends SpectralFileLoader {
 		d = new BufferedReader(new InputStreamReader(data_in));
 		
 		// read the whole file
+		not_eof = true;
 		read_file(d, f);
 		
 		

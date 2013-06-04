@@ -167,7 +167,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						// and a body (*.slb) is passed.
 						// In such a case no spectrum is inserted.
 						spec_file = sfl.load(file);
-						if (spec_file != null)
+						if (spec_file != null && spec_file.getNumberOfSpectra() > 0)
 						{
 							spec_file.setGarbageIndicator(is_garbage);
 							int ids[] = insert_spectral_file(spec_file, parent_id);
