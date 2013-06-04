@@ -19,6 +19,7 @@ import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.gui.combo_table_data;
 import ch.specchio.types.Category;
 import ch.specchio.types.MatlabAdaptedArrayList;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.attribute;
@@ -365,8 +366,20 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 		for(Object value : table_values)
 		{
 			if (value != null) {
-				String regex = regex_start + value.toString() + regex_end;
-				if(db_val.toString().matches(regex)) indices.add(i);
+				
+				// build regular expression according the type of the database value
+				String regex = model.getRegexForClass(db_val.getClass(), value);
+				
+				// check for a match
+				boolean match;
+				if (value instanceof Date) {
+					// use internal date format for comparison
+					match = MetaDate.formatDate((Date)value).matches(regex);
+				} else {
+					match = db_val.toString().matches(regex);
+				}
+				if(match)
+					indices.add(i);
 			}
 			
 			i++;

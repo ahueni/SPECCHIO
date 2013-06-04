@@ -3,6 +3,7 @@ package ch.specchio.metadata;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.ListIterator;
 
@@ -11,6 +12,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.types.Category;
 import ch.specchio.types.MatlabAdaptedArrayList;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.attribute;
 import jxl.BooleanCell;
 import jxl.Cell;
@@ -367,17 +369,52 @@ public class MetaDataFromTabModel {
 		{
 			
 			 ArrayList<Object> matching_values = getValuesOfTableColumn(getMatching_col());
+			 ArrayList<Object> db_values = getMatching_col_db_values();
 			
 			if(matching_values.size() > 0)
 			{
 				Object val = matching_values.get(0);
-						
-				regex = getRegex_start() + val.toString() + getRegex_end();
+				if (db_values.size() > 0) {
+					regex = getRegexForClass(db_values.get(0).getClass(), val);
+				} else {
+					regex = getRegexForClass(String.class, val);
+				}
 				
 			}		
 		}
 
 		return regex;
+	}
+	
+	
+	public String getRegexForClass(Class<?> cl, Object value) {
+		
+		String regex;
+		
+		if (cl.isAssignableFrom(Integer.class)) {
+			if (value instanceof Number) {
+				regex = regex_start + Integer.toString(((Number)value).intValue()) + regex_end;
+			} else {
+				regex = regex_start + value.toString() + regex_end;
+			}
+		} else if (cl.isAssignableFrom(Double.class)) {
+			if (value instanceof Number) {
+				regex = regex_start + Double.toString(((Number)value).doubleValue()) + regex_end;
+			} else {
+				regex = regex_start + value.toString() + regex_end;
+			}
+		} else if (cl.isAssignableFrom(Date.class)) {
+			if (value instanceof Date) {
+				regex = regex_start + MetaDate.formatDate((Date)value) + regex_end;
+			} else {
+				regex = regex_start + value.toString() + regex_end;
+			}
+		} else {
+			regex = regex_start + value.toString() + regex_end;
+		}
+		
+		return regex;
+		
 	}
 
 	public void setMatchingTable(File file) {
