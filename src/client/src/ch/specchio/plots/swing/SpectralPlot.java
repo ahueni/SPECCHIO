@@ -68,7 +68,11 @@ public abstract class SpectralPlot extends JPanel
 		
 		if(pr != null) pr.set_component("Spectral Plot");
 		
-		wavelength = space.getAverageWavelengths()[0];
+		if (space.getAverageWavelengths() != null) {
+			if (space.getAverageWavelengths().length > 0) {
+				wavelength = space.getAverageWavelengths()[0];
+			}
+		}
 		
 //		cv = new ChartView();
 //		cv.setPreferredSize(x_size, y_size);
