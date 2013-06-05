@@ -49,7 +49,7 @@ class MainMenu implements ActionListener, ItemListener {
    String sun_angle_calc = "Sun angle calculation";
    String gonio_angle_calc = "Gonio angle calculation";
    String test = "test";
-   String info = "Info";
+   String info = "About";
    String list_eav_metadata_attributes = "List available Metadata Elements";
    
    /** menu items accessible to all clients */
@@ -192,17 +192,17 @@ class MainMenu implements ActionListener, ItemListener {
       menuBar.add(menu);
       
       // Help 
-      menu = new JMenu("Info");
-      
-      menuItem = new JMenuItem(info);
-      menuItem.addActionListener(this);
-      menu.add(menuItem);      
-      public_menu_items.put(info, menuItem);
+      menu = new JMenu("Help");
       
       menuItem = new JMenuItem(list_eav_metadata_attributes);
       menuItem.addActionListener(this);
       menu.add(menuItem);
       user_menu_items.put(list_eav_metadata_attributes, menuItem);
+      
+      menuItem = new JMenuItem(info);
+      menuItem.addActionListener(this);
+      menu.add(menuItem);      
+      public_menu_items.put(info, menuItem);
       
       menuBar.add(menu);
    }
@@ -514,7 +514,7 @@ class MainMenu implements ActionListener, ItemListener {
         		 "University of Zurich\n" + 
         		 "www.specchio.ch\n\n" +
         		 "Please refer to the User Guide for more information.\n",
-        		    "Info",
+        		    "About",
         		    JOptionPane.INFORMATION_MESSAGE,
         		    icon);
          
