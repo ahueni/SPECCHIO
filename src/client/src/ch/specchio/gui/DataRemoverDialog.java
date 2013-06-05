@@ -119,8 +119,8 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 		constraints.gridy = 0;
 		l.insertComponent(remove, constraints);
 		
-		JButton cancel = new JButton("Cancel");
-		cancel.setActionCommand("cancel");
+		JButton cancel = new JButton("Close");
+		cancel.setActionCommand("close");
 		cancel.addActionListener(this);	
 			
 		constraints.gridy = 1;
@@ -164,7 +164,7 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 				
 		}
 		
-		if ("cancel".equals(e.getActionCommand())) {
+		if ("close".equals(e.getActionCommand())) {
 			setVisible(false);
 		}
 

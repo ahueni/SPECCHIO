@@ -68,7 +68,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 	private static final String SUBMIT = "Apply";
 	
 	/** text for the "dismiss" button */
-	private static final String DISMISS = "Dismiss";
+	private static final String DISMISS = "Close";
 	
 	
 	/**

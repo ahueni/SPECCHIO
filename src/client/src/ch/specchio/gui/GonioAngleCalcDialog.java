@@ -115,7 +115,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 	private static final String SUBMIT = "Apply";
 	
 	/** text for the "dismiss" button */
-	private static final String DISMISS = "Dismiss";
+	private static final String DISMISS = "Close";
 	
 	
 	/**

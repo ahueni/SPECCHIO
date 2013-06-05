@@ -77,7 +77,7 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 	private static final int PLOT_HEIGHT = 200;
 	
 	/** text for the "dismiss" button */
-	private static final String DISMISS = "Dismiss";
+	private static final String DISMISS = "Close";
 	
 	
 	/**
