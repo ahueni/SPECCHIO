@@ -3,9 +3,7 @@ package ch.specchio.types;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -16,6 +14,7 @@ import ch.specchio.jaxb.XmlDateAdapter;
 public class MetaDate extends MetaParameter {
 	
 	private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+	private static DateFormat dateFormat = new SimpleDateFormat(DEFAULT_DATE_FORMAT);
 	
 	protected MetaDate() {
 		super();
@@ -112,19 +111,23 @@ public class MetaDate extends MetaParameter {
 	
 	public static String formatDate(Date date) {
 		
-		return formatDate(date, DEFAULT_DATE_FORMAT);
+		return getDateFormat().format(date);
 		
 	}
 	
 	
 	public static String formatDate(Date date, String format_specifier) {
 		
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		Calendar cal = Calendar.getInstance(tz);
 		SimpleDateFormat formatter = new SimpleDateFormat(format_specifier);
-		cal.setTime(date);
 	
 		return formatter.format(date);
+		
+	}
+	
+	
+	public static DateFormat getDateFormat() {
+		
+		return dateFormat;
 		
 	}
 

@@ -12,7 +12,9 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.TimeZone;
 
 import java.util.ListIterator;
 
@@ -40,11 +42,11 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import jxl.Cell;
+import jxl.DateCell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
 
@@ -53,6 +55,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.metadata.MetaDataFromTabController;
 import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.types.Category;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.attribute;
 
 public class MetaDataFromTabView extends JFrame implements ActionListener, TreeSelectionListener, DocumentListener {
@@ -421,13 +424,22 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 					while (values_iter.hasNext()) {
 						Object value = values_iter.next();
 						Object matched_table_value = (matched_table_values_iter.hasNext())? matched_table_values_iter.next() : null;
-						table_model.setValueAt(value, r, 1);
+						
+						if (value instanceof Date) {
+							// display dates using SPECCHIO's internal format
+							table_model.setValueAt(MetaDate.formatDate((Date)value), r, 1);
+						} else {
+							table_model.setValueAt(value, r, 1);
+						}
 						
 						if (matched_table_value != null) {
 							Object matched_display_value = matched_table_value;
 							if (value instanceof Integer && matched_table_value instanceof Number) {
 								// make sure the match displays as an integer
 								matched_display_value = new Integer(((Number)matched_table_value).intValue());
+							} else if (matched_table_value instanceof Date) {
+								// displays dates using SPECCHIO's internal format
+								matched_display_value = MetaDate.formatDate((Date)matched_table_value);
 							}
 							table_model.setValueAt(matched_display_value, r, 2);
 						}
@@ -888,7 +900,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		
 		// Create column
 		Cell column_name_cell = sheet.getCell(column, 0);
-		table_model.addColumn(column_name_cell.getContents());			
+		table_model.addColumn(formatCell(column_name_cell));			
 
 		
 		// fill values
@@ -897,7 +909,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 				table_model.addRow(new Object[]{});
 				
 				Cell cell = sheet.getCell(column, r);
-				table_model.setValueAt(cell.getContents(), r-1, 0);
+				table_model.setValueAt(formatCell(cell), r-1, 0);
 		}
 		
 		JTable table = new JTable(table_model);
@@ -911,9 +923,18 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		
 		return table;
 		
-	}	
+	}
 	
-	
+	private String formatCell(Cell cell)
+	{
+		if (cell instanceof DateCell) {
+			// format dates using SPECCHIO's internal format instead of Java Excel's format, correcting for the local time zone
+			Date date = new Date(((DateCell)cell).getDate().getTime() - TimeZone.getDefault().getRawOffset());
+			return MetaDate.formatDate(date);
+		} else {
+			return cell.getContents();
+		}
+	}
 	
 	private static int getMaximalRequiredColumnWidth(JTable table, int columnIndex) {
 		

@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedList;
@@ -1137,16 +1136,15 @@ public class SpectrumMetadataPanel extends JPanel {
 			
 			// set up date and format
 			Date date = (Date)field.getMetaParameter().getValue();
-			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			
 			// build the calendar control
 			cal_combo = new JCalendarCombo(JCalendar.DISPLAY_DATE | JCalendar.DISPLAY_TIME,  false);			
-			cal_combo.setDateFormat(format);
+			cal_combo.setDateFormat(MetaDate.getDateFormat());
 			cal_combo.setDate(date);
 			cal_combo.addDateListener(this);
 			
 			// build the text field
-			text = new JTextField(format.format(date), 20);
+			text = new JTextField(MetaDate.formatDate(date), 20);
 			text.setEditable(false);
 			
 			// start with the combo box on display
