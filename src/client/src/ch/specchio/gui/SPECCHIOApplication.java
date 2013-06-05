@@ -57,8 +57,8 @@ public class SPECCHIOApplication {
 			
 		mid_pane.add(BorderLayout.CENTER, test);
 
-		pane.add(mid_pane, BorderLayout.CENTER);
-		pane.add(op, BorderLayout.WEST);
+		pane.add(mid_pane, BorderLayout.WEST);
+		pane.add(op, BorderLayout.CENTER);
 			
 		op.validate();
 	      
