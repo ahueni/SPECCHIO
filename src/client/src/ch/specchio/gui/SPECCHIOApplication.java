@@ -136,7 +136,7 @@ public class SPECCHIOApplication {
 	  		  		op.add_report(p_rep);	
 			   }
 			   p_rep.set_op_desc("Database connection status");
-			   p_rep.set_number_desc(d.getDisplayName());
+			   p_rep.set_number_desc(d.getDisplayName(false));
 			   p_rep.set_curr_op_desc("Connected as " + d.getDisplayUser() + " to:");
 			   
 			   try {

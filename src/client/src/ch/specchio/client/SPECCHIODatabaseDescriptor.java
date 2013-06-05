@@ -122,11 +122,13 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 	/**
 	 * Get the display name of this server.
 	 * 
+	 * @param showUser	include the user account details in the display?
+	 * 
 	 * @return a string describing the server, suitable for display to the user
 	 */
-	public String getDisplayName() {
+	public String getDisplayName(boolean showUser) {
 		
-		return "jdbc:mysql://" + user + "@" + server + ":" + port + "/" + schema;
+		return "jdbc:mysql://" + (showUser ? user + "@" : "") + server + ":" + port + "/" + schema;
 		
 	}
 	
@@ -179,16 +181,6 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 	
 	
 	/**
-	 * Get a string representation of the server.
-	 */
-	public String toString() {
-		
-		return "jdbc:mysql://" + user + "@" + server + ":" + port + "/" + schema;
-		
-	}
-	
-	
-	/**
 	 * Set the user information associated with this account.
 	 * 
 	 * @param user	the user information
@@ -197,6 +189,16 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 		
 		this.user = user.getUsername();
 		this.password = user.getPassword();
+		
+	}
+	
+	
+	/**
+	 * Get a string representation of the server.
+	 */
+	public String toString() {
+		
+		return getDisplayName(true);
 		
 	}
 	

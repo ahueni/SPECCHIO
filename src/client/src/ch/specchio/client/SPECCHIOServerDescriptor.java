@@ -23,9 +23,11 @@ public interface SPECCHIOServerDescriptor {
 	/**
 	 * Get the display name of this server.
 	 * 
+	 * @param showUser	include the user account details in the display?
+	 * 
 	 * @return a string describing the server, suitable for display to the user
 	 */
-	public String getDisplayName();
+	public String getDisplayName(boolean showUser);
 	
 	
 	/**

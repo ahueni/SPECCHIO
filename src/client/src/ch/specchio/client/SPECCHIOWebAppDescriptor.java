@@ -122,11 +122,13 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	/**
 	 * Get the display name of this server.
 	 * 
+	 * @param showUser	include the user account details in the display?
+	 * 
 	 * @return a string describing the server, suitable for display to the user
 	 */
-	public String getDisplayName() {
+	public String getDisplayName(boolean showUser) {
 		
-		return protocol + "://" + user + "@" + server + ":" + port + path;
+		return protocol + "://" + (showUser ? user + "@" : "") + server + ":" + port + path;
 		
 	}
 	
@@ -222,16 +224,6 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	
 	
 	/**
-	 * Get a string representation of the server.
-	 */
-	public String toString() {
-		
-		return protocol + "://" + user + "@" + server + ":" + port + path;
-		
-	}
-	
-	
-	/**
 	 * Set the user information associated with this account.
 	 * 
 	 * @param user	the user information
@@ -240,6 +232,16 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		
 		this.user = user.getUsername();
 		this.password = user.getPassword();
+		
+	}
+	
+	
+	/**
+	 * Get a string representation of the server.
+	 */
+	public String toString() {
+		
+		return getDisplayName(true);
 		
 	}
 	
