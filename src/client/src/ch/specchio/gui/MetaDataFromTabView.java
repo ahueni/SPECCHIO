@@ -1064,7 +1064,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		int default_selection = 2;
 		int decision;
 
-		Object selectedValue = JOptionPane.showInputDialog(null,
+		Object selectedValue = JOptionPane.showInputDialog(this,
 				"You are about to insert a new metaparameter of the type " + attribute_name
 				 + ".\n Some of the selected records already feature a metaparameter of the type " + attribute_name + " \n" +
 				"Please select one of the following actions:",
@@ -1087,7 +1087,42 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		
 		return decision;
 		
-	}  
+	}
+	
+	public int get_user_decision_on_mismatched_type(attribute attr, Object sample) {
+		
+		// build a message explaining the situation
+		StringBuffer message = new StringBuffer();
+		message.append("The " + attr.name + " attribute accepts ");
+		if (attribute.INT_VAL.equals(attr.default_storage_field)) {
+			message.append("integer");
+		} else if (attribute.DOUBLE_VAL.equals(attr.default_storage_field)) {
+			message.append("number");
+		} else if (attribute.DATETIME_VAL.equals(attr.default_storage_field)) {
+			message.append("date and time");
+		} else if (attribute.STRING_VAL.equals(attr.default_storage_field)) {
+			message.append("text");
+		} else if (attribute.BINARY_VAL.equals(attr.default_storage_field)) {
+			message.append("binary");
+		}
+		message.append(" values, but\n");
+		message.append(" this column appears to contain ");
+		if (sample instanceof String) {
+			message.append("text");
+		} else if (sample instanceof Number) {
+			message.append("number");
+		} else if (sample instanceof Date) {
+			message.append("date and time");
+		}
+		message.append(" values.\n");
+		message.append("Are you sure you wish to insert these values?");
+		
+		// display the confirmation dialogue
+		int decision = JOptionPane.showConfirmDialog(this, message, "Mismatched types", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+		
+		return (decision == JOptionPane.YES_OPTION)? MetaDataFromTabView.INSERT : MetaDataFromTabView.SKIP_PARAMETER;
+		
+	}
 	
 	
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
@@ -61,46 +62,51 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 				{
 
 					Integer assigned_col = assigned_cols.get(col_index);
-
 					attribute attr = model.getAttributeOfColumn(assigned_col);
+					ArrayList<Object> table_values = model.getValuesOfTableColumn(assigned_col);
 
 					progressMonitor.setNote("Inserting " + attr.getName());
 
-
-					ArrayList<Integer> spectrum_ids = new  ArrayList<Integer>();				
-					for(int index : LUT.keySet())
-					{
-						spectrum_ids.add(model.getSpectrum_ids().get(index));			
-					}
-
-
-					// check for attribute existance and warn user if exists for some spectra
-					int existing_count = check_attribute_existance(attr, spectrum_ids);
-
 					int decision = MetaDataFromTabView.INSERT;
-
-					if(existing_count > 0)
-					{
-
-						decision = view.get_user_decision_on_existing_fields(attr.getName());					
-
-						if(decision == MetaDataFromTabView.DELETE_EXISTING_AND_INSERT_NEW)
-						{						
-							specchio_client.removeEavMetadata(attr, spectrum_ids);
-
-							decision = MetaDataFromTabView.INSERT;					
-
-						}										
-
+					
+					// check that the type of the table column is compatible with the type of the attribute
+					Object sample_table_value = null;
+					Iterator<Object> iter = table_values.iterator();
+					while (sample_table_value == null && iter.hasNext()) {
+						sample_table_value = iter.next();
+					}
+					if (sample_table_value != null) {
+						if (attribute.INT_VAL.equals(attr.default_storage_field) && !(sample_table_value instanceof Number)) {
+							decision = view.get_user_decision_on_mismatched_type(attr, sample_table_value);
+						} else if (attribute.DOUBLE_VAL.equals(attr.default_storage_field) && !(sample_table_value instanceof Number)) {
+							decision = view.get_user_decision_on_mismatched_type(attr, sample_table_value);
+						} else if (attribute.DATETIME_VAL.equals(attr.default_storage_field) && !(sample_table_value instanceof Date)) {
+							decision = view.get_user_decision_on_mismatched_type(attr, sample_table_value);
+						}
 					}
 
-
+					if (decision == MetaDataFromTabView.INSERT) {
+						// check for attribute existance and warn user if exists for some spectra
+						ArrayList<Integer> spectrum_ids = new  ArrayList<Integer>();				
+						for(int index : LUT.keySet())
+						{
+							spectrum_ids.add(model.getSpectrum_ids().get(index));			
+						}
+						int existing_count = check_attribute_existance(attr, spectrum_ids);
+						if(existing_count > 0)
+						{
+							decision = view.get_user_decision_on_existing_fields(attr.getName());
+							if(decision == MetaDataFromTabView.DELETE_EXISTING_AND_INSERT_NEW)
+							{						
+								specchio_client.removeEavMetadata(attr, spectrum_ids);
+								decision = MetaDataFromTabView.INSERT;					
+							}
+						}
+					}
 
 					if(decision == MetaDataFromTabView.INSERT)
 					{
 						Enumeration<Integer> li = LUT.keys();
-
-						ArrayList<Object> table_values = model.getValuesOfTableColumn(assigned_col);
 
 						// loop over all spectra in matching LUT
 						while(li.hasMoreElements())
