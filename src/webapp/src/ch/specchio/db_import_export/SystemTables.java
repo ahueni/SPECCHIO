@@ -51,7 +51,9 @@ public class SystemTables {
 			rs.close();
 			stmt.close();
 			
-			system_tables.remove("research_group_members"); // exception to the above rule
+			 // exceptions to the above rule
+			system_tables.remove("research_group");
+			system_tables.remove("research_group_members");
 		
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
