@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SPECCHIO Web Client" basedir="." default="dist">
+
+	<!-- directory name configuration -->
+	<property name="source.dir" value="src" />
+	<property name="lib.dir" value="lib" />
+	<property name="build.dir" value="build" />
+	<property name="dist.dir" value="dist" />
+	<property name="jar.file" value="specchio-client.jar" />
+	
+	<!-- dependencies -->
+	<property name="types.dist.dir" value="../types/dist" />
+	<path id="lib.path">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${types.dist.dir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+	
+	
+	<!-- compile class files -->
+    <target name="build" description="Build application">
+    
+    	<!-- compile class files -->
+        <mkdir dir="${build.dir}" />
+        <javac srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false">
+            <classpath refid="lib.path" />
+        </javac>
+        
+        <!-- copy META-INF files -->
+        <mkdir dir="${build.dir}/META-INF" />
+        <copy todir="${build.dir}/META-INF">
+        	<fileset dir="${source.dir}/META-INF">
+        		<include name="**/*.*" />
+        	</fileset>
+        </copy>
+    </target>
+    
+    
+    <!-- build distribution package -->
+    <target name="dist" description="Build distribution package" depends="build">
+    
+    	<mkdir dir="${dist.dir}" />
+    	
+    	<!-- copy third-party libraries -->
+    	<copy todir="${dist.dir}">
+    		<path refid="lib.path" />
+    	</copy>
+    	
+    	<!-- copy support files -->
+    	<copy file="db_config.txt" todir="${dist.dir}" />
+    	<copy file="specchio.keystore" todir="${dist.dir}" />
+    	<copy file="SPECCHIO_Icon_Mid_Res_small.jpg" todir="${dist.dir}" />
+    	
+    	<!-- build jar -->
+    	<manifestclasspath property="manifest.classpath" jarfile="${dist.dir}/${jar.file}">
+    		<classpath refid="lib.path" />
+    	</manifestclasspath>
+    	<jar destfile="${dist.dir}/${jar.file}" basedir="${build.dir}">
+    		<manifest>
+    			<attribute name="Main-Class" value="ch.specchio.gui.SPECCHIOApplication" />
+    			<attribute name="Class-Path" value="${manifest.classpath}" />
+    		</manifest>
+    	</jar>
+    	
+    </target>
+    
+    
+    <!-- clean up -->
+    <target name="clean" description="Clean output directories">
+        <delete dir="${build.dir}" />
+        <delete dir="${dist.dir}" />
+    </target>
+    
+</project>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SPECCHIO Web Application" basedir="." default="dist">
+
+	<!-- directory name configuration -->
+	<property name="source.dir" value="src" />
+	<property name="web.dir" value="WebContent" />
+	<property name="lib.dir" value="lib" />
+	<property name="build.dir" value="build" />
+	<property name="dist.dir" value="dist" />
+	<property name="war.file" value="specchio-webapp.war" />
+	<property name="glassfish.home" value="/opt/glassfish3/glassfish" />
+	<property name="specchio-types.home" value="../types/dist" />
+	
+	<!-- dependencies -->
+	<fileset id="specchio.libs" dir="${specchio-types.home}">
+		<include name="*.jar" />
+	</fileset>
+	<fileset id="other.libs" dir="${lib.dir}">
+		<include name="*.jar" />
+	</fileset>
+	<fileset id="glassfish.libs" dir="${glassfish.home}">
+		<include name="lib/*.jar" />
+		<include name="modules/*.jar" />
+	</fileset>
+	<path id="lib.path">
+		<fileset refid="specchio.libs" />
+		<fileset refid="other.libs" />
+		<fileset refid="glassfish.libs" />
+	</path>
+	
+	
+	<!-- build web application -->
+    <target name="build" description="Build web application">
+    
+    	<mkdir dir="${build.dir}" />
+    
+    	<!-- copy static files -->
+    	<copy todir="${build.dir}">
+    		<fileset dir="${web.dir}">
+    			<include name="**/*.*" />
+    		</fileset>
+    	</copy>
+    	
+    	<!-- build class files -->
+        <mkdir dir="${build.dir}/WEB-INF/classes" />
+        <javac srcdir="${source.dir}" destdir="${build.dir}/WEB-INF/classes" includeantruntime="false">
+            <classpath refid="lib.path" />
+        </javac>
+        <mkdir dir="${build.dir}/WEB-INF/lib" />
+        <copy todir="${build.dir}/WEB-INF/lib" flatten="true">
+    		<fileset refid="specchio.libs" />
+    		<fileset refid="other.libs" />
+    	</copy>
+        
+    </target>
+    
+    
+    <!-- build war file -->
+    <target name="dist" description="Build WAR file">
+    	<mkdir dir="${dist.dir}" />
+    	<war destfile="${dist.dir}/${war.file}" webxml="${build.dir}/WEB-INF/web.xml">
+			<fileset dir="${build.dir}">
+				<include name="WEB-INF/*.xml" />
+				<include name="*.jsp" />
+			</fileset>
+			<classes dir="${build.dir}" />
+    	</war>
+    </target>
+    
+    
+    
+    <!-- clean up -->
+    <target name="clean" description="Clean output directories">
+        <delete dir="${build.dir}" />
+        <delete dir="${dist.dir}" />
+    </target>
+    
+</project>
