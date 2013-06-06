@@ -12,14 +12,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-import com.quinncurtis.chart3djava.ChartPoint3D;
-
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.plots.GonioPosition;
 import ch.specchio.plots.GonioSamplingPoints;
-import ch.specchio.queries.Query;
-import ch.specchio.queries.QueryConditionObject;
-import ch.specchio.queries.SpectrumQueryCondition;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.RefPanelCalSpace;
 import ch.specchio.spaces.ReferenceSpaceStruct;
