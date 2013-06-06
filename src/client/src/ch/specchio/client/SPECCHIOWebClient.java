@@ -1417,7 +1417,12 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 */
 	public int updateEavMetadata(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
 		
-		return postForInteger("metadata", "update", new MetadataUpdateDescriptor(mp, spectrum_ids));
+		int eav_id = postForInteger("metadata", "update", new MetadataUpdateDescriptor(mp, spectrum_ids));
+		if (mp.getEavId() == 0) {
+			mp.setEavId(eav_id);
+		}
+		
+		return eav_id;
 		
 	}
 	
@@ -1433,7 +1438,12 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 */
 	public int updateEavMetadata(MetaParameter mp, ArrayList<Integer> spectrum_ids, MetaParameter mp_old) throws SPECCHIOWebClientException {
 		
-		return postForInteger("metadata", "update", new MetadataUpdateDescriptor(mp, spectrum_ids, mp_old));
+		int eav_id = postForInteger("metadata", "update", new MetadataUpdateDescriptor(mp, spectrum_ids, mp_old));
+		if (mp.getEavId() == 0) {
+			mp.setEavId(eav_id);
+		}
+		
+		return eav_id;
 		
 	}
 	

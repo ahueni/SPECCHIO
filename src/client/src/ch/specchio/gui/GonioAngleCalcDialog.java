@@ -695,6 +695,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 						MetaParameter azimuthParameter = md.get_entry(azimuthAttribute.getId());
 						if (azimuthParameter == null) {
 							azimuthParameter = MetaParameter.newInstance(azimuthAttribute);
+							md.add_entry(azimuthParameter);
 						}
 						azimuthParameter.setValue(new Double(angles[i].azimuth));
 						specchioClient.updateEavMetadata(azimuthParameter, updateIds);
@@ -703,6 +704,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 						MetaParameter zenithParameter = md.get_entry(zenithAttribute.getId());
 						if (zenithParameter == null) {
 							zenithParameter = MetaParameter.newInstance(zenithAttribute);
+							md.add_entry(zenithParameter);
 						}
 						zenithParameter.setValue(new Double(angles[i].zenith));
 						specchioClient.updateEavMetadata(zenithParameter, updateIds);
