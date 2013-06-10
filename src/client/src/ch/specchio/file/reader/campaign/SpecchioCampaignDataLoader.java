@@ -415,6 +415,22 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 					data_in.close();
 				}
 				
+				if (loader == null) {
+					// cx if we got new ASD files without the proper ending: the case for calibration files
+					// to do this we open randomly the first file and read an ASD header
+
+					ASD_FileFormat_V7_FileLoader asd_loader = new ASD_FileFormat_V7_FileLoader();
+		
+					SpectralFile sf = asd_loader.load(files.get(0));
+		
+					if (sf.getCompany().equals("ASD")) {
+						loader = new ASD_FileFormat_V7_FileLoader();
+					}
+		
+					file_input.close();
+					data_in.close();
+				}
+				
 			}
 
 		} catch (FileNotFoundException e) {
