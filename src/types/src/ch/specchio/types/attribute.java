@@ -20,6 +20,7 @@ public class attribute {
 	@XmlElement public int default_unit_id;
 	@XmlElement public String default_storage_field;
 	@XmlElement public String description;
+	@XmlElement public int cardinality;
 	
 	public String getName()
 	{
