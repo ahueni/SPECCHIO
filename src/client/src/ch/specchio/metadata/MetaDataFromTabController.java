@@ -95,7 +95,7 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 						int existing_count = check_attribute_existance(attr, spectrum_ids);
 						if(existing_count > 0)
 						{
-							decision = view.get_user_decision_on_existing_fields(attr.getName());
+							decision = view.get_user_decision_on_existing_fields(attr);
 							if(decision == MetaDataFromTabView.DELETE_EXISTING_AND_INSERT_NEW)
 							{						
 								specchio_client.removeEavMetadata(attr, spectrum_ids);
