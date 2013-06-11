@@ -2,6 +2,7 @@ package ch.specchio.file.reader.spectrum;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -393,6 +394,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		skip(in, 8);
 
 		data_format = in.readByte();
+		if (data_format < 0 || data_format > 3)
+			throw new IOException("Unrecognised data format value " + data_format + " in ASD V7 file.");
 
 		// skip till channels
 		skip(in, 4);
@@ -1122,7 +1125,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	protected String read_string(DataInputStream in, int no_of_chars)
 			throws IOException {
 		byte[] bytes = new byte[no_of_chars];
-		in.read(bytes);
+		if (in.read(bytes) == -1)
+			throw new EOFException();
 
 		// add null at the end
 		// byte[] bytes_ = new byte[no_of_chars+1];
@@ -1136,13 +1140,15 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 	protected Integer read_short(DataInputStream in) throws IOException {
 		byte[] b = new byte[2];
-		in.read(b);
+		if (in.read(b) == -1)
+			throw new EOFException();
 		return (new Integer(arr2int(b, 0)));
 	}
 
 	protected Integer read_int(DataInputStream in) throws IOException {
 		byte[] b = new byte[4];
-		in.read(b);
+		if (in.read(b) == -1)
+			throw new EOFException();
 		Integer n = arr4int(b, 0); // strange why reading just an integer wont
 									// work (uint not existing in Java???)
 		return n;
@@ -1150,7 +1156,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 	protected Integer read_uint(DataInputStream in) throws IOException {
 		byte[] b = new byte[4];
-		in.read(b);
+		if (in.read(b) == -1)
+			throw new EOFException();
 		Integer n = (int) arr4uint(b, 0); // strange why reading just an integer
 											// wont work (uint not existing in
 											// Java???)
@@ -1159,7 +1166,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 	protected Integer read_long(DataInputStream in) throws IOException {
 		byte[] b = new byte[4];
-		in.read(b);
+		if (in.read(b) == -1)
+			throw new EOFException();
 		long n = arr2long(b, 0);
 
 		int as_int = (int) n;
@@ -1169,13 +1177,15 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 	protected Float read_float(DataInputStream in) throws IOException {
 		byte[] b = new byte[4];
-		in.read(b);
+		if (in.read(b) == -1)
+			throw new EOFException();
 		return (new Float(arr2float(b, 0)));
 	}
 
 	protected Double read_double(DataInputStream in) throws IOException {
 		byte[] b = new byte[8];
-		in.read(b);
+		if (in.read(b) == -1)
+			throw new EOFException();
 		return (new Double(arr2double(b, 0)));
 	}
 
