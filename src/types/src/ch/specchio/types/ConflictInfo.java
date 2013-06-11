@@ -1,5 +1,6 @@
 package ch.specchio.types;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.xml.bind.annotation.*;
@@ -29,6 +30,12 @@ public class ConflictInfo {
 	public void addConflict(Integer eav_id, ConflictStruct conflict_data)
 	{
 		conflict_structs.put(eav_id, conflict_data);	
+	}
+	
+	public Enumeration<Integer> eavIds() {
+		
+		return conflict_structs.keys();
+		
 	}
 	
 	public ConflictStruct getConflict(Integer eav_id)
