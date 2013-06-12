@@ -944,9 +944,10 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	 * 
 	 * @return the number of links created
 	 * 
+	 * @throws IllegalArgumentException	this target cannot be linked to any of the proposed references
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public int insertTargetReferenceLinks(Integer target_id, ArrayList<Integer> reference_ids) throws SPECCHIOFactoryException {
+	public int insertTargetReferenceLinks(Integer target_id, ArrayList<Integer> reference_ids) throws IllegalArgumentException, SPECCHIOFactoryException {
 		
 		int num = 0;
 		
@@ -960,20 +961,17 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			SpectrumDataLink links[];
 			if (reference_ids.contains(target_id)) {
 				// trying to link target to itself
-				System.out.println("Cannot link a target to itself.");
-				return 0;
+				throw new IllegalArgumentException("Cannot link a target to itself.");
 			}
 			links = getTargetReferenceLinks(target_id, 0, false);
 			if (links.length > 0) {
 				// target already has a reference
-				System.out.println("Target " + links[0].getReferencingId() + " is already linked to reference " + links[0].getReferencedId());
-				return 0;
+				throw new IllegalArgumentException("Target " + links[0].getReferencingId() + " is already linked to reference " + links[0].getReferencedId());
 			}
 			links = getTargetReferenceLinks(0, target_id, false);
 			if (links.length > 0) {
 				// target is already a reference
-				System.out.println("The proposed target " + target_id + " is in use as a reference.");
-				return 0;
+				throw new IllegalArgumentException("The proposed target " + target_id + " is in use as a reference.");
 			}
 			
 

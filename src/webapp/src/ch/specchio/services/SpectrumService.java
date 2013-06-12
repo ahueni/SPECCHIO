@@ -269,10 +269,17 @@ public class SpectrumService extends SPECCHIOService {
 	public XmlInteger insertTargetReferenceLinks(SpectrumIdsDescriptor id_d) throws SPECCHIOFactoryException {
 		
 		int num = 0;
-		if (id_d.getSpectrumIds1().size() > 0) { 
+		if (id_d.getSpectrumIds1().size() > 0) {
 			SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
-			num = factory.insertTargetReferenceLinks(id_d.getSpectrumId(1, 0), id_d.getSpectrumIds2());
-			factory.dispose();
+			try {
+				num = factory.insertTargetReferenceLinks(id_d.getSpectrumId(1, 0), id_d.getSpectrumIds2());
+			}
+			catch (IllegalArgumentException ex) {
+				throw new BadRequestException(ex);
+			}
+			finally {
+				factory.dispose();
+			}
 		}
 		
 		return new XmlInteger(num);
