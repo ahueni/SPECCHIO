@@ -2,6 +2,7 @@ package ch.specchio.file.reader.spectrum;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -79,9 +80,12 @@ public class TXT_FileLoader extends SpectralFileLoader {
 		whitespace(d);
 		
 		// wvl
-		char c = (char) d.read();
-		c = (char) d.read();
-		c = (char) d.read();
+		int c = d.read();
+		c = d.read();
+		c = d.read();
+		if (c == -1) {
+			throw new EOFException("The file ended before the header was read.");
+		}
 				
 		whitespace(d);
 		
@@ -110,7 +114,10 @@ public class TXT_FileLoader extends SpectralFileLoader {
 			f.setNumberOfSpectra(spec_cnt);
 		
 		// read new line character
-		c = (char) d.read();
+		c = d.read();
+		if (c == -1) {
+			throw new EOFException("The file ended before the header was read.");
+		}
 		
 		// move read position back to start
 		//d.reset();
@@ -121,23 +128,22 @@ public class TXT_FileLoader extends SpectralFileLoader {
 	{
 		String name = "";
 		
-		char c = (char) d.read();
+		int c = d.read();
+		if (c == -1) {
+			not_eof = false;
+		}
 		
 
 		while(c != ' ' && c != '\n' && c != '\t'  && c != '\r' && not_eof)
 		{
 			// add to string
-			name = name + c;
+			name = name + (char)c;
 			
 			d.mark(10);
-			int val = d.read();
-			if (val == -1) // deal with the fact that excel files end right after the last character
+			c = d.read();
+			if (c == -1) // deal with the fact that excel files end right after the last character
 			{
 				not_eof = false;
-			}
-			else
-			{
-				c = (char) val;	
 			}
 			
 		}
