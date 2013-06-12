@@ -889,7 +889,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public SpectrumDataLink[] getTargetReferenceLinksByTarget(int target_id, int reference_id, boolean is_admin) throws SPECCHIOFactoryException {
+	public SpectrumDataLink[] getTargetReferenceLinks(int target_id, int reference_id, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
 			// work out the correct table name
@@ -955,6 +955,27 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
 			String query;
+			
+			// check that the request makes sense
+			SpectrumDataLink links[];
+			if (reference_ids.contains(target_id)) {
+				// trying to link target to itself
+				System.out.println("Cannot link a target to itself.");
+				return 0;
+			}
+			links = getTargetReferenceLinks(target_id, 0, false);
+			if (links.length > 0) {
+				// target already has a reference
+				System.out.println("Target " + links[0].getReferencingId() + " is already linked to reference " + links[0].getReferencedId());
+				return 0;
+			}
+			links = getTargetReferenceLinks(0, target_id, false);
+			if (links.length > 0) {
+				// target is already a reference
+				System.out.println("The proposed target " + target_id + " is in use as a reference.");
+				return 0;
+			}
+			
 
 			// get target acquisition time for easier query formulation below
 			ArrayList<Integer> time_ids = this.getEavServices().get_eav_ids(target_id, "Acquisition Time");

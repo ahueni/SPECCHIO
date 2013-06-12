@@ -244,7 +244,7 @@ public class SpectrumService extends SPECCHIOService {
 			@PathParam("reference_id") int reference_id) throws SPECCHIOFactoryException {
 		
 		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
-		SpectrumDataLink datalinks[] = factory.getTargetReferenceLinksByTarget(target_id, reference_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
+		SpectrumDataLink datalinks[] = factory.getTargetReferenceLinks(target_id, reference_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
 		return datalinks;
