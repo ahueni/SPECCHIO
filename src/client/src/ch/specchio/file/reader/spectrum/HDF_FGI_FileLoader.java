@@ -954,11 +954,9 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 				}
 			}
 			if (hdf5_fgi_file.getRawDataFormat() != null) {
-				/*
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Raw Data Format"));
 				mp.setValue(hdf5_fgi_file.getRawDataFormat(), "String");
 				smd.add_entry(mp);
-				*/
 			}
 			if (hdf5_fgi_file.getSourceFile() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Source File"));

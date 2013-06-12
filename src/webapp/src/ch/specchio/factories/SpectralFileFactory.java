@@ -639,7 +639,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					
 					if (!spec_file.getPos(spec_no).location_name.equals(""))
 					{
-						mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Location name", "Location"));
+						mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Location Name", "Location"));
 						mp.setValue(spec_file.getPos(spec_no).location_name, "String");
 						md.add_entry(mp);	
 					}
@@ -684,34 +684,34 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				// geometry via EAV: SPECCHIO V3.0
 				if (spec_file.getIlluminationAzimuths().size() > 0)
 				{
-					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Illumination azimuth", "Sampling Geometry"));
+					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Illumination Azimuth", "Sampling Geometry"));
 					mp.setValue(spec_file.getIlluminationAzimuth(spec_no), "Degrees");
 					md.add_entry(mp);										
 				}
 				
 				if (spec_file.getIlluminationZeniths().size() > 0)
 				{
-					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Illumination zenith", "Sampling Geometry"));
+					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Illumination Zenith", "Sampling Geometry"));
 					mp.setValue(spec_file.getIlluminationZenith(spec_no), "Degrees");
 					md.add_entry(mp);										
 				}		
 				
 				if (spec_file.getSensorAzimuths().size() > 0)
 				{
-					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor azimuth", "Sampling Geometry"));
+					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor Azimuth", "Sampling Geometry"));
 					mp.setValue(spec_file.getSensorAzimuth(spec_no), "Degrees");
 					md.add_entry(mp);										
 				}	
 				
 				if (spec_file.getSensorZeniths().size() > 0)
 				{
-					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor zenith", "Sampling Geometry"));
+					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor Zenith", "Sampling Geometry"));
 					mp.setValue(spec_file.getSensorZenith(spec_no), "Degrees");
 					md.add_entry(mp);										
 				}		
 				
 				if (spec_file.getArmLengths() != null && spec_file.getArmLength(spec_no) != null) {
-					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor distance", "Sampling Geometry"));
+					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor Distance", "Sampling Geometry"));
 					mp.setValue(spec_file.getArmLength(spec_no), "m");
 					md.add_entry(mp);											
 				}

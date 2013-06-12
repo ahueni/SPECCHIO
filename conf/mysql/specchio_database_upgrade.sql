@@ -106,6 +106,7 @@ INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('mg/kg');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('g/g');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Deci Siemens / Metre', null, 'dS/m');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Metres', null, 'm');
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Percent', null, '%');
 
 
 
@@ -152,7 +153,7 @@ INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Acquisition Time', (select category_id from `specchio`.category where name = 'General'), 'datetime_val');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Loading Time', (select category_id from `specchio`.category where name = 'General'), 'datetime_val');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('File Comments', (select category_id from `specchio`.category where name = 'General'), 'string_val');
-
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Raw Data Format', (select category_id from `specchio`.category where name = 'General'), 'string_val', 'Information on where data originated from before being stored in the file loaded to SPECCHIO.');
 
 
 -- Vegetation Parameters
