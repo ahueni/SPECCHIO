@@ -712,13 +712,13 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 			Insets insets = mdMatchingScrollPane.getInsets();
 			Dimension sheet_control_preferred_size = sheet_control_panel.getPreferredSize();
 			Dimension mdMatchingViewportSize = new Dimension();
-			mdMatchingViewportSize.width = sheet_control_preferred_size.width + insets.left + insets.right;
+			mdMatchingViewportSize.width = info_panel_preferred_size.width + insets.left + insets.right;
 			if (sheet.getColumns() > 3) {
 				// make the panel wide enough to show the first three columns without scrolling
-				mdMatchingViewportSize.width += info_panel_preferred_size.width * 3 / sheet.getColumns();
+				mdMatchingViewportSize.width += sheet_control_preferred_size.width * 3 / sheet.getColumns();
 			} else {
 				// show all columns
-				mdMatchingViewportSize.width += info_panel_preferred_size.width;
+				mdMatchingViewportSize.width += sheet_control_preferred_size.width;
 			}
 			mdMatchingViewportSize.height = info_panel_preferred_size.height + insets.top + insets.bottom;
 			mdMatchingScrollPane.setPreferredSize(mdMatchingViewportSize);
