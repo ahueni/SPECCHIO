@@ -4,6 +4,7 @@
 	<!-- directory name configuration -->
 	<property name="source.dir" value="src" />
 	<property name="lib.dir" value="lib" />
+	<property name="osdep.dir" value="osdep" />
 	<property name="build.dir" value="build" />
 	<property name="dist.dir" value="dist" />
 	<property name="jar.file" value="specchio-client.jar" />
@@ -48,6 +49,14 @@
     	<copy todir="${dist.dir}">
     		<path refid="lib.path" />
     	</copy>
+    	
+    	<!-- copy OS-dependent files -->
+    	<copy todir="${dist.dir}" flatten="false">
+    		<fileset dir="${osdep.dir}">
+    			<include name="**/*" />
+    		</fileset>
+    	</copy>
+    	<chmod file="${dist.dir}/macosx" perm="755" />
     	
     	<!-- copy support files -->
     	<copy file="db_config.txt" todir="${dist.dir}" />
