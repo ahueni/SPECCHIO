@@ -126,6 +126,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 		// create the web services client configuration
 		ClientConfig config = new DefaultClientConfig();
+		config.getProperties().put(ClientConfig.PROPERTY_CHUNKED_ENCODING_SIZE, 32 * 1024);
 		
 		if (url.getProtocol().equalsIgnoreCase("https")) {
 			// configure SSL
