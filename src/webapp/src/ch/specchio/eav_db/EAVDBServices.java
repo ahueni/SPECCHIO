@@ -376,13 +376,14 @@ public class EAVDBServices extends Thread {
 		{
 			curr_mp = li.next();
 			
+			boolean equalValues = (mp.getValue() == null && curr_mp.getValue() == null) || (mp.getValue() != null && mp.getValue().equals(curr_mp.getValue()));
 			if(mp.getUnitId() == 0) // catches the case where the unit was not set by the user or program (it is later enforced as RAW during insert)
 			{
-				matches = mp.getAttributeId().equals(curr_mp.getAttributeId()) && mp.getValue().equals(curr_mp.getValue());
+				matches = mp.getAttributeId().equals(curr_mp.getAttributeId()) && equalValues;
 			}
 			else
 			{
-				matches = mp.getAttributeId().equals(curr_mp.getAttributeId()) && mp.getUnitId().equals(curr_mp.getUnitId()) && mp.getValue().equals(curr_mp.getValue());
+				matches = mp.getAttributeId().equals(curr_mp.getAttributeId()) && mp.getUnitId().equals(curr_mp.getUnitId()) && equalValues;
 			}
 
 		}
