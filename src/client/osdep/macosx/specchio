@@ -4,8 +4,9 @@
 #
 
 # work out SPECCHIO's home directory
-PWD=`pwd`
-SPECCHIO_HOME=`dirname $PWD`
+if [[ -z $SPECCHIO_HOME ]]; then
+	SPECCHIO_HOME=%{INSTALL_PATH}
+fi
 
 # go!
 cd $SPECCHIO_HOME
