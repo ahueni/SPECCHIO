@@ -12,6 +12,7 @@ import java.util.List;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.eav_db.TableNames;
+import ch.specchio.types.Country;
 import ch.specchio.types.Institute;
 import ch.specchio.types.User;
 
@@ -262,6 +263,37 @@ public class UserFactory extends SPECCHIOFactory {
 		return generatePassword(DEFAULT_PASSWORD_LENGTH, DEFAULT_PASSWORD_LENGTH);
 		
 	}
+	
+	
+	/**
+	 * Get a list of all of the countries in the database.
+	 * 
+	 * @return an array containing a Country object for every country in the database
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public Country[] getCountries() throws SPECCHIOFactoryException {
+		
+		List<Country> countries = new ArrayList<Country>();
+		
+		try {
+			Statement stmt = getStatementBuilder().createStatement();
+			String query = "select country_id, name from country";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				countries.add(new Country(rs.getInt(1), rs.getString(2)));
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		return countries.toArray(new Country[countries.size()]);
+		
+	}
 							
 	
 	/**
@@ -269,7 +301,7 @@ public class UserFactory extends SPECCHIOFactory {
 	 * 
 	 * @return an array containing an Institute object for every institute in the database
 	 * 
-	 * @throws SPECCHIOFactoryException	could not connect to the database
+	 * @throws SPECCHIOFactoryException	database error
 	 */
 	public Institute[] getInstitutes() throws SPECCHIOFactoryException {
 		
@@ -522,10 +554,16 @@ public class UserFactory extends SPECCHIOFactory {
 			// add the new institute to the database
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
-			String query = "insert into institute(name, department) values(" +
+			String query = "insert into institute(name, department, street, street_no, po_code, city, country_id, www) values(" +
 					SQL.conc_values(
 							institute.getInstituteName(),
-							institute.getDepartment()
+							institute.getDepartment(),
+							institute.getStreet(),
+							institute.getStreetNumber(),
+							institute.getPostOfficeCode(),
+							institute.getCity(),
+							(institute.getCountry() != null)? Integer.toString(institute.getCountry().getId()) : null,
+							institute.getWWWAddress()
 					) + ")";
 			stmt.executeUpdate(query);
 			

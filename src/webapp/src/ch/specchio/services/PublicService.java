@@ -11,6 +11,7 @@ import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.UserFactory;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.types.Capabilities;
+import ch.specchio.types.Country;
 import ch.specchio.types.Institute;
 import ch.specchio.types.User;
 
@@ -107,11 +108,32 @@ public class PublicService extends SPECCHIOService {
 	
 	
 	/**
+	 * Get a list of all of the countries in the database.
+	 * 
+	 * @return an array of Country objects representing every known country
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("listCountries")
+	public Country[] listCountries() throws SPECCHIOFactoryException {
+		
+		UserFactory factory = new UserFactory();
+		Country countries[] = factory.getCountries();
+		factory.dispose();
+		
+		return countries;
+		
+	}
+	
+	
+	/**
 	 * Get a list of all of the institutes in the database.
 	 * 
 	 * @return an array of Institute objects representing every known institute
 	 * 
-	 * @throws SPECCHIOFactoryException	could not connect to the database
+	 * @throws SPECCHIOFactoryException	database error
 	 */
 	@GET
 	@Produces(MediaType.APPLICATION_XML)

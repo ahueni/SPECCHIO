@@ -33,6 +33,7 @@ import ch.specchio.types.Capabilities;
 import ch.specchio.types.CategoryTable;
 import ch.specchio.types.ConflictDetectionDescriptor;
 import ch.specchio.types.ConflictTable;
+import ch.specchio.types.Country;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.InstrumentDescriptor;
@@ -475,6 +476,24 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get the value of a capability.
+	 * 
+	 * @param capability	the capability name
+	 * 
+	 * @return the value of the capability, or null if the capability is not recognised
+	 */
+	public String getCapability(String capability) throws SPECCHIOClientException {
+		
+		if (capabilities == null) {
+			capabilities = getObject(Capabilities.class, "public", "capabilities");
+		}
+		
+		return capabilities.getCapability(capability);
+		
+	}
+	
+	
+	/**
 	 * Get the children of a node of the spectral data browser.
 	 * 
 	 * @param sn	the node
@@ -495,29 +514,21 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @return a list of the node's children
 	 */
-	public List<TaxonomyNodeObject> getChildrenOfTaxonomyNode(TaxonomyNodeObject tn) throws SPECCHIOClientException {
+	public List<TaxonomyNodeObject> getChildrenOfTaxonomyNode(TaxonomyNodeObject tn) throws SPECCHIOWebClientException {
 		
 		return postForList(TaxonomyNodeObject.class, "metadata", "getChildrenOfTaxonomyNode", tn);
 		
 	}
 	
 	
-	
-	
 	/**
-	 * Get the value of a capability.
+	 * Get the list of countries known to the server.
 	 * 
-	 * @param capability	the capability name
-	 * 
-	 * @return the value of the capability, or null if the capability is not recognised
+	 * @return an array of Country objects
 	 */
-	public String getCapability(String capability) throws SPECCHIOClientException {
+	public Country[] getCountries() throws SPECCHIOWebClientException {
 		
-		if (capabilities == null) {
-			capabilities = getObject(Capabilities.class, "public", "capabilities");
-		}
-		
-		return capabilities.getCapability(capability);
+		return getArray(Country.class, "public", "listCountries");
 		
 	}
 	

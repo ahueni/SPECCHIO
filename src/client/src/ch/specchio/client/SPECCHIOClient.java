@@ -19,6 +19,7 @@ import ch.specchio.types.Campaign;
 import ch.specchio.types.Category;
 import ch.specchio.types.CategoryTable;
 import ch.specchio.types.ConflictTable;
+import ch.specchio.types.Country;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.InstrumentDescriptor;
@@ -266,6 +267,12 @@ public interface SPECCHIOClient {
 	public List<TaxonomyNodeObject> getChildrenOfTaxonomyNode(TaxonomyNodeObject tn) throws SPECCHIOClientException;
 	
 	
+	/**
+	 * Get the list of countries known to the server.
+	 * 
+	 * @return an array of Country objects
+	 */
+	public Country[] getCountries() throws SPECCHIOClientException;
 	
 	
 	/**
