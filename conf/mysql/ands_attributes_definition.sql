@@ -4,8 +4,8 @@
 --
 
 -- ANDS data portal attributes
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `default_unit_id`) VALUES ('ANDS Collection Key', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'string_val', (select unit_id from `specchio`.`unit` where short_name = 'String'));
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `default_unit_id`) VALUES ('FOR Code', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'taxonomy_id', (select unit_id from `specchio`.`unit` where short_name = 'String'));
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `default_unit_id`, `cardinality`) VALUES ('ANDS Collection Key', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'string_val', (select unit_id from `specchio`.`unit` where short_name = 'String'), NULL);
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `default_unit_id`, `cardinality`) VALUES ('FOR Code', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'taxonomy_id', (select unit_id from `specchio`.`unit` where short_name = 'String'), NULL);
 
 
 -- two-digit FOR codes

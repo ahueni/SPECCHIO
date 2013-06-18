@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Start-up script for Mac OS X
+#
+
+# work out SPECCHIO's home directory
+if [[ -z $SPECCHIO_HOME ]]; then
+	SPECCHIO_HOME=%{INSTALL_PATH}
+fi
+
+# go!
+cd $SPECCHIO_HOME
+java -jar -Xdock:name="SPECCHIO V3" -Dncsa.hdf.hdf5lib.H5.hdf5lib=$SPECCHIO_HOME/macosx/libjhdf5.jnilib specchio-client.jar

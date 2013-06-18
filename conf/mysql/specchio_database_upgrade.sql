@@ -106,6 +106,7 @@ INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('mg/kg');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('g/g');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Deci Siemens / Metre', null, 'dS/m');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Metres', null, 'm');
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Percent', null, '%');
 
 
 
@@ -113,6 +114,9 @@ INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Metre
 -- ---------------
 -- new attributes
 -- ---------------
+
+-- cardinality
+ALTER TABLE `specchio`.`attribute` ADD COLUMN `cardinality` INT(10) DEFAULT 1;
 
 -- environmental conditions from `specchio`.`category` 
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) VALUES ('Ambient Temperature', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val');
@@ -149,7 +153,7 @@ INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Acquisition Time', (select category_id from `specchio`.category where name = 'General'), 'datetime_val');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Loading Time', (select category_id from `specchio`.category where name = 'General'), 'datetime_val');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('File Comments', (select category_id from `specchio`.category where name = 'General'), 'string_val');
-
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Raw Data Format', (select category_id from `specchio`.category where name = 'General'), 'string_val', 'Information on where data originated from before being stored in the file loaded to SPECCHIO.');
 
 
 -- Vegetation Parameters
@@ -238,8 +242,8 @@ INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_fiel
 
 
 -- Scientific References
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `description`) VALUES ('Publication', (select category_id from `specchio`.`category` where name = 'Scientific References'), 'string_val', 'Publication relevant to these spectral data');
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `description`) VALUES ('Citation', (select category_id from `specchio`.`category` where name = 'Scientific References'), 'string_val', 'Publication to be cited when using these spectral data');
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) VALUES ('Publication', (select category_id from `specchio`.`category` where name = 'Scientific References'), 'string_val', 'Publication relevant to these spectral data', NULL);
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) VALUES ('Citation', (select category_id from `specchio`.`category` where name = 'Scientific References'), 'string_val', 'Publication to be cited when using these spectral data', NULL);
 
 
 -- Generic Target Properties
@@ -251,10 +255,10 @@ INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_fiel
 
 
 -- Pictures
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`) VALUES ('Target Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val');
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`) VALUES ('Sampling Setup Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val');
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`) VALUES ('Sky Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val');
-INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `description`) VALUES ('Sampling Environment Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val', 'Picture showing the general sampling environment, i.e. vicinity of the target');
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `cardinality`) VALUES ('Target Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val', NULL);
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `cardinality`) VALUES ('Sampling Setup Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val', NULL);
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `cardinality`) VALUES ('Sky Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val', NULL);
+INSERT INTO `specchio`.`attribute` (`name`, `category_id`, `default_storage_field`, `cardinality`, `description`) VALUES ('Sampling Environment Picture', (select category_id from `specchio`.`category` where name = 'Pictures'), 'binary_val', NULL, 'Picture showing the general sampling environment, i.e. vicinity of the target');
 
 
 -- PDFs
@@ -277,12 +281,12 @@ INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field
 -- Processing
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Processing Level', (select category_id from `specchio`.category where name = 'Processing'), 'double_val');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('DC Flag', (select category_id from `specchio`.category where name = 'Processing'), 'int_val', 'Designates this spectrum as dark current spectrum');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Processing Module', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Name of processing module applied to spectrum');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Processing Algorithm', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Description of processing algorithm applied to spectrum');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Source File', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'File that provided the original data (applies if data were processed outside of SPECCHIO)');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Data Ingestion Notes', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Notes produced by the data ingestion module during data loading into SPECCHIO');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Processing Module', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Name of processing module applied to spectrum', NULL);
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Processing Algorithm', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Description of processing algorithm applied to spectrum', NULL);
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Source File', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'File that provided the original data (applies if data were processed outside of SPECCHIO)', NULL);
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Data Ingestion Notes', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Notes produced by the data ingestion module during data loading into SPECCHIO', NULL);
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Garbage Flag', (select category_id from `specchio`.category where name = 'Processing'), 'int_val', 'Designates this spectrum is garbage. This flag can be used to automatically exclude garbage spectra from processing.');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Time Shift', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Notes produced by the SPECCHIO time shift routine');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Time Shift', (select category_id from `specchio`.category where name = 'Processing'), 'string_val', 'Notes produced by the SPECCHIO time shift routine', NULL);
 
 
 
@@ -335,7 +339,7 @@ INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`
 
 
 -- Keywords
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Keyword', (select category_id from `specchio`.category where name = 'Keywords'), 'string_val');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `cardinality`) values('Keyword', (select category_id from `specchio`.category where name = 'Keywords'), 'string_val', NULL);
 
 
 -- Names
@@ -353,7 +357,7 @@ INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `default_unit_id`) values('Sensor Distance', (select category_id from `specchio`.category where name = 'Sampling Geometry'), 'double_val', (select unit_id from `specchio`.`unit` where short_name = 'm'));
 
 -- Personnel
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`) values('Investigator', (select category_id from `specchio`.category where name = 'Personnel'), 'string_val', 'Investigator of these data; fallback if not definable via existing SPECCHIO users');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Investigator', (select category_id from `specchio`.category where name = 'Personnel'), 'string_val', 'Investigator of these data; fallback if not definable via existing SPECCHIO users', NULL);
 
 
 -- Illumination

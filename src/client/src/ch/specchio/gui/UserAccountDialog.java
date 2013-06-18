@@ -223,18 +223,30 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			
 		} else if (ADD_INSTITUTE.equals(event.getActionCommand())) {
 			
-			// open the institute dialogue
-			InstituteDialog id = new InstituteDialog((Frame)getOwner(), specchio_client);
-			id.setVisible(true);
-			
-			Institute inst = id.getInstitute();
-			if (inst != null) {
-				// add the new institute to the combo box and select it
-				userAccountPanel.addInstitute(inst);
-				userAccountPanel.setInstitute(inst);
+			try {
+				// open the institute dialogue
+				InstituteDialog id = new InstituteDialog((Frame)getOwner(), specchio_client);
+				id.setVisible(true);
 				
-				// need to re-layout the dialogue since the combo box size might have changed
-				pack();
+				Institute inst = id.getInstitute();
+				if (inst != null) {
+					// add the new institute to the combo box and select it
+					userAccountPanel.addInstitute(inst);
+					userAccountPanel.setInstitute(inst);
+					
+					// need to re-layout the dialogue since the combo box size might have changed
+					pack();
+				}
+			}
+			catch (SPECCHIOClientException ex) {
+				// could not contact the server
+				ErrorDialog error = new ErrorDialog(
+						(Frame)getOwner(),
+						"Could not create an institute",
+						ex.getMessage(),
+						ex
+					);
+				error.setVisible(true);
 			}
 			
 		} else if (CREATE.equals(event.getActionCommand())) {

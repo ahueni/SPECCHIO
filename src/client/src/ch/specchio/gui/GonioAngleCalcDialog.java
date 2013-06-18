@@ -511,7 +511,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 		public void run() {
 			
 			// initialise counters
-			CelestialAngle angle = new CelestialAngle(0, 75);
+			CelestialAngle angle = new CelestialAngle(180, 75);
 			CelestialAngle delta = new CelestialAngle(30, -15);
 			int opposite = 1;
 			
@@ -552,8 +552,11 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 				{
 					angle.azimuth += 180 * opposite;
 					opposite *= -1;	
+					
 					// move zenith to next sampling position
-					angle.zenith += delta.zenith;			
+					angle.zenith += delta.zenith;
+					
+					if (angle.azimuth == 360) angle.azimuth = 0;
 				}
 			}
 			

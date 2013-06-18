@@ -104,7 +104,7 @@ public class MetaSimple extends MetaParameter {
 			if (value instanceof String) {
 				super.setValue(value);
 			} else {
-				throw new MetaParameterFormatException("Cannot assign object of type " + value.getClass() + " to a string parameter.");
+				super.setValue(value.toString());
 			}
 			
 		} else if (attribute.BINARY_VAL.equals(getDefaultStorageField())) {

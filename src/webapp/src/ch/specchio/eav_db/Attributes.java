@@ -46,7 +46,7 @@ public class Attributes {
 	{
 		if (lists_are_filled) return;
 		
-		String query = "select a.attribute_id, a.name, c.category_id, c.name, c.string_val, a.default_unit_id, a.default_storage_field, a.description from attribute a, category c where a.category_id = c.category_id order by a.name";
+		String query = "select a.attribute_id, a.name, c.category_id, c.name, c.string_val, a.default_unit_id, a.default_storage_field, a.description, a.cardinality from attribute a, category c where a.category_id = c.category_id order by a.name";
 				
 		// create a list of existing attributes
 		Statement stmt = SQL.createStatement();
@@ -64,6 +64,7 @@ public class Attributes {
 			a.default_unit_id = rs.getInt(6);
 			a.default_storage_field = rs.getString(7);
 			a.description = rs.getString(8);
+			a.cardinality = rs.getInt(9);
 			
 			attributes.add(a);
 					

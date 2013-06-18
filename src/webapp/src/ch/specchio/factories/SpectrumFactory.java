@@ -889,7 +889,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public SpectrumDataLink[] getTargetReferenceLinksByTarget(int target_id, int reference_id, boolean is_admin) throws SPECCHIOFactoryException {
+	public SpectrumDataLink[] getTargetReferenceLinks(int target_id, int reference_id, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
 			// work out the correct table name
@@ -944,9 +944,10 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	 * 
 	 * @return the number of links created
 	 * 
+	 * @throws IllegalArgumentException	this target cannot be linked to any of the proposed references
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public int insertTargetReferenceLinks(Integer target_id, ArrayList<Integer> reference_ids) throws SPECCHIOFactoryException {
+	public int insertTargetReferenceLinks(Integer target_id, ArrayList<Integer> reference_ids) throws IllegalArgumentException, SPECCHIOFactoryException {
 		
 		int num = 0;
 		
@@ -955,6 +956,24 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
 			String query;
+			
+			// check that the request makes sense
+			SpectrumDataLink links[];
+			if (reference_ids.contains(target_id)) {
+				// trying to link target to itself
+				throw new IllegalArgumentException("Cannot link a target to itself.");
+			}
+			links = getTargetReferenceLinks(target_id, 0, false);
+			if (links.length > 0) {
+				// target already has a reference
+				throw new IllegalArgumentException("Target " + links[0].getReferencingId() + " is already linked to reference " + links[0].getReferencedId());
+			}
+			links = getTargetReferenceLinks(0, target_id, false);
+			if (links.length > 0) {
+				// target is already a reference
+				throw new IllegalArgumentException("The proposed target " + target_id + " is in use as a reference.");
+			}
+			
 
 			// get target acquisition time for easier query formulation below
 			ArrayList<Integer> time_ids = this.getEavServices().get_eav_ids(target_id, "Acquisition Time");

@@ -903,14 +903,13 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 			}
 
 			if (hdf5_fgi_file.getInstrumentExtendedName() != null) {
-				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Extended instrument name"));
-				mp.setAttributeName("Extended instrument name");
+				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Extended Instrument Name"));
 				mp.setValue(hdf5_fgi_file.getInstrumentExtendedName(), "String");
 				smd.add_entry(mp);
 			}
 
 			if (hdf5_fgi_file.getCampaignName() != null) {
-				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Campaign name"));
+				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Campaign Name"));
 				mp.setValue(hdf5_fgi_file.getCampaignName(), "String");
 				smd.add_entry(mp);
 			}
@@ -928,7 +927,6 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 			}
 			if (hdf5_fgi_file.getLightSourceParam() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Light Source Parameters"));
-				mp.setAttributeName("Light source parameters");
 				mp.setValue(hdf5_fgi_file.getLightSourceParam(), "String");
 				smd.add_entry(mp);
 			}
@@ -939,7 +937,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 				smd.add_entry(mp);
 			}
 			if (hdf5_fgi_file.getWhiteReferenceTarget() != null) {
-				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("White Reference Target"));
+				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("White Reference Panel Name"));
 				mp.setValue(hdf5_fgi_file.getWhiteReferenceTarget(), "String");
 				smd.add_entry(mp);
 			}
@@ -972,7 +970,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 				smd.add_entry(mp);
 			}
 			if (hdf5_fgi_file.getCalibrationSeries() != -1) {
-				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Instrument Calibration Number"));
+				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Calibration Number"));
 				mp.setValue(hdf5_fgi_file.getCalibrationSeries(), "RAW");
 				smd.add_entry(mp);
 			}

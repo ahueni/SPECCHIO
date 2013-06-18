@@ -50,6 +50,7 @@ import au.ands.org.researchdata.ResearchDataAustralia;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.constants.UserRoles;
 import ch.specchio.proc_modules.FileOutputManager;
 import ch.specchio.proc_modules.RadianceToReflectance;
 import ch.specchio.proc_modules.SpaceProcessingChainComponent;
@@ -75,6 +76,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	
 	boolean hierarchy_browser = false;
 	boolean mds_restrictions = false;
+	boolean is_admin;
 
 	JTabbedPane data_selection_tabs;
 	JTextArea SQL_query;
@@ -399,6 +401,8 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 			data_selection_tabs.addTab("Query conditions", scroll_pane);
 		}
 		
+		is_admin = specchio_client.isLoggedInWithRole(UserRoles.ADMIN);
+		
 		
 
 	    
@@ -475,7 +479,11 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		spectral_plot.setEnabled(enabled);
 		refl.setEnabled(enabled);
 		if (publish_collection != null) {
-			publish_collection.setEnabled(enabled && (mds_restrictions || show_only_my_data.isSelected()));
+			publish_collection.setEnabled(
+					enabled &&
+					(mds_restrictions || show_only_my_data.isSelected()) &&
+					!is_admin
+				);
 		}
 		this.menu.setEnabled(enabled);
 	}

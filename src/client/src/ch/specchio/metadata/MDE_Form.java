@@ -10,7 +10,6 @@ import ch.specchio.types.ConflictInfo;
 import ch.specchio.types.ConflictStruct;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
-import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
 
@@ -49,33 +48,19 @@ public class MDE_Form {
 	}
 	
 	
-	public void addEavParametersIntoExistingContainers(Metadata eav_md, ConflictTable eav_conflict_stati)
+	public void addEavParameterIntoExistingContainer(MetaParameter mp, ConflictInfo info)
 	{
-		
-		// iterate over all metadata entries
-		ListIterator<MD_CategoryContainer> li = containers.listIterator();
-		
-		
-		while(li.hasNext())
-		{
+		boolean found = false;
+		ListIterator<MD_CategoryContainer> li  = containers.listIterator();
+		while (li.hasNext() && !found) {
 			MD_CategoryContainer cc = li.next();
-			
-			ArrayList<MetaParameter> matching_entries = eav_md.get_entries_of_category(cc.getCategoryName());
-			
-			ListIterator<MetaParameter> mp_li = matching_entries.listIterator();
-			
-			while(mp_li.hasNext())
-			{
-				MetaParameter mp = mp_li.next();
-				
-				MD_EAV_Field field = new MD_EAV_Field(mp, eav_conflict_stati.get(mp.getAttributeId()));
-				
+			if (cc.getCategoryName().equals(mp.getCategoryName())) {
+				MD_EAV_Field field = new MD_EAV_Field(mp, info);
 				cc.addField(field);
-				
+				found = true;
 			}
-			
 		}
-		
+	
 	}
 	
 	

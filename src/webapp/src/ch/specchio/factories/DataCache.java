@@ -9,6 +9,7 @@ import java.util.ListIterator;
 import ch.specchio.constants.SensorType;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.spaces.MeasurementUnit;
+import ch.specchio.types.Country;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.ReferenceBrand;
@@ -115,20 +116,25 @@ public class DataCache {
 			Statement stmt = SQL.createStatement();
 
 			// read information from database
-			String[] tables = new String[]{"institute"};
-			String[] attr = new String[]{"institute_id", "name", "department"};
-
-			String query = SQL.assemble_sql_select_query(
-						SQL.conc_attributes(attr),
-						SQL.conc_tables(tables), "");
-			
-						
+			String query = "select i.institute_id, i.name, i.department, i.street, i.street_no, i.po_code, i.city, i.www, c.country_id, c.name " +
+					"from institute i left join country c on i.country_id = c.country_id";
+					
+					
 			ResultSet rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				Institute inst = new Institute(); 
 				inst.setInstituteId(rs.getInt(1));
 				inst.setInstituteName(rs.getString(2));
 				inst.setDepartment(rs.getString(3));
+				inst.setStreet(rs.getString(4));
+				inst.setStreetNumber(rs.getString(5));
+				inst.setPostOfficeCode(rs.getString(6));
+				inst.setCity(rs.getString(7));
+				inst.setWWWAddress(rs.getString(8));
+				int country_id = rs.getInt(9);
+				if (country_id != 0) {
+					inst.setCountry(new Country(country_id, rs.getString(10)));
+				}
 				
 				this.institutes.add(inst);
 			}

@@ -712,13 +712,13 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 			Insets insets = mdMatchingScrollPane.getInsets();
 			Dimension sheet_control_preferred_size = sheet_control_panel.getPreferredSize();
 			Dimension mdMatchingViewportSize = new Dimension();
-			mdMatchingViewportSize.width = sheet_control_preferred_size.width + insets.left + insets.right;
+			mdMatchingViewportSize.width = info_panel_preferred_size.width + insets.left + insets.right;
 			if (sheet.getColumns() > 3) {
 				// make the panel wide enough to show the first three columns without scrolling
-				mdMatchingViewportSize.width += info_panel_preferred_size.width * 3 / sheet.getColumns();
+				mdMatchingViewportSize.width += sheet_control_preferred_size.width * 3 / sheet.getColumns();
 			} else {
 				// show all columns
-				mdMatchingViewportSize.width += info_panel_preferred_size.width;
+				mdMatchingViewportSize.width += sheet_control_preferred_size.width;
 			}
 			mdMatchingViewportSize.height = info_panel_preferred_size.height + insets.top + insets.bottom;
 			mdMatchingScrollPane.setPreferredSize(mdMatchingViewportSize);
@@ -1052,33 +1052,34 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		changedUpdate(arg0);		
 	}
 
-	public int get_user_decision_on_existing_fields(String attribute_name) {
+	public int get_user_decision_on_existing_fields(attribute attr) {
 		
 		
-		Object[] options = new Object[3];
+		ArrayList<Object> options = new ArrayList<Object>();
+		options.add("Skip this parameter");
+		options.add("Delete existing and insert new values");
+		if (attr.cardinality == 0 || attr.cardinality > 1) {
+			options.add("Insert additional values");
+		}
 		
-		options[0] = "Insert anyway";
-		options[1] = "Delete existing and insert new values";
-		options[2] = "Skip this parameter";
-		
-		int default_selection = 2;
+		int default_selection = 0;
 		int decision;
 
 		Object selectedValue = JOptionPane.showInputDialog(this,
-				"You are about to insert a new metaparameter of the type " + attribute_name
-				 + ".\n Some of the selected records already feature a metaparameter of the type " + attribute_name + " \n" +
+				"You are about to insert a new metaparameter of the type " + attr.name
+				 + ".\n Some of the selected records already feature a metaparameter of the type " + attr.name + " \n" +
 				"Please select one of the following actions:",
-				"Insert of existing metaparameter " +  attribute_name,
+				"Insert of existing metaparameter " +  attr.name,
 				JOptionPane.INFORMATION_MESSAGE,
 				null,
-				options,
-				options[default_selection]);
+				options.toArray(new Object[options.size()]),
+				options.get(default_selection));
 
-		if(selectedValue == null || selectedValue.equals(options[2]))
+		if(selectedValue == null || selectedValue.equals(options.get(0)))
 		{
 			decision = MetaDataFromTabView.SKIP_PARAMETER;
 		}
-		else if(selectedValue.equals(options[1]))
+		else if(selectedValue.equals(options.get(1)))
 		{
 			decision = MetaDataFromTabView.DELETE_EXISTING_AND_INSERT_NEW;
 		}

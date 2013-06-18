@@ -1,5 +1,6 @@
 package ch.specchio.types;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.xml.bind.annotation.*;
@@ -26,5 +27,7 @@ public class ConflictTable {
 	
 	public ConflictInfo get(int attribute_id) { return this.table.get(Integer.toString(attribute_id)); }
 	public void put(int attribute_id, ConflictInfo info) { this.table.put(Integer.toString(attribute_id), info); }
+	
+	public Enumeration<String> conflicts() { return this.table.keys(); }
 
 }

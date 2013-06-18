@@ -1,6 +1,8 @@
 package ch.specchio.metadata;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.ListIterator;
 
 import ch.specchio.client.SPECCHIOClient;
@@ -22,12 +24,14 @@ public class MDE_Controller {
 	SPECCHIOClient specchio_client;
 	MDE_Form form;
 	MD_FormDescriptor form_descriptor;
+	Hashtable<Integer, attribute> attributes;
 	
 	
 	public MDE_Controller(SPECCHIOClient specchio_client) throws SPECCHIOClientException
 	{
 		this.form_factory = new MDE_FormFactory(specchio_client);
 		this.specchio_client = specchio_client;
+		this.attributes = specchio_client.getAttributesIdHash();
 		set_form_descriptor(this.form_factory.getDefaultFormDescriptor());
 	}
 	
@@ -79,20 +83,28 @@ public class MDE_Controller {
 			form = form_factory.getForm(form_descriptor);
 			form.set_spectrum_ids(ids);
 			
-			// get metadata for the first spectrum
-			// the decision if it can be displayed is based on the conflict detection
+			// need to get the first spectrum so that we can display non-conflicting values
+			Spectrum s = specchio_client.getSpectrum(ids.get(0), false);
 
-			// get spectrum metadata and eav metadata
-			Spectrum s;
-			s = specchio_client.getSpectrum(ids.get(0), false);
-				
-			eav_md = s.getEavMetadata();
-
-			// deal with EAV
+			// add EAV parameters including their conflict status
 			ConflictTable eav_conflict_stati = specchio_client.getEavMetadataConflicts(ids);
-
-			// add parameters including their conflict status
-			form.addEavParametersIntoExistingContainers(eav_md, eav_conflict_stati);
+			Enumeration<String> conflicts = eav_conflict_stati.conflicts();
+			while (conflicts.hasMoreElements()) {
+				try {
+					int attribute_id = Integer.parseInt(conflicts.nextElement());
+					MetaParameter mp = s.getMetadata().get_entry(attribute_id);
+					if (mp == null) {
+						// the first spectrum doesn't have this metadata, so it must be in conflict and we can use an empty metaparameter
+						mp = MetaParameter.newInstance(attributes.get(attribute_id));
+						mp.setEavId(eav_conflict_stati.get(attribute_id).eavIds().nextElement());
+					}
+					form.addEavParameterIntoExistingContainer(mp, eav_conflict_stati.get(attribute_id));
+				}
+				catch (NumberFormatException ex) {
+					// the server returned a non-numeric attribute id
+					throw new SPECCHIOClientException(ex);
+				}
+			}
 
 			ConflictTable spectrum_md_conflict_stati = specchio_client.getMetadataConflicts(ids, Spectrum.METADATA_FIELDS);
 
