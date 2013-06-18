@@ -5,13 +5,14 @@
 <html>
   <head>
     	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    	<title>SPECCHIO V3 Alpha Downloads</title>
+    	<title>SPECCHIO V3 Beta Downloads</title>
   </head>
   <body>
-    <h1>SPECCHIO V3 Alpha Downloads</h1>
+    <h1>SPECCHIO V3 Beta Downloads</h1>
     <ul>
-    	<li><a href="specchio-client.zip">SPECCHIO V3 client software</a></li>
+    	<li><a href="specchio-client-installer.jar">SPECCHIO V3 client software</a></li>
     	<li><a href="specchio-client-installation.pdf">Installation instructions</a></li>
+    	<li><a href="specchio-client-userguide.pdf">User guide (draft)</a></li>
     </ul>
   </body>
 </html> 
