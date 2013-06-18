@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JPanel;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.plots.GonioPosition;
 import ch.specchio.plots.GonioSamplingPoints;
@@ -126,22 +127,16 @@ public class SamplingPoints2DPlot  extends JPanel{
 	
 	
 	
-	public SamplingPoints2DPlot(SpectralSpace space, int x_size, int y_size, SPECCHIOClient specchio_client)
+	public SamplingPoints2DPlot(SpectralSpace space, int x_size, int y_size, SPECCHIOClient specchio_client) throws SPECCHIOClientException
 	{
 		this.space = space;
 		
 		cv = new ChartView();
 		cv.setPreferredSize(x_size, y_size);
 		
-		try {
-			sampling_points = specchio_client.getSensorSamplingGeometry(space);			
-			plot();
-			this.highlight(selected_point);			
-		} catch (SPECCHIOWebClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+		sampling_points = specchio_client.getSensorSamplingGeometry(space);			
+		plot();
+		this.highlight(selected_point);
 
 	}
 	

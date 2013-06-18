@@ -12,6 +12,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.gui.GridbagLayouter;
 import ch.specchio.gui.ProgressReport;
 import ch.specchio.plots.PlotsCallback;
@@ -38,7 +39,7 @@ public class SingleHemisphereExplorer extends JPanel implements ChangeListener, 
 	
 	ProgressReport pr;
 	
-	public SingleHemisphereExplorer(SpectralSpace space, ProgressReport pr, SPECCHIOClient specchio_client)
+	public SingleHemisphereExplorer(SpectralSpace space, ProgressReport pr, SPECCHIOClient specchio_client) throws SPECCHIOClientException
 	{
 		this.space = space;
 		this.pr = pr;

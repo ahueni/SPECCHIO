@@ -481,22 +481,51 @@ public class SpaceFactory extends SPECCHIOFactory {
 		try {
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
+			String query;
+			
+			// get attribute identifiers for sensor zenith and sensor azimuth
+			int zenith_id = getAttributes().get_attribute_id("Sensor Zenith");
+			int azimuth_id = getAttributes().get_attribute_id("Sensor Azimuth");
+			if (zenith_id == 0 || azimuth_id == 0) {
+				// database does not support these attributes
+				throw new SPECCHIOFactoryException("The sensor zenith and azimuth attributes are not available.");
+			}
 			
 
-			ArrayList<Integer> spectrum_ids;
-			spectrum_ids = space.getSpectrumIds();
-//			String query = "SELECT sensor_zenith, sensor_azimuth from sampling_geometry where sampling_geometry_id in (" +
-//				"select sampling_geometry_id from spectrum where spectrum_id in (" + 
-//				SQL.conc_ids(spectrum_ids) + ") order by date)";						
+			// create a temporary table with one row for each spectrum
+			String tempname = SQL.prefix(getTempDatabaseName(), "sampling_geometry_" + getDatabaseUserName());
+			query = "create temporary table if not exists " + tempname + " (" +
+						"spectrum_id INT(10) PRIMARY KEY NOT NULL, " +
+						"zenith DOUBLE, " +
+						"azimuth DOUBLE " +
+					")";
+			stmt.executeUpdate(query);
+			query = "delete from " + tempname;
+			stmt.executeUpdate(query);
+			query = "insert into " + tempname + "(spectrum_id, zenith, azimuth) values(" +
+						"?, " +
+						"(select double_val from spectrum_x_eav, eav where " +
+							"spectrum_x_eav.spectrum_id=? and " +
+							"spectrum_x_eav.eav_id=eav.eav_id and " +
+							"eav.attribute_id=" + Integer.toString(zenith_id) +
+						"), " +
+						"(select double_val from spectrum_x_eav, eav where " +
+							"spectrum_x_eav.spectrum_id=? and " +
+							"spectrum_x_eav.eav_id=eav.eav_id and " +
+							"eav.attribute_id=" + Integer.toString(azimuth_id) +
+						")" +
+					")";
+			PreparedStatement pstmt = SQL.prepareStatement(query);
+			for (Integer spectrum_id : space.getSpectrumIds()) {
+				pstmt.setInt(1, spectrum_id);
+				pstmt.setInt(2, spectrum_id);
+				pstmt.setInt(3, spectrum_id);
+				pstmt.executeUpdate();
+			}
+			pstmt.close();
 			
-			String query = "select sxe_zen.spectrum_id, zen.double_val, az.double_val from " +
-			"spectrum_x_eav sxe_zen, spectrum_x_eav sxe_az, eav zen, eav az " +
-			"where sxe_zen.spectrum_id in (" + 	SQL.conc_ids(spectrum_ids) + ") " + 
-			"and sxe_az.spectrum_id = sxe_zen.spectrum_id and zen.eav_id = sxe_zen.eav_id and " +
-			"zen.attribute_id = (select attribute_id from attribute where name = 'Sensor Zenith') and " +
-			"az.eav_id = sxe_az.eav_id and az.attribute_id = (select attribute_id from attribute where " +
-			"name = 'Sensor Azimuth') order by sxe_zen.spectrum_id";
-			
+			// build the list of sensor angles from the temporary table
+			query = "select spectrum_id, zenith, azimuth from " + tempname;
 			ResultSet rs = stmt.executeQuery(query);
 			int s = 0;
 			while (rs.next()) 
@@ -511,10 +540,6 @@ public class SpaceFactory extends SPECCHIOFactory {
 								
 				double x = Math.sin(alpha)*Math.cos(beta);
 				double y = Math.cos(alpha)*Math.cos(beta);
-				
-//				ChartPoint3D point = new ChartPoint3D();
-//				point.setLocation(x, y);
-//				sampling_points.setPoint(s, point);
 					
 				sampling_points.setAngle(s, new GonioPosition(sensor_azimuth, sensor_zenith, x, y));
 					
@@ -522,7 +547,11 @@ public class SpaceFactory extends SPECCHIOFactory {
 				sampling_points.setSpectrumId(s, spectrum_id);
 					
 				s++;
-			}	
+			}
+			rs.close();
+			
+			// clean up
+			stmt.close();
 
 		} catch (SQLException ex) {
 			// database error

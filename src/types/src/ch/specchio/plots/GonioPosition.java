@@ -1,13 +1,17 @@
 package ch.specchio.plots;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name="gonio_position")
 public class GonioPosition {
 	
-	public Double azimuth;
-	public Double zenith;
+	@XmlElement(name="azimuth") public double azimuth;
+	@XmlElement(name="zenith") public double zenith;
 	
-	public Double x;
-	public Double y;
-	public Double z;
+	@XmlElement(name="x") public double x;
+	@XmlElement(name="y") public double y;
+	@XmlElement(name="z") public double z;
 	
 	public GonioPosition()
 	{
