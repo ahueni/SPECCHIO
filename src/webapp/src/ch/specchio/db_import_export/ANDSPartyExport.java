@@ -9,6 +9,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
 import au.ands.org.researchdata.RDACollectionDescriptor;
+import ch.specchio.factories.MetadataFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpecchioCampaignFactory;
 import ch.specchio.factories.UserFactory;
@@ -28,6 +29,7 @@ import ch.specchio.model.RelatedInfo;
 import ch.specchio.model.RelatedObject;
 import ch.specchio.model.Relation;
 import ch.specchio.model.Subject;
+import ch.specchio.services.BadRequestException;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.User;
 
@@ -36,17 +38,20 @@ public class ANDSPartyExport {
 	private static final String ANDS_PARTY_FILE_NAME_PREFIX = "spectral-party-";
 	private static final String XML_FILE_POSTFIX = ".xml";
 	private static final String PARTY_PREFIX = "uow.edu.au/PTY/SL/";
+	private static final String COLLECTION_PREFIX = "uow.edu.au/SL/COL/";
 	
 	private UserFactory userFactory;
 	private SpecchioCampaignFactory specchioCampaignFactory;
 	private String andsXMLFileLocation;
+	private MetadataFactory metadataFactory;
 //	private String ANDSPartyFileNameDirString;
 	private File andsPartyFile;
 //	private FileReader andsFileReader;
 	
 	public void initialize( String dbUser, String dbPassword, String _andsXMLFileLocation) {
 		try {
-			userFactory = new UserFactory( dbUser, dbPassword);  
+			userFactory = new UserFactory( dbUser, dbPassword);
+			metadataFactory = new MetadataFactory(dbUser, dbPassword);
 			specchioCampaignFactory = new SpecchioCampaignFactory(dbUser, dbPassword);
 			andsXMLFileLocation = _andsXMLFileLocation;
 			//setANDSPartyFilenameDir( andsXMLFileLocation);
@@ -89,13 +94,24 @@ public class ANDSPartyExport {
 	
 	public void exportPartyXML( RDACollectionDescriptor rdaCollectionDescriptor)
 	{
+		String errorString = new String("");
 		try {
-System.out.println("###############################################################The exportPartyXML() ");
+//System.out.println("###############################################################The exportPartyXML() ");
 //			User user = userFactory.getUser("sdb_admin");
 			User userSpecchio = userFactory.getUser(rdaCollectionDescriptor.getPrincipalInvestigator().getUsername());
 			RegistryObject ro = new RegistryObject();
-			ro.setGroup(userSpecchio.getInstitute().getInstituteName());
-			ro.setKey(userSpecchio.getExternalId());
+			if(userSpecchio.getInstitute() != null && userSpecchio.getInstitute().getInstituteName() != null && userSpecchio.getInstitute().getInstituteName().length() > 0)
+			{
+				ro.setGroup(userSpecchio.getInstitute().getInstituteName());
+			}
+			if( userSpecchio.getExternalId() != null )
+			{
+				ro.setKey(userSpecchio.getExternalId());
+			}
+			else
+			{
+				errorString += "ERROR: party id MUST be provided!!!";
+			}
 			ro.setOriginatingSource("http://researchdata.ands.org.au/registry/orca/register_my_data");
 			ArrayList<RegistryObject> registryObjectList = new ArrayList<RegistryObject>();
 			registryObjectList.add(ro);
@@ -103,35 +119,75 @@ System.out.println("############################################################
 			ros.setRegistryObjectList(registryObjectList);
 			Name name = new Name();
 			name.setType("primary");
-			NamePart namePart = new NamePart();
-			namePart.setType("family");
-			namePart.setValue(userSpecchio.getLastName());
-			NamePart namePart1 = new NamePart();
-			namePart1.setType("given");
-			namePart1.setValue(userSpecchio.getFirstName());
 			ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
-			namePartList.add(namePart);
-			namePartList.add(namePart1);
-			name.setNamePartList(namePartList);
+			if(userSpecchio.getLastName() != null && userSpecchio.getLastName().length() > 0)
+			{
+				NamePart familyNamePart = new NamePart();
+				familyNamePart.setType("family");
+				familyNamePart.setValue(userSpecchio.getLastName());
+				namePartList.add(familyNamePart);
+			}
+			if(userSpecchio.getFirstName() != null && userSpecchio.getFirstName().length() > 0)
+			{
+				NamePart givenNamePart = new NamePart();
+				givenNamePart.setType("given");
+				givenNamePart.setValue(userSpecchio.getFirstName());
+				namePartList.add(givenNamePart);
+			}
+			if(namePartList.size() > 0)
+			{
+				name.setNamePartList(namePartList);
+			}
+
 			Location location = new Location();
 			Address address = new Address();
-			ElectronicAddress electronicAddress = new ElectronicAddress();
-			electronicAddress.setType("email");
-			electronicAddress.setValue(userSpecchio.getEmailAddress());
-			address.setElectronicAddress(electronicAddress);
-			PhysicalAddress physicalAddress = new PhysicalAddress();
-			physicalAddress.setType("streetAddress");
-			AddressPart addressPart = new AddressPart();
-			addressPart.setType("text");
-			addressPart.setValue(userSpecchio.getInstitute().getDepartment() + " " + userSpecchio.getInstitute().getInstituteName());
-			physicalAddress.setAddressPart(addressPart);
-			address.setPhysicalAddress(physicalAddress);
+			boolean emailAddressBoolean = false;
+			boolean physicalAddressBoolean = false;
+			if( userSpecchio.getEmailAddress() != null && userSpecchio.getEmailAddress().length() > 0)
+			{
+				ElectronicAddress electronicAddress = new ElectronicAddress();
+				electronicAddress.setType("email");
+				electronicAddress.setValue(userSpecchio.getEmailAddress());
+				address.setElectronicAddress(electronicAddress);
+				emailAddressBoolean = true;
+			}
+			if( (userSpecchio.getInstitute() != null 
+					&& ( userSpecchio.getInstitute().getDepartment() != null && userSpecchio.getInstitute().getDepartment().length() > 0)
+						||  (userSpecchio.getInstitute().getInstituteName() != null && userSpecchio.getInstitute().getInstituteName().length() > 0)))
+			{
+				PhysicalAddress physicalAddress = new PhysicalAddress();
+				physicalAddress.setType("streetAddress");
+				AddressPart addressPart = new AddressPart();
+				addressPart.setType("text");
+				String addressString = "";
+				if( userSpecchio.getInstitute().getDepartment() != null)
+				{
+					addressString += userSpecchio.getInstitute().getDepartment();
+					addressString += " ";
+				}
+				if( userSpecchio.getInstitute().getInstituteName() != null)
+				{
+					addressString += userSpecchio.getInstitute().getInstituteName();
+				}
+				addressPart.setValue(addressString);
+				physicalAddress.setAddressPart(addressPart);
+				address.setPhysicalAddress(physicalAddress);
+				physicalAddressBoolean = true;
+			}
+
 			location.setAddress(address);
 			Party party = new Party();
 			party.setType("person");
 			party.setDateModified(new Date());
-			party.setName(name);
-			party.setLocation(location);
+			if( namePartList.size() > 0 )
+			{
+				party.setName(name);
+			}
+			if(physicalAddressBoolean || emailAddressBoolean)
+			{
+				party.setLocation(location);
+			}
+			
 			Relation relation = new Relation();
 			relation.setType("isCollectorOf");
 			Campaign [] campaigns = specchioCampaignFactory.getCampaigns();
@@ -139,50 +195,63 @@ System.out.println("############################################################
 			relation.setDescription(campaign.getDescription());
 //			relation.setDescription("Leaf spectral reflectance of seven Australian native vegetation species");
 			RelatedObject relatedObject = new RelatedObject();
-			relatedObject.setKey("uow.edu.au/SL/COL/01");
+			relatedObject.setKey(COLLECTION_PREFIX + campaigns[0].getId());
 			relatedObject.setRelation(relation);
 			party.setRelatedObject(relatedObject);
+			int spectrumId = -1;
+			if( rdaCollectionDescriptor.getSpectrumIds().length > 0)
+			{
+				int [] spectrumIds = rdaCollectionDescriptor.getSpectrumIds();
+				for (int i=0; i < spectrumIds.length; i++)
+				{
+					System.out.println("spectrumIds is: " + spectrumIds[i]);
+					spectrumId = spectrumIds[i];
+				}
+			}
 			ArrayList<Subject> subjectList = new ArrayList<Subject>();
-			Subject subject1 = new Subject();
-			subject1.setType("anzsrc-for");
-			subject1.setValue("0501");
-			subjectList.add(subject1);
-			Subject subject2 = new Subject();
-			subject2.setType("local");
-			subject2.setValue("eucalyptus");
-			subjectList.add(subject2);
-			Subject subject3 = new Subject();
-			subject3.setType("local");
-			subject3.setValue("vegetation");
-			subjectList.add(subject3);
-			Subject subject4 = new Subject();
-			subject4.setType("local");
-			subject4.setValue("hyperspectral");
-			subjectList.add(subject4);
-			Subject subject5 = new Subject();
-			subject5.setType("local");
-			subject5.setValue("remote sensing");
-			subjectList.add(subject5);
-			party.setSubjectList(subjectList);
-			Description description = new Description();
-			description.setType("brief");
-			description.setValue("&lt;p class=\"p1\"&gt; Xiao Shang is currently undertaking his PhD at the University of Wollongong under the supervision of Dr. Laurie Chisholm. His research is in the field of conservation biology and environmental management. Xiao&amp;#39;s thesis title is &amp;quot;Discrimination of Australian native vegetation species using hyper-spectral remote sensing and object-oriented analysis, Beecroft Peninsula, Jervis Bay&amp;quot;.&lt;/p&gt;");
-			party.setDescription(description);
+			boolean addForCodeBoolean = false;
+			Subject forCodeSubject = new Subject();
+			try {
+				forCodeSubject.setType("anzsrc-for");
+				forCodeSubject.setValue( metadataFactory.getTaxonomyObject(((Long) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("FOR Code").getValue()).intValue()).getCode() );
+				addForCodeBoolean = true;
+			} catch (Exception e) {
+				// don't do anything its not a mandatory field
+			}
+			if (addForCodeBoolean && forCodeSubject.getValue() != null && forCodeSubject.getValue().length() > 0)
+			{
+				subjectList.add(forCodeSubject);
+				party.setSubjectList(subjectList);
+			}
+
+//			Description description = new Description();
+//			description.setType("brief");
+//			description.setValue("&lt;p class=\"p1\"&gt; Xiao Shang is currently undertaking his PhD at the University of Wollongong under the supervision of Dr. Laurie Chisholm. His research is in the field of conservation biology and environmental management. Xiao&amp;#39;s thesis title is &amp;quot;Discrimination of Australian native vegetation species using hyper-spectral remote sensing and object-oriented analysis, Beecroft Peninsula, Jervis Bay&amp;quot;.&lt;/p&gt;");
+//			party.setDescription(description);
 			ArrayList<RelatedInfo> relatedInfoList = new ArrayList<RelatedInfo>();
-			Identifier identifier1 = new Identifier();
-			identifier1.setType("local");
-			identifier1.setValue("Shang, X. Chisholm LA, Datt B 2011 'Assessment of multiple approaches to forest vegetation classification', in Proceedings of IAG, University of Wollongong, Wollongong");
-			RelatedInfo relatedInfo1 = new RelatedInfo();
-			relatedInfo1.setType("publication");
-			relatedInfo1.setIdentifier(identifier1);
-			relatedInfoList.add(relatedInfo1);
-			Identifier identifier2 = new Identifier();
-			identifier2.setType("local");
-			identifier2.setValue("Shang, X. Chisholm LA, Datt B 2011 'Classification of vegetation species at leaf level using hyperspectral reflectance data and SVM', paper presented at the 34th ISRSE, Sydney");
-			RelatedInfo relatedInfo2 = new RelatedInfo();
-			relatedInfo2.setIdentifier(identifier2);
-			relatedInfoList.add(relatedInfo2);
-			party.setRelatedInfoList(relatedInfoList);
+//			Identifier identifierLocalPublication = new Identifier();
+//			identifierLocalPublication.setType("local");
+//			identifierLocalPublication.setValue("Shang, X. Chisholm LA, Datt B 2011 'Assessment of multiple approaches to forest vegetation classification', in Proceedings of IAG, University of Wollongong, Wollongong");
+//			RelatedInfo relatedInfoPublication = new RelatedInfo();
+//			relatedInfoPublication.setType("publication");
+//			relatedInfoPublication.setIdentifier(identifierLocalPublication);
+//			relatedInfoList.add(relatedInfoPublication);
+			Identifier identifierPublication = new Identifier();
+			boolean addIdentifier2Boolean = true;
+			try {
+				identifierPublication.setType("local");
+				identifierPublication.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Publication").getValue() );
+				RelatedInfo relatedInfo2 = new RelatedInfo();
+				relatedInfo2.setIdentifier(identifierPublication);
+				relatedInfoList.add(relatedInfo2);
+			} catch (Exception e) {
+				addIdentifier2Boolean = false;
+			}
+			if (addIdentifier2Boolean && identifierPublication.getValue() != null && identifierPublication.getValue().length() > 0) 
+			{
+				party.setRelatedInfoList(relatedInfoList);	
+			}
+			
 			ro.setParty(party);
 
 			
@@ -209,6 +278,8 @@ System.out.println("############################################################
 //		      System.out.println("RegistryObject -> key: " + registryObject.getKey() + " originating source "
 //		          + registryObject.getOriginatingSource());
 //		    }
+		    
+		    checkErrorString(errorString);
 		  
 			
 		} catch (SPECCHIOFactoryException e) {
@@ -222,5 +293,11 @@ System.out.println("############################################################
 			e.printStackTrace();
 		}
 	}
+	
+    void checkErrorString(String errorString)
+    {
+        if (errorString.length() > 0)
+            throw new BadRequestException(errorString);
+    }
 
 }
