@@ -319,6 +319,7 @@ public class DataCache {
 			Integer sensor_id;
 			try {
 				sensor_id = this.get_sensor_id_for_file(spec_file, spec_no);
+				System.out.println("got sensor id " + sensor_id);
 
 				if(sensor_id != 0)
 				{					
@@ -574,6 +575,8 @@ public class DataCache {
 	// or 'null' if sensor could not be found in the database
 	public Integer get_sensor_id_for_file(SpectralFile spec_file, int spec_no) throws SQLException {
 		Integer sensor_id = 0;
+		
+		System.out.print("get_sensor_id_for_file() " + spec_file.getCompany() + " " + spec_file.getInstrumentTypeNumber() + " " + spec_file.getInstrumentNumber());
 
 		if (spec_file.getCompany().equals("APOGEE")) {
 			
@@ -601,10 +604,7 @@ public class DataCache {
 
 		// last case: for ASD calibration files where the instrument type number
 		// is set to zero for the *.ILL and *.REF files
-		if (spec_file.getCompany() == null || spec_file.getInstrumentTypeNumber() == -1
-				|| (spec_file.getCompany().equals("ASD") && spec_file.getInstrumentTypeNumber() == 0)) {
-			// try via sensor bank
-			//SensorBank sb = SensorBank.getInstance();
+		if (spec_file.getCompany().equals("ASD") && spec_file.getInstrumentTypeNumber() == 0) {
 			Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)]);
 			if (s == null)
 				return sensor_id; // "null"
