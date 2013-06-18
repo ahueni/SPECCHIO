@@ -409,7 +409,7 @@ public class EAVDBServices extends Thread {
 		stmt.executeUpdate(query);
 		
 		// insert link from image filename to hierarchy
-		query = "insert into eav_x_eav (eav1_id, eav2_id) values (" + String.valueOf(pd.get_metadata().get_entry("frame_filename").getEavId()) + ", " + String.valueOf(pd.get_metadata().get_hierarchy_id()) +")";
+		query = "insert into eav_x_eav (eav1_id, eav2_id) values (" + String.valueOf(pd.get_metadata().get_first_entry("frame_filename").getEavId()) + ", " + String.valueOf(pd.get_metadata().get_hierarchy_id()) +")";
 		stmt.executeUpdate(query);
 		//stmt.execute("UNLOCK TABLES");
 		

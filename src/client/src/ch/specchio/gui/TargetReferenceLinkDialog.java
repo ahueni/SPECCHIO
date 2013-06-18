@@ -1037,7 +1037,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				
 				// build a string representing this spectrum
 				StringBuffer sbuf = new StringBuffer();
-				MetaParameter mp = md.get_entry("File Name");
+				MetaParameter mp = md.get_first_entry("File Name");
 				if (mp != null) {
 					sbuf.append(mp.getValue().toString());
 				}

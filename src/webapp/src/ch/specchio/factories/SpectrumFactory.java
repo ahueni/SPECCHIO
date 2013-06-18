@@ -528,13 +528,13 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			{
 				// set file name and comments from metadata
 				MetaParameter mp;
-				mp = s.getMetadata().get_entry("File Name");
+				mp = s.getMetadata().get_first_entry("File Name");
 				if (mp != null) {
 					MetaDatatype<String> mds = new MetaDatatype<String>("File Name");
 					mds.set_value((String)mp.getValue());
 					s.setFileName(mds);
 				}
-				mp = s.getMetadata().get_entry("File Comments");
+				mp = s.getMetadata().get_first_entry("File Comments");
 				if (mp != null) {
 					MetaDatatype<String> mds = new MetaDatatype<String>("File Comments");
 					mds.set_value((String)mp.getValue());

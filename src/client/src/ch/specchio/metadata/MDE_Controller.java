@@ -3,6 +3,7 @@ package ch.specchio.metadata;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.ListIterator;
 
 import ch.specchio.client.SPECCHIOClient;
@@ -91,14 +92,24 @@ public class MDE_Controller {
 			Enumeration<String> conflicts = eav_conflict_stati.conflicts();
 			while (conflicts.hasMoreElements()) {
 				try {
+					
 					int attribute_id = Integer.parseInt(conflicts.nextElement());
-					MetaParameter mp = s.getMetadata().get_entry(attribute_id);
-					if (mp == null) {
+					List<MetaParameter> mps = s.getMetadata().get_all_entries(attribute_id);
+					if (mps.size() > 0) {
+						
+						// add a field for every instance of this attribute
+						for (MetaParameter mp : mps) {
+							form.addEavParameterIntoExistingContainer(mp, eav_conflict_stati.get(attribute_id));
+						}
+						
+					} else {
+						
 						// the first spectrum doesn't have this metadata, so it must be in conflict and we can use an empty metaparameter
-						mp = MetaParameter.newInstance(attributes.get(attribute_id));
+						MetaParameter mp = MetaParameter.newInstance(attributes.get(attribute_id));
 						mp.setEavId(eav_conflict_stati.get(attribute_id).eavIds().nextElement());
+						form.addEavParameterIntoExistingContainer(mp, eav_conflict_stati.get(attribute_id));
 					}
-					form.addEavParameterIntoExistingContainer(mp, eav_conflict_stati.get(attribute_id));
+					
 				}
 				catch (NumberFormatException ex) {
 					// the server returned a non-numeric attribute id

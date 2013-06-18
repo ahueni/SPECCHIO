@@ -124,7 +124,7 @@ public class Metadata {
 	}
 	
 	
-	public MetaParameter get_entry(String name)
+	public MetaParameter get_first_entry(String name)
 	{
 		
 		MetaParameter mp = null;
@@ -150,7 +150,7 @@ public class Metadata {
 			
 	}
 
-	public MetaParameter get_entry(Integer attribute_id)
+	public MetaParameter get_first_entry(Integer attribute_id)
 	{
 		MetaParameter mp = null;
 		
@@ -176,7 +176,7 @@ public class Metadata {
 	}
 	
 	
-	public MetaParameter get_entry(Integer attribute_id, Integer unit_id)
+	public MetaParameter get_first_entry(Integer attribute_id, Integer unit_id)
 	{
 		MetaParameter mp = null;
 		MetaParameter tmp = null;
@@ -200,7 +200,20 @@ public class Metadata {
 		
 		return mp;
 			
-	}	
+	}
+	
+	public ArrayList<MetaParameter> get_all_entries(Integer attribute_id) {
+		
+		ArrayList<MetaParameter> matches = new ArrayList<MetaParameter>();
+		for (MetaParameter mp : entries) {
+			if (mp.getAttributeId() == attribute_id) {
+				matches.add(mp);
+			}
+		}
+		
+		return matches;
+		
+	}
 	
 	
 	public void add_entry(MetaParameter mp)

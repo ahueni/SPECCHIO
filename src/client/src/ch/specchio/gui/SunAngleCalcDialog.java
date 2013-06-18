@@ -245,11 +245,11 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 					Metadata md = s.getMetadata();
 					
 					// get latitude and longitude
-					MetaSimple latitude = (MetaSimple)md.get_entry("Latitude");
-					MetaSimple longitude = (MetaSimple)md.get_entry("Longitude");
+					MetaSimple latitude = (MetaSimple)md.get_first_entry("Latitude");
+					MetaSimple longitude = (MetaSimple)md.get_first_entry("Longitude");
 					
 					// get acquisition time
-					MetaDate acquisitionTime = (MetaDate)md.get_entry("Acquisition Time");
+					MetaDate acquisitionTime = (MetaDate)md.get_first_entry("Acquisition Time");
 					
 					// calculate angles only if we have a position and acquisition time
 					if (latitude != null && longitude != null && acquisitionTime != null) {
@@ -266,7 +266,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						updateIds.add(id);
 						
 						// update azimuth
-						MetaParameter azimuthParameter = md.get_entry(azimuthAttribute.getId());
+						MetaParameter azimuthParameter = md.get_first_entry(azimuthAttribute.getId());
 						if (azimuthParameter == null) {
 							azimuthParameter = MetaParameter.newInstance(azimuthAttribute);
 						}
@@ -274,7 +274,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						specchioClient.updateEavMetadata(azimuthParameter, updateIds);
 						
 						// update zenith
-						MetaParameter zenithParameter = md.get_entry(zenithAttribute.getId());
+						MetaParameter zenithParameter = md.get_first_entry(zenithAttribute.getId());
 						if (zenithParameter == null) {
 							zenithParameter = MetaParameter.newInstance(zenithAttribute);
 						}

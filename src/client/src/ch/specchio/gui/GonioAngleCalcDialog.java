@@ -341,7 +341,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			
 			// get the spectrum file name
 			if (s != null) {
-				MetaParameter mp = s.getMetadata().get_entry("File Name");
+				MetaParameter mp = s.getMetadata().get_first_entry("File Name");
 				if (mp != null) {
 					sbuf.append(mp.valueAsString());
 				}
@@ -695,7 +695,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 						updateIds.add(spectra[i].getSpectrumId());
 						
 						// update azimuth
-						MetaParameter azimuthParameter = md.get_entry(azimuthAttribute.getId());
+						MetaParameter azimuthParameter = md.get_first_entry(azimuthAttribute.getId());
 						if (azimuthParameter == null) {
 							azimuthParameter = MetaParameter.newInstance(azimuthAttribute);
 							md.add_entry(azimuthParameter);
@@ -704,7 +704,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 						specchioClient.updateEavMetadata(azimuthParameter, updateIds);
 						
 						// update zenith
-						MetaParameter zenithParameter = md.get_entry(zenithAttribute.getId());
+						MetaParameter zenithParameter = md.get_first_entry(zenithAttribute.getId());
 						if (zenithParameter == null) {
 							zenithParameter = MetaParameter.newInstance(zenithAttribute);
 							md.add_entry(zenithParameter);

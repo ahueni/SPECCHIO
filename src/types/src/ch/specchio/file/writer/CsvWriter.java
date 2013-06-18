@@ -242,7 +242,7 @@ class CsvHdrWriter extends CsvWriter {
 				writeFieldSeparator();
 				
 				// write the attribute's value
-				MetaParameter mp = s.getMetadata().get_entry(attributeName);
+				MetaParameter mp = s.getMetadata().get_first_entry(attributeName);
 				if (mp != null && mp.getValue() != null) {
 					
 					if (mp instanceof MetaDate) {

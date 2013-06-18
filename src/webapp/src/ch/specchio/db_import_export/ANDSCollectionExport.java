@@ -118,7 +118,7 @@ public class ANDSCollectionExport {
 		for (int spectrumId: spectrumIds)
 		{
 			System.out.println("spectrumIds is: " + spectrumId);
-			fromToDates.add(((java.util.Date) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Acquisition Time").getValue()));
+			fromToDates.add(((java.util.Date) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("Acquisition Time").getValue()));
 		}
 		
 		java.util.Collections.sort(fromToDates);
@@ -192,7 +192,7 @@ public class ANDSCollectionExport {
 			// check if doi has a value and if it does include it in the rif-cs collection file as an identifer
 			String doiIdentifierString = "";
 			try {
-				doiIdentifierString = (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Digital Object Identifier").getValue();
+				doiIdentifierString = (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("Digital Object Identifier").getValue();
 			} catch (Exception e) {
 				// dont do anything, just means no data to retrieve
 			}
@@ -288,7 +288,7 @@ public class ANDSCollectionExport {
 			subjectForCode.setType("anzsrc-for");
 			boolean subjectForCodeBoolean = false;
 			try {
-				subjectForCode.setValue( metadataFactory.getTaxonomyObject(((Long) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("FOR Code").getValue()).intValue()).getCode());
+				subjectForCode.setValue( metadataFactory.getTaxonomyObject(((Long) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("FOR Code").getValue()).intValue()).getCode());
 				subjectForCodeBoolean = true;
 			} catch (Exception e) {
 				// Don't do anything, its not a mandatory field.
@@ -307,7 +307,7 @@ public class ANDSCollectionExport {
 			spatial.setType("text");
 			boolean addSpatialBoolean = false;
 			try {
-				spatial.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Location Name").getValue());
+				spatial.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("Location Name").getValue());
 				addSpatialBoolean = true;
 			} catch (Exception e) {
 				// Don't do anything, its not a mandatory field.
@@ -338,7 +338,7 @@ public class ANDSCollectionExport {
 			identifierLocal.setType("local");
 			boolean identifierLocalBoolean = false;
 			try {
-				identifierLocal.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Publication").getValue() );
+				identifierLocal.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("Publication").getValue() );
 				identifierLocalBoolean = true;
 			} catch ( Exception e) {
 				// Don't do anything, its not a mandatory field.
@@ -360,7 +360,7 @@ public class ANDSCollectionExport {
 			boolean fullCitationBoolean = false;
 //			fullCitation.setValue("Shang, X 2012 Leaf Spectral reflectance of seven Australian native vegetation species. School of Earth and Environmental Sciences, University of Wollongong, Wollongong, N.S.W. http://hdl.handle.net/102.100.100/9338");
 			try {
-				fullCitation.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Citation").getValue());
+				fullCitation.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("Citation").getValue());
 				fullCitationBoolean = true;
 			} catch (Exception e) {
 				// Don't do anything, its not a mandatory field.
@@ -376,7 +376,7 @@ public class ANDSCollectionExport {
 			Rights rights = new Rights();
 			boolean rightsBoolean = false;
 			try {
-				rights.setRightsStatement((String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Data Usage Policy").getValue());
+				rights.setRightsStatement((String) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("Data Usage Policy").getValue());
 				rightsBoolean = true;
 			} catch (Exception e) {
 				// Don't do anything, its not a mandatory field.

@@ -244,7 +244,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			Spectrum s = specchioClient.getSpectrum(id, true);
 			
 			// get the existing capture date
-			MetaDate mpAcquisitionTime = (MetaDate)s.getMetadata().get_entry("Acquisition Time");
+			MetaDate mpAcquisitionTime = (MetaDate)s.getMetadata().get_first_entry("Acquisition Time");
 			if (mpAcquisitionTime != null) {
 				
 				// get a calendar object that represents the capture date

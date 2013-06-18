@@ -213,7 +213,7 @@ public class ANDSPartyExport {
 			Subject forCodeSubject = new Subject();
 			try {
 				forCodeSubject.setType("anzsrc-for");
-				forCodeSubject.setValue( metadataFactory.getTaxonomyObject(((Long) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("FOR Code").getValue()).intValue()).getCode() );
+				forCodeSubject.setValue( metadataFactory.getTaxonomyObject(((Long) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("FOR Code").getValue()).intValue()).getCode() );
 				addForCodeBoolean = true;
 			} catch (Exception e) {
 				// don't do anything its not a mandatory field
@@ -240,7 +240,7 @@ public class ANDSPartyExport {
 			boolean addIdentifier2Boolean = true;
 			try {
 				identifierPublication.setType("local");
-				identifierPublication.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Publication").getValue() );
+				identifierPublication.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_first_entry("Publication").getValue() );
 				RelatedInfo relatedInfo2 = new RelatedInfo();
 				relatedInfo2.setIdentifier(identifierPublication);
 				relatedInfoList.add(relatedInfo2);

@@ -199,7 +199,7 @@ class ENVIHdrWriter extends ENVIWriter {
 		
 		// write spectrum name
 		bw.newLine();
-		MetaParameter mp = s.getMetadata().get_entry("File Name");
+		MetaParameter mp = s.getMetadata().get_first_entry("File Name");
 		if (mp != null && mp.getValue() != null) {
 			bw.write(mp.getValue().toString());
 		}
