@@ -27,8 +27,6 @@ import ch.specchio.model.ElectronicAddress;
 import ch.specchio.model.FullCitation;
 import ch.specchio.model.Identifier;
 import ch.specchio.model.Location;
-import ch.specchio.model.Name;
-import ch.specchio.model.NamePart;
 import ch.specchio.model.PhysicalAddress;
 import ch.specchio.model.RegistryObject;
 import ch.specchio.model.RegistryObjects;
@@ -39,6 +37,7 @@ import ch.specchio.model.Rights;
 import ch.specchio.model.Spatial;
 import ch.specchio.model.Subject;
 import ch.specchio.model.Temporal;
+import ch.specchio.services.BadRequestException;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
@@ -152,12 +151,16 @@ public class ANDSCollectionExport {
 	
 	public String exportCollectionXML(RDACollectionDescriptor rdaCollectionDescriptor) throws MetaParameterFormatException
 	{
+//		String errorString = new String("");
 		try {
 			List<java.util.Date> fromToDateList = obtainFirstLastDates (rdaCollectionDescriptor);
 			
 			User userSpecchio = userFactory.getUser(rdaCollectionDescriptor.getPrincipalInvestigator().getUsername());
 			RegistryObject ro = new RegistryObject();
-			ro.setGroup(userSpecchio.getInstitute().getInstituteName());
+			if(userSpecchio.getInstitute() != null && userSpecchio.getInstitute().getInstituteName() != null && userSpecchio.getInstitute().getInstituteName().length() > 0)
+			{
+				ro.setGroup(userSpecchio.getInstitute().getInstituteName());
+			}
 			String collectionIdString = obtainCollectionIdString(rdaCollectionDescriptor);
 			ro.setKey( collectionIdString);
 			ro.setOriginatingSource("http://researchdata.ands.org.au/registry/orca/register_my_data");
@@ -210,35 +213,60 @@ public class ANDSCollectionExport {
 			dates.setType("dc.dateSubmitted");
 			dates.setDate(date);
 			collection.setDates(dates);
-			Name name = new Name();
-			name.setType("primary");
+//			Name name = new Name();
+//			name.setType("primary");
 //			name.setGiven(userSpecchio.getFirstName());
 //			name.setFamily(userSpecchio.getLastName());
-			NamePart namePart = new NamePart();
-			namePart.setType("primary");
-			namePart.setValue("Leaf spectral reflectance of seven Australian native vegetation species");
-			ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
-			namePartList.add(namePart);
-			name.setNamePartList(namePartList);
-			collection.setName(name);
+//			NamePart namePart = new NamePart();
+//			namePart.setType("primary");
+//			namePart.setValue("Leaf spectral reflectance of seven Australian native vegetation species");
+//			ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
+//			namePartList.add(namePart);
+//			name.setNamePartList(namePartList);
+//			collection.setName(name);
 			Location location = new Location();
 			location.setDateFrom(sdf.format(fromToDateList.get(0)));
 			location.setDateTo(sdf.format(fromToDateList.get(fromToDateList.size()-1)));
 			Address address = new Address();
-			ElectronicAddress electronicAddress = new ElectronicAddress();
-			electronicAddress.setType("email");
-			electronicAddress.setValue(userSpecchio.getEmailAddress());
-			address.setElectronicAddress(electronicAddress);
-			PhysicalAddress physicalAddress = new PhysicalAddress();
-			physicalAddress.setType("streetAddress");
-			AddressPart addressPart = new AddressPart();
-			addressPart.setType("text");
-			addressPart.setValue(userSpecchio.getInstitute().getDepartment() + " " + userSpecchio.getInstitute().getInstituteName());
-			physicalAddress.setAddressPart(addressPart);
-			address.setPhysicalAddress(physicalAddress);
+			boolean emailAddressBoolean = false;
+			boolean physicalAddressBoolean = false;
+			if( userSpecchio.getEmailAddress() != null && userSpecchio.getEmailAddress().length() > 0)
+			{
+				ElectronicAddress electronicAddress = new ElectronicAddress();
+				electronicAddress.setType("email");
+				electronicAddress.setValue(userSpecchio.getEmailAddress());
+				address.setElectronicAddress(electronicAddress);
+				emailAddressBoolean = true;
+			}
+			if( (userSpecchio.getInstitute() != null 
+					&& ( userSpecchio.getInstitute().getDepartment() != null && userSpecchio.getInstitute().getDepartment().length() > 0)
+						||  (userSpecchio.getInstitute().getInstituteName() != null && userSpecchio.getInstitute().getInstituteName().length() > 0)))
+			{
+				PhysicalAddress physicalAddress = new PhysicalAddress();
+				physicalAddress.setType("streetAddress");
+				AddressPart addressPart = new AddressPart();
+				addressPart.setType("text");
+				String addressString = "";
+				if( userSpecchio.getInstitute().getDepartment() != null)
+				{
+					addressString += userSpecchio.getInstitute().getDepartment();
+					addressString += " ";
+				}
+				if( userSpecchio.getInstitute().getInstituteName() != null)
+				{
+					addressString += userSpecchio.getInstitute().getInstituteName();
+				}
+				addressPart.setValue(addressString);
+				physicalAddress.setAddressPart(addressPart);
+				address.setPhysicalAddress(physicalAddress);
+				physicalAddressBoolean = true;
+			}
 			location.setAddress(address);
 
-			collection.setLocation(location);
+			if(physicalAddressBoolean || emailAddressBoolean)
+			{
+				collection.setLocation(location);
+			}
 //			party.setType("person");
 //			party.setDateModified(new Date());
 //			party.setName(name);
@@ -256,34 +284,35 @@ public class ANDSCollectionExport {
 			relatedObjectList.add(relatedObject);
 			collection.setRelatedObjectList(relatedObjectList);
 			ArrayList<Subject> subjectList = new ArrayList<Subject>();
-			Subject subject1 = new Subject();
-			subject1.setType("anzsrc-for");
-			subject1.setValue( metadataFactory.getTaxonomyObject(((Long) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("FOR Code").getValue()).intValue()).getCode());
-			subjectList.add(subject1);
-			Subject subject2 = new Subject();
-			subject2.setType("local");
-			subject2.setValue("eucalyptus");
-			subjectList.add(subject2);
-			Subject subject3 = new Subject();
-			subject3.setType("local");
-			subject3.setValue("vegetation");
-			subjectList.add(subject3);
-			Subject subject4 = new Subject();
-			subject4.setType("local");
-			subject4.setValue("hyperspectral");
-			subjectList.add(subject4);
-			Subject subject5 = new Subject();
-			subject5.setType("local");
-			subject5.setValue("remote sensing");
-			subjectList.add(subject5);
-			collection.setSubjectList(subjectList);
+			Subject subjectForCode = new Subject();
+			subjectForCode.setType("anzsrc-for");
+			boolean subjectForCodeBoolean = false;
+			try {
+				subjectForCode.setValue( metadataFactory.getTaxonomyObject(((Long) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("FOR Code").getValue()).intValue()).getCode());
+				subjectForCodeBoolean = true;
+			} catch (Exception e) {
+				// Don't do anything, its not a mandatory field.
+			}
+			
+			if( subjectForCodeBoolean && subjectForCode.getValue().length() > 0)
+			{
+				subjectList.add(subjectForCode);
+				collection.setSubjectList(subjectList);
+			}
 			Description description = new Description();
 			description.setType("brief");
 			description.setValue("&lt;p class=\"p1\"&gt; Xiao Shang is currently undertaking his PhD at the University of Wollongong under the supervision of Dr. Laurie Chisholm. His research is in the field of conservation biology and environmental management. Xiao&amp;#39;s thesis title is &amp;quot;Discrimination of Australian native vegetation species using hyper-spectral remote sensing and object-oriented analysis, Beecroft Peninsula, Jervis Bay&amp;quot;.&lt;/p&gt;");
 			collection.setDescription(description);
 			Spatial spatial = new Spatial();
 			spatial.setType("text");
-			spatial.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Location Name").getValue());
+			boolean addSpatialBoolean = false;
+			try {
+				spatial.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Location Name").getValue());
+				addSpatialBoolean = true;
+			} catch (Exception e) {
+				// Don't do anything, its not a mandatory field.
+			}
+			
 			Temporal temporal = new Temporal();
 			ArrayList<Date> temporalDateList = new ArrayList<Date>();
 			Date date1 = new Date();
@@ -298,28 +327,65 @@ public class ANDSCollectionExport {
 			temporalDateList.add(date2);
 			temporal.setDateList(temporalDateList);
 			Coverage coverage = new Coverage();
-			coverage.setSpatial(spatial);
+			if (addSpatialBoolean && spatial.getValue().length() > 0)
+			{
+				coverage.setSpatial(spatial);
+			}
 			coverage.setTemporal(temporal);
 			collection.setCoverage(coverage);
 			ArrayList<RelatedInfo> relatedInfoList = new ArrayList<RelatedInfo>();
-			Identifier identifier1 = new Identifier();
-			identifier1.setType("local");
-			identifier1.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Publication").getValue() );
-			RelatedInfo relatedInfo1 = new RelatedInfo();
-			relatedInfo1.setType("publication");
-			relatedInfo1.setIdentifier(identifier1);
-			relatedInfoList.add(relatedInfo1);
-			collection.setRelatedInfoList(relatedInfoList);
+			Identifier identifierLocal = new Identifier();
+			identifierLocal.setType("local");
+			boolean identifierLocalBoolean = false;
+			try {
+				identifierLocal.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Publication").getValue() );
+				identifierLocalBoolean = true;
+			} catch ( Exception e) {
+				// Don't do anything, its not a mandatory field.
+			}
+			
+			RelatedInfo relatedInfoPublication = new RelatedInfo();
+			relatedInfoPublication.setType("publication");
+			if (identifierLocalBoolean && identifierLocal.getValue().length() > 0)
+			{
+				relatedInfoPublication.setIdentifier(identifierLocal);
+				relatedInfoList.add(relatedInfoPublication);
+			}
+			if (relatedInfoList.size() > 0)
+			{
+				collection.setRelatedInfoList(relatedInfoList);
+			}
 			FullCitation fullCitation = new FullCitation();
 			fullCitation.setStyle("Harvard");
+			boolean fullCitationBoolean = false;
 //			fullCitation.setValue("Shang, X 2012 Leaf Spectral reflectance of seven Australian native vegetation species. School of Earth and Environmental Sciences, University of Wollongong, Wollongong, N.S.W. http://hdl.handle.net/102.100.100/9338");
-			fullCitation.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Citation").getValue());
-			CitationInfo citationInfo = new CitationInfo();
-			citationInfo.setFullCitation(fullCitation);
-			collection.setCitationInfo(citationInfo);
+			try {
+				fullCitation.setValue( (String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Citation").getValue());
+				fullCitationBoolean = true;
+			} catch (Exception e) {
+				// Don't do anything, its not a mandatory field.
+			}
+			
+			if(fullCitationBoolean && fullCitation.getValue().length() > 0)
+			{
+				CitationInfo citationInfo = new CitationInfo();
+				citationInfo.setFullCitation(fullCitation);
+				collection.setCitationInfo(citationInfo);
+			}
+
 			Rights rights = new Rights();
-			rights.setRightsStatement((String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Data Usage Policy").getValue());
-			collection.setRights(rights);
+			boolean rightsBoolean = false;
+			try {
+				rights.setRightsStatement((String) metadataFactory.getMetadataForSpectrum(spectrumId).get_entry("Data Usage Policy").getValue());
+				rightsBoolean = true;
+			} catch (Exception e) {
+				// Don't do anything, its not a mandatory field.
+			}
+			if (rightsBoolean && rights.getRightsStatement().length() > 0)
+			{
+				collection.setRights(rights);
+			}
+			
 			ro.setCollection(collection);
 			
 		    // create JAXB context and instantiate marshaller
@@ -346,6 +412,10 @@ public class ANDSCollectionExport {
 //		          + registryObject.getOriginatingSource());
 //		    }
 		    
+//		    errorString += "@@@@@@@@KARL: This is my test \n I want an essay here!!!";
+		    
+//		    checkErrorString(errorString);
+		    
 		    return collectionIdString;
 		  
 			
@@ -357,11 +427,14 @@ public class ANDSCollectionExport {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
+		} 
 	}
+	
+    void checkErrorString(String errorString)
+    {
+        if (errorString.length() > 0)
+            throw new BadRequestException(errorString);
+    }
+
 
 }
