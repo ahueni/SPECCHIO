@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import ch.specchio.constants.Limits;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.eav_db.TableNames;
@@ -597,9 +598,25 @@ public class UserFactory extends SPECCHIOFactory {
 	 * 
 	 * @return the identifier of the new user
 	 * 
+	 * @throws IllegalArgumentException	the user object contains invalid data
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public int insertUser(User user) throws SPECCHIOFactoryException {
+	public int insertUser(User user) throws SPECCHIOFactoryException, IllegalArgumentException {
+		
+		// check that the fields are not too long
+		if (user.getFirstName() == null || user.getFirstName().length() == 0) {
+			throw new IllegalArgumentException("Users must have a first name.");
+		} else if (user.getLastName() == null || user.getLastName().length() == 0) {
+			throw new IllegalArgumentException("Users must have a last name.");
+		} else if (user.getFirstName().length() > Limits.MAX_LEN_NAME || user.getLastName().length() > Limits.MAX_LEN_NAME) {
+			throw new IllegalArgumentException("Names cannot contain more than " + Limits.MAX_LEN_NAME + " characters.");
+		} else if (user.getEmailAddress() ==  null || user.getEmailAddress().length() == 0) {
+			throw new IllegalArgumentException("Users must have an e-mail address.");
+		} else if (user.getEmailAddress().length() > Limits.MAX_LEN_EMAIL) {
+			throw new IllegalArgumentException("E-mail addresses cannot contain more than " + Limits.MAX_LEN_EMAIL + " characters.");
+		} else if (user.getWwwAddress() != null && user.getWwwAddress().length() > Limits.MAX_LEN_WWW) {
+			throw new IllegalArgumentException("WWW address cannot contain more than " + Limits.MAX_LEN_WWW + " characters.");
+		}
 		
 		try {
 			// generate a username and password for the user

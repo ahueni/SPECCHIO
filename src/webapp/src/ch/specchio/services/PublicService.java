@@ -63,20 +63,28 @@ public class PublicService extends SPECCHIOService {
 		
 		// create a user factory to do the work
 		UserFactory factory = new UserFactory();
+		try {
 		
-		// create the account
-		factory.insertUser(user);
-		
-		if (getServerCapability(ResearchDataAustralia.ANDS_SERVER_CAPABILITY) != null) {
-			// make sure the user has an ANDS party identifier
-			if (user.getExternalId() == null || user.getExternalId().length() == 0) {
-				user.setExternalId(ResearchDataAustralia.generatePartyIdentifier(SpectralLibrary.PARTY_ID_PREFIX, user));
-				factory.updateUser(user);
+			// create the account
+			factory.insertUser(user);
+			
+			if (getServerCapability(ResearchDataAustralia.ANDS_SERVER_CAPABILITY) != null) {
+				// make sure the user has an ANDS party identifier
+				if (user.getExternalId() == null || user.getExternalId().length() == 0) {
+					user.setExternalId(ResearchDataAustralia.generatePartyIdentifier(SpectralLibrary.PARTY_ID_PREFIX, user));
+					factory.updateUser(user);
+				}
 			}
+			
 		}
-		
-		// clean up
-		factory.dispose();
+		catch (IllegalArgumentException ex) {
+			// illegal data in the user object
+			throw new BadRequestException(ex);
+		}
+		finally {
+			// clean up
+			factory.dispose();
+		}
 		
 		return user;
 		
