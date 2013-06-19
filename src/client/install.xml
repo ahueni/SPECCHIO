@@ -23,11 +23,18 @@
 	<!-- GUI preferences -->
 	<guiprefs height="480" width="640" resizable="yes" />
 	
+	<!-- resources -->
+	<resources>
+		<res src="macosx/shortcutSpec.xml" id="shortcutSpec.xml" />
+		<res src="win32/shortcutSpec.xml" id="Win_shortcutSpec.xml" />
+	</resources>
+	
 	<!-- installer panels -->
 	<panels>
-		<panel classname="TargetPanel"/>
-		<panel classname="InstallPanel"/>
-		<panel classname="FinishPanel"/>
+		<panel classname="TargetPanel" />
+		<panel classname="InstallPanel" />
+		<panel classname="ShortcutPanel" />
+		<panel classname="FinishPanel" />
 	</panels>
 	
 	<!-- packages to be installed -->
@@ -52,5 +59,11 @@
 		</pack>
 		
 	</packs>
+	
+	<!-- native libraries -->
+	<natives>
+		<native type="izpack" name="ShellLink.dll" />
+		<native type="izpack" name="ShellLink_x64.dll" />
+	</natives>
 
 </installation>
