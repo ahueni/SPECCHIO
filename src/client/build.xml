@@ -67,7 +67,7 @@
     			<include name="**/*" />
     		</fileset>
     	</copy>
-    	<chmod file="${dist.dir}/macosx" perm="755" />
+    	<chmod file="${dist.dir}/macosx/specchio" perm="755" />
     	
     	<!-- copy support files -->
     	<copy file="db_config.txt" todir="${dist.dir}" />
