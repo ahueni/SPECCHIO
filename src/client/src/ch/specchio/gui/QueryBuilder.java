@@ -52,6 +52,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.proc_modules.FileOutputManager;
+import ch.specchio.proc_modules.ModuleException;
 import ch.specchio.proc_modules.RadianceToReflectance;
 import ch.specchio.proc_modules.SpaceProcessingChainComponent;
 import ch.specchio.proc_modules.VisualisationModule;
@@ -729,12 +730,21 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		catch (SPECCHIOClientException ex) {
 	  		ErrorDialog error = new ErrorDialog(
 			    	this,
-		    		"Error",
+		    		"Server error",
 		    		ex.getUserMessage(),
 		    		ex
 			    );
 		  		error.setVisible(true);
 	    }
+	  	catch (ModuleException ex) {
+	  		ErrorDialog error = new ErrorDialog(
+	  				this,
+	  				"Module error",
+	  				ex.getMessage(),
+	  				ex
+	  			);
+	  		error.setVisible(true);
+	  	}
 	  	endOperation();		
 		
 		
@@ -862,7 +872,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	}
 
 	public void lostOwnership(Clipboard arg0, Transferable arg1) {
-		// TODO Auto-generated method stub
+		// ignore
 		
 	}
 

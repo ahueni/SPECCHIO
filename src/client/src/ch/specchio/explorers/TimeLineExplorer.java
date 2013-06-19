@@ -9,6 +9,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.gui.GridbagLayouter;
 import ch.specchio.gui.ProgressReport;
 import ch.specchio.plots.PlotsCallback;
+import ch.specchio.plots.SPECCHIOPlotException;
 import ch.specchio.plots.swing.SpectralLinePlot;
 import ch.specchio.plots.swing.SpectralPlot;
 import ch.specchio.plots.swing.TimelinePlot;
@@ -25,7 +26,7 @@ public class TimeLineExplorer extends JPanel implements PlotsCallback
 	SpectralPlot sp;
 	ProgressReport pr;
 	
-	public TimeLineExplorer(SPECCHIOClient specchio_client , SpectralSpace space, ProgressReport pr) throws SPECCHIOClientException
+	public TimeLineExplorer(SPECCHIOClient specchio_client , SpectralSpace space, ProgressReport pr) throws SPECCHIOClientException, SPECCHIOPlotException
 	{
 		this.space = space;
 		this.pr = pr;

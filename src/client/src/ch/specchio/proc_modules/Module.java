@@ -28,9 +28,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.SpaceTypes;
 import ch.specchio.gui.GridbagLayouter;
 import ch.specchio.gui.ProgressReportInterface;
-import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.spaces.MeasurementUnit;
-import ch.specchio.spaces.RefPanelCalSpace;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpectralSpace;
 
@@ -425,9 +423,17 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 				}
 		  		catch (SPECCHIOClientException ex) {
 					JOptionPane.showMessageDialog(
-			    			SPECCHIOApplication.getInstance().get_frame(),
+			    			owner,
 			    			ex.getMessage(),
-			    			"Error",
+			    			"Server error",
+			    			JOptionPane.ERROR_MESSAGE
+			    		);
+			    }
+				catch (ModuleException ex) {
+					JOptionPane.showMessageDialog(
+			    			owner,
+			    			ex.getMessage(),
+			    			"Module error",
 			    			JOptionPane.ERROR_MESSAGE
 			    		);
 			    }
@@ -500,7 +506,7 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 	}
 	
 	
-	public void process() throws SPECCHIOClientException
+	public void process() throws SPECCHIOClientException, ModuleException
 	{
 		// clear output space
 		for(int i=0;i < output_spaces.size();i++)
@@ -527,7 +533,7 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 	}
 	
 	// the actual transformation
-	abstract public void transform() throws SPECCHIOClientException;
+	abstract public void transform() throws SPECCHIOClientException, ModuleException;
 	
 	abstract public int get_output_space_type();
 	abstract public int get_required_input_space_type();

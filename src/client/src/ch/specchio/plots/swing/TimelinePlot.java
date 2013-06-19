@@ -29,6 +29,7 @@ import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.Crosshair;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.general.SeriesException;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -36,6 +37,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 import ch.specchio.gui.GridbagLayouter;
 import ch.specchio.gui.ProgressReport;
 import ch.specchio.plots.PlotsCallback;
+import ch.specchio.plots.SPECCHIOPlotException;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.MatlabAdaptedArrayList;
 
@@ -70,7 +72,7 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 	
 
 	
-	public TimelinePlot(SpectralSpace space, MatlabAdaptedArrayList<Object> time_vector2, int x_size, int y_size, ProgressReport pr)
+	public TimelinePlot(SpectralSpace space, MatlabAdaptedArrayList<Object> time_vector2, int x_size, int y_size, ProgressReport pr) throws SPECCHIOPlotException
 	{
 		this.space = space;
 		this.time_vector = new Date[time_vector2.size()];
@@ -121,12 +123,18 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 		
 	}
 	
-	public void setup_plot()
+	private void setup_plot() throws SPECCHIOPlotException
 	{
 		
 		pr.set_operation("Setting up plot");		
 		
-		dataset = getDataSet();
+		try {
+			dataset = getDataSet();
+		}
+		catch (SeriesException ex) {
+			// not a valid time series
+			throw new SPECCHIOPlotException("Two spectra with the same timestamp cannot be included on a single plot.", ex);
+		}
 		
 		chart = ChartFactory.createTimeSeriesChart(
 				"Spectral Time Series",  // title
@@ -198,7 +206,7 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 	
 	
 	
-	public TimeSeriesCollection getDataSet()
+	private TimeSeriesCollection getDataSet() throws SeriesException
 	{
 		
 		TimeSeriesCollection dataset = new TimeSeriesCollection();

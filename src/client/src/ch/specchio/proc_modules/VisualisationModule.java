@@ -3,7 +3,6 @@ package ch.specchio.proc_modules;
 
 import java.awt.BorderLayout;
 import java.awt.Frame;
-import java.util.Calendar;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -16,6 +15,7 @@ import ch.specchio.explorers.SingleHemisphereExplorer;
 import ch.specchio.explorers.SpectralMultiPlot;
 import ch.specchio.explorers.TimeLineExplorer;
 import ch.specchio.gui.ProgressReport;
+import ch.specchio.plots.SPECCHIOPlotException;
 import ch.specchio.plots.swing.SamplingPoints2DPlot;
 import ch.specchio.plots.swing.TimelinePlot;
 import ch.specchio.spaces.MeasurementUnit;
@@ -30,7 +30,6 @@ public class VisualisationModule extends Module implements ModuleCallback {
 	
 	public VisualisationModule(Frame owner, SPECCHIOClient specchio_client) {
 		super(owner, specchio_client);
-		// TODO Auto-generated constructor stub
 	}
 	
 
@@ -65,7 +64,7 @@ public class VisualisationModule extends Module implements ModuleCallback {
 	
 	// input space is used for the visualisation
 	// then the transformation is just copying from input to output space 
-	public void transform() throws SPECCHIOClientException 
+	public void transform() throws SPECCHIOClientException, ModuleException
 	{
 		ProgressReport pr = new ProgressReport(vis_module_type, true);
 		pr.setVisible(true);
@@ -74,40 +73,49 @@ public class VisualisationModule extends Module implements ModuleCallback {
 		this.progressBar.setString("Opening " + vis_module_type);
 		set_progress(50);
 		
-		
-		if(this.vis_module_type.equals(VisualisationSelectionDialog.gonio_hem_expl))
-		{
-			vis_panel = new SingleHemisphereExplorer((SpectralSpace)this.get_main_input_space().getSpace(), pr, this.specchio_client);
+		try {
+			if(this.vis_module_type.equals(VisualisationSelectionDialog.gonio_hem_expl))
+			{
+				vis_panel = new SingleHemisphereExplorer((SpectralSpace)this.get_main_input_space().getSpace(), pr, this.specchio_client);
+			}
+			
+			if(this.vis_module_type.equals(VisualisationSelectionDialog.time_line_plot))
+			{
+				SpectralSpace ss = (SpectralSpace)this.get_main_input_space().getSpace();
+				MatlabAdaptedArrayList<Object> time_vector = specchio_client.getMetaparameterValues(ss.getSpectrumIds(), "Acquisition Time");			
+				vis_panel = new TimelinePlot(ss, time_vector, 400, 400, pr);
+			}
+			
+			if(this.vis_module_type.equals(VisualisationSelectionDialog.time_line_expl))
+			{
+				vis_panel = new TimeLineExplorer(specchio_client, (SpectralSpace)this.get_main_input_space().getSpace(), pr);
+			}
+			
+			if(this.vis_module_type.equals(VisualisationSelectionDialog.sampling_points_plot))
+			{
+				vis_panel = new SamplingPoints2DPlot((SpectralSpace)this.get_main_input_space().getSpace(), 400, 400, this.specchio_client);
+			}
+	
+			if(this.vis_module_type.equals(VisualisationSelectionDialog.spectral_multiplot))
+			{
+				vis_panel = new SpectralMultiPlot((SpectralSpace)this.get_main_input_space().getSpace(), pr, 0);			
+			}		
+			
+			if(this.vis_module_type.equals(VisualisationSelectionDialog.spectral_scatter_multiplot))
+			{
+				vis_panel = new SpectralMultiPlot((SpectralSpace)this.get_main_input_space().getSpace(), pr, 1);			
+			}
+			
+			set_progress(100);
+		}
+		catch (SPECCHIOPlotException ex) {
+			// invalid plot data
+			throw new ModuleException(ex);
+		}
+		finally {
+			pr.setVisible(false);
 		}
 		
-		if(this.vis_module_type.equals(VisualisationSelectionDialog.time_line_plot))
-		{
-			SpectralSpace ss = (SpectralSpace)this.get_main_input_space().getSpace();
-			MatlabAdaptedArrayList<Object> time_vector = specchio_client.getMetaparameterValues(ss.getSpectrumIds(), "Acquisition Time");			
-			vis_panel = new TimelinePlot(ss, time_vector, 400, 400, pr);
-		}
-		
-		if(this.vis_module_type.equals(VisualisationSelectionDialog.time_line_expl))
-		{
-			vis_panel = new TimeLineExplorer(specchio_client, (SpectralSpace)this.get_main_input_space().getSpace(), pr);
-		}
-		
-		if(this.vis_module_type.equals(VisualisationSelectionDialog.sampling_points_plot))
-		{
-			vis_panel = new SamplingPoints2DPlot((SpectralSpace)this.get_main_input_space().getSpace(), 400, 400, this.specchio_client);
-		}
-
-		if(this.vis_module_type.equals(VisualisationSelectionDialog.spectral_multiplot))
-		{
-			vis_panel = new SpectralMultiPlot((SpectralSpace)this.get_main_input_space().getSpace(), pr, 0);			
-		}		
-		
-		if(this.vis_module_type.equals(VisualisationSelectionDialog.spectral_scatter_multiplot))
-		{
-			vis_panel = new SpectralMultiPlot((SpectralSpace)this.get_main_input_space().getSpace(), pr, 1);			
-		}		
-		
-		set_progress(100);
 
 		
 		// open new dialog with the visualisation panel added
@@ -120,12 +128,10 @@ public class VisualisationModule extends Module implements ModuleCallback {
 			frame.setVisible(true);
 		}
 		
-		pr.setVisible(false);
-		
 	}
 	
 	
-	public void process() throws SPECCHIOClientException
+	public void process() throws SPECCHIOClientException, ModuleException
 	{
 		progressBar.setString(null);
 		
