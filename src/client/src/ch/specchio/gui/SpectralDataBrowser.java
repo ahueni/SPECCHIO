@@ -64,7 +64,11 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 		// build GUI (without the tree)
 		
 		// create panel for level selection and for tree
-		tree_scroll_pane = new JScrollPane();
+		tree = new JTree();
+		tree.addTreeWillExpandListener(this);
+		tree.addTreeExpansionListener(this);		
+		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+		tree_scroll_pane = new JScrollPane(tree);
 				
 		panel = new JPanel();		
 		order_by_box = new JComboBox();
@@ -101,8 +105,10 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 	
 	public void set_view_restriction(boolean restrict_to_view) throws SPECCHIOClientException
 	{
-		this.restrict_to_view = restrict_to_view;
-		build_tree();
+		if (this.restrict_to_view != restrict_to_view) {
+			this.restrict_to_view = restrict_to_view;
+			build_tree();
+		}
 	}
 	
 	public void build_tree(int campaign_id) throws SPECCHIOClientException
@@ -122,19 +128,11 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 	void build_tree(spectral_node_object node)
 	{
 		root = new SpectralDataBrowserNode(this, node);	
-		// create tree using the above node as top node
-		tree = new JTree();	
 				
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		root.setTree(model);
 		root.defineChildNodes();
 		tree.setModel(model);
-	
-		tree.addTreeWillExpandListener(this);
-		tree.addTreeExpansionListener(this);
-		tree_scroll_pane.getViewport().add(tree);
-		
-		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 		
 	}
 

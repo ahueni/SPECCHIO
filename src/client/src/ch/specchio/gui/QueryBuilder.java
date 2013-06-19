@@ -852,12 +852,9 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	public void stateChanged(ChangeEvent e) {
 		try {
 			sdb.set_view_restriction(show_only_my_data.isSelected());
-		
-			// add tree listener
-			sdb.tree.addTreeSelectionListener(this);
 			
-			// changing the view restriction removes the selection, so disable the buttons
-			setButtonsEnabled(false);
+			// changing the view restriction may remove the selection, so update the button state
+			setButtonsEnabled(sdb.get_selected_node() != null);
 		}
   		catch (SPECCHIOClientException ex) {
 	  		ErrorDialog error = new ErrorDialog(
