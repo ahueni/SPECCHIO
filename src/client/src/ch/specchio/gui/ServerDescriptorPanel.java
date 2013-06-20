@@ -312,11 +312,11 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 		try {
 			port = getPortNumber();
 			if (port == 0)
-				port = 8181;
+				port = 443;
 		}
 		catch (NumberFormatException ex) {
 			// use the default port number
-			port = 8181;
+			port = 443;
 		}
 		
 		if (!isAnonymous()) {
