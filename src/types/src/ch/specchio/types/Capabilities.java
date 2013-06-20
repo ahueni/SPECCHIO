@@ -3,6 +3,9 @@ package ch.specchio.types;
 import java.util.Hashtable;
 
 import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import ch.specchio.jaxb.XmlMapAdapter;
 
 /**
  * Server capabilities descriptor
@@ -31,6 +34,7 @@ public class Capabilities {
 	
 	
 	@XmlElement(name="table")
+	@XmlJavaTypeAdapter(XmlMapAdapter.class)
 	public Hashtable<String, String> getTable() { return this.table; }
 	public void setTable(Hashtable<String, String> table) { this.table = table; }
 	

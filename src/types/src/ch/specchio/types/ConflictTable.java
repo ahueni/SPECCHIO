@@ -4,12 +4,16 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import ch.specchio.jaxb.XmlMapAdapter;
 
 /**
  * This class represents a table of metadata conflicts. It is basically
  * a wrapper around Hashtable<String, ConflictInfo>.
  */
 @XmlRootElement(name="conflict_table")
+@XmlSeeAlso(ConflictInfo.class)
 public class ConflictTable {
 	
 	/** mapping of field names and attribute ids to conflict information structures */
@@ -19,6 +23,7 @@ public class ConflictTable {
 	
 	
 	@XmlElement(name="table")
+	@XmlJavaTypeAdapter(XmlMapAdapter.class) 
 	public Hashtable<String, ConflictInfo> getHashtable() { return this.table; }
 	public void setHashtable(Hashtable<String, ConflictInfo> table) { this.table = table; }
 	

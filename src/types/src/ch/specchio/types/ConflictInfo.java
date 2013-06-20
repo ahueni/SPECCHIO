@@ -4,11 +4,15 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import ch.specchio.jaxb.XmlMapAdapter;
 
 @XmlRootElement(name="conflict_info")
+@XmlSeeAlso(ConflictStruct.class)
 public class ConflictInfo {
 	
-	Hashtable<Integer, ConflictStruct> conflict_structs = new Hashtable<Integer, ConflictStruct>();
+	private Hashtable<Integer, ConflictStruct> conflict_structs = new Hashtable<Integer, ConflictStruct>();
 	
 	public ConflictInfo()
 	{
@@ -49,6 +53,7 @@ public class ConflictInfo {
 	}
 
 	@XmlElement(name="conflict_structs")
+	@XmlJavaTypeAdapter(XmlMapAdapter.class) 
 	public Hashtable<Integer, ConflictStruct> getConflictStructs() { return this.conflict_structs; }
 	public void setConflictStructs(Hashtable<Integer, ConflictStruct> conflict_structs) { this.conflict_structs = conflict_structs; }
 

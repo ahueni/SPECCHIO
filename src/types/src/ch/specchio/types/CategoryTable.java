@@ -4,6 +4,9 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import ch.specchio.jaxb.XmlMapAdapter;
 
 /**
  * This class represents a table of metadata categories. It is basically
@@ -23,6 +26,7 @@ public class CategoryTable {
 	}
 	
 	@XmlElement(name="table")
+	@XmlJavaTypeAdapter(XmlMapAdapter.class)
 	public Hashtable<Integer, String> getHashtable() { return this.table; }
 	public void setHashtable(Hashtable<Integer, String> table) { this.table = table; }
 	

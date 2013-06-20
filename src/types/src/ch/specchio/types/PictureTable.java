@@ -4,6 +4,9 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import ch.specchio.jaxb.XmlMapAdapter;
 
 /**
  * This class represents a table of picture data.
@@ -21,6 +24,7 @@ public class PictureTable {
 	}
 	
 	@XmlElement(name="pictures")
+	@XmlJavaTypeAdapter(XmlMapAdapter.class)
 	public Hashtable<Integer, Picture> getPictures() { return this.pictures; }
 	public void setPictures(Hashtable<Integer, Picture> pictures) { this.pictures = pictures; }
 
