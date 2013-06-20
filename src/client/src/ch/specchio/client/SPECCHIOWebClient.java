@@ -257,7 +257,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Delete an instrument from the database.
 	 * 
 	 * @param instrument_id	the instrument identifier
-	 * @throws SPECCHIOWeÄbClientException 
+	 * 
+	 * @throws SPECCHIOWebClientException 
 	 */
 	public void deleteInstrument(int instrument_id) throws SPECCHIOWebClientException {
 		
