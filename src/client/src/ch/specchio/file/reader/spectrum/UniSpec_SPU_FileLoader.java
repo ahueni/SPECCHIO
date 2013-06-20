@@ -329,10 +329,10 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 		Double pos = null;
 		
 		// variations of strings:
-		// 51.100191°  N
-		// 50° 54.19333' N 	
+		// 51.100191  N
+		// 50 54.19333' N 	
 		
-		// case 1: 50° 54.19333'
+		// case 1: 50 54.19333'
 		if(string.contains("'"))
 		{
 			String[] tokens = string.split(" ");
@@ -346,7 +346,7 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 		}
 		else
 		{
-			// 51.100191°  N
+			// 51.100191  N
 			
 			String tmp = string.substring(0, string.length()-4);				
 			pos = Double.valueOf(tmp);

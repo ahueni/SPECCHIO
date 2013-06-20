@@ -789,7 +789,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 			// hdf5_fgi_file.FGI_datastructure_version = ds.Extra_info
 			// .substring(1).trim();
 
-			// TODO: Achtung: arm länge kann nicht aus dem xml-file
+			// TODO: Achtung: arm laenge kann nicht aus dem xml-file
 			// herausgelesen werden, somit jetzt mit null abgespeichert.
 			// fill array of armlength
 			for (int i = 0; i < ds.no_of_measurements; i++) {
@@ -1259,14 +1259,14 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 //			references.add("Jouni Peltoniemi et al. BRDF measurement of understory \n" +
 //					"vegetation in pine forests: dwarf shrubs, \n" +
 //					"lichen and moss. Remote Sens. Environment, \n" +
-//					"94(3):343–354, 15 Feb 2005. \n\n");
+//					"94(3):343-354, 15 Feb 2005. \n\n");
 //		}
 //		
 //		if(keywords[0].equals("Vegetation") && capture_dates[0].getYear() >= 2005){
 //			
 //			references.add("Juha Suomalainen et al. Polarised bidirectional reflectance \n " +
 //							"factor measurements from vegetated land surfaces. \n" +
-//							"J. Quant. Spectrosc. Radiat. Transfer, 110:1044–1056, 2009.\n\n");
+//							"J. Quant. Spectrosc. Radiat. Transfer, 110:1044-1056, 2009.\n\n");
 //			
 //		}
 //		
@@ -1277,7 +1277,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 //		
 //		references.add("Juha Suomalainen et al. Polarised multiangular reflectance \n" +
 //				"measurements using Finnish Geodetic Institute field goniospectrometer. \n " +
-//				"Sensors, 9(5):3891–3907, 2009.\n\n");
+//				"Sensors, 9(5):3891-3907, 2009.\n\n");
 //		
 //		references.toArray(reference_array);
 //		

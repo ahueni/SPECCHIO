@@ -992,7 +992,7 @@ public class fgi_2008a {
 	// // buffer6, buffer7, buffer8, buffer9};
 	//
 	// // Das einlesen in die buffers muss wahrscheinlich einzeln verlaufen und
-	// // kann nicht Ÿber
+	// // kann nicht ueber
 	// // eine Schlaufe geschehen. oder wie sollte das gehen????
 	//
 	// // Read Campaign
