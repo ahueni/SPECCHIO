@@ -71,7 +71,13 @@ public class SPECCHIOClientException extends Exception {
 		
 		// put the stack trace into the detailed message
 		StringBuffer sbuf = new StringBuffer();
-		sbuf.append((ex != null)? ex.getMessage() : getMessage());
+		if (ex != null) {
+			sbuf.append(ex.getMessage());
+		} else if (cause != null) {
+			sbuf.append(cause.getMessage());
+		} else {
+			sbuf.append(getMessage());
+		}
 		for (StackTraceElement elem : getStackTrace()) {
 			sbuf.append("\n  " + elem.toString());
 		}

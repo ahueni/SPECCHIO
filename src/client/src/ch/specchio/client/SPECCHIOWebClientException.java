@@ -76,6 +76,21 @@ public class SPECCHIOWebClientException extends SPECCHIOClientException {
 	
 	
 	/**
+	 * Constructor for re-throwing an illegal argument exception thrown by Jersey.
+	 * 
+	 * @param ex	the original exception
+	 */
+	public SPECCHIOWebClientException(IllegalArgumentException ex) {
+		
+		super(ex.getCause().getMessage(), ex);
+
+		// set up user message
+		userMessage = "The host name, port number or application path contains an illegal character. Please check that they are typed correctly.";
+		
+	}
+	
+	
+	/**
 	 * Constructor for throwing a new exception.
 	 * 
 	 * @param message	the message to be reported by the exception

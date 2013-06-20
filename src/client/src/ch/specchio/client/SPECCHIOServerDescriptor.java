@@ -16,8 +16,10 @@ public interface SPECCHIOServerDescriptor {
 	 * described by this descriptor.
 	 * 
 	 * @return a new SPECCHIOClient object
+	 * 
+	 * @throws SPECCHIOClientException	could not create the client
 	 */
-	public SPECCHIOClient createClient();
+	public SPECCHIOClient createClient() throws SPECCHIOClientException;
 	
 	
 	/**

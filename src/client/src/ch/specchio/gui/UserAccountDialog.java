@@ -214,7 +214,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				ErrorDialog error = new ErrorDialog(
 						(Frame)getOwner(),
 						"Could not connect",
-						ex.getMessage(),
+						ex.getUserMessage(),
 						ex
 					);
 				error.setVisible(true);
@@ -243,7 +243,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				ErrorDialog error = new ErrorDialog(
 						(Frame)getOwner(),
 						"Could not create an institute",
-						ex.getMessage(),
+						ex.getUserMessage(),
 						ex
 					);
 				error.setVisible(true);
@@ -293,7 +293,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				ErrorDialog error = new ErrorDialog(
 						(Frame)getOwner(),
 						"User creation failed",
-						ex.getMessage(),
+						ex.getUserMessage(),
 						ex
 					);
 				error.setVisible(true);

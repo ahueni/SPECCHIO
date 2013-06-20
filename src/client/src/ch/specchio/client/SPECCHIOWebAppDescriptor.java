@@ -105,8 +105,10 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 * this descriptor.
 	 * 
 	 * @return a new SPECCHIOWebClient object
+	 * 
+	 * @throws SPECCHIOClientException	could not create the client
 	 */
-	public SPECCHIOClient createClient() {
+	public SPECCHIOClient createClient() throws SPECCHIOClientException {
 		
 		if (user == null) {
 			// create an anonymous client

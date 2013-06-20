@@ -104,8 +104,10 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Construct an anonymous connection to the web application server.
 	 * 
 	 * @param url		the URL of the SPECCHIO web application
+	 * 
+	 * @throws SPECCHIOClientException	invalid URL
 	 */
-	SPECCHIOWebClient(URL url) {
+	SPECCHIOWebClient(URL url) throws SPECCHIOClientException {
 		
 		this(url, null, null);
 		
@@ -118,8 +120,10 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * @param url		the URL of the SPECCHIO web application
 	 * @param user		the user name with which to log in
 	 * @param password	the user's password
+	 * 
+	 * @throws SPECCHIOClientException	invalid URL
 	 */
-	SPECCHIOWebClient(URL url, String username, String password) {
+	SPECCHIOWebClient(URL url, String username, String password) throws SPECCHIOClientException {
 		
 		// configure member variables
 		this.url = url;
@@ -146,16 +150,22 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 			}
 		}
 		
-		// create the web services client and save a reference to the web service
-		web_client = Client.create(config);
-		web_service = web_client.resource(url.toString());
-		
-		// add response-fixing filter
-		web_client.addFilter(new SPECCHIOWebClientFilter());
-		
-		if (username != null) {
-			// configure HTTP basic authentication
-			web_client.addFilter(new HTTPBasicAuthFilter(username, password));
+		try {
+			// create the web services client and save a reference to the web service
+			web_client = Client.create(config);
+			web_service = web_client.resource(url.toString());
+			
+			// add response-fixing filter
+			web_client.addFilter(new SPECCHIOWebClientFilter());
+			
+			if (username != null) {
+				// configure HTTP basic authentication
+				web_client.addFilter(new HTTPBasicAuthFilter(username, password));
+			}
+		}
+		catch (IllegalArgumentException ex) {
+			// invalid URL
+			throw new SPECCHIOWebClientException(ex);
 		}
 		
 	}
