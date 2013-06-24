@@ -264,9 +264,10 @@ public class DataCache {
 		else
 		{
 			Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no);
-			d_wvls = this.get_sensor(sensor_id).getAverageWavelengths();
+			if (sensor_id != 0)
+				d_wvls = this.get_sensor(sensor_id).getAverageWavelengths();
 		}
-		if (d_wvls.length == 0) {
+		if (d_wvls == null || d_wvls.length == 0) {
 			// no wavelengths to check
 			return null;
 		}
@@ -309,17 +310,12 @@ public class DataCache {
 
 		}
 
-		if(instrument == null)
+		// insert as new instrument only if we have an instrument number
+		if(instrument == null && spec_file.getInstrumentNumber() != null)
 		{
-			// unknown instrument
-			System.out.println("unknown instrument");
-
-			// insert as new instrument:
-
 			Integer sensor_id;
 			try {
 				sensor_id = this.get_sensor_id_for_file(spec_file, spec_no);
-				System.out.println("got sensor id " + sensor_id);
 
 				if(sensor_id != 0)
 				{					
@@ -576,8 +572,6 @@ public class DataCache {
 	public Integer get_sensor_id_for_file(SpectralFile spec_file, int spec_no) throws SQLException {
 		Integer sensor_id = 0;
 		
-		System.out.print("get_sensor_id_for_file() " + spec_file.getCompany() + " " + spec_file.getInstrumentTypeNumber() + " " + spec_file.getInstrumentNumber());
-
 		if (spec_file.getCompany().equals("APOGEE")) {
 			
 			Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
