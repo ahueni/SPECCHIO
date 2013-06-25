@@ -12,7 +12,7 @@
 			<author name="Karl Hermann" email="kherman@uow.edu.au" />
 		</authors>
 		<javaversion>1.6</javaversion>
-		<requiresjdk>yes</requiresjdk>
+		<requiresjdk>no</requiresjdk>
 	</info>
 	
 	<!-- language configuration -->
