@@ -283,39 +283,8 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 	}
 	
 	public void reload_tree() throws SPECCHIOClientException
-	{
-		this.tree_scroll_pane.remove(tree);
-		
-		// save references to the listeners of the tree
-		TreeSelectionListener[] l = tree.getTreeSelectionListeners();
-		MouseListener[] ml = tree.getMouseListeners(); // set by current Matlab callbacks
-		
-		// save the current lead selection path
-		TreePath oldLeadSelectionPath = tree.getSelectionPath();
-			
+	{		
 		this.build_tree();
-		
-		// manufacture a selection event to represent the effective de-selection of the previos tree
-		TreeSelectionEvent event = new TreeSelectionEvent(
-				tree,
-				null,
-				new boolean[0],
-				oldLeadSelectionPath,
-				null
-			);
-		
-		// restore listeners
-		for (int i=0;i<l.length;i++)
-		{
-			tree.addTreeSelectionListener(l[i]);
-			l[i].valueChanged(event);
-		}
-		
-		for (int i=0;i<ml.length;i++)
-		{
-			tree.addMouseListener(ml[i]); 
-		}			
-			
 	}
 
 
