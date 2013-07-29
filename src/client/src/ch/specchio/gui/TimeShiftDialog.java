@@ -273,16 +273,20 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			}
 		}
 
-		// create a metaparameter noting that the time was shifted
-		MetaParameter mpShift = MetaParameter.newInstance(
-				"Processing",
-				"",
-				"Capture time was shifted by " + shift + " hours East using the SPECCHIO timeshift function."
-			);
-		mpShift.setAttributeName("Time Shift");	
-		
-		// add the metaparameter to the database
-		specchioClient.updateEavMetadata(mpShift, updatedIds);
+		if (updatedIds.size() > 0) {
+			
+			// create a metaparameter noting that the time was shifted
+			MetaParameter mpShift = MetaParameter.newInstance(
+					"Processing",
+					"",
+					"Capture time was shifted by " + shift + " hours East using the SPECCHIO timeshift function."
+				);
+			mpShift.setAttributeName("Time Shift");	
+			
+			// add the metaparameter to the database
+			specchioClient.updateEavMetadata(mpShift, updatedIds);
+			
+		}
 		
 		return updatedIds.size();
 		
