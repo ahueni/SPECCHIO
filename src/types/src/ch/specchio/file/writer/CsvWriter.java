@@ -95,17 +95,21 @@ public abstract class CsvWriter extends SpectrumWriter {
 	 */
 	protected void writeField(String value) throws IOException {
 		
-		// see if the value contains any special characters
-		boolean specialCharacters = value.contains(separator) || value.contains("\n") || value.contains("\"");
-		
-		// escape any double quotes in the input value
-		String escapedValue = value.replaceAll("\"", "\"\"");
+		// escape special characters
+		boolean specialCharacters = false;
+		String escapedValue = null;
+		if (value != null) {
+			specialCharacters = value.contains(separator) || value.contains("\n") || value.contains("\"");
+			escapedValue = value.replaceAll("\"", "\"\"");
+		}
 		
 		// output the value, with quotes if necessary
 		if (specialCharacters) {
 			bw.write("\"");
 		}
-		bw.write(escapedValue);
+		if (escapedValue != null) {
+			bw.write(escapedValue);
+		}
 		if (specialCharacters) {
 			bw.write("\"");
 		}
