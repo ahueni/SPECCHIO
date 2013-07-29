@@ -178,26 +178,16 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			try {
 				// get the number of hours to shift by
 				double shift = Double.parseDouble(timezoneField.getText());
-				
-				// update the time stamps
-				int n = shiftTime(shift);
-				
-				// display a success message
-				JOptionPane.showMessageDialog(this, "Acquisition times of " + Integer.toString(n) + " spectra successfully shifted.");
+			
+				if (selectedIds.size() > 0) {
+					// launch a thread to perform the actual work
+					TimeShiftThread thread = new TimeShiftThread(selectedIds, shift);
+					thread.start();
+				}
 			}
 			catch (NumberFormatException ex) {
 				// the time zone field does not contain a number
 				JOptionPane.showMessageDialog(this, "Please enter a valid number of hours east of GMT.", "Invalid number of hours", JOptionPane.ERROR_MESSAGE);
-			}
-			catch (SPECCHIOClientException ex) {
-				// error contacting the server
-				ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
-				error.setVisible(true);
-			}
-			catch (MetaParameterFormatException ex) {
-				// the time shift attribute has the wrong type
-				ErrorDialog error = new ErrorDialog(this, "Error", "The time shift attribute has the wrong type. Please contact your system administrator.", ex);
-				error.setVisible(true);
 			}
 			endOperation();
 			
@@ -218,77 +208,6 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 		
 		// change the cursor to its default start
 		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-		
-	}
-	
-	
-	/**
-	 * Shift the times associated with the currently-selected spectra.
-	 * 
-	 * @param shift	the number of hours by which to shift the time
-	 * 
-	 * @return the number of spectra whose timestamps were adjusted
-	 *
-	 * @throws SPECCHIOClientException	error contacting the server
-	 */
-	private int shiftTime(double shift) throws SPECCHIOClientException, MetaParameterFormatException {
-		
-		ArrayList<Integer> updatedIds = new ArrayList<Integer>();
-		
-		specchioClient.clearMetaparameterRedundancyList(); // otherwise, repeated calls of the time shift leads to Duplicate entry SQL exception
-		
-		// shift the capture dates of the selected spectra
-		for (Integer id : selectedIds) {
-			
-			// get the existing spectrum with metadata
-			Spectrum s = specchioClient.getSpectrum(id, true);
-			
-			// get the existing capture date
-			MetaDate mpAcquisitionTime = (MetaDate)s.getMetadata().get_first_entry("Acquisition Time");
-			if (mpAcquisitionTime != null) {
-				
-				// get a calendar object that represents the capture date
-//				SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-//				TimeZone tz = TimeZone.getTimeZone("UTC");
-//				Calendar cal = Calendar.getInstance(tz);
-//				formatter.setTimeZone(tz);
-//				cal.setTime((Date) mpAcquisitionTime.getValue());
-				
-				// remove gmt offset
-				long time_in_millis = ((Date) mpAcquisitionTime.getValue()).getTime();
-				long gmt_offset_in_millis = (long)(shift*3600*1000);
-				time_in_millis -= gmt_offset_in_millis;
-//				cal.setTimeInMillis(time_in_millis);
-				
-				// update the metadata object
-//				mpAcquisitionTime.setValue(cal.getTime());
-				mpAcquisitionTime.setValue(new Date(time_in_millis));
-				ArrayList<Integer> id_list = new ArrayList<Integer>();
-				id_list.add(id);
-				specchioClient.updateEavMetadata(mpAcquisitionTime, id_list);
-				
-				// add the identifier to the list of updated identifiers
-				updatedIds.add(id);
-				
-			}
-		}
-
-		if (updatedIds.size() > 0) {
-			
-			// create a metaparameter noting that the time was shifted
-			MetaParameter mpShift = MetaParameter.newInstance(
-					"Processing",
-					"",
-					"Capture time was shifted by " + shift + " hours East using the SPECCHIO timeshift function."
-				);
-			mpShift.setAttributeName("Time Shift");	
-			
-			// add the metaparameter to the database
-			specchioClient.updateEavMetadata(mpShift, updatedIds);
-			
-		}
-		
-		return updatedIds.size();
 		
 	}
 	
@@ -345,6 +264,126 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			// error contacting the server
 			ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
 			error.setVisible(true);
+		}
+		
+	}
+	
+	
+	/**
+	 * Worker thread for performing the actual calculations.
+	 */
+	private class TimeShiftThread extends Thread {
+		
+		/** the spectrum identifiers to be processed */
+		private Integer spectrumIds[];
+		
+		/** the amount of time by which to shift the time */
+		private double shift;
+		
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param spectrumIdsIn	the list of spectrum identifiers to be processed
+		 */
+		public TimeShiftThread(List<Integer> spectrumIdsIn, double shiftIn) {
+			
+			super();
+			
+			// save the input parameters for later
+			spectrumIds = spectrumIdsIn.toArray(new Integer[spectrumIdsIn.size()]);
+			shift = shiftIn;
+			
+		}
+		
+		
+		/**
+		 * Thread entry point.
+		 */
+		public void run() {
+
+			// create a progress report
+			int progress = 0;
+			double tot = new Double(spectrumIds.length);
+			ProgressReport pr = new ProgressReport("UTC Time Correction", false);
+			pr.set_operation("Updating acquisition times");
+			pr.setVisible(true);
+			
+			try {
+				
+				specchioClient.clearMetaparameterRedundancyList(); // otherwise, repeated calls of the time shift leads to Duplicate entry SQL exception
+				
+				// shift the capture dates of the selected spectra
+				ArrayList<Integer> updatedIds = new ArrayList<Integer>();
+				for (Integer id : spectrumIds) {
+					
+					// get the existing spectrum with metadata
+					Spectrum s = specchioClient.getSpectrum(id, true);
+					
+					// get the existing capture date
+					MetaDate mpAcquisitionTime = (MetaDate)s.getMetadata().get_first_entry("Acquisition Time");
+					if (mpAcquisitionTime != null) {
+						
+						// remove gmt offset
+						long time_in_millis = ((Date) mpAcquisitionTime.getValue()).getTime();
+						long gmt_offset_in_millis = (long)(shift*3600*1000);
+						time_in_millis -= gmt_offset_in_millis;
+						
+						// update the metadata object
+						mpAcquisitionTime.setValue(new Date(time_in_millis));
+						ArrayList<Integer> id_list = new ArrayList<Integer>();
+						id_list.add(id);
+						specchioClient.updateEavMetadata(mpAcquisitionTime, id_list);
+						
+						// add the identifier to the list of updated identifiers
+						updatedIds.add(id);
+						
+					}
+					
+					// update progress meter
+					pr.set_progress(++progress * 100.0 / tot);
+				}
+	
+				if (updatedIds.size() > 0) {
+					
+					// create a metaparameter noting that the time was shifted
+					MetaParameter mpShift = MetaParameter.newInstance(
+							"Processing",
+							"",
+							"Capture time was shifted by " + shift + " hours East using the SPECCHIO timeshift function."
+						);
+					mpShift.setAttributeName("Time Shift");	
+					
+					// add the metaparameter to the database
+					pr.set_operation("Updating database");
+					specchioClient.updateEavMetadata(mpShift, updatedIds);
+					
+				}
+				
+				// display a success message
+				String message;
+				if (updatedIds.size() > 0) {
+					message = "Acquisition times of " + Integer.toString(updatedIds.size()) + " spectra successfully shifted.";
+				} else {
+					message = "No acquisition times found. No data was updated.";
+				}
+				JOptionPane.showMessageDialog(TimeShiftDialog.this, message);
+				
+			}
+			catch (SPECCHIOClientException ex) {
+				// error contacting the server
+				ErrorDialog error = new ErrorDialog(TimeShiftDialog.this, "Error", ex.getUserMessage(), ex);
+				error.setVisible(true);
+			}
+			catch (MetaParameterFormatException ex) {
+				// the time shift attribute has the wrong type
+				ErrorDialog error = new ErrorDialog(TimeShiftDialog.this, "Error", "The time shift attribute has the wrong type. Please contact your system administrator.", ex);
+				error.setVisible(true);
+			}
+			
+			// close progress report
+			pr.setVisible(false);
+			
 		}
 		
 	}
