@@ -45,7 +45,6 @@ public class MetaDataFromTabModel {
 	
 	String regex_start = "";
 	String regex_end = "";
-	private attribute[] attributes;
 	
 	
 	public MetaDataFromTabModel()
@@ -69,13 +68,7 @@ public class MetaDataFromTabModel {
 				attributes_per_category.put(c.name, attr_array);
 			}
 			
-			attributes = specchio_client.getAttributes();
-			
-			// generate hashtable
-			for(int i=0;i<attributes.length;i++)
-			{
-				attributes_hash.put(attributes[i].getId(), attributes[i]);
-			}
+			attributes_hash = specchio_client.getAttributesIdHash();
 			
 			// empty attribute
 			attribute NIL_attribute = new attribute();

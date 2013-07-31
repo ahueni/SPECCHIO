@@ -85,14 +85,8 @@ public class SPECCHIOClientFactory {
 		SPECCHIOClient client = null;
 		
 		// create a new client and connect to the server
-		try {
-			client = app.createClient();
-			client.connect();
-		}
-		catch (SPECCHIOClientException ex) {
-			// connection failed, so delete current_client before re-throwing the exception
-			throw ex;
-		}
+		client = new SPECCHIOClientCache(app.createClient());
+		client.connect();
 		
 		return client;
 	
