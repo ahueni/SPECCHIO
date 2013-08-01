@@ -423,16 +423,6 @@ public interface SPECCHIOClient {
 	public MeasurementUnit getMeasurementUnitFromCoding(int coding) throws SPECCHIOWebClientException;
 	
 	/**
-	 * Get sensor sampling geometry 
-	 * 
-	 * @param space		holds spectra ids of which geometry is to retrieved
-	 * 
-	 * @return a new GonioSamplingPoints, or null if no geometries were found
-	 * @throws SPECCHIOWebClientException 
-	 */		
-	public GonioSamplingPoints getSensorSamplingGeometry(SpectralSpace space) throws SPECCHIOWebClientException;
-	
-	/**
 	 * Get the data usage policies for a space.
 	 * 
 	 * @param space	the space
@@ -515,6 +505,17 @@ public interface SPECCHIOClient {
 	public Sensor[] getSensors() throws SPECCHIOClientException;
 	
 	
+	/**
+	 * Get sensor sampling geometry 
+	 * 
+	 * @param space		holds spectra ids of which geometry is to retrieved
+	 * 
+	 * @return a new GonioSamplingPoints, or null if no geometries were found
+	 * @throws SPECCHIOWebClientException 
+	 */		
+	public GonioSamplingPoints getSensorSamplingGeometry(SpectralSpace space) throws SPECCHIOWebClientException;
+	
+
 	/**
 	 * Get the space objects for a set of spectrum identifiers.
 	 * 

@@ -788,23 +788,6 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	}
 	
 	/**
-	 * Get sensor sampling geometry 
-	 * 
-	 * @param space		holds spectra ids of which geometry is to retrieved
-	 * 
-	 * @return a new GonioSamplingPoints, or null if no geometries were found
-	 * @throws SPECCHIOWebClientException 
-	 */		
-	public GonioSamplingPoints getSensorSamplingGeometry(SpectralSpace space) throws SPECCHIOWebClientException {
-		
-		
-		GonioSamplingPoints g = postForObject(GonioSamplingPoints.class, "spectrum", "getGonioSamplingPoints", space); 
-		
-		return g;
-	}
-	
-	
-	/**
 	 * Get the data usage policies for a space.
 	 * 
 	 * @param space	the space
@@ -940,6 +923,23 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	}
 	
 	
+	/**
+	 * Get sensor sampling geometry 
+	 * 
+	 * @param space		holds spectra ids of which geometry is to retrieved
+	 * 
+	 * @return a new GonioSamplingPoints, or null if no geometries were found
+	 * @throws SPECCHIOWebClientException 
+	 */		
+	public GonioSamplingPoints getSensorSamplingGeometry(SpectralSpace space) throws SPECCHIOWebClientException {
+		
+		
+		GonioSamplingPoints g = postForObject(GonioSamplingPoints.class, "spectrum", "getGonioSamplingPoints", space); 
+		
+		return g;
+	}
+
+
 	/**
 	 * Get the space objects for a set of spectrum identifiers.
 	 * 
