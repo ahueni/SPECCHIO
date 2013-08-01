@@ -228,7 +228,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 		public void run() {
 			
 			// create a progress report
-			ProgressReport pr = new ProgressReport("Sun Angle Calculator", false);
+			ProgressReportDialog pr = new ProgressReportDialog(SunAngleCalcDialog.this, "Sun Angle Calculator", false);
 			pr.set_operation("Updating illumination angles");
 			pr.setVisible(true);
 

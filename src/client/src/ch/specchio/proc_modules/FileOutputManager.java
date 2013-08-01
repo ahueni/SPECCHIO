@@ -17,7 +17,7 @@ import ch.specchio.constants.TimeFormats;
 import ch.specchio.file.writer.SpectrumWriter;
 import ch.specchio.file.writer.SpectrumWriterFactory;
 import ch.specchio.gui.FileOutputDialog;
-import ch.specchio.gui.ProgressReport;
+import ch.specchio.gui.ProgressReportDialog;
 import ch.specchio.gui.ProgressReportInterface;
 import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.spaces.Space;
@@ -127,8 +127,8 @@ public class FileOutputManager extends Thread {
 				// create progress report if not yet externally defined
 				if(pr == null)
 				{
-					pr = new ProgressReport("Writing to filesystem", false);
-					((ProgressReport)pr).setVisible(true);
+					pr = new ProgressReportDialog(SPECCHIOApplication.getInstance().get_frame(), "Writing to filesystem", false);
+					((ProgressReportDialog)pr).setVisible(true);
 					close_progress_report = true;
 				}
 
@@ -167,7 +167,7 @@ public class FileOutputManager extends Thread {
 							}
 						}
 						
-						JOptionPane.showMessageDialog(((ProgressReport)pr).get_frame(), "Exported " + Integer.toString(numOutput) + " spectra" + "\n" + data_policies);
+						JOptionPane.showMessageDialog(SPECCHIOApplication.getInstance().get_frame(), "Exported " + Integer.toString(numOutput) + " spectra" + "\n" + data_policies);
 					}
 			  		catch (SPECCHIOClientException ex) {
 						JOptionPane.showMessageDialog(
@@ -178,7 +178,7 @@ public class FileOutputManager extends Thread {
 				    		);
 				    }
 					
-					((ProgressReport)pr).setVisible(false);					
+					((ProgressReportDialog)pr).setVisible(false);					
 				}
 				
 

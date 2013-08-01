@@ -14,7 +14,8 @@ import ch.specchio.constants.SpaceTypes;
 import ch.specchio.explorers.SingleHemisphereExplorer;
 import ch.specchio.explorers.SpectralMultiPlot;
 import ch.specchio.explorers.TimeLineExplorer;
-import ch.specchio.gui.ProgressReport;
+import ch.specchio.gui.ProgressReportDialog;
+import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.plots.SPECCHIOPlotException;
 import ch.specchio.plots.swing.SamplingPoints2DPlot;
 import ch.specchio.plots.swing.TimelinePlot;
@@ -66,7 +67,7 @@ public class VisualisationModule extends Module implements ModuleCallback {
 	// then the transformation is just copying from input to output space 
 	public void transform() throws SPECCHIOClientException, ModuleException
 	{
-		ProgressReport pr = new ProgressReport(vis_module_type, true);
+		ProgressReportDialog pr = new ProgressReportDialog(SPECCHIOApplication.getInstance().get_frame(), vis_module_type, true);
 		pr.setVisible(true);
 		
 		// update progress bar

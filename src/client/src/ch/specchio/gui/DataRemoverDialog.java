@@ -39,7 +39,7 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 	class removing_thread extends Thread
 	{
 
-		ProgressReport pr = new ProgressReport("Removing data ...", false);
+		ProgressReportDialog pr = new ProgressReportDialog(DataRemoverDialog.this, "Removing data ...", false);
 		
 		SpectralDataBrowser.SpectralDataBrowserNode sdb_node;
 		
@@ -50,11 +50,14 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 		
 		synchronized public void run()
 		{
+			pr.set_indeterminate(true);
 			pr.setVisible(true);
 			
 			try {
 				// ask the server to remove the node from the database
+				pr.set_operation("Deleting data. Please wait.");
 				specchio_client.removeSpectralNode(sdb_node.getNode());
+				pr.set_operation("Cleaning up...");
 				specchio_client.clearMetaparameterRedundancyList();
 				
 				// remove the node from the local tree control

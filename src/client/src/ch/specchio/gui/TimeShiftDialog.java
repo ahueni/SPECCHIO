@@ -305,7 +305,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			// create a progress report
 			int progress = 0;
 			double tot = new Double(spectrumIds.length);
-			ProgressReport pr = new ProgressReport("UTC Time Correction", false);
+			ProgressReportDialog pr = new ProgressReportDialog(TimeShiftDialog.this, "UTC Time Correction", false);
 			pr.set_operation("Updating acquisition times");
 			pr.setVisible(true);
 			

@@ -25,10 +25,10 @@ class ReportContainer extends JPanel{
 class ReportRemover extends Thread
 {
 	ReportContainer frame; 
-	ProgressReport_ rep;
+	ProgressReportPanel rep;
 	OperationsPane op;
 	
-	public ReportRemover(OperationsPane op, ReportContainer frame, ProgressReport_ rep)
+	public ReportRemover(OperationsPane op, ReportContainer frame, ProgressReportPanel rep)
 	{
 		this.frame = frame;
 		this.rep = rep;		
@@ -88,7 +88,7 @@ public class OperationsPane extends JScrollPane {
 	      return instance;
 	   }
 	   
-	   public void add_report(ProgressReport_ rep)
+	   public void add_report(ProgressReportPanel rep)
 	   {
 		   constraints.gridy = rep_cnt;
 		   frame.l.insertComponent(rep, constraints);
@@ -96,7 +96,7 @@ public class OperationsPane extends JScrollPane {
 		   this.validate(); // force the redraw on screen
 	   }
 	   
-	   public void remove_report(ProgressReport_ rep)
+	   public void remove_report(ProgressReportPanel rep)
 	   {		   
 		   ReportRemover rr = new ReportRemover(this, frame, rep);		   
 		   rr.start();		   

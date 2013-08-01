@@ -3,7 +3,7 @@ package ch.specchio.explorers;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import ch.specchio.gui.ProgressReport;
+import ch.specchio.gui.ProgressReportDialog;
 import ch.specchio.plots.PlotsCallback;
 import ch.specchio.plots.swing.SpectralLinePlot;
 import ch.specchio.plots.swing.SpectralPlot;
@@ -17,9 +17,9 @@ public class SpectralMultiPlot  extends JPanel implements PlotsCallback
 	SpectralSpace space;
 	
 	SpectralPlot sp;
-	ProgressReport pr;
+	ProgressReportDialog pr;
 	
-	public SpectralMultiPlot(SpectralSpace space, ProgressReport pr, int plot_type)
+	public SpectralMultiPlot(SpectralSpace space, ProgressReportDialog pr, int plot_type)
 	{
 		
 		this.space = space;

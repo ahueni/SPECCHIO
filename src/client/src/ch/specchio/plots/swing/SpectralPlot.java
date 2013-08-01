@@ -12,7 +12,7 @@ import javax.swing.JSlider;
 
 import ptolemy.plot.Plot;
 
-import ch.specchio.gui.ProgressReport;
+import ch.specchio.gui.ProgressReportDialog;
 import ch.specchio.plots.VectorStatistics;
 import ch.specchio.proc_modules.VectorRegion;
 import ch.specchio.spaces.MeasurementUnit;
@@ -55,13 +55,13 @@ public abstract class SpectralPlot extends JPanel
 	// Ptolemy plotting
 	Plot plot;
 	
-	ProgressReport pr;
+	ProgressReportDialog pr;
 	private int currentDataset;
 	private int wvl_indicator_dataset_no;
 	private boolean wvl_indicator_on = false;
 	private boolean show_wvl_indicator = false;
 	
-	public SpectralPlot(SpectralSpace space, int x_size, int y_size, ProgressReport pr)
+	public SpectralPlot(SpectralSpace space, int x_size, int y_size, ProgressReportDialog pr)
 	{
 		this.space = space;
 		this.pr = pr;

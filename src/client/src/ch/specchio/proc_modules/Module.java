@@ -48,9 +48,23 @@ class SmartProgressBar extends JProgressBar implements ProgressReportInterface
 		this.setFont(new Font("Arial", Font.PLAIN,11));
 	}
 	
-	public void set_progress(final Double value)
+	
+	public void set_component(String c)
 	{
-	     setValue(value.intValue());
+		// not used
+	}
+	
+	
+	public void set_indeterminate(boolean indeterminate)
+	{
+		setIndeterminate(indeterminate);
+	}
+	
+	public boolean set_progress(double value)
+	{
+	     setValue((int)value);
+	     
+	     return true;
 	}
 
 	public boolean set_progress(int value) 
@@ -148,9 +162,22 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 	}
 	
 	
-	public void set_progress(final Double value)
+	public void set_component(String c)
 	{
-		set_progress(value.intValue());
+		progressBar.set_component(c);
+	}
+	
+	
+	public void set_indeterminate(boolean indeterminate)
+	{
+		progressBar.set_indeterminate(indeterminate);
+	}
+	
+	
+	public boolean set_progress(double value)
+	{
+		set_progress((int)value);
+		return true;
 	}
 
 	public boolean set_progress(int value) {

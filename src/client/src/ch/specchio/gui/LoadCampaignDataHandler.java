@@ -13,8 +13,8 @@ import ch.specchio.file.reader.campaign.CampaignDataLoaderListener;
 
 public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	
-	private ProgressReport_type1 p_rep;
-	private ProgressReport_type1 p_spectra_insert_rep;	
+	private ProgressReportTextPanel p_rep;
+	private ProgressReportTextPanel p_spectra_insert_rep;	
 	
 	
 	/**
@@ -32,7 +32,7 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	public void campaignDataLoadError(String message) {
 
 		if (p_rep != null) {
-			p_rep.set_curr_op_desc("Loading aborted!");
+			p_rep.set_operation("Loading aborted!");
 		}
 		JOptionPane.showMessageDialog(null, "Error while loading files: " + message);
 		
@@ -46,20 +46,13 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 		
 		// create a new progress report and add it to the operation pane
 		OperationsPane op = OperationsPane.getInstance();
-		p_rep = new ProgressReport_type1();
+		p_rep = new ProgressReportTextPanel("Loading campaign data.", "# of processed files");
 		op.add_report(p_rep);
 
-		p_rep.set_op_desc("Loading campaign data.");
-		p_rep.set_number_desc("# of processed files");
-		p_rep.set_curr_op_desc("");
-
 		// create progress report for the spectra
-		p_spectra_insert_rep = new ProgressReport_type1();
+		p_spectra_insert_rep = new ProgressReportTextPanel("Loading campaign data.", "# of inserted spectra");
 		op.add_report(p_spectra_insert_rep);
 
-		p_spectra_insert_rep.set_op_desc("Loading campaign data.");
-		p_spectra_insert_rep.set_number_desc("# of inserted spectra");
-		p_spectra_insert_rep.set_curr_op_desc("");
 		
 	}
 	
@@ -72,10 +65,10 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	public void campaignDataLoaded(int num_files, List<String> file_errors) {
 
 		OperationsPane op = OperationsPane.getInstance();
-		p_rep.set_curr_op_desc("Done!");
+		p_rep.set_operation("Done!");
 		op.remove_report(p_rep);
 
-		p_spectra_insert_rep.set_curr_op_desc("Done!");
+		p_spectra_insert_rep.set_operation("Done!");
 		op.remove_report(p_spectra_insert_rep);
 
 		SPECCHIOApplication app = SPECCHIOApplication.getInstance();
@@ -123,8 +116,8 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	 */
 	public void campaignDataLoadFileCount(int fileCount, int spectrumCount) {
 
-		p_rep.set_number(fileCount);
-		p_spectra_insert_rep.set_number(spectrumCount);
+		p_rep.set_progress(fileCount);
+		p_spectra_insert_rep.set_progress(spectrumCount);
 		
 	}
 	
@@ -136,7 +129,7 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	 */
 	public void campaignDataLoadOperation(String message) {
 		
-		p_rep.set_curr_op_desc(message);
+		p_rep.set_operation(message);
 	
 	}
 

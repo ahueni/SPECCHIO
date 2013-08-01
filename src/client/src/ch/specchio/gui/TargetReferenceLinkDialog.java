@@ -1111,7 +1111,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				
 				
 				// create a progress dialogue
-				ProgressReport pr = new ProgressReport("Linking data ...", false);
+				ProgressReportDialog pr = new ProgressReportDialog(TargetReferenceLinkDialog.this, "Linking data ...", false);
 				pr.set_operation("Creating TGT-REF links. ");
 				pr.setVisible(true);
 				
@@ -1184,7 +1184,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			try {
 				
 				// create a progress dialogue
-				ProgressReport pr = new ProgressReport("Deleting links ...", false);
+				ProgressReportDialog pr = new ProgressReportDialog(TargetReferenceLinkDialog.this, "Deleting links ...", false);
 				pr.set_operation("Deleting TGT-REF links. ");
 				pr.setVisible(true);
 				

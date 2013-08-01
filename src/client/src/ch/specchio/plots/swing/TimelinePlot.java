@@ -35,7 +35,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import ch.specchio.gui.GridbagLayouter;
-import ch.specchio.gui.ProgressReport;
+import ch.specchio.gui.ProgressReportDialog;
 import ch.specchio.plots.PlotsCallback;
 import ch.specchio.plots.SPECCHIOPlotException;
 import ch.specchio.spaces.SpectralSpace;
@@ -52,7 +52,7 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 	Integer band = 0;
 	int time_ind = 0;
 	PlotsCallback cb;
-	ProgressReport pr;
+	ProgressReportDialog pr;
 	
 	boolean indicator_enabled = false;
 	
@@ -72,7 +72,7 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 	
 
 	
-	public TimelinePlot(SpectralSpace space, MatlabAdaptedArrayList<Object> time_vector2, int x_size, int y_size, ProgressReport pr) throws SPECCHIOPlotException
+	public TimelinePlot(SpectralSpace space, MatlabAdaptedArrayList<Object> time_vector2, int x_size, int y_size, ProgressReportDialog pr) throws SPECCHIOPlotException
 	{
 		this.space = space;
 		this.time_vector = new Date[time_vector2.size()];

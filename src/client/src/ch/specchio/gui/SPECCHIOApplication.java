@@ -17,7 +17,7 @@ public class SPECCHIOApplication {
 	public static Float min_db_version = 2.2F;
 	
 	/* progress report in the operations pane */
-	static ProgressReport_type1 p_rep = null;
+	static ProgressReportTextPanel p_rep = null;
 	
 	protected SPECCHIOApplication()
 	{
@@ -132,12 +132,10 @@ public class SPECCHIOApplication {
 			   
 			   	// add connection details to the operations pane
 			   if (p_rep == null) {
-				   p_rep = new ProgressReport_type1();
+				   p_rep = new ProgressReportTextPanel("Database connection status", d.getDisplayName(false));
 	  		  		op.add_report(p_rep);	
 			   }
-			   p_rep.set_op_desc("Database connection status");
-			   p_rep.set_number_desc(d.getDisplayName(false));
-			   p_rep.set_curr_op_desc("Connected as " + d.getDisplayUser() + " to:");
+			   p_rep.set_operation("Connected as " + d.getDisplayUser() + " to:");
 			   
 			   try {
 				   // enable menu items appropriate for this connection

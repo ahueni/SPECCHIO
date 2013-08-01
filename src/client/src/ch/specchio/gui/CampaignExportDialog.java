@@ -214,8 +214,9 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 		synchronized public void run() {
 			
 			// create a progress report
-			ProgressReport pr = new ProgressReport("Downloading campaign data", false);
-			pr.set_operation("Waiting for the server...");
+			ProgressReportDialog pr = new ProgressReportDialog(CampaignExportDialog.this, "Downloading campaign data", false);
+			pr.set_operation("Waiting for the server to package the data...");
+			pr.set_indeterminate(true);
 			pr.setVisible(true);
 			
 			try {
