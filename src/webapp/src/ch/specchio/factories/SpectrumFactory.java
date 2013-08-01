@@ -843,42 +843,6 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	
 	
 	/**
-	 * Get the file name for a given spectrum.
-	 * 
-	 * @param spectrum_id	the spectrum identifier
-	 * 
-	 * @return	the name of the file from which this spectrum was loaded, or null if the spectrum does not exist
-	 * 
-	 * @throws SPECCHIOFactoryException	database error
-	 */
-	public String getSpectrumFilename(int spectrum_id) throws SPECCHIOFactoryException {
-		
-		String filename = null;
-		
-		try {
-			Statement stmt = getStatementBuilder().createStatement();
-			String query = "select eav.string_val from spectrum_x_eav,eav" +
-					" where spectrum_x_eav.spectrum_id=" + Integer.toString(spectrum_id) +
-					" and eav.eav_id=spectrum_x_eav.eav_id" +
-					" and eav.attribute_id=" + Integer.toString(getAttributes().get_attribute_id("File Name"));
-			ResultSet rs = stmt.executeQuery(query);
-			while (rs.next()) {
-				filename = rs.getString(1);
-			}
-			rs.close();
-			stmt.close();
-		}
-		catch (SQLException ex) {
-			// database error
-			throw new SPECCHIOFactoryException(ex);
-		}
-		
-		return filename;
-		
-	}
-	
-	
-	/**
 	 * Get the spectrum data links that refer to a given target and/or reference.
 	 * 
 	 * @param target_id		the identifier of the target spectrum (0 to match all targets)

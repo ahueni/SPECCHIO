@@ -1013,22 +1013,6 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
-	 * Get the name of the file from which a spectrum was loaded.
-	 * 
-	 * @param spectrum_id	the spectrum identifier
-	 *
-	 * @return the name of the file, or null if the spectrum does not exist
-	 * 
-	 * @throws SPECCHIOClientException
-	 */
-	public String getSpectrumFilename(int spectrum_id) throws SPECCHIOClientException {
-		
-		return getString("spectrum", "filename", Integer.toString(spectrum_id));
-		
-	}
-	
-	
-	/**
 	 * Get the identifiers of all spectra beneath a given node of the spectral data browser
 	 * 
 	 * @param sn	the node

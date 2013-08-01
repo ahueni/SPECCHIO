@@ -59,29 +59,6 @@ public class SpectrumService extends SPECCHIOService {
 	
 	
 	/**
-	 * Get the name of the file from which a spectrum was loaded.
-	 * 
-	 * @param spectrum_id	the spectrum identifier
-	 * 
-	 * @return the name of the file, or null if the spectrum does not exist
-	 * 
-	 * @throws SPECCHIOFactoryException	database error
-	 */
-	@GET
-	@Path("filename/{spectrum_id: [0-9]+}")
-	@Produces(MediaType.APPLICATION_XML)
-	public String filename(@PathParam("spectrum_id") int spectrum_id) throws SPECCHIOFactoryException {
-		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
-		String filename = factory.getSpectrumFilename(spectrum_id);
-		factory.dispose();
-		
-		return filename;
-		
-	}
-	
-	
-	/**
 	 * Get a spectrum object.
 	 * 
 	 * @param spectrum_id		the identifier of the desired spectrum
