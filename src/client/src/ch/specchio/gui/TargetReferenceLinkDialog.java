@@ -639,13 +639,17 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		public void setReferenceIds(List<Integer> ids) throws SPECCHIOClientException {
 			
 			// refresh the list of linked targets
+			ArrayList<Integer> datalinkIds = new ArrayList<Integer>();
 			targetList.clear();
 			for (Integer id : ids) {
 				SpectrumDataLink datalinks[] = specchioClient.getTargetReferenceLinks(0, id);
 				for (SpectrumDataLink datalink : datalinks) {
-					targetList.addId(datalink.getReferencingId());
+					if (!datalinkIds.contains(datalink.getReferencingId())) {
+						datalinkIds.add(datalink.getReferencingId());
+					}
 				}
 			}
+			targetList.setIds(datalinkIds);
 			
 		}
 		
@@ -660,13 +664,17 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		public void setTargetIds(List<Integer> ids) throws SPECCHIOClientException {
 			
 			// refresh the list of linked references
+			ArrayList<Integer> datalinkIds = new ArrayList<Integer>();
 			referenceList.clear();
 			for (Integer id : ids) {
 				SpectrumDataLink datalinks[] = specchioClient.getTargetReferenceLinks(id, 0);
 				for (SpectrumDataLink datalink : datalinks) {
-					referenceList.addId(datalink.getReferencedId());
+					if (!datalinkIds.contains(datalink.getReferencedId())) {
+						datalinkIds.add(datalink.getReferencedId());
+					}
 				}
 			}
+			referenceList.setIds(datalinkIds);
 			
 		}
 		
@@ -776,7 +784,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 * 
 		 * @throws SPECCHIOClientException	error contacting server
 		 */
-		public void setReferenceIds(List<Integer> ids) throws SPECCHIOClientException {
+		public void setReferenceIds(ArrayList<Integer> ids) throws SPECCHIOClientException {
 			
 			// update the list contents
 			referenceList.setIds(ids);
@@ -794,7 +802,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 * 
 		 * @throws SPECCHIOClientException	error contacting server
 		 */
-		public void setTargetIds(List<Integer> ids) throws SPECCHIOClientException {
+		public void setTargetIds(ArrayList<Integer> ids) throws SPECCHIOClientException {
 			
 			// update the list contents
 			targetList.setIds(ids);
@@ -851,28 +859,6 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			// put the list inside a scroll pane
 			JScrollPane scroller = new JScrollPane(list);
 			add(scroller, BorderLayout.CENTER);
-			
-		}
-		
-		
-		/**
-		 * Add an identifier to the list.
-		 * 
-		 * @param id	the identifier
-		 * 
-		 * @throws SPECCHIOClientException	error contacting the server
-		 */
-		public void addId(int id) throws SPECCHIOClientException {
-			
-			// first check that we haven't got this identifier already
-			for (int i = 0; i < model.getSize(); i++) {
-				if (getEntryAt(i).getId() == id) {
-					return;
-				}
-			}
-			
-			// okay, add the new item
-			model.addElement(new TargetReferenceListEntry(id));
 			
 		}
 		
@@ -979,14 +965,17 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 * 
 		 * @throws SPECCHIOClientException	error contacting server
 		 */
-		public void setIds(List<Integer> ids) throws SPECCHIOClientException {
+		public void setIds(ArrayList<Integer> ids) throws SPECCHIOClientException {
 			
 			// clear the list
 			model.clear();
 			
+			// get the filenames from the server
+			ArrayList<Object> filenames = specchioClient.getMetaparameterValues(ids, "File Name");
+			
 			// fill the list with information from the server
-			for (Integer id : ids) {
-				model.addElement(new TargetReferenceListEntry(id));
+			for (int i = 0; i < ids.size(); i++) {
+				model.addElement(new TargetReferenceListEntry(ids.get(i), filenames.get(i).toString()));
 			}
 			
 		}
@@ -1022,21 +1011,18 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			/**
 			 * Constructor.
 			 * 
-			 * @param id	the identifier of the spectrum in this entry
+			 * @param id		the identifier of the spectrum in this entry
+			 * @param filename	the filename of the spectrum in the entry
 			 * 
 			 * @throws SPECCHIOClientException	error contacting the server
 			 */
-			public TargetReferenceListEntry(Integer id) throws SPECCHIOClientException {
+			public TargetReferenceListEntry(Integer id, String filename) throws SPECCHIOClientException {
 				
-				// download the spectrum from the server
+				// save the spectrum identifier for later
 				spectrum_id = id;
 				
 				// build a string representing this spectrum
-				StringBuffer sbuf = new StringBuffer();
-				String filename = specchioClient.getSpectrumFilename(id);
-				sbuf.append(filename);
-				sbuf.append(" (ID: " + Integer.toString(id) + ")");
-				string = sbuf.toString();
+				string = filename + " (ID: " + Integer.toString(id) + ")";
 				
 			}
 			
