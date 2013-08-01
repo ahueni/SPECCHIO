@@ -2,6 +2,8 @@ package ch.specchio.gui;
 
 import javax.swing.JPanel;
 
+import ch.specchio.interfaces.ProgressReportInterface;
+
 
 /**
  * Base class for all panels that display progress.

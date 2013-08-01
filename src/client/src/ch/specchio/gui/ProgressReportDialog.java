@@ -6,6 +6,8 @@ import java.awt.Frame;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
+import ch.specchio.interfaces.ProgressReportInterface;
+
 
 /**
  * Dialogue for displaying progress of an operation.

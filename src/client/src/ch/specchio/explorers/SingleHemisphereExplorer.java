@@ -14,7 +14,7 @@ import javax.swing.event.ChangeListener;
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.gui.GridbagLayouter;
-import ch.specchio.gui.ProgressReportDialog;
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.PlotsCallback;
 import ch.specchio.plots.swing.DirectionalPlot;
 import ch.specchio.plots.swing.GonioAnglePointInfoPanel;
@@ -37,9 +37,9 @@ public class SingleHemisphereExplorer extends JPanel implements ChangeListener, 
 	SamplingPoints2DPlot spp;
 	GonioAnglePointInfoPanel gap;
 	
-	ProgressReportDialog pr;
+	ProgressReportInterface pr;
 	
-	public SingleHemisphereExplorer(SpectralSpace space, ProgressReportDialog pr, SPECCHIOClient specchio_client) throws SPECCHIOClientException
+	public SingleHemisphereExplorer(SpectralSpace space, ProgressReportInterface pr, SPECCHIOClient specchio_client) throws SPECCHIOClientException
 	{
 		this.space = space;
 		this.pr = pr;

@@ -1,4 +1,4 @@
-package ch.specchio.gui;
+package ch.specchio.interfaces;
 
 public interface ProgressReportInterface {
 	

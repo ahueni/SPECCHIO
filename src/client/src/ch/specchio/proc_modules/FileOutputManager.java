@@ -18,8 +18,8 @@ import ch.specchio.file.writer.SpectrumWriter;
 import ch.specchio.file.writer.SpectrumWriterFactory;
 import ch.specchio.gui.FileOutputDialog;
 import ch.specchio.gui.ProgressReportDialog;
-import ch.specchio.gui.ProgressReportInterface;
 import ch.specchio.gui.SPECCHIOApplication;
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.spaces.Space;
 import ch.specchio.types.Spectrum;
 

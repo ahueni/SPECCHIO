@@ -5,7 +5,7 @@ import java.awt.Font;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOWebClientException;
-import ch.specchio.gui.ProgressReportDialog;
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.GonioPosition;
 import ch.specchio.plots.GonioSamplingPoints;
 import ch.specchio.spaces.SpectralSpace;
@@ -29,9 +29,9 @@ public class DirectionalPlot extends JPanel{
 	ChartAttribute attribs[];
 	CartesianCoordinates pTransform1;
 	LinearAxis xAxis, yAxis, zAxis;
-	ProgressReportDialog pr;
+	ProgressReportInterface pr;
 	
-	public DirectionalPlot(SpectralSpace space, int x_size, int y_size, ProgressReportDialog pr, SPECCHIOClient specchio_client)
+	public DirectionalPlot(SpectralSpace space, int x_size, int y_size, ProgressReportInterface pr, SPECCHIOClient specchio_client)
 	{
 		this.space = space;
 		this.pr = pr;

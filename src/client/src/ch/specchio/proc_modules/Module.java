@@ -27,7 +27,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.SpaceTypes;
 import ch.specchio.gui.GridbagLayouter;
-import ch.specchio.gui.ProgressReportInterface;
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpectralSpace;
@@ -190,8 +190,10 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 	}
 
 	public void set_operation(String op) {
-		progressBar.setString(op);	
-		processing_plane.redraw_object(get_ppo());
+		progressBar.setString(op);
+		if (processing_plane != null) {
+			processing_plane.redraw_object(get_ppo());
+		}
 	}
 
 	public void set_min_max(int min, int max) {

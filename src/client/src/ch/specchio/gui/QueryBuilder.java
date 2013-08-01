@@ -603,7 +603,10 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    	  || VisualisationSelectionDialog.time_line_plot.equals(e.getActionCommand())
 	    	  || VisualisationSelectionDialog.time_line_expl.equals(e.getActionCommand()))
 	      {	 
-	    	  visualise(e.getActionCommand());		 			  
+	    	  startOperation();
+	    	  VisualisationThread thread = new VisualisationThread(e.getActionCommand());
+	    	  thread.start();
+	    	  endOperation();	 			  
 	      }	      
 	      
 	      
@@ -696,57 +699,6 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
     					  
 	      }
 	      
-		
-	}
-	
-	
-	private void visualise(String plotType)
-	{
-		
-  	  startOperation();
-	  	try {
-      	VisualisationModule VM;
-      	
-      	Space[] spaces = specchio_client.getSpaces(
-      			ids_matching_query,
-      			this.split_spaces_by_sensor.isSelected(),
-      			this.split_spaces_by_sensor_and_unit.isSelected(),
-      			sdb.get_order_by_field()
-      		);
-			
-      	Integer i = 0;
-			for (Space space : spaces)
-			{
-				Space s = specchio_client.loadSpace(space);
-				VM = new VisualisationModule(this, specchio_client);
-				SpaceProcessingChainComponent c = new SpaceProcessingChainComponent(this, s);
-				c.setNumber(i);
-				VM.add_input_space(c, -1);
-				VM.set_vis_module_type(plotType);
-				VM.transform();
-				i++;
-			}
-	  	}
-		catch (SPECCHIOClientException ex) {
-	  		ErrorDialog error = new ErrorDialog(
-			    	this,
-		    		"Server error",
-		    		ex.getUserMessage(),
-		    		ex
-			    );
-		  		error.setVisible(true);
-	    }
-	  	catch (ModuleException ex) {
-	  		ErrorDialog error = new ErrorDialog(
-	  				this,
-	  				"Module error",
-	  				ex.getMessage(),
-	  				ex
-	  			);
-	  		error.setVisible(true);
-	  	}
-	  	endOperation();		
-		
 		
 	}
 	
@@ -898,7 +850,83 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	}
 	
 	
-	
+	/**
+	 * Thread for building visualisations.
+	 */
+	private class VisualisationThread extends Thread {
+		
+		/** the plot type */
+		private String plotType;
+		
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param plotTypeIn	the plot type
+		 */
+		public VisualisationThread(String plotTypeIn)
+		{
+			plotType = plotTypeIn;
+		}
+		
+		
+		/**
+		 * Thread entry point.
+		 */
+		public void run()
+		{
+	  	    // create a progress report
+			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, plotType, true);
+			pr.set_operation("Opening " + plotType);
+			pr.setVisible(true);
+			
+		  	try {
+		      	VisualisationModule VM;
+		      	
+		      	Space[] spaces = specchio_client.getSpaces(
+		      			ids_matching_query,
+		      			split_spaces_by_sensor.isSelected(),
+		      			split_spaces_by_sensor_and_unit.isSelected(),
+		      			sdb.get_order_by_field()
+		      		);
+					
+		      	Integer i = 0;
+				for (Space space : spaces)
+				{
+					Space s = specchio_client.loadSpace(space);
+					VM = new VisualisationModule(QueryBuilder.this, specchio_client);
+					SpaceProcessingChainComponent c = new SpaceProcessingChainComponent(QueryBuilder.this, s);
+					c.setNumber(i);
+					VM.add_input_space(c, -1);
+					VM.set_vis_module_type(plotType);
+					VM.transform();
+					i++;
+				}
+		  	}
+			catch (SPECCHIOClientException ex) {
+		  		ErrorDialog error = new ErrorDialog(
+				    	QueryBuilder.this,
+			    		"Server error",
+			    		ex.getUserMessage(),
+			    		ex
+				    );
+			  		error.setVisible(true);
+		    }
+		  	catch (ModuleException ex) {
+		  		ErrorDialog error = new ErrorDialog(
+		  				QueryBuilder.this,
+		  				"Module error",
+		  				ex.getMessage(),
+		  				ex
+		  			);
+		  		error.setVisible(true);
+		  	}
+		  	
+		  	pr.setVisible(false);
+			
+		}
+		
+	}
 	
 
 }
