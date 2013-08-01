@@ -1016,8 +1016,8 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 */
 		private class TargetReferenceListEntry {
 			
-			/** spectrum object */
-			private Spectrum spectrum;
+			/** spectrum identifer */
+			private Integer spectrum_id;
 			
 			/** the string to appear in the list */
 			private String string;
@@ -1032,15 +1032,12 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			public TargetReferenceListEntry(Integer id) throws SPECCHIOClientException {
 				
 				// download the spectrum from the server
-				spectrum = specchioClient.getSpectrum(id, true);
-				Metadata md = spectrum.getEavMetadata();
+				spectrum_id = id;
 				
 				// build a string representing this spectrum
 				StringBuffer sbuf = new StringBuffer();
-				MetaParameter mp = md.get_first_entry("File Name");
-				if (mp != null) {
-					sbuf.append(mp.getValue().toString());
-				}
+				String filename = specchioClient.getSpectrumFilename(id);
+				sbuf.append(filename);
 				sbuf.append(" (ID: " + Integer.toString(id) + ")");
 				string = sbuf.toString();
 				
@@ -1054,7 +1051,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			 */
 			public Integer getId() {
 				
-				return spectrum.getSpectrumId();
+				return spectrum_id;
 				
 			}
 			
