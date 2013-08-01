@@ -113,9 +113,9 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 		rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
 		getContentPane().add(rootPanel);
 		
-		// add the spectral plot panel, forcing it to be slightly bigger than the plot itself because the plot draws outside its boundaries
+		// add the spectral plot panel
 		spectralPlotPanel = new JPanel();
-		spectralPlotPanel.setMinimumSize(new java.awt.Dimension(PLOT_WIDTH + 50, PLOT_HEIGHT + 50));
+		spectralPlotPanel.setMinimumSize(new java.awt.Dimension(PLOT_WIDTH, PLOT_HEIGHT));
 		rootPanel.add(spectralPlotPanel);
 		
 		if (spectrumEnum.size() > 1) {
