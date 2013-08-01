@@ -36,13 +36,10 @@ import ch.specchio.constants.UserRoles;
 import ch.specchio.queries.EAVQueryConditionObject;
 import ch.specchio.queries.Query;
 import ch.specchio.queries.QueryConditionObject;
-import ch.specchio.types.MetaParameter;
-import ch.specchio.types.Metadata;
-import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 
 /**
- * Target-reference lin dialogue.
+ * Target-reference link dialogue.
  */
 public class TargetReferenceLinkDialog extends JDialog implements ActionListener, TreeSelectionListener {
 	
@@ -1104,16 +1101,15 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 */
 		public void run() {
 			
+			// create a progress dialogue
+			ProgressReportDialog pr = new ProgressReportDialog(TargetReferenceLinkDialog.this, "Linking data ...", false);
+			pr.set_operation("Creating TGT-REF links. ");
+			pr.setVisible(true);
+			
 			// move through all spectra in the selected target hierarchy
 			// and link them to the corresponding reference spectrum in the 
 			// reference hierarchy
 			try {
-				
-				
-				// create a progress dialogue
-				ProgressReportDialog pr = new ProgressReportDialog(TargetReferenceLinkDialog.this, "Linking data ...", false);
-				pr.set_operation("Creating TGT-REF links. ");
-				pr.setVisible(true);
 				
 				int cnt = 0;
 				int num = 0;
@@ -1132,8 +1128,6 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				// notify the dialogue that links have been created
 				pr.set_operation("Refreshing lists.");
 				TargetReferenceLinkDialog.this.linksCreated(targetIds, referenceIds, num);
-				
-				pr.setVisible(false);
 			
 			} catch (SPECCHIOClientException ex) {
 				ErrorDialog error = new ErrorDialog(
@@ -1144,6 +1138,8 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 					);
 				error.setVisible(true);
 			}
+			
+			pr.setVisible(false);
 			
 		}
 		
