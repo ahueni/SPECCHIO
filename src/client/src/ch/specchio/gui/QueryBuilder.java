@@ -878,28 +878,38 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	  	    // create a progress report
 			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, plotType, true);
 			pr.set_operation("Opening " + plotType);
+			pr.set_progress(0);
 			pr.setVisible(true);
 			
 		  	try {
 		      	VisualisationModule VM;
 		      	
+		      	pr.set_operation("Identifying spaces");
 		      	Space[] spaces = specchio_client.getSpaces(
 		      			ids_matching_query,
 		      			split_spaces_by_sensor.isSelected(),
 		      			split_spaces_by_sensor_and_unit.isSelected(),
 		      			sdb.get_order_by_field()
 		      		);
+		      	pr.set_progress(100);
 					
 		      	Integer i = 0;
 				for (Space space : spaces)
 				{
+					pr.set_operation("Loading space " + i);
+					pr.set_progress(0);
 					Space s = specchio_client.loadSpace(space);
+					pr.set_progress(50);
+					
+					pr.set_operation("Building plot");
 					VM = new VisualisationModule(QueryBuilder.this, specchio_client);
 					SpaceProcessingChainComponent c = new SpaceProcessingChainComponent(QueryBuilder.this, s);
 					c.setNumber(i);
 					VM.add_input_space(c, -1);
 					VM.set_vis_module_type(plotType);
 					VM.transform();
+					pr.set_progress(100);
+					
 					i++;
 				}
 		  	}
