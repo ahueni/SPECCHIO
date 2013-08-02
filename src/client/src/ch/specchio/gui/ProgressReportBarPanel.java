@@ -78,6 +78,7 @@ public class ProgressReportBarPanel extends ProgressReportPanel {
 	public void set_indeterminate(boolean indeterminate)
 	{
 		progressBar.setIndeterminate(indeterminate);
+		progressBar.setStringPainted(!indeterminate);
 	}
 	
 
