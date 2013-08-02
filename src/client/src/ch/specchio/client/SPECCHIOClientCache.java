@@ -57,11 +57,14 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	/** cache of attributes by category */
 	private Hashtable<String, attribute[]> attributesByCategory;
 	
-	/** indiex of attributes by id */
+	/** index of attributes by id */
 	private Hashtable<Integer, attribute> attributesById;
 	
 	/** index of attributes by name */
 	private Hashtable<String, attribute> attributesByName;
+	
+	/** metadata categories */
+	private Hashtable<String, CategoryTable> metadataCategories;
 	
 	/**
 	 * Constructor.
@@ -78,6 +81,7 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		attributesByCategory = new Hashtable<String, attribute[]>();
 		attributesById = null;
 		attributesByName = null;
+		metadataCategories = new Hashtable<String, CategoryTable>();
 		
 	}
 	
@@ -589,7 +593,11 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	 */
 	public CategoryTable getMetadataCategories(String field) throws SPECCHIOClientException {
 		
-		return realClient.getMetadataCategories(field);
+		if (!metadataCategories.containsKey(field)) {
+			metadataCategories.put(field, realClient.getMetadataCategories(field));
+		}
+		
+		return metadataCategories.get(field);
 		
 	}
 	
