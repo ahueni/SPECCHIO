@@ -22,6 +22,7 @@ import javax.swing.event.ListSelectionListener;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.metadata.MDE_Controller;
 import ch.specchio.plots.swing.SpectralLinePlot;
 import ch.specchio.plots.swing.SpectralPlot;
@@ -39,6 +40,9 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 	
 	/** client object */
 	private SPECCHIOClient specchioClient;
+	
+	/** progress report */
+	private ProgressReportInterface pr;
 	
 	/** metadata controller */
 	private MDE_Controller mdec;
@@ -85,13 +89,20 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 	 * 
 	 * @param specchioClient	client object
 	 * @param spaces			the spaces to be displayed in the dialogue
+	 * @param pr				progress report (may be null)
 	 * 
 	 * @throws SPECCHIOClientException	error contacting the server
 	 */
-	public SpectrumReportDialog(SPECCHIOClient specchioClient, ArrayList<Space> spaces) throws SPECCHIOClientException {
+	public SpectrumReportDialog(SPECCHIOClient specchioClient, ArrayList<Space> spaces, ProgressReportInterface pr) throws SPECCHIOClientException {
 		
 		// initialise member variables
 		this.specchioClient = specchioClient;
+		this.pr = pr;
+		
+		if (pr != null) {
+			pr.set_operation("Initialising");
+			pr.set_progress(0);
+		}
 		
 		// enumerate the spectrum identifiers in all spaces
 		spectrumEnum = new ArrayList<Integer>();
@@ -107,6 +118,11 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 		
 		// set up a metadata controller and form
 		mdec = new MDE_Controller(specchioClient);
+		
+		if (pr != null) {
+			pr.set_operation("Building user interface");
+			pr.set_progress(50);
+		}
 		
 		// set up the root panel with a vertical box layout
 		JPanel rootPanel = new JPanel();
@@ -155,6 +171,10 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 		dismissButton.setActionCommand(DISMISS);
 		dismissButton.addActionListener(this);
 		buttonPanel.add(dismissButton);
+		
+		if (pr != null) {
+			pr.set_progress(100);
+		}
 		
 		// display the first spectrum
 		if (spectrumEnum.size() > 0) {
@@ -212,11 +232,19 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 			// get the loaded space object for this spectrum
 			if (!loadedSpaces.containsKey(space)) {
 				// need to load the space from the server
+				if (pr != null) {
+					pr.set_operation("Loading spectral data");
+					pr.set_progress(0);
+				}
 				loadedSpaces.put(space, (SpectralSpace)specchioClient.loadSpace(space));
 			}
 			SpectralSpace ss = loadedSpaces.get(space);
 			
 			// plot the spectrum
+			if (pr != null) {
+				pr.set_operation("Plotting");
+				pr.set_progress(50);
+			}
 			spectralPlotPanel.removeAll();
 			if (!spectralPlots.containsKey(ss)) {
 				// need to build the plot object for this space
@@ -232,11 +260,20 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 			mdec.set_spectrum_ids(spectrumIdList);
 
 			// tell the metadata panel to display the new spectrum
+			if (pr != null) {
+				pr.set_operation("Loading metadata");
+				pr.set_progress(75);
+			}
 			spectrumMetadataPanel.setForm(mdec.getForm());
 			
 			// force re-draw
 			validate();
 			this.repaint();
+			
+			if (pr != null) {
+				pr.set_operation("Done.");
+				pr.set_progress(100);
+			}
 			
 		}
 		catch (SPECCHIOClientException ex) {

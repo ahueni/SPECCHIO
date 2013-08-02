@@ -508,33 +508,14 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      if("show_report".equals(e.getActionCommand()))
 	      {
 	    	  startOperation();
-	    	  try {
-	    		  Space spaces[] = specchio_client.getSpaces(
-	    				  ids_matching_query,
-	    				  this.split_spaces_by_sensor.isSelected(),
-	    				  this.split_spaces_by_sensor_and_unit.isSelected(),
-	    				  sdb.get_order_by_field()
-	    			);
-	   
-	    		  ArrayList<Space> spaces_li = new ArrayList<Space>(spaces.length);
-	    		  for (Space space : spaces) {
-	    			  spaces_li.add(space);
-	    		  }
-	  
-			      SpectrumReportDialog  d = new SpectrumReportDialog(specchio_client, spaces_li);
-			      d.setVisible(true);
-	    	  }
-	  		catch (SPECCHIOClientException ex) {
-		  		ErrorDialog error = new ErrorDialog(
-				    	this,
-			    		"Error",
-			    		ex.getUserMessage(),
-			    		ex
-				    );
-			  		error.setVisible(true);
-		    }
+	    	  ReportThread thread = new ReportThread(
+    				  ids_matching_query,
+    				  split_spaces_by_sensor.isSelected(),
+    				  split_spaces_by_sensor_and_unit.isSelected(),
+    				  sdb.get_order_by_field()
+	    			  );
+	    	  thread.start();
 	    	  endOperation();
-
 	      }
 	      
 	      if("file_export".equals(e.getActionCommand()))
@@ -543,8 +524,8 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    	  try {
 	    		  Space spaces[] = specchio_client.getSpaces(
 	    				  ids_matching_query,
-	    				  this.split_spaces_by_sensor.isSelected(),
-	    				  this.split_spaces_by_sensor_and_unit.isSelected(),
+	    				  split_spaces_by_sensor.isSelected(),
+	    				  split_spaces_by_sensor_and_unit.isSelected(),
 	    				  sdb.get_order_by_field()
 	    			);
 	    		  ArrayList<SpaceProcessingChainComponent> spaces_li = new ArrayList<SpaceProcessingChainComponent>(spaces.length);
@@ -604,7 +585,13 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    	  || VisualisationSelectionDialog.time_line_expl.equals(e.getActionCommand()))
 	      {	 
 	    	  startOperation();
-	    	  VisualisationThread thread = new VisualisationThread(e.getActionCommand());
+	    	  VisualisationThread thread = new VisualisationThread(
+	    			  e.getActionCommand(),
+    				  ids_matching_query,
+    				  split_spaces_by_sensor.isSelected(),
+    				  split_spaces_by_sensor_and_unit.isSelected(),
+    				  sdb.get_order_by_field()
+    			);
 	    	  thread.start();
 	    	  endOperation();	 			  
 	      }	      
@@ -851,6 +838,83 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	
 	
 	/**
+	 * Thread for builing reports.
+	 */
+	private class ReportThread extends Thread {
+		
+		/** spectrum identifiers on which to report */
+		private ArrayList<Integer> ids;
+		
+		/** split spaces by sensor */
+		private boolean bySensor;
+		
+		/** split spaces by sensor and unit */
+		private boolean bySensorAndUnit;
+		
+		/** field to order by */
+		private String orderBy;
+		
+		/**
+		 * Constructor.
+		 */
+		public ReportThread(ArrayList<Integer> idsIn, boolean bySensorIn, boolean bySensorAndUnitIn, String orderByIn)
+		{
+			// save parameters for later
+			ids = idsIn;
+			bySensor = bySensorIn;
+			bySensorAndUnit = bySensorAndUnitIn;
+			orderBy = orderByIn;
+		}
+		
+		/**
+		 * Thread entry point.
+		 */
+		public void run()
+		{
+	  	    // create a progress report
+			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, "Spectrum Report", true);
+			pr.set_operation("Opening report");
+			pr.set_progress(0);
+			pr.set_indeterminate(true);
+			pr.setVisible(true);
+			
+	    	try {
+	    		
+	    		pr.set_operation("Identifying spaces");
+	    		Space spaces[] = specchio_client.getSpaces(
+	    				ids,
+	    				bySensor,
+	    				bySensorAndUnit,
+	    				orderBy
+	    			);
+	   
+	    		ArrayList<Space> spaces_li = new ArrayList<Space>(spaces.length);
+	    		for (Space space : spaces) {
+	    			spaces_li.add(space);
+	    		}
+	  
+	    		pr.set_indeterminate(false);
+			    SpectrumReportDialog  d = new SpectrumReportDialog(specchio_client, spaces_li, pr);
+			    pr.setVisible(false);
+			    d.setVisible(true);
+	    	}
+	    	catch (SPECCHIOClientException ex) {
+		  		ErrorDialog error = new ErrorDialog(
+		  				QueryBuilder.this,
+			    		"Error",
+			    		ex.getUserMessage(),
+			    		ex
+				    );
+			  	error.setVisible(true);
+		    }
+	    	
+	    	pr.setVisible(false);
+		}
+		
+	}
+	
+	
+	/**
 	 * Thread for building visualisations.
 	 */
 	private class VisualisationThread extends Thread {
@@ -858,15 +922,36 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		/** the plot type */
 		private String plotType;
 		
+		/** spectrum identifiers on which to report */
+		private ArrayList<Integer> ids;
+		
+		/** split spaces by sensor */
+		private boolean bySensor;
+		
+		/** split spaces by sensor and unit */
+		private boolean bySensorAndUnit;
+		
+		/** field to order by */
+		private String orderBy;
+		
 		
 		/**
 		 * Constructor.
 		 * 
-		 * @param plotTypeIn	the plot type
+		 * @param plotTypeIn		the plot type
+		 * @param idsIn				the spectrum identifiers to be visualised
+		 * @param bySensor			split spaces by sensor
+		 * @param bySensorAndUnit	split spaces by sensor and unit
+		 * @param orderByIn			field to order by
 		 */
-		public VisualisationThread(String plotTypeIn)
+		public VisualisationThread(String plotTypeIn, ArrayList<Integer> idsIn, boolean bySensorIn, boolean bySensorAndUnitIn, String orderByIn)
 		{
+			// save parameters for later
 			plotType = plotTypeIn;
+			ids = idsIn;
+			bySensor = bySensorIn;
+			bySensorAndUnit = bySensorAndUnitIn;
+			orderBy = orderByIn;
 		}
 		
 		
@@ -886,10 +971,10 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		      	
 		      	pr.set_operation("Identifying spaces");
 		      	Space[] spaces = specchio_client.getSpaces(
-		      			ids_matching_query,
-		      			split_spaces_by_sensor.isSelected(),
-		      			split_spaces_by_sensor_and_unit.isSelected(),
-		      			sdb.get_order_by_field()
+		      			ids,
+		      			bySensor,
+		      			bySensorAndUnit,
+		      			orderBy
 		      		);
 		      	pr.set_progress(100);
 					
