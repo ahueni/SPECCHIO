@@ -127,7 +127,7 @@ public class FileOutputManager extends Thread {
 				// create progress report if not yet externally defined
 				if(pr == null)
 				{
-					pr = new ProgressReportDialog(SPECCHIOApplication.getInstance().get_frame(), "Writing to filesystem", false);
+					pr = new ProgressReportDialog(SPECCHIOApplication.getInstance().get_frame(), "Writing to filesystem", false, 20);
 					((ProgressReportDialog)pr).setVisible(true);
 					close_progress_report = true;
 				}

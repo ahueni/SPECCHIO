@@ -872,7 +872,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		public void run()
 		{
 	  	    // create a progress report
-			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, "Spectrum Report", true);
+			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, "Spectrum Report", false, 20);
 			pr.set_operation("Opening report");
 			pr.set_progress(0);
 			pr.set_indeterminate(true);
@@ -961,7 +961,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		public void run()
 		{
 	  	    // create a progress report
-			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, plotType, true);
+			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, plotType, false, 20);
 			pr.set_operation("Opening " + plotType);
 			pr.set_progress(0);
 			pr.setVisible(true);

@@ -222,7 +222,7 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 
 			// create a progress report
 			startOperation();
-	    	ProgressReportDialog pr = new ProgressReportDialog(DatabaseConnectionDialog.this, "Connection", false);
+	    	ProgressReportDialog pr = new ProgressReportDialog(DatabaseConnectionDialog.this, "Connection", false, 30);
 	    	
 	    	try {
 	    		// connect

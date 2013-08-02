@@ -516,7 +516,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			int opposite = 1;
 			
 			// create and display a progress report
-			ProgressReportDialog pr = new ProgressReportDialog(GonioAngleCalcDialog.this, "Gonio Angle Calculator", false);
+			ProgressReportDialog pr = new ProgressReportDialog(GonioAngleCalcDialog.this, "Gonio Angle Calculator", false, 20);
 			pr.setVisible(true);
 			pr.set_operation("Calculating sensor angles");
 			
@@ -607,7 +607,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 		public void run() {
 			
 			// create and display a progress report
-			ProgressReportDialog pr = new ProgressReportDialog(GonioAngleCalcDialog.this, "Gonio Angle Calculator", false);
+			ProgressReportDialog pr = new ProgressReportDialog(GonioAngleCalcDialog.this, "Gonio Angle Calculator", false, 20);
 			pr.setVisible(true);
 			pr.set_operation("Reading spectrum metadata");
 			
@@ -675,7 +675,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 		public void run() {
 			
 			// create and display a progress report
-			ProgressReportDialog pr = new ProgressReportDialog(GonioAngleCalcDialog.this, "Gonio Angle Calculator", false);
+			ProgressReportDialog pr = new ProgressReportDialog(GonioAngleCalcDialog.this, "Gonio Angle Calculator", false, 20);
 			pr.setVisible(true);
 			pr.set_operation("Updating sensor angles");
 			

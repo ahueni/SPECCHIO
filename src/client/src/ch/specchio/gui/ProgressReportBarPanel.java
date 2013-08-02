@@ -1,5 +1,8 @@
 package ch.specchio.gui;
 
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -25,9 +28,10 @@ public class ProgressReportBarPanel extends ProgressReportPanel {
 	/**
 	 * Constructor.
 	 */
-	public ProgressReportBarPanel(boolean include_component_label)
+	public ProgressReportBarPanel(boolean include_component_label, int columns)
 	{
 		super();
+		
 		
 		// initialise components
 		operation_value = new JLabel();
@@ -64,6 +68,17 @@ public class ProgressReportBarPanel extends ProgressReportPanel {
 
 		constraints.gridx = 1;		
 		add(progressBar, constraints);	
+		
+		// work out the preferred size of the operation and component fields
+		if (columns > 0) {
+			FontMetrics fm = operation_value.getFontMetrics(operation_value.getFont());
+			Dimension preferredLabelSize = new Dimension(fm.charWidth('M') * columns, fm.getHeight());
+			operation_value.setPreferredSize(preferredLabelSize);
+			if (component_value != null) {
+				component_value.setPreferredSize(preferredLabelSize);
+			}
+		}
+		
 	}
 	
 	

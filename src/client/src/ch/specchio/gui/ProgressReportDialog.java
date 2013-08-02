@@ -28,12 +28,13 @@ public class ProgressReportDialog extends JDialog implements ProgressReportInter
 	 * @param owner						the frame that owns this dialogue
 	 * @param title						the title of the dialogue
 	 * @param include_component_label	include the "component" section?
+	 * @param columns					the number of columns in the "operation" and "component" fields
 	 */
-	public ProgressReportDialog(Frame owner, String title, boolean include_component_label)
+	public ProgressReportDialog(Frame owner, String title, boolean include_component_label, int columns)
 	{
 		super(owner, title + " Progress", false);	
 		
-		init(include_component_label);
+		init(include_component_label, columns);
 	}
 	
 	
@@ -43,12 +44,13 @@ public class ProgressReportDialog extends JDialog implements ProgressReportInter
 	 * @param owner						the dialogue that owns this dialogue
 	 * @param title						the title of the dialogue
 	 * @param include_component_label	include the "component" section?
+	 * @param columns					the number of columns in the "operation" and "component" fields
 	 */
-	public ProgressReportDialog(Dialog owner, String title, boolean include_component_label)
+	public ProgressReportDialog(Dialog owner, String title, boolean include_component_label, int columns)
 	{
 		super(owner, title + " Progress", false);	
 		
-		init(include_component_label);
+		init(include_component_label, columns);
 	}
 	
 	
@@ -56,15 +58,16 @@ public class ProgressReportDialog extends JDialog implements ProgressReportInter
 	 * Helper method for constructing the dialogue.
 	 * 
 	 * @param include_component_label	include the "component" section?
+	 * @param columns					the number of columns in the "operation" and "component" fields
 	 */
-	private void init(boolean include_component_label) {
+	private void init(boolean include_component_label, int columns) {
 		
 		// add the root panel
 		JPanel rootPanel = new JPanel();
 		getContentPane().add(rootPanel);
 		
 		// add the progress report panel
-		progressPanel = new ProgressReportBarPanel(include_component_label);
+		progressPanel = new ProgressReportBarPanel(include_component_label, columns);
 		rootPanel.add(progressPanel);
 		
 		// lay it out
@@ -75,7 +78,6 @@ public class ProgressReportDialog extends JDialog implements ProgressReportInter
 	public void set_component(String c)
 	{
 		progressPanel.set_component(c);
-		pack();
 	}
 	
 	
@@ -88,7 +90,6 @@ public class ProgressReportDialog extends JDialog implements ProgressReportInter
 	public void set_operation(String op)
 	{
 		progressPanel.set_operation(op);
-		pack();
 	}
 	
 	public void set_min_max(int min, int max)

@@ -39,7 +39,7 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 	class removing_thread extends Thread
 	{
 
-		ProgressReportDialog pr = new ProgressReportDialog(DataRemoverDialog.this, "Removing data ...", false);
+		ProgressReportDialog pr = new ProgressReportDialog(DataRemoverDialog.this, "Removing data ...", false, 20);
 		
 		SpectralDataBrowser.SpectralDataBrowserNode sdb_node;
 		

@@ -42,7 +42,7 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 	class startup_thread extends Thread
 	{
 
-		ProgressReportDialog pr = new ProgressReportDialog(InstrumentationMetadataEditor.this, "Starting Instrumentation Metadata Editor", false);
+		ProgressReportDialog pr = new ProgressReportDialog(InstrumentationMetadataEditor.this, "Starting Instrumentation Metadata Editor", false, 30);
 		InstrumentationMetadataEditor imde;
 	
 		
