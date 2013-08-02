@@ -13,6 +13,7 @@ import javax.net.ssl.SSLContext;
 import javax.ws.rs.core.MediaType;
 
 import au.ands.org.researchdata.RDACollectionDescriptor;
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.jaxb.XmlBoolean;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.jaxb.XmlIntegerAdapter;
@@ -96,6 +97,9 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	/** the capabilities of the server */
 	private Capabilities capabilities = null;
+	
+	/** the progress report on which to indicate progress */
+	private ProgressReportInterface pr = null;
 
 	private Hashtable<Integer, attribute> attributes_id_hash = null;
 	private Hashtable<String, attribute> attributes_name_hash = null;
@@ -183,6 +187,9 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 		if (username != null) {
 			// execute the log in service
+			if (pr != null) {
+				pr.set_operation("Connecting to " + url);
+			}
 			user = getObject(User.class, "user", "login");
 		}
 		
@@ -1344,6 +1351,19 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 		postForInteger("metadata", "remove_metaparameters_of_given_attribute", new MetadataUpdateDescriptor(mp, spectrum_ids));
 				
+	}
+	
+	
+	/**
+	 * Set the progress report interface to which progress made by this
+	 * client will be reported.
+	 * 
+	 * @param pr	the progress report; use null to report no progress
+	 */
+	public void setProgressReport(ProgressReportInterface pr) {
+		
+		this.pr = pr;
+		
 	}
 	
 	

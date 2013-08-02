@@ -2,10 +2,13 @@ package ch.specchio.client;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 
 import au.ands.org.researchdata.RDACollectionDescriptor;
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.GonioSamplingPoints;
 import ch.specchio.queries.Query;
 import ch.specchio.spaces.MeasurementUnit;
@@ -66,6 +69,9 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	/** metadata categories */
 	private Hashtable<String, CategoryTable> metadataCategories;
 	
+	/** the progress report with which to indicate progress */
+	private ProgressReportInterface pr;
+	
 	/**
 	 * Constructor.
 	 * 
@@ -75,6 +81,9 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 		/** save a reference to the real client */
 		realClient = client;
+		
+		/** initialise member variables */
+		pr = null;
 		
 		/** initialise caches */
 		attributes = null;
@@ -93,7 +102,32 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	 */
 	public void connect() throws SPECCHIOClientException {
 		
+		// make connection
+		pr.set_progress(0);
 		realClient.connect();
+		
+		// pre-populate attribute cache
+		pr.set_progress(50);
+		pr.set_operation("Downloading attributes");
+		attributes = realClient.getAttributes();
+		attributesById = new Hashtable<Integer, attribute>();
+		attributesByName = new Hashtable<String, attribute>();
+		Set<String> categories = new HashSet<String>();
+		for (attribute attr : attributes) {
+			attributesById.put(attr.id, attr);
+			attributesByName.put(attr.name, attr);
+			if (attr.cat_name != null && attr.cat_name.length() > 0) {
+				categories.add(attr.cat_name);
+			}
+		}
+		pr.set_progress(75);
+		for (String category : categories) {
+			attributesByCategory.put(category, realClient.getAttributesForCategory(category));
+		}
+		
+		// finished
+		pr.set_progress(100);
+		pr.set_operation("Done");
 		
 	}
 	
@@ -1168,6 +1202,20 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	public void removeSpectralNode(spectral_node_object sn) throws SPECCHIOClientException {
 		
 		realClient.removeSpectralNode(sn);
+		
+	}
+	
+	
+	/**
+	 * Set the progress report interface to which progress made by this
+	 * client will be reported.
+	 * 
+	 * @param pr	the progress report; use null to report no progress
+	 */
+	public void setProgressReport(ProgressReportInterface pr) {
+		
+		this.pr = pr;
+		realClient.setProgressReport(pr);
 		
 	}
 	

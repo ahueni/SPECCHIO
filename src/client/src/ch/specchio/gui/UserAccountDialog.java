@@ -197,7 +197,8 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				
 				// create a client connected to this server
 				SPECCHIOClientFactory cf = SPECCHIOClientFactory.getInstance();
-				specchio_client = cf.connect(d);
+				specchio_client = cf.createClient(d);
+				specchio_client.connect();
 				
 				// fill the institute selection box
 				userAccountPanel.setInstitutes(specchio_client.getInstitutes());

@@ -7,6 +7,7 @@ import java.util.List;
 
 import au.ands.org.researchdata.RDACollectionDescriptor;
 
+import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.GonioSamplingPoints;
 import ch.specchio.queries.Query;
 import ch.specchio.spaces.MeasurementUnit;
@@ -793,6 +794,15 @@ public interface SPECCHIOClient {
 	 * @param sn	the node to be removed
 	 */
 	public void removeSpectralNode(spectral_node_object sn) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Set the progress report interface to which progress made by this
+	 * client will be reported.
+	 * 
+	 * @param pr	the progress report; use null to report no progress
+	 */
+	public void setProgressReport(ProgressReportInterface pr);
 	
 	
 	/**

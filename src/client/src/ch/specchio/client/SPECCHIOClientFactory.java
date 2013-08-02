@@ -78,17 +78,11 @@ public class SPECCHIOClientFactory {
 	 *
 	 * @return a web client object connected to the new application server
 	 * 
-	 * @throws SPECCHIOWebClientConnection	could not log in to the server
+	 * @throws SPECCHIOClientConnection	could not create the client
 	 */
-	public SPECCHIOClient connect(SPECCHIOServerDescriptor app) throws SPECCHIOClientException {
+	public SPECCHIOClient createClient(SPECCHIOServerDescriptor app) throws SPECCHIOClientException {
 		
-		SPECCHIOClient client = null;
-		
-		// create a new client and connect to the server
-		client = new SPECCHIOClientCache(app.createClient());
-		client.connect();
-		
-		return client;
+		return new SPECCHIOClientCache(app.createClient());
 	
 	}
 	

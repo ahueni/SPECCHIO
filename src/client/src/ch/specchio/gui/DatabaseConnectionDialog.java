@@ -129,30 +129,11 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 	    	this.setVisible(false);
 	    } 
 	    if ("connect".equals(e.getActionCommand())) {
-	    	
-	    	// create new connection_details_class object for standard connections
-	    	startOperation();
-    		SPECCHIOServerDescriptor d = descriptor_panel.getServerDescriptor();
-	    	try {
-	    		// connect
-	    		SPECCHIOClient specchio_client = cf.connect(d);
-	    		
-	    		// register the new connection with the application
-	    		SPECCHIOApplication.getInstance().setClient(specchio_client);
-	  		  	
-	  		  	// close the dialogue
-	    		this.setVisible(false);
-	    	}
-	    	catch (SPECCHIOClientException ex) {
-	    		ErrorDialog error = new ErrorDialog(
-	    				this,
-	    				"Could not connect",
-	    				ex.getUserMessage(),
-	    				ex
-	    		);
-	    		error.setVisible(true);
-	    	}
-	    	endOperation();
+
+	    	// launch a thread to perform the connection
+    		SPECCHIOServerDescriptor server_d = descriptor_panel.getServerDescriptor();
+	    	DatabaseConnectionThread thread = new DatabaseConnectionThread(server_d);
+	    	thread.start();
 	    }
 	    
 		if (e.getSource() == conn_combo)
@@ -171,7 +152,6 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 			db_details_panel.add(descriptor_panel);
 			db_details_panel.revalidate();
 			db_details_panel.repaint();
-			
 			
 			pack();
 			
@@ -210,6 +190,69 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 		
 		// change the cursor to its "wait" state
 		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		
+	}
+	
+	
+	/**
+	 * Thread for connecting to a database.
+	 */
+	private class DatabaseConnectionThread extends Thread {
+		
+		/** the server do connect to */
+		private SPECCHIOServerDescriptor server_d;
+		
+		
+		/**
+		 * Constructor.
+		 *
+		 * @param serverIn	the descriptor of the server to which to connect
+		 */
+		public DatabaseConnectionThread(SPECCHIOServerDescriptor serverIn) {
+			
+			// save parameters for later
+			server_d = serverIn;
+			
+		}
+		
+		/**
+		 * Thread entry point.
+		 */
+		public void run() {
+
+			// create a progress report
+			startOperation();
+	    	ProgressReportDialog pr = new ProgressReportDialog(DatabaseConnectionDialog.this, "Connection", false);
+	    	
+	    	try {
+	    		// connect
+	    		SPECCHIOClient specchio_client = cf.createClient(server_d);
+	    		specchio_client.setProgressReport(pr);
+		    	pr.setVisible(true);
+	    		specchio_client.connect();
+	    		
+	    		// register the new connection with the application
+	    		SPECCHIOApplication.getInstance().setClient(specchio_client);
+	  		  	
+	  		  	// close the dialogue
+		    	specchio_client.setProgressReport(null);
+	    		setVisible(false);
+	    	}
+	    	catch (SPECCHIOClientException ex) {
+	    		pr.set_operation("Error");
+	    		ErrorDialog error = new ErrorDialog(
+	    				DatabaseConnectionDialog.this,
+	    				"Could not connect",
+	    				ex.getUserMessage(),
+	    				ex
+	    		);
+	    		error.setVisible(true);
+	    	}
+	    	
+	    	// close progress report
+	    	pr.setVisible(false);	
+	    	endOperation();
+		}
 		
 	}
 	
