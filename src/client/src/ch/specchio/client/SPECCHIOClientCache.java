@@ -85,7 +85,7 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		/** initialise member variables */
 		pr = null;
 		
-		/** initialise caches */
+		// initialise caches
 		attributes = null;
 		attributesByCategory = new Hashtable<String, attribute[]>();
 		attributesById = null;
@@ -103,31 +103,42 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	public void connect() throws SPECCHIOClientException {
 		
 		// make connection
-		pr.set_progress(0);
+		if (pr != null) {
+			pr.set_progress(0);
+		}
 		realClient.connect();
 		
-		// pre-populate attribute cache
-		pr.set_progress(50);
-		pr.set_operation("Downloading attributes");
-		attributes = realClient.getAttributes();
-		attributesById = new Hashtable<Integer, attribute>();
-		attributesByName = new Hashtable<String, attribute>();
-		Set<String> categories = new HashSet<String>();
-		for (attribute attr : attributes) {
-			attributesById.put(attr.id, attr);
-			attributesByName.put(attr.name, attr);
-			if (attr.cat_name != null && attr.cat_name.length() > 0) {
-				categories.add(attr.cat_name);
+		if (realClient.getLoggedInUser() != null) {
+		
+			// pre-populate attribute cache
+			if (pr != null) {
+				pr.set_progress(50);
+				pr.set_operation("Downloading attributes");
 			}
-		}
-		pr.set_progress(75);
-		for (String category : categories) {
-			attributesByCategory.put(category, realClient.getAttributesForCategory(category));
+			attributes = realClient.getAttributes();
+			attributesById = new Hashtable<Integer, attribute>();
+			attributesByName = new Hashtable<String, attribute>();
+			Set<String> categories = new HashSet<String>();
+			for (attribute attr : attributes) {
+				attributesById.put(attr.id, attr);
+				attributesByName.put(attr.name, attr);
+				if (attr.cat_name != null && attr.cat_name.length() > 0) {
+					categories.add(attr.cat_name);
+				}
+			}
+			if (pr != null) {
+				pr.set_progress(75);
+			}
+			for (String category : categories) {
+				attributesByCategory.put(category, realClient.getAttributesForCategory(category));
+			}
 		}
 		
 		// finished
-		pr.set_progress(100);
-		pr.set_operation("Done");
+		if (pr != null) {
+			pr.set_progress(100);
+			pr.set_operation("Done");
+		}
 		
 	}
 	
