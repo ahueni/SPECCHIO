@@ -56,14 +56,15 @@
     
     
     <!-- build war file -->
-    <target name="dist" description="Build WAR file">
+    <target name="dist" description="Build WAR file" depends="build">
     	<mkdir dir="${dist.dir}" />
     	<war destfile="${dist.dir}/${war.file}" webxml="${build.dir}/WEB-INF/web.xml">
 			<fileset dir="${build.dir}">
-				<include name="WEB-INF/*.xml" />
 				<include name="*.jsp" />
+				<include name="WEB-INF/*.xml" />
+				<include name="WEB-INF/lib/*.jar" />
 			</fileset>
-			<classes dir="${build.dir}" />
+			<classes dir="${build.dir}/WEB-INF/classes" />
     	</war>
     </target>
     
