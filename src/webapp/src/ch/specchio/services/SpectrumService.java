@@ -204,24 +204,22 @@ public class SpectrumService extends SPECCHIOService {
 	
 	
 	/**
-	 * Get target-reference links that refer to a given target and/or reference.
+	 * Get target-reference links that refer to a given sets of targets and references.
 	 * 
-	 * @param target_id		the target identifier (0 to match all targets)
-	 * @param reference_id	the reference identifier (0 to match all references)
+	 * @param ids_d	the spectrum identifiers (set 1 = targets, set 2 = references)
 	 * 
 	 * @return an array of SpectrumDataLink objects
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	@GET
-	@Path("getTargetReferenceLinksByTarget/{target_id: [0-9]+}/{reference_id: [0-9]+}")
+	@POST
+	@Path("getTargetReferenceLinks")
+	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public SpectrumDataLink[] getTargetReferenceLinksByTarget(
-			@PathParam("target_id") int target_id,
-			@PathParam("reference_id") int reference_id) throws SPECCHIOFactoryException {
+	public SpectrumDataLink[] getTargetReferenceLinks(SpectrumIdsDescriptor ids_d) throws SPECCHIOFactoryException {
 		
 		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
-		SpectrumDataLink datalinks[] = factory.getTargetReferenceLinks(target_id, reference_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
+		SpectrumDataLink datalinks[] = factory.getTargetReferenceLinks(ids_d.getSpectrumIds(1), ids_d.getSpectrumIds(2), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
 		return datalinks;

@@ -601,14 +601,14 @@ public interface SPECCHIOClient {
 	
 	
 	/**
-	 * Get the spectrum data links that refer to a given target and/or reference.
+	 * Get the spectrum data links that refer to a given set of targets and/or references.
 	 * 
-	 * @param target_id		the identifier of the target spectrum (0 to match all targets)
-	 * @param reference_id	the identifier of the reference spectrum (0 to match all references)
+	 * @param target_ids	the identifiers of the target spectra (null or empty to match all targets)
+	 * @param reference_ids	the identifiers of the reference spectra (null or empty to match all references)
 	 * 
 	 * @returns an array of SpectrumDataLink objects
 	 */
-	public SpectrumDataLink[] getTargetReferenceLinks(int target_id, int reference_id) throws SPECCHIOClientException;
+	public SpectrumDataLink[] getTargetReferenceLinks(ArrayList<Integer> target_ids, ArrayList<Integer> reference_ids) throws SPECCHIOClientException;
 	
 		
 	/**

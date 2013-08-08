@@ -845,15 +845,15 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	/**
 	 * Get the spectrum data links that refer to a given target and/or reference.
 	 * 
-	 * @param target_id		the identifier of the target spectrum (0 to match all targets)
-	 * @param reference_id	the identifier of the reference spectrum (0 to match all references)
+	 * @param target_ids	the identifiers of the target spectra (null or empty to match all targets)
+	 * @param reference_ids	the identifiers of the reference spectra (null or empty all references)
 	 * @param is_admin		perform the query as the admin user
 	 * 
 	 * @return an array of identifiers of linked spectra
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public SpectrumDataLink[] getTargetReferenceLinks(int target_id, int reference_id, boolean is_admin) throws SPECCHIOFactoryException {
+	public SpectrumDataLink[] getTargetReferenceLinks(ArrayList<Integer> target_ids, ArrayList<Integer> reference_ids, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
 			// work out the correct table name
@@ -865,14 +865,14 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			
 			// build a query that will return all matching datalinks
 			StringBuffer query = new StringBuffer();
-			query.append("select spectrum_id,linked_spectrum_id, name");
+			query.append("select spectrum_id, linked_spectrum_id, name");
 			query.append(" from " + tablename + ", datalink_type ");
 			query.append(" where " + SQL.prefix(tablename, "datalink_type_id") + "=" + SQL.prefix("datalink_type", "datalink_type_id"));
-			if (target_id != 0) {
-				query.append(" and spectrum_id=" + Integer.toString(target_id));
+			if (target_ids != null && target_ids.size() > 0) {
+				query.append(" and spectrum_id in " + SQL.quote_list(target_ids));
 			}
-			if (reference_id != 0) {
-				query.append(" and linked_spectrum_id=" + Integer.toString(reference_id));
+			if (reference_ids != null && reference_ids.size() > 0) {
+				query.append(" and linked_spectrum_id in " + SQL.quote_list(reference_ids));
 			}
 			
 			// build a list of matching datalinks
@@ -927,12 +927,14 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				// trying to link target to itself
 				throw new IllegalArgumentException("Cannot link a target to itself.");
 			}
-			links = getTargetReferenceLinks(target_id, 0, false);
+			ArrayList<Integer> target_id_list = new ArrayList<Integer>(1);
+			target_id_list.add(target_id);
+			links = getTargetReferenceLinks(target_id_list, null, false);
 			if (links.length > 0) {
 				// target already has a reference
 				throw new IllegalArgumentException("Target " + links[0].getReferencingId() + " is already linked to reference " + links[0].getReferencedId());
 			}
-			links = getTargetReferenceLinks(0, target_id, false);
+			links = getTargetReferenceLinks(null, target_id_list, false);
 			if (links.length > 0) {
 				// target is already a reference
 				throw new IllegalArgumentException("The proposed target " + target_id + " is in use as a reference.");
