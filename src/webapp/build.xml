@@ -2,6 +2,7 @@
 <project name="SPECCHIO Web Application" basedir="." default="dist">
 
 	<!-- directory name configuration -->
+	<property name="repo.home" value="../.." />
 	<property name="source.dir" value="src" />
 	<property name="web.dir" value="WebContent" />
 	<property name="lib.dir" value="lib" />
@@ -9,10 +10,10 @@
 	<property name="dist.dir" value="dist" />
 	<property name="war.file" value="specchio-webapp.war" />
 	<property name="glassfish.home" value="/opt/glassfish3/glassfish" />
-	<property name="specchio-types.home" value="../types/dist" />
+	<property name="pkg.dir" value="${repo.home}/pkg" />
 	
 	<!-- dependencies -->
-	<fileset id="specchio.libs" dir="${specchio-types.home}">
+	<fileset id="specchio.libs" dir="${repo.home}/src/types/dist">
 		<include name="*.jar" />
 	</fileset>
 	<fileset id="other.libs" dir="${lib.dir}">
@@ -67,6 +68,11 @@
 			<classes dir="${build.dir}/WEB-INF/classes" />
     	</war>
     </target>
+	
+	<!-- build installation packages -->
+	<target name="package" description="Build installation package" depends="dist">
+		<copy file="${dist.dir}/${war.file}" todir="${pkg.dir}" />
+	</target>
     
     
     
