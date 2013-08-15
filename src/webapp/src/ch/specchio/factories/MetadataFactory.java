@@ -144,305 +144,89 @@ public class MetadataFactory extends SPECCHIOFactory {
 			Statement stmt = getStatementBuilder().createStatement();
 			
 	
-			if("suboptimal but working Conflict detection".equals("do it anyway"))
-			{
-				
-				String query = "SELECT count(distinct sxe.spectrum_id), count(distinct eav.eav_id), count(eav.eav_id)/count(distinct sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-				getStatementBuilder().conc_ids(ids) +
-					") and sxe.eav_id = eav.eav_id group by attribute_id";
-								
-				
-				int distinct_spectrum_id_cnt;
-				int distinct_eav_id_cnt;
-				double multi_value_cnt;
-				Integer attribute_id;
-				Integer eav_id;
-				ConflictStruct conflict;
-				ArrayList<Integer> eav_ids_to_double_check = new ArrayList<Integer>();
-				ArrayList<Integer> attributes_with_mixed_conflict_state = new ArrayList<Integer>();
-				
-				ResultSet rs;
-	
-				rs = stmt.executeQuery(query);
-				
-				while (rs.next()) {
-					
-					conflict = new ConflictStruct();
-					
-					distinct_spectrum_id_cnt = rs.getInt(1);		
-					distinct_eav_id_cnt = rs.getInt(2);	
-					multi_value_cnt = rs.getDouble(3);	
-					attribute_id  = rs.getInt(4);	
-					eav_id = rs.getInt(5);
-	
-					if (distinct_eav_id_cnt == 1 && distinct_spectrum_id_cnt == ids.length && multi_value_cnt == 1)
-					{
-						conflict.setStatus(1); // unique
-						eav_ids_to_double_check.add(eav_id);
-					}
-					else if (distinct_eav_id_cnt== 1 && distinct_spectrum_id_cnt != ids.length)
-					{
-						conflict.setStatus(2); // ambiguous
-					}
-					else if (distinct_eav_id_cnt > 1 && distinct_eav_id_cnt == multi_value_cnt && distinct_spectrum_id_cnt == ids.length)
-					{
-						conflict.setStatus(1); // unique with several entries of the same attribute
-						eav_ids_to_double_check.add(eav_id);
-					}
-					else if (distinct_eav_id_cnt == 1 && distinct_spectrum_id_cnt == ids.length && multi_value_cnt > 1)
-					{
-						conflict.setStatus(3); // unique with several entries of the same attribute: shared metadata
-					}
-					else if(distinct_spectrum_id_cnt < distinct_eav_id_cnt)
-					{
-						conflict.setStatus(4); // mixed state of shared and ambiguous; requires more details
-						attributes_with_mixed_conflict_state.add(attribute_id);
-					}
-					else
-					{
-						conflict.setStatus(2); // ambiguous
-					}
-					
-					conflict.setNumberOfSharingRecords((int)multi_value_cnt);
-					conflict.setNumberOfSelectedRecords(ids.length);
-					
-					
-					ConflictInfo conflict_info = new ConflictInfo(conflict);
-			
-					stati.put(attribute_id, conflict_info);
-					
-				}			
-				rs.close();			
-							
-				
-				// second query to figure out the number of total spectra referring to the eav entries (number of shared records)
-				query = "SELECT count(sxe.eav_id), attribute_id from spectrum_x_eav sxe, eav eav where sxe.eav_id in (" +
-				getStatementBuilder().conc_ids(eav_ids_to_double_check) +
-					") and sxe.eav_id = eav.eav_id group by attribute_id";			
-				
-				rs = stmt.executeQuery(query);
-				
-				while (rs.next()) {
-					
-					multi_value_cnt = rs.getDouble(1);	
-					attribute_id  = rs.getInt(2);				
-					
-					
-					if(multi_value_cnt > 1)
-					{
-						conflict = new ConflictStruct();
-						conflict.setStatus(3);
-						conflict.setNumberOfSharingRecords((int) multi_value_cnt);
-						conflict.setNumberOfSelectedRecords(ids.length);
-						ConflictInfo conflict_info = new ConflictInfo(conflict);
-						stati.put(attribute_id, conflict_info);
-					}
-					
-					
-				}
-				
-				rs.close();		
-				
-				
-				
-				
-				// special query for the mixed cases (multiple entries with varying conflicts)
-				if(attributes_with_mixed_conflict_state.size() > 0)
-				{
-					eav_ids_to_double_check.clear();
-					
-					query = "SELECT count(distinct sxe.spectrum_id), count(distinct eav.eav_id), count(eav.eav_id)/count(distinct sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-					getStatementBuilder().conc_ids(ids) +
-						") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" + 
-						getStatementBuilder().conc_ids(attributes_with_mixed_conflict_state) +
-						") group by eav_id";	
-					
-					rs = stmt.executeQuery(query);
-					
-					while (rs.next()) {
-					
-						distinct_spectrum_id_cnt = rs.getInt(1);		
-						distinct_eav_id_cnt = rs.getInt(2);	
-						multi_value_cnt = rs.getDouble(3);	
-						attribute_id  = rs.getInt(4);	
-						eav_id = rs.getInt(5);		
-						
-						ConflictInfo conflict_info = stati.get(attribute_id);
-						
-						conflict = new ConflictStruct();
-						
-						if (distinct_eav_id_cnt == 1 && distinct_spectrum_id_cnt == ids.length && multi_value_cnt == 1)
-						{
-							conflict.setStatus(1); // unique
-							eav_ids_to_double_check.add(eav_id);
-						}
-						else if (distinct_eav_id_cnt== 1 && distinct_spectrum_id_cnt != ids.length)
-						{
-							conflict.setStatus(2); // ambiguous
-						}
-						else if (distinct_eav_id_cnt > 1 && distinct_eav_id_cnt == multi_value_cnt && distinct_spectrum_id_cnt == ids.length)
-						{
-							conflict.setStatus(1); // unique with several entries of the same attribute
-							eav_ids_to_double_check.add(eav_id);
-						}
-						else if (distinct_eav_id_cnt == 1 && distinct_spectrum_id_cnt == ids.length && multi_value_cnt > 1)
-						{
-							conflict.setStatus(3); // unique with several entries of the same attribute: shared metadata
-						}
-						else if(distinct_spectrum_id_cnt < distinct_eav_id_cnt)
-						{
-							conflict.setStatus(4); // mixed state of shared and ambiguous; requires more details
-							attributes_with_mixed_conflict_state.add(attribute_id);
-						}
-						else
-						{
-							conflict.setStatus(2); // ambiguous
-						}	
-						
-						conflict.setNumberOfSharingRecords((int) multi_value_cnt);
-						conflict.setNumberOfSelectedRecords(ids.length);
-						
-						conflict_info.addConflict(eav_id, conflict);
-						
-						
-					}
-					
-					
-					// second query to figure out the number of total spectra referring to the eav entries (number of shared records)
-					query = "SELECT count(sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.eav_id in (" +
-					getStatementBuilder().conc_ids(eav_ids_to_double_check) +
-						") and sxe.eav_id = eav.eav_id group by eav.eav_id";			
-					
-					rs = stmt.executeQuery(query);
-	
-					while (rs.next()) {
-						
-						multi_value_cnt = rs.getDouble(1);	
-						attribute_id  = rs.getInt(2);				
-						eav_id = rs.getInt(3);		
-						
-						if(multi_value_cnt > 1)
-						{
-							// update existing conflict data
-							ConflictInfo conflict_info = stati.get(attribute_id);
-							
-							conflict = conflict_info.getConflictData(eav_id);
-							conflict.setStatus(3);
-							conflict.setNumberOfSharingRecords((int) multi_value_cnt);
-							conflict.setNumberOfSelectedRecords(ids.length);
-	
-						}					
-						
-					}				
+			boolean double_check = false;
+			int distinct_spectrum_id_cnt;
+			int distinct_eav_id_cnt;
+			double multi_value_cnt;
+			Integer attribute_id;
+			Integer eav_id;
+			ConflictStruct conflict;
+			ArrayList<Integer> eav_ids_to_double_check = new ArrayList<Integer>();
 		
-					
-				}
+			String query = "SELECT count(distinct sxe.spectrum_id), count(distinct eav.eav_id), count(eav.eav_id)/count(distinct sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+			getStatementBuilder().conc_ids(ids) +
+				") and sxe.eav_id = eav.eav_id group by eav_id order by attribute_id";	
 			
+			ResultSet rs = stmt.executeQuery(query);
+			
+			while (rs.next()) {
+			
+				distinct_spectrum_id_cnt = rs.getInt(1);		
+				distinct_eav_id_cnt = rs.getInt(2);	
+				multi_value_cnt = rs.getDouble(3);	
+				attribute_id  = rs.getInt(4);	
+				eav_id = rs.getInt(5);		
+				
+				conflict = new ConflictStruct();
+				if (distinct_eav_id_cnt == 1 && distinct_spectrum_id_cnt == ids.length)
+				{
+						conflict.setStatus(1); // unique
+						double_check = true;
+				}
+				else if (distinct_eav_id_cnt== 1 && distinct_spectrum_id_cnt != ids.length)
+				{
+					conflict.setStatus(2); // ambiguous
+					double_check = false;
+				}
+				else
+				{
+					System.out.println("unexpected case in conflict detection !!!!");
+				}
+				conflict.setNumberOfSelectedRecords(ids.length);
+				conflict.setNumberOfSharingRecords(1);					
+										
+				ConflictInfo conflict_info = stati.get(attribute_id);	
+				if(conflict_info == null)
+					conflict_info = new ConflictInfo();
+				
+				conflict_info.addConflict(eav_id, conflict);
+				
+				stati.put(attribute_id, conflict_info);
+					
+				if(double_check)
+					eav_ids_to_double_check.add(eav_id);
+				
+
 			}
-			else
-			{
-				boolean double_check = false;
-				//int current_attribute_id = 0;
-				int distinct_spectrum_id_cnt;
-				int distinct_eav_id_cnt;
-				double multi_value_cnt;
-				Integer attribute_id;
-				Integer eav_id;
-				ConflictStruct conflict;
-				ArrayList<Integer> eav_ids_to_double_check = new ArrayList<Integer>();
-				//ArrayList<Integer> attributes_with_mixed_conflict_state = new ArrayList<Integer>();				
 				
-				String query = "SELECT count(distinct sxe.spectrum_id), count(distinct eav.eav_id), count(eav.eav_id)/count(distinct sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-				getStatementBuilder().conc_ids(ids) +
-					") and sxe.eav_id = eav.eav_id group by eav_id order by attribute_id";	
 				
-				ResultSet rs = stmt.executeQuery(query);
+			// second query to figure out the number of total spectra referring to the eav entries (number of shared records)
+			query = "SELECT count(sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.eav_id in (" +
+			getStatementBuilder().conc_ids(eav_ids_to_double_check) +
+				") and sxe.eav_id = eav.eav_id group by eav.eav_id order by attribute_id";			
+			
+			rs = stmt.executeQuery(query);
+
+			while (rs.next()) {
 				
-				while (rs.next()) {
+				multi_value_cnt = rs.getDouble(1);	
+				attribute_id  = rs.getInt(2);				
+				eav_id = rs.getInt(3);		
 				
-					distinct_spectrum_id_cnt = rs.getInt(1);		
-					distinct_eav_id_cnt = rs.getInt(2);	
-					multi_value_cnt = rs.getDouble(3);	
-					attribute_id  = rs.getInt(4);	
-					eav_id = rs.getInt(5);		
-					
-					
-					
-					
-					conflict = new ConflictStruct();
-					
-					
-					
-					
-					if (distinct_eav_id_cnt == 1 && distinct_spectrum_id_cnt == ids.length)
-					{
-							conflict.setStatus(1); // unique
-							double_check = true;
-					}
-					else if (distinct_eav_id_cnt== 1 && distinct_spectrum_id_cnt != ids.length)
-					{
-						conflict.setStatus(2); // ambiguous
-						double_check = false;
-					}
-					else
-					{
-						//conflict.status = 2; // ambiguous
-						System.out.println("unexpected case in conflict detection !!!!");
-					}	
-					
-					conflict.setNumberOfSelectedRecords(ids.length);
-					conflict.setNumberOfSharingRecords(1);					
-											
+				if(multi_value_cnt > 1)
+				{
+					// update existing conflict data
 					ConflictInfo conflict_info = stati.get(attribute_id);
 					
-					if(conflict_info == null)
-						conflict_info = new ConflictInfo();
-					
-					
-					conflict_info.addConflict(eav_id, conflict);
-					
-					stati.put(attribute_id, conflict_info);
-						
-					if(double_check)
-						eav_ids_to_double_check.add(eav_id);
-				
+					conflict = conflict_info.getConflictData(eav_id);
+					conflict.setStatus(3);
+					conflict.setNumberOfSharingRecords((int) multi_value_cnt);
 
-				}
-				
-				
-				// second query to figure out the number of total spectra referring to the eav entries (number of shared records)
-				query = "SELECT count(sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.eav_id in (" +
-				getStatementBuilder().conc_ids(eav_ids_to_double_check) +
-					") and sxe.eav_id = eav.eav_id group by eav.eav_id order by attribute_id";			
-				
-				rs = stmt.executeQuery(query);
-
-				while (rs.next()) {
+				}					
 					
-					multi_value_cnt = rs.getDouble(1);	
-					attribute_id  = rs.getInt(2);				
-					eav_id = rs.getInt(3);		
-					
-					if(multi_value_cnt > 1)
-					{
-						// update existing conflict data
-						ConflictInfo conflict_info = stati.get(attribute_id);
-						
-						conflict = conflict_info.getConflictData(eav_id);
-						conflict.setStatus(3);
-						conflict.setNumberOfSharingRecords((int) multi_value_cnt);
-
-					}					
-					
-				}				
+			}				
 				
-				rs.close();						
-				
-				
-			}
-			
-			
-			
+			rs.close();						
 			stmt.close();
 			
 			
