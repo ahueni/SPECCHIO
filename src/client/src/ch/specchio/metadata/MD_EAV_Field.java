@@ -85,9 +85,8 @@ public class MD_EAV_Field extends MD_Field {
 	}
 	
 	
-	public void setEavId(int eav_id) {
+	public void setEavId(int eav_id, int old_eav_id) {
 		
-		int old_eav_id = mp.getEavId();
 		if (eav_id != old_eav_id) {
 			mp.setEavId(eav_id);
 			conflict.addConflict(eav_id, conflict.getConflict(old_eav_id));

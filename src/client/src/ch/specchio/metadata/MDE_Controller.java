@@ -157,8 +157,9 @@ public class MDE_Controller {
 				MD_EAV_Field eav_field = (MD_EAV_Field) field;
 				MetaParameter mp = eav_field.getMetaParameter();
 				mp.setValue(field.getNewValue());
+				int old_eav_id = mp.getEavId();
 				int eav_id = specchio_client.updateEavMetadata(mp, ids);
-				eav_field.setEavId(eav_id);
+				eav_field.setEavId(eav_id, old_eav_id);
 			}
 			catch (MetaParameterFormatException ex) {
 				// should never happen
@@ -199,8 +200,9 @@ public class MDE_Controller {
 				MD_EAV_Field eav_field = (MD_EAV_Field) field;
 				MetaParameter mp = eav_field.getMetaParameter();
 				mp.setValue(field.getNewValue());
+				int old_eav_id = mp.getEavId();
 				int eav_id = specchio_client.updateEavMetadata(mp, ids, mp);
-				eav_field.setEavId(eav_id);
+				eav_field.setEavId(eav_id, old_eav_id);
 			}
 			catch (MetaParameterFormatException ex) {
 				// should never happen
