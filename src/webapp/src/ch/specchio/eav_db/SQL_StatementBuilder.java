@@ -605,22 +605,36 @@ public class SQL_StatementBuilder {
    
    public synchronized String assemble_sql_select_query(String attributes, String tables, String conditions)
    {
-	   return assemble_sql_select_query(attributes, tables, conditions, "");	   
+	   return assemble_sql_query("SELECT", attributes, tables, conditions, "");	   
+   }
+   
+   public synchronized String assemble_sql_select_distinct_query(String attributes, String tables, String conditions)
+   {
+	   return assemble_sql_query("SELECT DISTINCT", attributes, tables, conditions, "");
    }
    
    public synchronized String assemble_sql_select_query(String attributes, String tables, String conditions, String options)
    {
-	   String query = new String ("SELECT " + attributes + " FROM " + tables);
+	   return assemble_sql_query("SELECT", attributes, tables, conditions, options);
+   }
+   
+   private synchronized String assemble_sql_query(String select, String attributes, String tables, String conditions, String options)
+   {
+	   StringBuffer query = new StringBuffer();
+	   query.append(select);
+	   query.append(" ");
+	   query.append(attributes);
+	   query.append(" FROM ");
+	   query.append(tables);
 	   if (!conditions.equals(""))
 	   {
-		   query = query.concat(" WHERE ");
-		   query = query.concat(conditions);
+		   query.append(" WHERE ");
+		   query.append(conditions);
 	   }
-	   
-	   query = query.concat(options);
+	   query.append(options);
 
 			
-	   return query;
+	   return query.toString();
 	   
    }
    

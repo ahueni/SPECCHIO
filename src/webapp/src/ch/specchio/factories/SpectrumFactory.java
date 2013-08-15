@@ -327,7 +327,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				
 				iteration_result_exists = true; // true for all further queries
 				
-				String queryString = getStatementBuilder().assemble_sql_select_query(
+				String queryString = getStatementBuilder().assemble_sql_select_distinct_query(
 						SB.prefix(query.getTableName(), primary_key_name),
 						getStatementBuilder().conc_tables(tables),
 						curr_cond);
