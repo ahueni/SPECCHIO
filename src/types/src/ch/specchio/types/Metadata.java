@@ -206,7 +206,7 @@ public class Metadata {
 		
 		ArrayList<MetaParameter> matches = new ArrayList<MetaParameter>();
 		for (MetaParameter mp : entries) {
-			if (mp.getAttributeId() == attribute_id) {
+			if (mp.getAttributeId().equals(attribute_id)) {
 				matches.add(mp);
 			}
 		}
