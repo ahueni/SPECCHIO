@@ -9,6 +9,8 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.Iterator;
 import java.util.TimeZone;
 
 import java.util.ListIterator;
+import java.util.concurrent.ExecutionException;
 
 
 import javax.swing.BorderFactory;
@@ -34,6 +37,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ProgressMonitor;
+import javax.swing.SwingWorker;
+import javax.swing.SwingWorker.StateValue;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
@@ -58,7 +64,7 @@ import ch.specchio.types.Category;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.attribute;
 
-public class MetaDataFromTabView extends JFrame implements ActionListener, TreeSelectionListener, DocumentListener {
+public class MetaDataFromTabView extends JFrame implements ActionListener, PropertyChangeListener, TreeSelectionListener, DocumentListener {
 
 	/**
 	 * 
@@ -103,6 +109,9 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 	
 	private boolean combobox_user_update = true; // used to control the handling of events when combo values are modified internally by the controller
 	private boolean model_element_update = true;
+	
+	SwingWorker<Integer, Void> worker;
+	ProgressMonitor progressMonitor;
 	
 	public MetaDataFromTabView() throws SPECCHIOClientException {
 		super("Metadata Augmentation from Tabular Data");	
@@ -345,7 +354,20 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		
 		if(arg0.getActionCommand().equals("Insert Selected Metadata"))
 		{
-			controller.insert();
+			try {
+				progressMonitor = new ProgressMonitor(this,
+		                "Inserting selected Metadata Parameters from XLS ...",
+		                "", 0, 100);
+				progressMonitor.setProgress(0);
+				worker = controller.getInsertWorker(progressMonitor);
+				worker.addPropertyChangeListener(this);
+				worker.execute();
+			}
+			catch (SPECCHIOClientException ex) {
+				progressMonitor.close();
+				ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
+				error.setVisible(true);
+			}
 		}
 		
 		
@@ -1122,6 +1144,40 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, TreeS
 		int decision = JOptionPane.showConfirmDialog(this, message, "Mismatched types", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 		
 		return (decision == JOptionPane.YES_OPTION)? MetaDataFromTabView.INSERT : MetaDataFromTabView.SKIP_PARAMETER;
+		
+	}
+
+
+	@Override
+	public void propertyChange(PropertyChangeEvent evt) {
+		if ("progress".equals(evt.getPropertyName())) {
+			
+			progressMonitor.setProgress((Integer)evt.getNewValue());
+		
+		} else if ("state".equals(evt.getPropertyName())) {
+			
+			SwingWorker.StateValue state = (StateValue) evt.getNewValue();
+	        if (state == StateValue.DONE) {
+	        	try {
+		        	progressMonitor.close();
+		        	JOptionPane.showMessageDialog(
+		        			this, 
+		        			"Updated " + worker.get() + " attributes.",
+		        			"Metadata inserted",
+		        			JOptionPane.INFORMATION_MESSAGE
+		        		);
+	        	}
+	        	catch (ExecutionException ex) {
+	        		// not sure why this would happen
+	        		ex.printStackTrace();
+	        	}
+	        	catch (InterruptedException ex) {
+	        		// not sure why this would happen
+	        		ex.printStackTrace();
+				}
+	        	
+	        }
+		}
 		
 	}
 	

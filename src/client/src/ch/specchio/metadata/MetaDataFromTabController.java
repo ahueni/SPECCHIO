@@ -1,7 +1,5 @@
 package ch.specchio.metadata;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,21 +26,25 @@ import ch.specchio.types.attribute;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
 
-public class MetaDataFromTabController implements PropertyChangeListener {
+public class MetaDataFromTabController  {
 	
 	MetaDataFromTabView view;
 	MetaDataFromTabModel model = new MetaDataFromTabModel();
 	SPECCHIOClient specchio_client;
 	
-	private ProgressMonitor progressMonitor;
-	private Task task;
 	 
-	class Task extends SwingWorker<Void, Void> {
+	class MetaDataFromTabWorker extends SwingWorker<Integer, Void> {
 		
+		private ProgressMonitor progressMonitor;
 		
+		public MetaDataFromTabWorker(ProgressMonitor progressMonitorIn) {
+			
+			progressMonitor = progressMonitorIn;
+			
+		}
 		
 		@Override
-		public Void doInBackground() throws SPECCHIOClientException {
+		public Integer doInBackground() throws SPECCHIOClientException {
 
 			int progress = 0;
 			
@@ -56,6 +58,7 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 
 				int col_index = 0;
 				int delta_progress = 100 / assigned_cols.size();
+				int attr_count = 0;
 				
 
 				while (col_index < assigned_cols.size()  && !isCancelled()) 
@@ -130,6 +133,7 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 									ids.add(spectrum_id);
 			
 									specchio_client.updateEavMetadata(mp, ids);
+									attr_count++;
 								}
 								catch (MetaParameterFormatException ex) {
 									// could not convert the table value to a meta-parameter of appropriate type
@@ -153,14 +157,12 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 					setProgress(progress);
 					col_index++;
 				}
-				return null;
+				return attr_count;
 
 			}
 
 		@Override
 		public void done() {
-			progressMonitor.setProgress(0);
-			progressMonitor.close();
 		}
 	}
  	
@@ -403,25 +405,12 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 	
 
 
-	public boolean insert() {
+	public SwingWorker<Integer, Void> getInsertWorker(ProgressMonitor progressMonitor) throws SPECCHIOClientException {
 		
-		try {
-			// ensure that a possible re-insert is really resulting in duplicated rows under all circumstances
-			specchio_client.clearMetaparameterRedundancyList();
-		} catch (SPECCHIOClientException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		// ensure that a possible re-insert is really resulting in duplicated rows under all circumstances
+		specchio_client.clearMetaparameterRedundancyList();
 		
-		progressMonitor = new ProgressMonitor(view,
-                "Inserting selected Metadata Parameters from XLS ...",
-                "", 0, 100);
-		progressMonitor.setProgress(0);
-		task = new Task();
-		task.addPropertyChangeListener(this);
-		task.execute();		
-		
-		return true;
+		return new MetaDataFromTabWorker(progressMonitor);
 
 	}
 
@@ -491,25 +480,6 @@ public class MetaDataFromTabController implements PropertyChangeListener {
 	
 		
 	}
-
-
-	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
-	    if ("progress" == evt.getPropertyName() ) {
-            int progress = (Integer) evt.getNewValue();
-            progressMonitor.setProgress(progress);
-
-            if (progressMonitor.isCanceled() || task.isDone()) {
-
-                if (progressMonitor.isCanceled()) {
-                    task.cancel(true);
-                } 
-            }
-        }
-		
-	}
-
-
 
 	
 
