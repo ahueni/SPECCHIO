@@ -344,23 +344,23 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				line = d.readLine();
 	
 				// cx for JAZ (Ocean Optics files)
-				if (exts.contains("txt") && line.equals("SpectraSuite Data File")) {
+				if (exts.contains("txt") && "SpectraSuite Data File".equals(line)) {
 					loader = new JAZ_FileLoader();
 				}
 	
 				// cx for OO (Ocean Optics files)
 				else if (exts.contains("csv")
-						&& (line.equals("SpectraSuite Data File") || line
-								.equals("SpectraSuite Data File\t"))) {
+						&& ("SpectraSuite Data File".equals(line) ||
+								"SpectraSuite Data File\t".equals(line))) {
 					loader = new OO_FileLoader();
 	
 				}
 	
 				// cx for COST OO CSV file format
 				else if (exts.contains("csv")
-						&& (line.equals("Wl; WR; S; Ref; Info;wl; mri_counts;gains;mri_irradiance")
-								|| line.equals("Wl; WR; S; Ref; Info") || line
-									.equals("Sample;solar_local;DOY.dayfraction;SZA (deg);SAA (deg);COS(SZA);Qs quality_WR_stability;Ql quality_WR_level;Qd quality_WR_S_difference;Qh quality_WR;Qsat quality_WR;totalQ;Qwl_cal;wl of min L(Ha);wl of min L(O2B);wl of min L(O2A);Lin@400nm;Lin@500nm;Lin@600nm;Lin@680nm;Lin@O2-B;Lin@700nm;Lin@747.5 same as CF;Lin@753_broad;Lin@O2-A;Lin@800nm;Lin@890nm;Lin@990nm;PRI;R531;R570;Lin@643;CF@F656;NF@F656;Lin@680;CF@F687;NF@F687;Lin@753;CF@F760;NF@F760;R680;R800;SR(800,680);ND(800,680);ND(750,705);ND(858.5,645);ND(531,555);ND(531,551);ND(531,645);ND(800,550);SIPI(800,680,445);PSRI(680,500,750);NPQI(415,435);TVI(800,550,680);SR(740,720);GRI;SAVI;MSAVI;OSAVI;MTCI;RVI;WDVI;EVI;GEMI;BI;MODIS_PRI4;MODIS_PRI12;MODIS_PRI1;MODIS_NDVI;MODIS_EVI;R_blu_MODIS;R_green_MODIS;R_nir_MODIS;R_rep_MERIS;R_nir_MERIS;WI(900,970);ND(410,710);ND(530,570);ND(550,410);ND(720,420);ND(542,550);WC_R/(R+G+B);WC_G/(R+G+B);WC_B/(R+G+B);WC_GEI=2*G-(R+B);PPFDsum(umol m-2s-1);PPFDinteg(umol m-2s-1);fAPAR+fTPAR sum;fAPAR+fTPAR^2*Rsoil integ;n of Nan in Wr;perc. of Nan in Wr;n of Nan in S;perc. of Nan in S"))) {
+						&& ("Wl; WR; S; Ref; Info;wl; mri_counts;gains;mri_irradiance".equals(line)
+								|| "Wl; WR; S; Ref; Info".equals(line) ||
+									"Sample;solar_local;DOY.dayfraction;SZA (deg);SAA (deg);COS(SZA);Qs quality_WR_stability;Ql quality_WR_level;Qd quality_WR_S_difference;Qh quality_WR;Qsat quality_WR;totalQ;Qwl_cal;wl of min L(Ha);wl of min L(O2B);wl of min L(O2A);Lin@400nm;Lin@500nm;Lin@600nm;Lin@680nm;Lin@O2-B;Lin@700nm;Lin@747.5 same as CF;Lin@753_broad;Lin@O2-A;Lin@800nm;Lin@890nm;Lin@990nm;PRI;R531;R570;Lin@643;CF@F656;NF@F656;Lin@680;CF@F687;NF@F687;Lin@753;CF@F760;NF@F760;R680;R800;SR(800,680);ND(800,680);ND(750,705);ND(858.5,645);ND(531,555);ND(531,551);ND(531,645);ND(800,550);SIPI(800,680,445);PSRI(680,500,750);NPQI(415,435);TVI(800,550,680);SR(740,720);GRI;SAVI;MSAVI;OSAVI;MTCI;RVI;WDVI;EVI;GEMI;BI;MODIS_PRI4;MODIS_PRI12;MODIS_PRI1;MODIS_NDVI;MODIS_EVI;R_blu_MODIS;R_green_MODIS;R_nir_MODIS;R_rep_MERIS;R_nir_MERIS;WI(900,970);ND(410,710);ND(530,570);ND(550,410);ND(720,420);ND(542,550);WC_R/(R+G+B);WC_G/(R+G+B);WC_B/(R+G+B);WC_GEI=2*G-(R+B);PPFDsum(umol m-2s-1);PPFDinteg(umol m-2s-1);fAPAR+fTPAR sum;fAPAR+fTPAR^2*Rsoil integ;n of Nan in Wr;perc. of Nan in Wr;n of Nan in S;perc. of Nan in S".equals(line))) {
 					loader = new COST_OO_FileLoader();
 	
 				}
@@ -372,13 +372,13 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
 				// cx for Spectra Vista HR-1024 files
 				else if (exts.contains("sig")
-						&& (line.equals("/*** Spectra Vista HR-1024 ***/") || line
-								.equals("/*** Spectra Vista SIG Data ***/"))) {
+						&& ("/*** Spectra Vista HR-1024 ***/".equals(line) ||
+								"/*** Spectra Vista SIG Data ***/".equals(line))) {
 					loader = new Spectra_Vista_HR_1024_FileLoader();
 				}
 	
 				// cx if we got GER files
-				else if (line.equals("///GER SIGNATUR FILE///")) {
+				else if ("///GER SIGNATUR FILE///".equals(line)) {
 				loader = new GER_FileLoader();
 				}
 	
@@ -389,7 +389,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				}
 	
 				// cx for SPECPR files (no extensions)
-				else if (line.contains("SPECPR")) {
+				else if (line != null && line.contains("SPECPR")) {
 					loader = new SPECPR_FileLoader();
 				}
 	
