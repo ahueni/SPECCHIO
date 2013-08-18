@@ -167,6 +167,7 @@ public class ProcessingPlane implements ActionListener, ModuleCallback
 	    
 		popupListener = new PopupListener();
 		graph.addMouseListener(popupListener);
+		graph.setEditable(false);
 		
 		main_panel.setLayout(new BorderLayout());
 		
