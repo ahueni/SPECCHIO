@@ -91,12 +91,15 @@ public class PanelCorrFactorsSelection extends SpectralProcessingModule {
 		output_spaces = new ArrayList<SpaceProcessingChainComponent>();
 		
 		define_output_spaces();
-				
-		SpaceProcessingChainComponent spcc = new SpaceProcessingChainComponent(owner, cal_spaces[0]);
+		
+		SpaceProcessingChainComponent spcc = null;
+		if (cal_spaces.length > 0) {
+			spcc = new SpaceProcessingChainComponent(owner, cal_spaces[0]);
+		}
 		
 		// check if the new space is valid
 		// if a module cannot create a space, then it sets the dimension to zero
-		if (cal_spaces[0] != null && cal_spaces[0].getDimensionality() > 0)
+		if (spcc != null && cal_spaces[0] != null && cal_spaces[0].getDimensionality() > 0)
 		{
 			spcc.set_space_name(output_space_definitions.get(0).space_name);
 			set_spectrum_ids_in_output_space(cal_spaces[0]);
