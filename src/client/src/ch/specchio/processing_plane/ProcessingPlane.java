@@ -26,6 +26,7 @@ import org.jgraph.graph.DefaultGraphCell;
 import org.jgraph.graph.DefaultGraphModel;
 import org.jgraph.graph.GraphConstants;
 import org.jgraph.graph.GraphModel;
+import org.jgraph.graph.GraphSelectionModel;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
@@ -169,6 +170,8 @@ public class ProcessingPlane implements ActionListener, ModuleCallback
 		graph.addMouseListener(popupListener);
 		graph.setEditable(false);
 		graph.setDisconnectable(false);
+		GraphSelectionModel gsm = graph.getSelectionModel();
+		gsm.setSelectionMode(GraphSelectionModel.SINGLE_GRAPH_SELECTION);
 		
 		main_panel.setLayout(new BorderLayout());
 		
