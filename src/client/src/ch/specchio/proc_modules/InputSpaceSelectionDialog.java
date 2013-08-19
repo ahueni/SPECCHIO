@@ -85,7 +85,8 @@ public class InputSpaceSelectionDialog extends ModalDialog implements ActionList
 
 		OK = new JButton("OK");
 		OK.setActionCommand("Ok");
-		OK.addActionListener(this);	
+		OK.addActionListener(this);
+		OK.setEnabled(false);
 		
 		constraints.gridx++;
 		constraints.gridy = 0;

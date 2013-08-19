@@ -98,7 +98,8 @@ public class ModuleSelection extends ModalDialog  implements ActionListener, Lis
 
 		OK = new JButton("OK");
 		OK.setActionCommand("Ok");
-		OK.addActionListener(this);	
+		OK.addActionListener(this);
+		OK.setEnabled(false);
 		
 		constraints.gridx = 2;
 		constraints.gridy = 0;
