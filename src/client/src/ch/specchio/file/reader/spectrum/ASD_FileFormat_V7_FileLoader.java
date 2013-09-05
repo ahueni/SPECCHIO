@@ -1061,8 +1061,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	}
 
 	Date read_asd_time(DataInputStream in) throws IOException {
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		// TimeZone tz = TimeZone.getDefault();
+		
+		TimeZone tz = TimeZone.getDefault();
 		Calendar cal = Calendar.getInstance(tz);
 
 		Integer sec = read_short(in);
@@ -1081,9 +1081,6 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
 		formatter.setTimeZone(tz);
-
-//		String out = formatter.format(cal.getTime());
-//		System.out.println(out);
 
 		return cal.getTime();
 	}

@@ -337,7 +337,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 		private CelestialAngle calculateSunAngle(double latitude, double longitude, Date date) {
 
 			// get the time of year
-			TimeZone tz = TimeZone.getTimeZone("UTC");
+			TimeZone tz = TimeZone.getDefault();
 			Calendar cal = Calendar.getInstance(tz);
 			cal.setTime(date);
 			int dy = cal.get(Calendar.DAY_OF_YEAR);
