@@ -8,9 +8,9 @@
 
 
 -- Set the admin user name and password here - make sure the username and password is the same on each line!
-CREATE USER 'sdb_admin'@'localhost' IDENTIFIED BY 'xXY7!fe@';
+CREATE USER 'sdb_admin'@'localhost' IDENTIFIED BY 'sdb_admin_password';
 INSERT INTO `specchio`.`specchio_user` (`user`, `first_name`, `last_name`, `email`, `admin`, `password`)
-	VALUES ('sdb_admin', 'SPECCHIO', 'Administrator', '', 1, MD5('xXY7!fe@'));
+	VALUES ('sdb_admin', 'SPECCHIO', 'Administrator', '', 1, MD5('sdb_admin_password'));
 INSERT INTO `specchio`.`specchio_user_group` VALUES('sdb_admin', 'admin');
 
 
