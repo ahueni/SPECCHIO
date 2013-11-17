@@ -1,8 +1,5 @@
 package ch.specchio.client;
 
-import java.io.IOException;
-import java.io.Writer;
-
 import ch.specchio.types.User;
 
 
@@ -22,6 +19,12 @@ public interface SPECCHIOServerDescriptor {
 	public SPECCHIOClient createClient() throws SPECCHIOClientException;
 	
 	
+	/**
+	 * Get the string describing the account configuration for db_config.txt
+	 */
+	public String getAccountConfigurationString();
+
+
 	/**
 	 * Get the display name of this server.
 	 * 
@@ -46,15 +49,5 @@ public interface SPECCHIOServerDescriptor {
 	 * @param user	the user information
 	 */
 	public void setUser(User user);
-	
-	
-	/**
-	 * Write the configuration of a user account.
-	 * 
-	 * @param w		the writer with which to write
-	 * 
-	 * @throws IOException	I/O error
-	 */
-	public void writeAccountConfiguration(Writer w) throws IOException;
 
 }

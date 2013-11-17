@@ -1,7 +1,5 @@
 package ch.specchio.client;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -121,6 +119,23 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	}
 	
 	
+	/**
+	 * Get the string describing the account configuration for db_config.txt
+	 */
+	public String getAccountConfigurationString() {
+		
+		// format is: protocol, server, port, path, username, password
+		return
+			protocol + ", " +
+			server + ", " +
+			port + ", " +
+			path + ", " +
+			user + ", " +
+			password;
+		
+	}
+
+
 	/**
 	 * Get the display name of this server.
 	 * 
@@ -244,29 +259,6 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	public String toString() {
 		
 		return getDisplayName(true);
-		
-	}
-	
-	
-	/**
-	 * Write the configuration of a user account.
-	 * 
-	 * @param w		the writer with which to write
-	 * 
-	 * @throws IOException	I/O error
-	 */
-	public void writeAccountConfiguration(Writer w) throws IOException {
-		
-		// format is: protocol, server, port, path, username, password
-		w.write(
-			protocol + ", " +
-			server + ", " +
-			port + ", " +
-			path + ", " +
-			user + ", " +
-			password +
-			"\n"
-		);
 		
 	}
 

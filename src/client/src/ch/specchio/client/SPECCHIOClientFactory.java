@@ -59,8 +59,11 @@ public class SPECCHIOClientFactory {
 		// open the configuration file
 		FileWriter w = new FileWriter(config_file, true);
 		
-		// ask the server descriptor to write an appropriate line
-		d.writeAccountConfiguration(w);
+		// start a new line
+		w.write("\n");
+		
+		// write out the account configuration line
+		w.write(d.getAccountConfigurationString());
 		
 		// close file
 		w.close();
