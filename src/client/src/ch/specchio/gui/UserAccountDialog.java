@@ -253,6 +253,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		} else if (CREATE.equals(event.getActionCommand())) {
 			
 			startOperation();
+			SPECCHIOServerDescriptor d = null;
 			User user = null;
 			try {
 				// build a user object from the input fields
@@ -263,7 +264,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				
 				// add a line to the configuration file
 				SPECCHIOClientFactory cf = SPECCHIOClientFactory.getInstance();
-				SPECCHIOServerDescriptor d = specchio_client.getServerDescriptor();
+				d = specchio_client.getServerDescriptor();
 				d.setUser(user);
 				cf.addAccountConfiguration(d);
 				
@@ -301,13 +302,19 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			}
 			catch (IOException ex) {
 				// error writing to the configuration file
-				String message = "A user account has been created, but I could not update the configuration file. " +
-						"Please update it manually. " +
-						"Username: " + user.getUsername() + " Password: " + user.getPassword();
+				StringBuffer message = new StringBuffer();
+				message.append("A user account has been created, but I could not update the configuration file. ");
+				message.append("Username: " + user.getUsername() + ". Password: " + user.getPassword() + ".");
+				if (d != null) {
+					message.append("\n");
+					message.append("Please add the following line to the file db_config.txt:");
+					message.append("\n");
+					message.append(d.getAccountConfigurationString());
+				}
 				ErrorDialog error = new ErrorDialog(
 						(Frame)getOwner(),
 						"Configuration file not updated",
-						message,
+						message.toString(),
 						ex
 					);
 				error.setVisible(true);

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -54,8 +55,8 @@ public class ErrorDialog extends JDialog implements ActionListener {
 	/** the label containing the icon */
 	private JLabel iconComponent;
 	
-	/** the label containing the error message */
-	private JLabel messageComponent;
+	/** the panel containing the error message */
+	private JPanel messageComponent;
 	
 	/** the button for dismissing the dialogue */
 	private JButton dismissButton;
@@ -137,7 +138,11 @@ public class ErrorDialog extends JDialog implements ActionListener {
 		panel.add(iconComponent, constraints);
 		
 		// place the message at the top right
-		messageComponent = new JLabel(message);
+		messageComponent = new JPanel();
+		messageComponent.setLayout(new BoxLayout(messageComponent, BoxLayout.Y_AXIS));
+		for (String line : message.split("\n")) {
+			messageComponent.add(new JLabel(line));
+		}
 		constraints.gridx = 1;
 		constraints.gridy = 0;
 		constraints.gridheight = 1;
