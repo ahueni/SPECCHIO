@@ -78,7 +78,7 @@ public class QueryForm {
 					}
 					else
 					{
-						cond = new SpectrumQueryCondition("spectrum", field.get_fieldname());
+						cond = new SpectrumQueryCondition("spectrum", field.get_fieldname() + "_id");
 						cond.setValue(field.getValue());
 						
 					}	
