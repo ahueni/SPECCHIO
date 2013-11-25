@@ -1,19 +1,28 @@
 package ch.specchio.factories;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.ListIterator;
 
 import ch.specchio.constants.SensorType;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.spaces.MeasurementUnit;
+import ch.specchio.types.Calibration;
 import ch.specchio.types.Country;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.ReferenceBrand;
 import ch.specchio.types.Sensor;
+import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 
 
@@ -21,6 +30,7 @@ public class DataCache {
 	
 	SQL_StatementBuilder SQL;
 	
+	ArrayList<Calibration> calibrations;
 	ArrayList<Institute> institutes;
 	ArrayList<Instrument> instruments;
 	ArrayList<Sensor> sensors;
@@ -42,13 +52,175 @@ public class DataCache {
 	{
 		load_institutes();
 		load_sensors();
-		load_instruments();
 		load_measurement_units();
+		load_calibrations();
+		load_instruments();		
 		load_goniometers();
 		load_sampling_environments();
 		load_measurement_types();
 		load_reference_brands();
 	}
+	
+	
+	
+	/**
+	 * Load calibrations
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	private void load_calibrations() {
+		
+		calibrations = new ArrayList<Calibration> ();
+		
+		Calibration cal = null;
+		
+		try {
+			Statement stmt = SQL.createStatement();
+
+			String query = "select calibration_id, calibration_no,calibration_date,comments, cal_factors, uncertainty from calibration";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				cal = new Calibration();
+				cal.setCalibration_id(rs.getInt(1));
+				cal.setCalibration_number(rs.getInt(2));
+				cal.setCalibrationDate(rs.getDate(3));
+				cal.setComments(rs.getString(4));
+				cal.setCalFactorsId(rs.getInt(5));
+				cal.setUncertainty_id(rs.getInt(6));
+				
+				// get factors
+				if (cal.getCalFactorsId() != 0)
+				{
+					InstrumentationStruct instr_cal_data = getInstrumentationVector(cal.getCalFactorsId());
+					cal.setFactors(instr_cal_data.vector);
+					cal.setMeasurement_unit_id(instr_cal_data.measurement_unit_id);
+				}
+
+				if (cal.getUncertainty_id() != 0)
+				{
+					InstrumentationStruct instr_cal_data = getInstrumentationVector(cal.getUncertainty_id());
+					cal.setUncertainty(instr_cal_data.vector);
+				}		
+				
+				
+				calibrations.add(cal);
+								
+				
+			}
+			rs.close();
+			
+
+//			SpaceFactory sf = new SpaceFactory(this);
+//			ArrayList<Integer> calibration_id_list = new ArrayList<Integer>();
+//			calibration_id_list.add(cal.getCalFactorsId());
+//			ArrayList<Space> spaces = sf.getSpacesForInstrumentationFactors(calibration_id_list);
+//			
+//			if (spaces.size() > 0) {
+//				SpectralSpace ss = (SpectralSpace)spaces.get(0);
+//				sf.loadSpace(ss);
+//				cal.setFactors(ss.getVector(calibration_id));
+//				
+//				
+//			}
+//			
+//			calibration_id_list.clear();
+//			calibration_id_list.add(cal.getUncertainty_id());
+//			spaces = sf.getSpacesForInstrumentationFactors(calibration_id_list);
+//			
+//			if (spaces.size() > 0) {
+//				SpectralSpace ss = (SpectralSpace)spaces.get(0);
+//				sf.loadSpace(ss);
+//				cal.setUncertainty(ss.getVector(calibration_id));
+//			}			
+//			
+//			// clean up
+//			sf.dispose();			
+			
+			
+		}
+		catch (SQLException ex) {
+			// database error
+			ex.printStackTrace();
+		} catch (SPECCHIOFactoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
+	}	
+	
+
+	
+	
+	private InstrumentationStruct getInstrumentationVector(int instrumentation_factor_id) throws SPECCHIOFactoryException
+	{
+		
+		InstrumentationStruct istruct = new InstrumentationStruct();
+		
+		try {
+			Statement stmt = SQL.createStatement();
+			
+			String query = "SELECT measurement_unit_id, measurement from instrumentation_factors " +
+					"where instrumentation_factors_id = " + instrumentation_factor_id;
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				
+				istruct.measurement_unit_id = rs.getInt(1);
+				
+				Blob measurement = rs.getBlob(2);
+				InputStream binstream = measurement.getBinaryStream();
+				DataInput dis = new DataInputStream(binstream);
+
+				try {
+					int dim = binstream.available() / 4;
+
+					double[] vector = new double[dim];		
+
+					for(int i = 0; i < dim; i++)
+					{
+						try {
+							Float f = dis.readFloat();
+							vector[i] = f.doubleValue();
+						} catch (IOException e) {
+							// don't know what would cause this
+							e.printStackTrace();
+						}				
+					}		
+					
+					istruct.vector = vector;
+					
+
+
+				} catch (IOException e) {
+					// dont't know what would cause this
+					e.printStackTrace();
+				}
+
+
+				try {
+					binstream.close();
+				} catch (IOException e) {
+					// don't know what woudl cause this
+					e.printStackTrace();
+				}
+				
+				
+				
+
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		return istruct;
+		
+	}
+			
+	
 	
 	
 	public void add_institute(Institute institute)
@@ -223,8 +395,7 @@ public class DataCache {
 	
 	
 
-	public String get_instrument_id_for_file(SpectralFile spec_file, int spec_no) throws SQLException {
-		String instrument_id = "null";
+	public Instrument get_instrument_id_for_file(SpectralFile spec_file, int spec_no, SpecchioMessage msg) throws SQLException {
 		
 		Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no);
 		
@@ -233,24 +404,22 @@ public class DataCache {
 		
 		if(instr == null) // try via centre wvls
 		{
-			instr = get_instrument_by_centre_wvls(spec_file, spec_no);
+			instr = get_instrument_by_centre_wvls(spec_file, spec_no, msg);
 		}
-		
-		if (instr != null) instrument_id = Integer.toString(instr.getInstrumentId());
 
-		return instrument_id;
+		return instr;
 
 	}
 	
 	
-	private Instrument get_instrument_by_centre_wvls(SpectralFile spec_file, int spec_no) throws SQLException {
+	private Instrument get_instrument_by_centre_wvls(SpectralFile spec_file, int spec_no, SpecchioMessage msg) throws SQLException {
 		
 		Instrument instrument = null;
 		Instrument i;
 
 		ListIterator<Instrument> li = instruments.listIterator();
 		boolean wvls_match = true;
-		boolean serial_no_match = true;
+		boolean serial_no_match = false;
 		
 		// get wvls information
 		Float[] wvls = null;
@@ -306,12 +475,20 @@ public class DataCache {
 			}
 
 			if(possible_match && wvls_match && serial_no_match) instrument = i;
+			
+			if(possible_match && wvls_match && !serial_no_match)
+			{
+				instrument = i;
+				// maybe issue a warning for the user that a matching instrument was found only based on wvls matching
+			}
 
 
 		}
 
 		// insert as new instrument only if we have an instrument number
-		if(instrument == null && spec_file.getInstrumentNumber() != null)
+		// new approach: insert anyway and use the centre wvls as a fingerprint
+//		if(instrument == null && spec_file.getInstrumentNumber() != null)
+		if(instrument == null)
 		{
 			Integer sensor_id;
 			try {
@@ -327,18 +504,61 @@ public class DataCache {
 					Instrument instr = new Instrument();
 
 					Sensor s = this.get_sensor(sensor_id);
+					
+					String instrument_designator = "";
+					
+					if (spec_file.getInstrumentNumber() != null)
+					{
+						instrument_designator= " #" + spec_file.getInstrumentNumber();
+					}
+					
+					if (instrument_designator.length() == 0 && spec_file.getCaptureDate(spec_no).toString() != null)
+					{
+						instrument_designator = new SimpleDateFormat("yyyyMMdd").format(spec_file.getCaptureDate(spec_no)) + " (sample time)"; // try to augment with date of spectrum capture
+					}
+					
+					if (instrument_designator.length() == 0)
+					{
+						instrument_designator = new SimpleDateFormat("yyyyMMdd_HHmm").format(Calendar.getInstance().getTime())  + " (insert time)"; // augment with current time/date
+					}
 
-					instr.setInstrumentName(s.getName().get_value() + " #" + spec_file.getInstrumentNumber() + " instrument");
+					instr.setInstrumentName(s.getName().get_value() + " " + instrument_designator);
 					instr.setSensorId(sensor_id);
 					instr.setInstrumentNumber(spec_file.getInstrumentNumber());
 					instr.setSensor(s);
 					instr.setAverageWavelengths(d_wvls);
 
-					factory.insertInstrument(instr);
-					factory.updateInstrument(instr);
+					factory.insertInstrument(instr);					
+					
+					// create new calibration with wavelength calibration factors
+					SpectralFile wvl_cal = new SpectralFile(spec_file);
+					wvl_cal.setNumberOfSpectra(1);
+					wvl_cal.setMeasurements(new Float[wvls.length][1]);
+					wvl_cal.setMeasurement(0, wvls);
+					wvl_cal.setWvls(spec_file.getWvls());
+					wvl_cal.setNumberOfChannels(spec_file.getNumberOfChannels());
+					wvl_cal.addMeasurementUnits(100); // wavelength code
+					wvl_cal.setInstrumentTypeNumber(spec_file.getInstrumentTypeNumber()); // needed for some files to identify the sensor
+					
+					Calibration cal = new Calibration();
+					cal.setIncludesUncertainty(false);
+					cal.setSpectralFile(wvl_cal);
+					cal.setInstrumentId(instr.getInstrumentId());
+					cal.setComments("Wavelength Calibration auto-generated by SPECCHIO file loader process");
+					int cal_id = factory.insertInstrumentCalibration(cal);
+					
+					instr.setCalibrationId(cal_id);
+					
 					factory.dispose();
 					
-					instrument = get_instrument_by_serial_id(spec_file.getInstrumentNumber(), sensor_id);
+					// update cache with new instrument
+					add_instrument(instr);
+
+					instrument = instr;
+					
+					// add info to the spectral file
+					msg.setMessage("Added new instrument: " + instr.getInstrumentName().get_value());
+					msg.setType(SpecchioMessage.INFO);
 				}
 
 
@@ -384,13 +604,14 @@ public class DataCache {
 			Statement stmt = SQL.createStatement();
 
 			// read information from database
-			String[] tables = new String[]{"instrument"};
-			String[] attr = new String[]{"instrument_id", "name", "institute_id", "serial_number", "sensor_id"};
-
-			String query = SQL.assemble_sql_select_query(
-						SQL.conc_attributes(attr),
-						SQL.conc_tables(tables),
-						"");
+//			String[] tables = new String[]{"instrument"};
+//			String[] attr = new String[]{"instrument_id", "name", "institute_id", "serial_number", "sensor_id"};
+//
+//			String query = SQL.assemble_sql_select_query(
+//						SQL.conc_attributes(attr),
+//						SQL.conc_tables(tables),
+//						"");
+			String query = "SELECT i.instrument_id, name, institute_id, serial_number, i.sensor_id, calibration_id FROM instrument as i left join calibration as c on i.instrument_id = c.instrument_id";
 			
 						
 			ResultSet rs = stmt.executeQuery(query);
@@ -402,8 +623,9 @@ public class DataCache {
 				int institute_id = rs.getInt(i++);
 				String instr_no = rs.getString(i++);
 				int sensor_id = rs.getInt(i++);
+				int calibration_id = rs.getInt(i++);
 				
-				Instrument instr = load_instrument(instrument_id, name, institute_id, instr_no, sensor_id);
+				Instrument instr = load_instrument(instrument_id, name, institute_id, instr_no, sensor_id, calibration_id);
 				this.instruments.add(instr);
 				
 			}
@@ -414,12 +636,15 @@ public class DataCache {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (SPECCHIOFactoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}			
 
 	}
 	
 	private Instrument load_instrument(int instrument_id2, String name, int institute_id,
-			String instr_no2, int sensor_id2) {
+			String instr_no2, int sensor_id2, int calibration_id) throws SPECCHIOFactoryException {
 
 		Instrument instrument = new Instrument();
 		
@@ -437,9 +662,67 @@ public class DataCache {
 		
 		instrument.setSensor(get_sensor(sensor_id2));
 		
+		instrument.setCalibrationId(calibration_id);
+		
+		// get centre wavelengths from calibration if existing
+		if (calibration_id != 0)
+		{
+			
+			Calibration cal = getCalibration(calibration_id);
+			
+			MeasurementUnit unit = get_measurement_unit_via_id(cal.getMeasurement_unit_id());
+			
+			if (unit.getUnitName().equals("Wavelength"))
+			{
+				// use these factors as centre wavelengths for this instrument
+				instrument.setAverageWavelengths(cal.getFactors());
+				
+			}
+			
+			
+		}
+		
+		
+		
 		return instrument;
 		
 	}
+	
+	/**
+	 * Get calibration.
+	 * 
+	 * @param calibration_id	the calibration identifier
+	 * 
+	 * @return calibration object
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public Calibration getCalibration(int calibration_id) throws SPECCHIOFactoryException {
+		
+		Calibration cal = null;
+		Calibration c;
+		
+		if(calibration_id != 0)
+		{
+		
+			// search through sensor list
+			ListIterator<Calibration> li = calibrations.listIterator();
+
+			while(li.hasNext() && cal == null)
+			{
+				c = li.next();
+				if(c.getCalibration_id() == calibration_id)
+					cal = c;			
+			}
+		}
+		
+		return cal;
+		
+	}	
+		
+	
+	
+	
 	
 	
 	public ArrayList<Sensor> get_sensors()
@@ -495,7 +778,7 @@ public class DataCache {
 	
 	public Sensor get_sensor(Float[] wvls, String company)
 	{
-		float nm_diff_threshold = 3.0f;
+		float nm_diff_threshold = 10.0f; // could make this configurable for better control
 		Sensor sensor = null;
 		Sensor s;
 		boolean wvls_match = true;
@@ -572,55 +855,65 @@ public class DataCache {
 	public Integer get_sensor_id_for_file(SpectralFile spec_file, int spec_no) throws SQLException {
 		Integer sensor_id = 0;
 		
-		if (spec_file.getCompany().equals("APOGEE")) {
+		try {
 			
-			Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
-
-			return s.getSensorId();
-
-		}
-		
-		if (spec_file.getCompany().equals("PP Systems" ) && spec_file.getFileFormatName().equals("UniSpec_SPU")) {
-			
-			Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
-
-			return s.getSensorId();	
-			
-		}
-
-		if (spec_file.getCompany().equals("COST_OO_CSV")) {
-
-			Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)], "OceanOptics");
-
-			return s.getSensorId();
-
-		}
-
-		// last case: for ASD calibration files where the instrument type number
-		// is set to zero for the *.ILL and *.REF files
-		if (spec_file.getCompany().equals("ASD") && spec_file.getInstrumentTypeNumber() == 0) {
-			Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)]);
-			if (s == null)
-				return sensor_id; // "null"
-			else
+			if (spec_file.getCompany().equals("APOGEE")) {
+				
+				Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
+	
 				return s.getSensorId();
-		}
-
-		// get sensor id via the instrument if instrument number is defined
-		if (spec_file.getInstrumentNumber() != null) {
-			
-			Instrument i = get_instrument(spec_file.getInstrumentNumber(), spec_file.getCompany());
-			
-			if (i != null)
-			{
-				return i.getSensor().getSensorId();
+	
 			}
-
+			
+			if (spec_file.getCompany().equals("PP Systems" ) && (spec_file.getFileFormatName().equals("UniSpec_SPU"))) {
+				
+				Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
+	
+				return s.getSensorId();	
+				
+			}
+					
+	
+			if (spec_file.getCompany().equals("COST_OO_CSV")) {
+	
+				Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)], "OceanOptics");
+	
+				return s.getSensorId();
+	
+			}
+	
+			// last case: for ASD calibration files where the instrument type number
+			// is set to zero for the *.ILL and *.REF files
+			if (spec_file.getCompany().equals("ASD") && spec_file.getInstrumentTypeNumber() == 0) {
+				Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)]);
+				if (s == null)
+					return sensor_id; // "null"
+				else
+					return s.getSensorId();
+			}
+	
+			// get sensor id via the instrument if instrument number is defined
+			if (spec_file.getInstrumentNumber() != null) {
+				
+				Instrument i = get_instrument(spec_file.getInstrumentNumber(), spec_file.getCompany());
+				
+				if (i != null)
+				{
+					return i.getSensor().getSensorId();
+				}
+	
+			}
+			
+			Sensor s = get_sensor(spec_file.getCompany(), spec_file.getInstrumentTypeNumber());
+	
+			return (s != null)? s.getSensorId() : 0;
+			
 		}
-		
-		Sensor s = get_sensor(spec_file.getCompany(), spec_file.getInstrumentTypeNumber());
-
-		return (s != null)? s.getSensorId() : 0;
+		catch(NullPointerException e)
+		{
+			
+			return sensor_id;
+		}
 
 	}
 	
@@ -783,6 +1076,23 @@ public class DataCache {
 		
 		return s;
 	}
+	
+	public MeasurementUnit get_measurement_unit_via_id(int measurement_unit_id)
+	{	
+		MeasurementUnit s = null;
+			// search through sensor list
+			ListIterator<MeasurementUnit> li = measurement_units.listIterator();
+
+			while(li.hasNext())
+			{
+				s = li.next();
+				if(s.getUnitId() == measurement_unit_id)
+					break;			
+			}
+		
+		return s;
+	}
+	
 
 	public Integer get_measurement_unit_id_for_file(SpectralFile spec_file, int index) throws SQLException {
 		
@@ -1090,4 +1400,10 @@ class BeamGeometryStruct
 	public int measurement_type_id;	
 }
 
+
+class InstrumentationStruct
+{
+	public double[] vector;
+	public int measurement_unit_id;
+}
 
