@@ -8,6 +8,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import ch.specchio.constants.UserRoles;
+import ch.specchio.factories.MetadataFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpaceFactory;
 import ch.specchio.factories.SpectrumFactory;
@@ -19,6 +20,9 @@ import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpaceQueryDescriptor;
 import ch.specchio.spaces.SpectralSpace;
+import ch.specchio.types.AVMatchingList;
+import ch.specchio.types.AVMatchingListCollection;
+import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.SpectraMetadataUpdateDescriptor;
 import ch.specchio.types.Spectrum;
@@ -33,6 +37,33 @@ import ch.specchio.types.SpectrumFactorTable;
 @Path("/spectrum")
 @DeclareRoles({UserRoles.ADMIN, UserRoles.USER})
 public class SpectrumService extends SPECCHIOService {
+	
+	
+	/**
+	 * Creates a copy of a spectrum in the specified hierarchy
+	 * 
+	 * @param spectrum_id		the spectrum_id of the spectrum to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * 
+	 * @return new spectrum id
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */	
+	@GET
+	@Path("copySpectrum/{spectrum_id: [0-9]+}/{target_hierarchy_id: [0-9]+}")
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger copySpectrum(
+			@PathParam("spectrum_id") int spectrum_id,
+			@PathParam("target_hierarchy_id") int target_hierarchy_id
+		) throws SPECCHIOFactoryException {
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
+		int new_spectrum_id = factory.copySpectrum(spectrum_id, target_hierarchy_id);
+		factory.dispose();
+		
+		return new XmlInteger(new_spectrum_id);
+		
+	}	
 	
 	
 	/**
@@ -57,6 +88,102 @@ public class SpectrumService extends SPECCHIOService {
 		
 	}
 	
+	
+	/**
+	 * Get the spectrum identifiers that do have a reference to the specified attribute.
+	 * 
+	 * @param MetadataSelectionDescriptor 	specifies ids to filter and attribute to filter by
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@POST
+	@Path("filterSpectrumIdsByHavingAttribute")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger[] filterSpectrumIdsByHavingAttribute(MetadataSelectionDescriptor mds)throws SPECCHIOFactoryException {
+		
+		if(mds.getAttribute_id() == 0)
+		{
+			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword());
+			mds.setAttribute_id(factory.getAttributes().get_attribute_id(mds.getAttributeName()));			
+		}			
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
+		List<Integer> ids = factory.filterSpectrumIdsByHavingAttribute(mds);
+		factory.dispose();
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);
+
+		
+	}
+		
+	
+	/**
+	 * Get the spectrum identifiers that do not have a reference to the specified attribute.
+	 * 
+	 * @param MetadataSelectionDescriptor 	specifies ids to filter and attribute to filter by
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@POST
+	@Path("filterSpectrumIdsByNotHavingAttribute")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger[] filterSpectrumIdsByNotHavingAttribute(MetadataSelectionDescriptor mds)throws SPECCHIOFactoryException {
+		
+		if(mds.getAttribute_id() == 0)
+		{
+			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword());
+			mds.setAttribute_id(factory.getAttributes().get_attribute_id(mds.getAttributeName()));			
+		}			
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
+		List<Integer> ids = factory.filterSpectrumIdsByNotHavingAttribute(mds);
+		factory.dispose();
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);
+
+		
+	}
+	
+	
+	/**
+	 * Get the spectrum identifiers that do reference to the specified attribute of a specified value.
+	 * 
+	 * @param MetadataSelectionDescriptor 	specifies ids to filter and attribute and value to filter by
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@POST
+	@Path("filterSpectrumIdsByHavingAttributeValue")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger[] filterSpectrumIdsByHavingAttributeValue(MetadataSelectionDescriptor mds)throws SPECCHIOFactoryException {
+		
+		if(mds.getAttribute_id() == 0)
+		{
+			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword());
+			mds.setAttribute_id(factory.getAttributes().get_attribute_id(mds.getAttributeName()));			
+		}			
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
+		List<Integer> ids = factory.filterSpectrumIdsByHavingAttributeValue(mds);
+		factory.dispose();
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);
+
+		
+	}	
+		
 	
 	/**
 	 * Get a spectrum object.
@@ -382,6 +509,27 @@ public class SpectrumService extends SPECCHIOService {
 	
 	
 	/**
+	 * Sort spectra by the values of the specified attributes
+	 * 
+	 * @param spectrum_ids	list of ids to sort
+	 * @param attribute_names	attribute names to sort by
+	 * 
+	 * @return a AVMatchingListCollection object
+	 */	
+	@POST
+	@Path("sortByAttributes")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public AVMatchingListCollection sortByAttributes(AVMatchingList av_list)throws SPECCHIOFactoryException {
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
+		return factory.sortByAttributes(av_list);
+		
+	}	
+	
+	
+	
+	/**
 	 * Update spectrum metadata.
 	 * 
 	 * @param update_d	the update descriptor
@@ -403,5 +551,27 @@ public class SpectrumService extends SPECCHIOService {
 		return new XmlInteger(0);
 		
 	}
+	
+	/**
+	 * Update the spectral vector of a spectrum
+	 * 
+	 * @param spectrum	the spectrum to be updated
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	@POST
+	@Path("update_vector")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger update_vector(Spectrum spectrum) throws SPECCHIOFactoryException {
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword());
+		factory.updateSpectrumVector(spectrum);
+		factory.dispose();
+		
+		return new XmlInteger(0);
+		
+	}	
+	
 
 }
