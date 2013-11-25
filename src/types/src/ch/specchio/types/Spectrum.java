@@ -17,6 +17,7 @@ public class Spectrum
 {
 	public static final String INSTRUMENT = "instrument";
 	public static final String SENSOR = "sensor";
+	public static final String CALIBRATION = "calibration"; // not yet used: calibrations do not have a useful name to be displayed
 	public static final String MEASUREMENT_UNIT = "measurement_unit";
 	public static final String FILE_FORMAT = "file_format";
 	public static final String REFERENCE = "reference";
@@ -27,7 +28,8 @@ public class Spectrum
 		FILE_FORMAT,
 		INSTRUMENT, 
 		MEASUREMENT_UNIT,
-		REFERENCE
+		REFERENCE,
+		CALIBRATION
 	};
 	
 	MetaDatatype<Integer> number;
@@ -75,7 +77,7 @@ public class Spectrum
 	
 	MetaDatatype<ArrayList<Integer>> pictures;
 
-	Float[] measurement_array = null;
+	Float[] measurement_vector = null;
 	
 	public int spectrum_id;
 	int position_id;
@@ -96,6 +98,7 @@ public class Spectrum
 	public int reference_id;
 	int goniometer_id;
 	int hierarchy_level_id;
+	public int calibration_id;
 	
 	private Sensor sensor;
 	Instrument instrument;
@@ -152,6 +155,13 @@ public class Spectrum
 	@XmlElement(name="campaign_name")
 	public MetaDatatype<String> getCampaignName() { return this.campaign_name; }
 	public void setCampaignName(MetaDatatype<String> campaign_name) { this.campaign_name = campaign_name; }
+	
+	@XmlElement(name="calibration_id")
+	public int getCalibrationId() { return this.calibration_id; }
+	public void setCalibrationId(int calibration_id) { this.calibration_id = calibration_id; }	
+	
+	public MetaDatatype<Integer> getCalibration() { return new MetaDatatype<Integer>("Calibration ID", calibration_id); }
+
 	
 	@XmlElement(name="capture_date")
 	public MetaDatatype<Date> getCaptureDate() { return this.capture_date; }
@@ -268,6 +278,14 @@ public class Spectrum
 	@XmlElement(name="longitude")
 	public MetaDatatype<Double> getLongitude() { return this.longitude; }
 	public void setLongitude(MetaDatatype<Double> longitude) { this.longitude = longitude; }
+	
+	@XmlElement(name="measurement_vector")
+	public Float[] getMeasurementVector() {
+		return measurement_vector;
+	}
+	public void setMeasurementVector(Float[] measurement_vector) {
+		this.measurement_vector = measurement_vector;
+	}	
 	
 	@XmlElement(name="measurement_type")
 	public MetaDatatype<String> getMeasurementType() { return this.measurement_type; }
