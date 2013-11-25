@@ -164,6 +164,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 	    	}
 
 			this.setVisible(false);
+			this.dispose();
 			
 		} 	 
 		if(e.getActionCommand().equals("browse"))
