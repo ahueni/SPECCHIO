@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import ch.specchio.eav_db.EAVDBServices;
@@ -18,6 +19,7 @@ import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
+import ch.specchio.types.Taxonomy;
 import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.attribute;
 import ch.specchio.types.Units;
@@ -285,10 +287,18 @@ public class MetadataFactory extends SPECCHIOFactory {
 		
 		CategoryTable table = new CategoryTable();
 		
+		String field = "name";
+		
+		if (category.equals(Spectrum.CALIBRATION))
+		{
+			field = "calibration_id";
+			
+		}
+		
 		try {
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
-			String query = "select " + SQL.quote_identifier(category + "_id") + ", name from " + SQL.quote_identifier(category);
+			String query = "select " + SQL.quote_identifier(category + "_id") + ","  + field + " from " + SQL.quote_identifier(category);
 			ResultSet rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				table.put(rs.getInt(1), rs.getString(2));
@@ -304,6 +314,44 @@ public class MetadataFactory extends SPECCHIOFactory {
 		return table;
 		
 	}
+	
+	
+	/**
+	 * Get instrument ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of instrument ids, zero where no instrument is defined
+	 * @throws SPECCHIOFactoryException 
+	 */		
+	public ArrayList<Integer> getInstrumentIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOFactoryException {
+		// TODO Auto-generated method stub
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		
+		try {
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			String conc_ids = SQL.conc_ids(spectrum_ids);
+			String query = "select instrument_id, spectrum_id from spectrum where spectrum_id in (" + conc_ids + ")" +
+			"order by FIELD (spectrum_id, "+ conc_ids +")";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				ids.add(rs.getInt(1));
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		return ids;
+	}
+
+
+	
 	
 	
 	/**
@@ -563,6 +611,52 @@ public class MetadataFactory extends SPECCHIOFactory {
 		return children;
 		
 	}
+	
+	
+	public Taxonomy getTaxonomy(int attribute_id) throws SPECCHIOFactoryException {
+		
+		Hashtable<Integer, String> tree_hash = new Hashtable<Integer, String>();		
+		Taxonomy t = new Taxonomy(getAttributes().get_attribute_info(attribute_id));
+		ArrayList<Integer> parent_ids = new ArrayList<Integer>();
+		
+		// build hashtable containing only the leaves
+		try {
+			Statement stmt = getStatementBuilder().createStatement();
+			String query = "select taxonomy_id, name, parent_id from taxonomy where " +
+					"attribute_id = " + attribute_id;
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {	
+				int i = 1;
+				int taxonomy_id = rs.getInt(i++);
+				String name = rs.getString(i++);
+				int parent_id = rs.getInt(i++);
+				
+				// insert into leaf_hash and taxonomy
+				tree_hash.put(taxonomy_id, name);
+				t.put(name, taxonomy_id);
+				parent_ids.add(parent_id);
+					
+			}			
+			rs.close();
+			stmt.close();			
+		} catch (SQLException e) {
+			throw new SPECCHIOFactoryException(e);
+		}
+		
+		// check leaf_hash and remove the ones that are parents: the leaves are left
+		for(Integer parent_id : parent_ids)
+		{
+			if(tree_hash.containsKey(parent_id))
+			{
+				t.remove(tree_hash.get(parent_id));
+			}
+		}
+		
+		
+		return t;
+		
+	}
+	
 
 	 
 	 
