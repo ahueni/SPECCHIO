@@ -204,6 +204,11 @@ class MainMenu implements ActionListener, ItemListener {
       menu.add(menuItem);      
       public_menu_items.put(info, menuItem);
       
+//      menuItem = new JMenuItem(test);
+//      menuItem.addActionListener(this);
+//      menu.add(menuItem);      
+//      public_menu_items.put(test, menuItem);      
+      
       menuBar.add(menu);
    }
    
@@ -604,12 +609,30 @@ class MainMenu implements ActionListener, ItemListener {
 				
 				
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			} catch (SPECCHIOClientException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+      }
+      
+      
+      if(test.equals(e.getActionCommand()))
+      {
+    	// TODO The Sandbox is here ....
+    	  // Sandbox
+    	  SPECCHIOClient specchio_client = SPECCHIOApplication.getInstance().getClient();
+    	  
+    	  try {
+			int tax_id = specchio_client.getTaxonomyId(160, "Hemispherical-conical (CASE 8)");
+			int x = 1;
+    		  
+//    		  specchio_client.getInstrumentIds(spectrum_ids)  
+    		  
+    		  
+		} catch (SPECCHIOClientException e1) {
+			e1.printStackTrace();
+		}
+    	  
       }
   	
       if(time_shift.equals(e.getActionCommand()))
