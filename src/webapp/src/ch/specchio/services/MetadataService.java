@@ -11,6 +11,7 @@ import ch.specchio.constants.UserRoles;
 import ch.specchio.factories.MetadataFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.jaxb.XmlInteger;
+import ch.specchio.jaxb.XmlIntegerAdapter;
 import ch.specchio.jaxb.XmlString;
 import ch.specchio.jaxb.XmlStringAdapter;
 import ch.specchio.spaces.MeasurementUnit;
@@ -22,6 +23,7 @@ import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.MetadataUpdateDescriptor;
+import ch.specchio.types.Taxonomy;
 import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.attribute;
 import ch.specchio.types.Units;
@@ -305,6 +307,33 @@ public class MetadataService extends SPECCHIOService {
 		
 	}	
 	
+	/**
+	 * Get a taxonomy
+	 * 
+	 * @param attribute_id	id of the required taxonomy
+	 * 
+	 * @return taxonomy object including hashtable with elements
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@GET
+	@Path("get_taxonomy/{attribute_id: [0-9]+}")
+	@Produces(MediaType.APPLICATION_XML)
+	public Taxonomy get_taxonomy(@PathParam("attribute_id")	int attribute_id) throws SPECCHIOFactoryException {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword());
+		
+		Taxonomy t = factory.getTaxonomy(attribute_id);
+
+		factory.dispose();
+		
+		return t;
+		
+	}	
+	
+		
+	
+	
 	
 	/**
 	 * Get the node of a taxonomy
@@ -377,6 +406,28 @@ public class MetadataService extends SPECCHIOService {
 		
 		return mu;
 	}	
+	
+	/**
+	 * Get instrument ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of instrument ids, zero where no instrument is defined
+	 */	
+	@POST
+	@Path("getInstrumentIds")
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	public XmlInteger[] getInstrumentIds(MetadataSelectionDescriptor msd) throws SPECCHIOFactoryException {
+
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword());
+		
+		ArrayList<Integer> ids = factory.getInstrumentIds(msd.getIds());
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);		
+		
+	}
 	
 	
 	/**
