@@ -15,7 +15,7 @@ public class SpectrumQueryField extends QueryField{
 		this.fieldname = db_field_name;
 		this.label = label;
 		
-		category_values = specchio_client.getMetadataCategories(db_field_name);
+		category_values = specchio_client.getMetadataCategoriesForIdAccess(db_field_name);
 	
 	}
 	
