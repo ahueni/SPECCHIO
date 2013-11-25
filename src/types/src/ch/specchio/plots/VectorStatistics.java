@@ -24,14 +24,16 @@ public class VectorStatistics {
 		// get mean, min and max
 		for(band = start_ind; band <= end_ind;band++)
 		{
-			
-			sum += vector[band];
-			
-			if(max < vector[band])
-				max = vector[band];
-			
-			if(min > vector[band])
-				min = vector[band];
+			if(!Double.isNaN(vector[band])) // filter NaNs
+			{
+				sum += vector[band];
+				
+				if(max < vector[band])
+					max = vector[band];
+				
+				if(min > vector[band])
+					min = vector[band];
+			}
 							
 		}
 		
@@ -41,7 +43,9 @@ public class VectorStatistics {
 		// get standard deviation			
 		for(band = start_ind; band <= end_ind;band++)
 		{
-			sum += Math.pow(vector[band] - mean, 2);				
+			if(!Double.isNaN(vector[band])) // filter NaNs
+				sum += Math.pow(vector[band] - mean, 2);	
+			
 		}
 		
 		var = sum/(N-1);
@@ -64,14 +68,19 @@ public class VectorStatistics {
 		{
 			for(band = start_ind; band <= end_ind;band++)
 			{
+
+				if(!Double.isNaN(vectors.get(i)[band])) // filter NaNs
+				{
 				
-				sum += vectors.get(i)[band];
-				
-				if(max < vectors.get(i)[band])
-					max = vectors.get(i)[band];
-				
-				if(min > vectors.get(i)[band])
-					min = vectors.get(i)[band];
+					
+					sum += vectors.get(i)[band];
+					
+					if(max < vectors.get(i)[band])
+						max = vectors.get(i)[band];
+					
+					if(min > vectors.get(i)[band])
+						min = vectors.get(i)[band];
+				}
 								
 			}
 		}
@@ -82,9 +91,13 @@ public class VectorStatistics {
 		// get standard deviation			
 		for(int i = 0; i < vectors.size();i++)
 		{		
+			
 			for(band = start_ind; band <= end_ind;band++)
 			{
-				sum += Math.pow(vectors.get(i)[band] - mean, 2);				
+				if(!Double.isNaN(vectors.get(i)[band])) // filter NaNs
+				{
+					sum += Math.pow(vectors.get(i)[band] - mean, 2);	
+				}
 			}
 		}
 		
