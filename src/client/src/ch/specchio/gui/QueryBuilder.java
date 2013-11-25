@@ -50,6 +50,7 @@ import au.ands.org.researchdata.ResearchDataAustralia;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.proc_modules.FileOutputManager;
 import ch.specchio.proc_modules.ModuleException;
@@ -109,6 +110,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 
 
 	private JMenu menu;
+	private JMenu test_menu;
 	
 	
 	// new class for a JTextArea to include a popup listener
@@ -359,6 +361,15 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    menu.add(menuItem);		    
 	    
 	    menuBar.add(menu);
+	    
+	    // test menu for developing and debugging purposes
+	    // TODO the Test menu is here ....
+	    test_menu = new JMenu("Test");
+	    menuItem = new JMenuItem("Test");
+	    menuItem.addActionListener(this);
+	    test_menu.add(menuItem);	    
+//	    menuBar.add(test_menu);
+	    
 	    
 	    this.setJMenuBar(menuBar);		
 
@@ -684,6 +695,21 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 			  }
 	    	  endOperation();		  
     					  
+	      }
+	      
+	      // TODO The Sandbox is here ...
+	      if ("Test".equals(e.getActionCommand()))
+	      {
+	    	  try {
+				ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
+				
+				int x = 1;
+				
+			} catch (SPECCHIOWebClientException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}	    	  
+	    	  
 	      }
 	      
 		
