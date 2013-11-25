@@ -208,8 +208,20 @@ public class MetaDataFromTabModel {
 			Object value;
 			if (column[i] instanceof NumberCell)
 			{
-				// assume it's a double for now
-				value = new Double(((NumberCell)column[i]).getValue());
+				String tmp = (column[i]).getContents();
+				
+				if(tmp.contains("."))
+				{
+					// assume it's a double for now
+					value = new Double(((NumberCell)column[i]).getValue());					
+				}
+				else
+				{
+					Double d = ((NumberCell)column[i]).getValue();
+					value = d.intValue();	
+				}
+				
+
 			}
 			else if (column[i] instanceof DateCell)
 			{
