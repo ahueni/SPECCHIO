@@ -15,6 +15,7 @@ public class MetadataSelectionDescriptor {
 	private ArrayList<Integer> ids;
 	private String attribute_name;
 	private Integer attribute_id;
+	private Object value;
 	
 	
 	/**
@@ -36,6 +37,13 @@ public class MetadataSelectionDescriptor {
 		this.attribute_name = attribute_name;
 		
 	}
+	
+	public MetadataSelectionDescriptor(ArrayList<Integer> ids, String attribute_name, Object value) {
+		
+		this.ids = ids;
+		this.attribute_name = attribute_name;
+		this.value = value;		
+	}	
 	
 	public MetadataSelectionDescriptor(ArrayList<Integer> ids, Integer attribute_id) {
 		
@@ -62,6 +70,15 @@ public class MetadataSelectionDescriptor {
 
 	public void setAttribute_id(Integer attribute_id) {
 		this.attribute_id = attribute_id;
+	}
+
+	@XmlElement(name="value")
+	public Object getValue() {
+		return value;
+	}
+
+	public void setValue(Object value) {
+		this.value = value;
 	}
 	
 
