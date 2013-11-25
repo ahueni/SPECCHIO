@@ -51,6 +51,7 @@ public class QueryFormFactory {
 		} else if (name.equals("Instrument")) {
 			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "sensor", "Sensor"));
 			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "instrument", "Instrument"));
+			form.addFieldToContainer(c, new SpectrumQueryField(specchioClient, "calibration", "Calibration"));
 		}
 		
 	}
