@@ -2,14 +2,15 @@ package ch.specchio.file.reader.campaign;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ListIterator;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.file.reader.spectrum.*;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
+import ch.specchio.types.SpectralFileInsertResult;
 
 public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
@@ -48,6 +49,11 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			// now we create the root hierarchy for this campaign
 			root_hierarchy_id = insert_hierarchy(f.getName(), 0);
 			load_directory(root_hierarchy_id, f, false);
+			
+			// force a refresh of the client cache for potentially new instruments and calibrations
+			// TODO: only refresh if new instruments and/or calibrations were actually inserted
+			specchio_client.refreshMetadataCategory("instrument");
+			specchio_client.refreshMetadataCategory("calibration");
 			
 			// tell the listener that we're finished
 			listener.campaignDataLoaded(successful_file_counter, this.file_errors);
@@ -148,6 +154,8 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		// load each file using the spectral
 		// file loader
 		if (files.size() > 0) {	
+			
+			
 
 			// get the spectral file loader needed for this directory
 			sfl = get_spectral_file_loader(files);
@@ -160,6 +168,8 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				while(file_li.hasNext()) {
 					File file = file_li.next();
 					
+					SpectralFileInsertResult insert_result = new SpectralFileInsertResult();
+					
 					try {
 
 						// the loader can return null, e.g. if ENVI files are
@@ -169,36 +179,40 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						spec_file = sfl.load(file);
 						if (spec_file != null && spec_file.getNumberOfSpectra() > 0)
 						{
-							spec_file.setGarbageIndicator(is_garbage);
-							int ids[] = insert_spectral_file(spec_file, parent_id);
-							if(ids != null)
+							if(spec_file.getFileErrorCode() != SpectralFile.UNRECOVERABLE_ERROR)
 							{
-								spectrum_counter += ids.length;
+								spec_file.setGarbageIndicator(is_garbage);
+								insert_result = insert_spectral_file(spec_file, parent_id);
+
+								spectrum_counter += insert_result.getSpectrumIds().size();
+								
+								if(insert_result.getSpectrumIds().size() > 0) successful_file_counter++;
+								
 							}
 							
+							insert_result.addErrors(spec_file.getFileErrors()); // compile into one list of errors							
+//							if(insert_result.getErrors().size() == 0) successful_file_counter++;
+							
 							// check on file errors
-							if(spec_file.getFileErrors().size() > 0)
+							if(insert_result.getErrors().size() > 0)
 							{
 								// concatenate all errors into one message
-								StringBuffer buf = new StringBuffer("Errors found in : " + spec_file.getFilename());
-								boolean first = true;
-								for (String error : spec_file.getFileErrors()) {
-									if (!first) {
-										buf.append(", ");
-									} else {
-										first = false;
-									}
-									buf.append(error);
+								StringBuffer buf = new StringBuffer("Issues found in " + spec_file.getFilename() + ": \n");
+
+								for (SpecchioMessage error : insert_result.get_nonredudant_errors()) {
+										
+									buf.append("\t");
+			
+									buf.append(error.toString());
 								}
+								
+								buf.append("\n");
 								
 								// add the message to the list of all errors
 								this.file_errors.add(buf.toString());
 								
 							}
-							else
-							{
-								successful_file_counter++;
-							}
+
 						}
 								
 						file_counter++;
@@ -224,9 +238,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	}
 	
 	
-	int[] insert_spectral_file(SpectralFile spec_file, int hierarchy_id) throws SPECCHIOClientException {
+	SpectralFileInsertResult insert_spectral_file(SpectralFile spec_file, int hierarchy_id) throws SPECCHIOClientException {
 		
-		int ids[] = null;
+		SpectralFileInsertResult results = new SpectralFileInsertResult();
 		
 		// first check whether or not the file has already been loaded
 		// to do this, create a clone of the spectral file, remove it's measurement to reduce size and send it 
@@ -243,15 +257,15 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			spec_file.setCampaignType(campaign.getType());
 			spec_file.setCampaignId(campaign.getId());
 			spec_file.setHierarchyId(hierarchy_id);
-			List<Integer> results = specchio_client.insertSpectralFile(spec_file);
+			results = specchio_client.insertSpectralFile(spec_file);
 			
-			ids = new int[results.size()];
-			for (int i = 0; i < results.size(); i++) {
-				ids[i] = results.get(i);
-			}
+//			ids = new int[results.size()];
+//			for (int i = 0; i < results.size(); i++) {
+//				ids[i] = results.get(i);
+//			}
 		} 
 		
-		return ids;
+		return results;
 		
 	}
 
@@ -312,7 +326,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			
 			
 			// cx for UNISPEC SPU files
-			else if (exts.contains("spu"))
+			else if (exts.contains("spu") || exts.contains("SPU"))
 				loader = new UniSpec_SPU_FileLoader();					
 
 			// cx for MFR out files
