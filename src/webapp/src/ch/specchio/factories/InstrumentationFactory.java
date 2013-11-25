@@ -342,6 +342,7 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		
 	}
 	
+
 	
 	/**
 	 * Get the descriptors of every instrument in the database.
@@ -629,13 +630,15 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public void insertCalibration(String object_type, Calibration cal) throws SPECCHIOFactoryException {
+	public int insertCalibration(String object_type, Calibration cal) throws SPECCHIOFactoryException {
 		
+		int cal_id = 0;
 		String id_column = object_type + "_id";
 		
 		try {
 			
 			// insert the spectral file, if any, into the database
+			
 			Integer cal_factor_id = 0;
 			Integer uncert_id = 0;
 			SpectralFile spec_file = cal.getSpectralFile();
@@ -647,21 +650,44 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 					uncert_id = insertInstrumentationFactors(spec_file, 1);
 				}			
 			}
+			
+			int referenced_id = 0;
+			
+			if(object_type.equals("reference"))
+			{
+				referenced_id = cal.getReferenceId();
+			}
+			else
+			{
+				referenced_id = cal.getInstrumentId();
+			}
+			
+			
 
 			// update the calibration table
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
 			id_and_op_struct cal_factor = SQL.is_null_key_get_val_and_op(cal_factor_id);
 			id_and_op_struct cal_uncert = SQL.is_null_key_get_val_and_op(uncert_id);
-			String query = "insert into calibration (" + id_column + ", cal_factors, uncertainty) " +
-					"values (" + Integer.toString(cal.getReferenceId()) + "," + cal_factor.id + "," + cal_uncert.id + ")";
+			String query = "insert into calibration (" + id_column + ", cal_factors, uncertainty, comments, calibration_no) " +
+					"values (" + referenced_id + "," + cal_factor.id + "," + cal_uncert.id + ", '" + cal.getComments() + "'," + cal.getCalibration_number() + ")";
 			stmt.executeUpdate(query);
+			
+			// get the identifier of the new instrument
+			query = "select last_insert_id()";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				cal_id = rs.getInt(1);
+			}
+			rs.close();			
 			
 		}
 		catch (SQLException ex) {
 			// database error
 			throw new SPECCHIOFactoryException(ex);
 		}
+		
+		return cal_id;
 		
 	}
 	
@@ -733,12 +759,13 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 	 * Insert an instrument calibration into the database.
 	 * 
 	 * @param cal			the calibration
+	 * @return id of the new calibration
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public void insertInstrumentCalibration(Calibration cal) throws SPECCHIOFactoryException {
+	public int insertInstrumentCalibration(Calibration cal) throws SPECCHIOFactoryException {
 		
-		insertCalibration(INSTRUMENT, cal);
+		return insertCalibration(INSTRUMENT, cal);
 		
 	}
 	
