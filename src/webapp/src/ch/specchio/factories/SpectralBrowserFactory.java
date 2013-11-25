@@ -114,6 +114,45 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Get the parent_id for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return id of the parent of given hierarchy
+	 * 
+	 * @throws SPECCHIOFactoryException	could not find a campaign with this identifier
+	 */
+	public int getHierarchyParentId(int hierarchy_id) throws SPECCHIOFactoryException {
+		
+		try {		
+			int parent_id = 0;
+			// get parent id
+			Statement stmt = getStatementBuilder().createStatement();
+			ResultSet rs = stmt.executeQuery("select parent_level_id from hierarchy_level where hierarchy_level_id = " + hierarchy_id);
+			while (rs.next()) {
+				parent_id = rs.getInt(1);	
+			}
+			rs.close();
+			stmt.close();
+			
+			// throw an exception if the campaign was not found
+			if (parent_id == 0) {
+				throw new SPECCHIOFactoryException("Parent hierarchy id of hierarchy " + hierarchy_id + " does not exist.");
+			}
+			
+			return parent_id;
+			
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+	}
+		
+	
+	
+	/**
 	 * Get the name of the view that contains the visible children of a campaign node.
 	 * 
 	 * @param node	the node
