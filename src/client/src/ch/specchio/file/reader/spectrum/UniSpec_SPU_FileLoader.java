@@ -18,6 +18,7 @@ import java.util.TimeZone;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
+import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
 
@@ -49,6 +50,8 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 		
 		f.setCompany("PP Systems");
 		f.setFileFormatName(this.file_format_name);
+		f.setInstrumentTypeNumber(1); // hard coded arbitrary value within SPECCHIO as PP systems assigns no instrument codes
+
 	
 		file_input = new FileInputStream (file);			
 		
@@ -264,9 +267,22 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 
 					time_str = remove_leading_spaces(time_str);
 					
-					// "Time:       6/12/2010 12:05:58 PM"
+					// "Time:       6/12/2010 12:05:58 PM" (for spu files)
+					// "Time:       05/07/2000  14:32:38" (for SPU files)
 					TimeZone tz = TimeZone.getTimeZone("UTC");
-					DateFormat sdf = new SimpleDateFormat("MM/dd/yy hh:mm:ss a");
+					DateFormat sdf;
+					
+					if(time_str.contains("PM") || time_str.contains("AM"))
+					{
+						sdf = new SimpleDateFormat("MM/dd/yy hh:mm:ss a");
+					}
+					else
+					{
+						sdf = new SimpleDateFormat("MM/dd/yy hh:mm:ss");
+					}
+					
+					
+					
 					sdf.setTimeZone(tz);
 				    Date date;
 					try {
@@ -417,17 +433,13 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 			line=d.readLine();
 			while(line != null && line.length() > 0)
 			{
-				//line = line.substring(1); // cut start white space
-				
-				
-				
-				String[] tokens = line.split("\t");		
-				
-				//if(tokens.length == 1) tokens = line.split(" ");	// special case for e.g. 401.29 -3
+
+				// see: http://stackoverflow.com/questions/225337/how-do-i-split-a-string-with-any-whitespace-chars-as-delimiters
+				String[] tokens = line.split("\\s+");	
 
 				a.add(Float.valueOf(tokens[2]));
 				
-				tokens[1] = this.remove_trailing_spaces(tokens[1]);
+				//tokens[1] = this.remove_trailing_spaces(tokens[1]);
 				
 				//tokens[1] = remove_trailing_tabs(tokens[1]); // clean up for the integer conversion (apparently, the Float conversion is more tolerant)				
 				
@@ -437,10 +449,19 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 					// tried to parse a floating point value, therefore, this spectrum was spectrally interpolated
 					
 					// avoid the detection of special cases where unbinned values show up as "0."
-					if(Float.valueOf(tokens[1]) > 0)
-					{
-						spectral_interpolation = true;
-					}
+
+						// catching cases of just a decimal point instead of a float
+						if(e.getMessage().equals("For input string: \".\""))
+						{
+							tokens[1] = "0.0";
+						}						
+						
+						if(Float.valueOf(tokens[1]) > 0)
+						{
+							spectral_interpolation = true;
+						}
+
+					
 				}						
 					
 				
@@ -468,15 +489,27 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 		
 		
 		Float[][] out_spectrum = new Float[f.getNumberOfSpectra()][f.getNumberOfChannels(0)];
-
-		ListIterator<Float> a_li = a.listIterator();
-		ListIterator<Float> b_li = b.listIterator();
-		int i = 0;
-		while(a_li.hasNext())
+		
+		// check if size of the two vectors are the same: happens if corrupted files are encountered (e.g. YS00093.SPT of John Gamons sky oaks dataset)
+		if (a.size() != b.size())
 		{
-			out_spectrum[0][i] = (Float)b_li.next(); // channel b
-			out_spectrum[1][i++] = (Float)a_li.next(); // channel a
-		}	
+			f.setFileErrorCode(SpectralFile.UNRECOVERABLE_ERROR);
+			ArrayList<SpecchioMessage> file_errors = new ArrayList<SpecchioMessage>();
+			file_errors.add(new SpecchioMessage("Target and reference vectors are of unequal length.", SpecchioMessage.ERROR));
+			f.setFileErrors(file_errors);
+		}
+		else
+		{	
+	
+			ListIterator<Float> a_li = a.listIterator();
+			ListIterator<Float> b_li = b.listIterator();
+			int i = 0;
+			while(a_li.hasNext())
+			{
+				out_spectrum[0][i] = (Float)b_li.next(); // channel b
+				out_spectrum[1][i++] = (Float)a_li.next(); // channel a
+			}	
+		}
 		
 		return out_spectrum;
 		

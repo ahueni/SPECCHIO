@@ -12,6 +12,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.ListIterator;
+
+import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 
 public class UniSpec_FileLoader extends SpectralFileLoader {
@@ -36,6 +38,7 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 		
 		f.setCompany("PP Systems");
 		f.setFileFormatName(this.file_format_name);
+		f.setInstrumentTypeNumber(2); // hard coded arbitrary value within SPECCHIO as PP systems assigns no instrument codes
 	
 		file_input = new FileInputStream (file);			
 		
@@ -230,9 +233,9 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 			{
 				//line = line.substring(1); // cut start white space
 				
-				String[] tokens = line.split("  ");		
+				String[] tokens = line.split("\\s+");		
 				
-				if(tokens.length == 1) tokens = line.split(" ");	// special case for e.g. 401.29 -3
+				//if(tokens.length == 1) tokens = line.split(" ");	// special case for e.g. 401.29 -3
 
 				tgt.add(Float.valueOf(tokens[1]));				
 				wvl.add(Float.valueOf(tokens[0]));
@@ -268,17 +271,30 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 		f.setWvls(0, tmp);		// before wvls was an arraylist: wvl.toArray(f.wvls);
 		
 
+
 		
 		Float[][] out_spectrum = new Float[f.getNumberOfSpectra()][f.getNumberOfChannels(0)];
-
-		ListIterator<Float> tgt_li = tgt.listIterator();
-		ListIterator<Float> ref_li = ref.listIterator();
-		int i = 0;
-		while(tgt_li.hasNext())
+		
+		// check if size of the two vectors are the same: happens if corrupted files are encountered (e.g. YS00093.SPT of John Gamons sky oaks dataset)
+		if (tgt.size() != ref.size())
 		{
-			out_spectrum[0][i] = (Float)tgt_li.next();
-			out_spectrum[1][i++] = (Float)ref_li.next();
-		}	
+			f.setFileErrorCode(SpectralFile.UNRECOVERABLE_ERROR);
+			ArrayList<SpecchioMessage> file_errors = new ArrayList<SpecchioMessage>();
+			file_errors.add(new SpecchioMessage("Target and reference vectors are of unequal length.", SpecchioMessage.ERROR));
+			f.setFileErrors(file_errors);
+		}
+		else
+		{
+
+			ListIterator<Float> tgt_li = tgt.listIterator();
+			ListIterator<Float> ref_li = ref.listIterator();
+			int i = 0;
+			while(tgt_li.hasNext())
+			{
+				out_spectrum[0][i] = (Float)tgt_li.next();
+				out_spectrum[1][i++] = (Float)ref_li.next();
+			}
+		}
 		
 		return out_spectrum;
 		
