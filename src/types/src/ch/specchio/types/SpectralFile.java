@@ -18,6 +18,11 @@ import javax.xml.bind.annotation.*;
 @XmlRootElement(name="spectral_file")
 public class SpectralFile {
 	
+	// static file error code definitions
+	public static int NO_ERRORS = 0;
+	public static int RECOVERABLE_ERROR = 1;
+	public static int UNRECOVERABLE_ERROR = 2;
+	
 	// these three fields are used by the "insert spectral file" web service
 	private String campaign_type;
 	private int campaign_id;
@@ -139,7 +144,8 @@ public class SpectralFile {
 	private boolean asd_v7_radiance_flag;
 	private boolean asd_v7_reflectance_flag;
 	
-	private  ArrayList<String> file_errors = new ArrayList<String>();
+	private  ArrayList<SpecchioMessage> file_errors = new ArrayList<SpecchioMessage>();
+	private int file_error_code;
 	
 	public SpectralFile() {
 		
@@ -147,6 +153,7 @@ public class SpectralFile {
 	
 	public SpectralFile(SpectralFile spec_file) {
 		// special constructor to create a lightweigth clone for checking the file existince
+		this.setFileFormatName(spec_file.getFileFormatName());
 		this.setCompany(spec_file.getCompany());
 		this.setInstrumentNumber(spec_file.getInstrumentNumber());
 		this.setNumberOfSpectra(spec_file.getNumberOfSpectra());
@@ -159,6 +166,7 @@ public class SpectralFile {
 		for (String filename : spec_file.getSpectraFilenames()) {
 			this.spectra_filenames.add(filename);
 		}
+		this.setFileErrorCode(SpectralFile.NO_ERRORS);
 	}
 
 	@XmlElement(name="arm_length")
@@ -299,8 +307,8 @@ public class SpectralFile {
 	public void setFgiOptics(String fgi_optics) { this.fgi_optics = fgi_optics; }
 	
 	@XmlElement(name="file_errors")
-	public ArrayList<String> getFileErrors() { return this.file_errors; }
-	public void setFileErrors(ArrayList<String> file_errors) { this.file_errors = file_errors; }
+	public ArrayList<SpecchioMessage> getFileErrors() { return this.file_errors; }
+	public void setFileErrors(ArrayList<SpecchioMessage> file_errors) { this.file_errors = file_errors; }
 	
 	@XmlElement(name="file_format_name")
 	public String getFileFormatName() { return this.file_format_name; }
@@ -692,7 +700,7 @@ public class SpectralFile {
 					temp_buf = new byte[no_of_channels.get(0)];
 					
 					// log the error
-					file_errors.add("Spectrum contains null values.");
+					file_errors.add(new SpecchioMessage("Spectrum contains null values.", SpecchioMessage.ERROR));
 					
 					break;
 				}
@@ -704,6 +712,14 @@ public class SpectralFile {
 		InputStream refl = new ByteArrayInputStream(temp_buf);
 
 		return refl;
+	}
+
+	public int getFileErrorCode() {
+		return file_error_code;
+	}
+
+	public void setFileErrorCode(int file_error_code) {
+		this.file_error_code = file_error_code;
 	}
 
 }
