@@ -694,7 +694,8 @@ public class SpaceFactory extends SPECCHIOFactory {
 				"spectrum_id",
 				"sensor_id",
 				"instrument_id",
-				"measurement_unit_id"
+				"measurement_unit_id",
+				"calibration_id"
 			};
 			String query = buildSpaceQuery("spectrum", "spectrum_id", columns, spectrum_ids, this.order_by);
 			
@@ -706,7 +707,8 @@ public class SpaceFactory extends SPECCHIOFactory {
 				ssi.spectrum_id = rs.getInt(1);
 				ssi.sensor_id = rs.getInt(2);
 				ssi.instrument_id = rs.getInt(3);
-				ssi.measurement_unit_id = rs.getInt(4);				
+				ssi.measurement_unit_id = rs.getInt(4);		
+				ssi.calibration_id = rs.getInt(5);	
 				ssi_list.add(ssi);				
 			}	
 			rs.close();
@@ -718,7 +720,7 @@ public class SpaceFactory extends SPECCHIOFactory {
 			throw new SPECCHIOFactoryException(ex);
 		}
 		
-		ssi_list = getCalibrationIds(ssi_list, spectrum_ids);
+		//ssi_list = getCalibrationIds(ssi_list, spectrum_ids);
 		
 		//int spectrum_id, int sensor_id, int instrument_id, int calibration_id, int measurement_type_id
 		
