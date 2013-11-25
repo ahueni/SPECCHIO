@@ -44,6 +44,7 @@ public class MDE_FormFactory {
 		} else if (name.equals("Instrument")) {
 			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.SENSOR, "Sensor"));
 			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.INSTRUMENT, "Instrument"));
+			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.CALIBRATION, "Calibration (internal id)"));
 		}
 		 else if (name.equals("Instrumentation")) {
 			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.REFERENCE, "Reference"));
