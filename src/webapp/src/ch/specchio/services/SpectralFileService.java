@@ -1,6 +1,5 @@
 package ch.specchio.services;
 
-import java.util.List;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -11,8 +10,8 @@ import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpectralFileFactory;
 import ch.specchio.jaxb.XmlBoolean;
 import ch.specchio.jaxb.XmlInteger;
-import ch.specchio.jaxb.XmlIntegerAdapter;
 import ch.specchio.types.SpectralFile;
+import ch.specchio.types.SpectralFileInsertResult;
 
 
 /**
@@ -88,10 +87,10 @@ public class SpectralFileService extends SPECCHIOService {
 	 * @throws SPECCHIOFactoryException	could not access the database
 	 */
 	@POST
-	@Produces(MediaType.APPLICATION_XML)
-	@Consumes(MediaType.APPLICATION_XML)
 	@Path("insert")
-	public XmlInteger[] insert(SpectralFile spec_file) throws SPECCHIOFactoryException {
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public SpectralFileInsertResult insert(SpectralFile spec_file) throws SPECCHIOFactoryException {
 
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
@@ -99,11 +98,12 @@ public class SpectralFileService extends SPECCHIOService {
 				spec_file.getCampaignType(),
 				spec_file.getCampaignId()
 			);
-		List<Integer> ids = factory.insertSpectralFile(spec_file, spec_file.getHierarchyId());
+		SpectralFileInsertResult insert_result = factory.insertSpectralFile(spec_file, spec_file.getHierarchyId());
 		factory.dispose();
 		
-		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
-		return adapter.marshalArray(ids);
+//		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+//		return adapter.marshalArray(ids);
+		return insert_result;
 	}
 
 }
