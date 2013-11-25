@@ -1,22 +1,35 @@
 package ch.specchio.factories;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Blob;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 
+import ch.specchio.eav_db.AVSorter;
+import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.queries.EAVQueryConditionObject;
 import ch.specchio.queries.Query;
 import ch.specchio.queries.QueryCondition;
+import ch.specchio.types.AVMatchingList;
+import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.MetaDatatype;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.Sensor;
+import ch.specchio.types.SpectralFile;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
@@ -175,6 +188,73 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Creates a copy of a spectrum in the specified hierarchy
+	 * 
+	 * @param spectrum_id		the spectrum_id of the spectrum to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * 
+	 * @return new spectrum id
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */	
+	public int copySpectrum(int spectrum_id, int target_hierarchy_id) throws SPECCHIOFactoryException {
+		
+		int copy_spectrum_id = 0;
+		
+				
+		
+		String query = "INSERT INTO spectrum_view ("
+		+ " hierarchy_level_id, sensor_id, campaign_id, "
+		+ "file_format_id, instrument_id, "
+		+ "measurement_unit_id, measurement_type_id, illumination_source_id, goniometer_id, sampling_environment_id, measurement) "
+		+ "select "
+		+ " hierarchy_level_id, sensor_id, campaign_id, "
+		+ "file_format_id, instrument_id, "
+		+ "measurement_unit_id, measurement_type_id, illumination_source_id, goniometer_id, sampling_environment_id, measurement "
+		+ " from spectrum_view where spectrum_id = " + spectrum_id;
+		
+		Statement stmt;
+		try {
+			stmt = getStatementBuilder().createStatement();
+			
+			
+			stmt.executeUpdate(query);
+			
+			ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+			while (rs.next())
+				copy_spectrum_id = rs.getInt(1);
+			rs.close();
+			
+			stmt.close();		
+			
+			
+			// copy all eav references
+			ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(spectrum_id);			
+			getEavServices().insert_primary_x_eav(copy_spectrum_id, eav_ids);
+			
+			// exchange hierarchy id
+			query = "update spectrum_view set hierarchy_level_id = " + target_hierarchy_id + " where spectrum_id = " + copy_spectrum_id;
+			
+			stmt = getStatementBuilder().createStatement();
+			stmt.executeUpdate(query);
+			stmt.close();	
+			
+			// update the aggregated info in the upper hierarchies
+			SpectralFileFactory sf_factory = new SpectralFileFactory(this);			
+			sf_factory.insertHierarchySpectrumReferences(target_hierarchy_id, copy_spectrum_id, 0);
+			
+			
+			
+		} catch (SQLException e) {
+			throw new SPECCHIOFactoryException(e);
+		}		
+		
+		
+		return copy_spectrum_id;
+	}
+	
+	
+	/**
 	 * Delete target-reference links.
 	 * 
 	 * @param target_id	the target identifier
@@ -201,7 +281,55 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		return n;
 		
 	}
+
 	
+	/**
+	 * Get the spectrum identifiers that do have a reference to the specified attribute.
+	 * 
+	 * @param MetadataSelectionDescriptor 	specifies ids to filter and attribute to filter by
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttribute(MetadataSelectionDescriptor mds) throws SPECCHIOFactoryException {
+		
+		EAVDBServices eav = getEavServices();					
+		return eav.filter_by_eav(mds.getIds(), mds.getAttribute_id());		
+	}	
+		
+	
+	/**
+	 * Get the spectrum identifiers that do not have a reference to the specified attribute.
+	 * 
+	 * @param MetadataSelectionDescriptor 	specifies ids to filter and attribute to filter by
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByNotHavingAttribute(MetadataSelectionDescriptor mds) throws SPECCHIOFactoryException {
+		
+		EAVDBServices eav = getEavServices();					
+		return eav.filter_by_attribute_NOT(mds.getIds(), mds.getAttribute_id());		
+	}	
+	
+	
+	/**
+	 * Get the spectrum identifiers that do reference to the specified attribute of a specified value.
+	 * 
+	 * @param MetadataSelectionDescriptor 	specifies ids to filter and attribute and value to filter by
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttributeValue(MetadataSelectionDescriptor mds) throws SPECCHIOFactoryException {
+		
+		EAVDBServices eav = getEavServices();					
+		return eav.filter_by_eav(mds.getIds(), mds.getAttribute_id(), eav.ATR.get_default_storage_field(mds.getAttribute_id()), mds.getValue());		
+	}	
+		
 	
 	/**
 	 * Helper method for countIdsMatchQuery() and getIdsMatchingQuery().
@@ -502,7 +630,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			while (rs.next()) {
 				s.setIsReference(new MetaDatatype<Boolean>("Is reference", rs.getBoolean(1)));
 				s.setCampaignId(rs.getInt(2));
-				s.setHierarchyLevelId(rs.getInt(2));
+				s.setHierarchyLevelId(rs.getInt(3));
 			}
 			rs.close();
 			
@@ -763,21 +891,8 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				}	
 				
 				if(s.getInstrumentId() != 0)
-				{
-					SpaceFactory sf = new SpaceFactory(this);
-					
-					space_sorting_ident_struct ssi = new space_sorting_ident_struct();
-					ssi.spectrum_id = spectrum_id;
-					ArrayList<space_sorting_ident_struct> ssi_list = new ArrayList<space_sorting_ident_struct>();
-					ssi_list.add(ssi);
-					
-					ArrayList<Integer> ids = new ArrayList<Integer>();
-					ids.add(spectrum_id);
-					
-					ssi_list = sf.getCalibrationIds(ssi_list, ids);
-					
-					
-					s.setInstrument(getDataCache().get_instrument(s.getInstrumentId(), ssi_list.get(0).calibration_id));
+				{					
+					s.setInstrument(getDataCache().get_instrument(s.getInstrumentId(), s.getCalibrationId()));
 				}
 				else
 				{
@@ -992,6 +1107,16 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	}
 	
 	
+	public AVMatchingListCollection sortByAttributes(AVMatchingList av_list) throws SPECCHIOFactoryException {
+	
+		EAVDBServices eav = getEavServices();
+		AVSorter avs = new AVSorter(eav);
+		avs.insert_into_lists(av_list);
+		
+		return avs.getAVMatchingListCollection();
+	}
+	
+	
 	/**
 	 * Remove a spectrum from the database.
 	 * 
@@ -1078,6 +1203,59 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			// bad SQL
 			throw new SPECCHIOFactoryException(ex);
 		}
+		
+	}
+
+	
+	/**
+	 * Update the spectral vector of a spectrum
+	 * 
+	 * @param spectrum	the file to be inserted
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public void updateSpectrumVector(Spectrum s)  throws SPECCHIOFactoryException {
+		
+		SQL_StatementBuilder SQL = getStatementBuilder();
+
+		try {
+
+			// insert the measurement blob
+			String update_stm = "UPDATE spectrum_view set measurement = ? where spectrum_id = "
+					+ s.getSpectrumId();
+			PreparedStatement statement = SQL.prepareStatement(update_stm);
+
+			
+			byte[] temp_buf;
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			DataOutput dos = new DataOutputStream(baos);
+			
+			for (int i = 0; i < s.getMeasurementVector().length; i++) {
+				try {
+					dos.writeFloat(s.getMeasurementVector()[i]);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			temp_buf = baos.toByteArray();
+	
+			InputStream vector = new ByteArrayInputStream(temp_buf);
+				
+			statement.setBinaryStream(1, vector, s.getMeasurementVector().length * 4);
+			statement.executeUpdate();
+
+			vector.close();
+
+
+		} catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		} catch (IOException ex) {
+			// TODO Auto-generated catch block
+			throw new SPECCHIOFactoryException(ex);
+		}		
+
 		
 	}
 
