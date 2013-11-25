@@ -484,7 +484,14 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 		calibration_date.addDateListener(this);	
 		constraints.gridx = 1;
 		l.insertComponent(calibration_date, constraints);
-
+		
+		constraints.gridx = 0;
+		constraints.gridy++;
+		l.insertComponent(new JLabel("Calibration ID (auto. ID):"), constraints);									
+		calibration_no = new JTextField(Integer.toString(cm.getCalibration_id()), 10);
+		calibration_no.setEditable(false);
+		constraints.gridx = 1;
+		l.insertComponent(calibration_no, constraints);		
 
 		constraints.gridx = 0;
 		constraints.gridy++;
