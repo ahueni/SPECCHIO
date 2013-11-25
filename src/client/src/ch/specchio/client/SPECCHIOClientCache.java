@@ -2,6 +2,7 @@ package ch.specchio.client;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -15,6 +16,7 @@ import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpectralSpace;
+import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.Campaign;
@@ -34,6 +36,7 @@ import ch.specchio.types.ReferenceBrand;
 import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
 import ch.specchio.types.SpectralFile;
+import ch.specchio.types.SpectralFileInsertResult;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
@@ -67,7 +70,11 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	private Hashtable<String, attribute> attributesByName;
 	
 	/** metadata categories */
-	private Hashtable<String, CategoryTable> metadataCategories;
+	private Hashtable<String, Hashtable<String, Integer>> metadataCategoriesForNameAccess;
+	private Hashtable<String, CategoryTable> metadataCategoriesForIdAccess;
+	
+	/** taxonomies */
+	private Hashtable<Integer, Hashtable<String, Integer>> taxonomiesHash; // key is set to attribute id
 	
 	/** the progress report with which to indicate progress */
 	private ProgressReportInterface pr;
@@ -90,8 +97,9 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		attributesByCategory = new Hashtable<String, attribute[]>();
 		attributesById = null;
 		attributesByName = null;
-		metadataCategories = new Hashtable<String, CategoryTable>();
-		
+		metadataCategoriesForIdAccess = new Hashtable<String, CategoryTable>();
+		metadataCategoriesForNameAccess = new Hashtable<String, Hashtable<String, Integer>>();
+		taxonomiesHash = new Hashtable<Integer, Hashtable<String, Integer>>();
 	}
 	
 	
@@ -141,6 +149,24 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		}
 		
 	}
+	
+	
+	/**
+	 * Copy a spectrum to a specified hierarchy.
+	 * 
+	 * @param spectrum_id		the spectrum_id of the spectrum to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * 
+	 * @return new spectrum id
+	 * 
+	 * @throws SPECCHIOClientException could not log in
+	 */
+	public int copySpectrum(int spectrum_id, int target_hierarchy_id) throws SPECCHIOClientException {
+		
+		return realClient.copySpectrum(spectrum_id, target_hierarchy_id);
+		
+	}
+	
 	
 	/**
 	 * Clears the known metaparameter list held by the server for this user
@@ -276,6 +302,52 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		realClient.disconnect();
 		
 	}
+	
+	/**
+	 * Get the spectrum identifiers that do have a reference to the specified attribute.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttribute(ArrayList<Integer> spectrum_ids, String attribute_name) throws SPECCHIOClientException{
+		
+		return realClient.filterSpectrumIdsByHavingAttribute(spectrum_ids, attribute_name);		
+		
+	}
+	
+	
+	
+	/**
+	 * Get the spectrum identifiers that do not have a reference to the specified attribute.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByNotHavingAttribute(ArrayList<Integer> spectrum_ids, String attribute_name) throws SPECCHIOClientException {
+		
+		return realClient.filterSpectrumIdsByNotHavingAttribute(spectrum_ids, attribute_name);
+		
+	}
+	
+	
+	/**
+	 * Get the spectrum identifiers that do reference to the specified attribute of a specified value.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * @param value	attribute value to match
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttributeValue(ArrayList<Integer> spectrum_ids, String attribute_name, Object value) throws SPECCHIOClientException {
+		return realClient.filterSpectrumIdsByHavingAttributeValue(spectrum_ids, attribute_name, value);
+	}
+	
 	
 	
 	/**
@@ -549,6 +621,20 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.getHierarchyId(campaign, name, parent_id);
 		
 	}
+		
+	
+	/**
+	 * Get the parent_id for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return id of the parent of given hierarchy
+	 */
+	public int getHierarchyParentId(int hierarchy_id) throws SPECCHIOClientException {
+		
+		return realClient.getHierarchyParentId(hierarchy_id);
+		
+	}
 	
 	
 	/**
@@ -588,6 +674,17 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 		return realClient.getInstrumentCalibrationMetadata(instrument_id);
 		
+	}
+
+	/**
+	 * Get instrument ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of instrument ids, zero where no instrument is defined
+	 */
+	public ArrayList<Integer> getInstrumentIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
+		return realClient.getInstrumentIds(spectrum_ids);
 	}
 	
 	
@@ -636,15 +733,51 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	 * 
 	 * @return a CategoryTable object, or null if the field does not exist
 	 */
-	public CategoryTable getMetadataCategories(String field) throws SPECCHIOClientException {
+	public CategoryTable getMetadataCategoriesForIdAccess(String field) throws SPECCHIOClientException {
 		
-		if (!metadataCategories.containsKey(field)) {
-			metadataCategories.put(field, realClient.getMetadataCategories(field));
+		if (!metadataCategoriesForIdAccess.containsKey(field)) {
+			
+			CategoryTable categories = realClient.getMetadataCategoriesForIdAccess(field);
+			
+			metadataCategoriesForIdAccess.put(field, categories);
+			
+			// build the reverse hash as well
+			Hashtable<String, Integer> reverse = new Hashtable<String, Integer>();
+			
+			Enumeration<Integer> e = categories.keys();
+			while(e.hasMoreElements())
+			{
+				Integer key = e.nextElement();
+				reverse.put(categories.get(key), key);
+			}
+			
+			metadataCategoriesForNameAccess.put(field, reverse);
+			
 		}
 		
-		return metadataCategories.get(field);
+		return metadataCategoriesForIdAccess.get(field);
 		
 	}
+	
+	
+	/**
+	 * Get the metadata categories for a metadata field, ready for access via name
+	 * 
+	 * @param field	the field name
+	 * 
+	 * @return a CategoryTable object, or null if the field does not exist
+	 */
+	public Hashtable<String, Integer> getMetadataCategoriesForNameAccess(String field) throws SPECCHIOClientException {
+		
+		if (!metadataCategoriesForIdAccess.containsKey(field)) {
+			
+			getMetadataCategoriesForIdAccess(field);
+		
+		}
+		
+		return metadataCategoriesForNameAccess.get(field);
+	}
+	
 	
 	
 	/**
@@ -975,6 +1108,43 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get the id for a given taxonomy node in a given taxonomy
+	 * 
+	 * @param attribute_id	attribute_id that defines the taxonomy
+	 *  @param name		name of the node of which the id is required
+	 * 
+	 */
+	public int getTaxonomyId(int attribute_id, String name)  throws SPECCHIOClientException {
+		
+		if(!taxonomiesHash.containsKey(attribute_id))
+		{
+			getTaxonomyHash(attribute_id);
+		}
+		
+		
+		Hashtable<String, Integer> taxonomy_hash = taxonomiesHash.get(attribute_id);
+		
+		return taxonomy_hash.get(name);		
+		
+	}
+	
+	
+	/**
+	 * Get the taxonomy hash for a given taxonomy
+	 * 
+	 * @param attribute_id	attribute_id that defines the taxonomy
+	 * 
+	 */
+	public Hashtable<String, Integer> getTaxonomyHash(int attribute_id)  throws SPECCHIOClientException {
+		
+		taxonomiesHash.put(attribute_id, realClient.getTaxonomyHash(attribute_id));
+				
+		return taxonomiesHash.get(attribute_id);
+	}
+	
+	
+	
+	/**
 	 * Get a list of all of the users in the database.
 	 * 
 	 * @return an array of User objects
@@ -1100,7 +1270,7 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	 * 
 	 * @return a list of spectrum identifiers that were inserted into the database
 	 */
-	public List<Integer> insertSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException {
+	public SpectralFileInsertResult insertSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException {
 		
 		return realClient.insertSpectralFile(spec_file);
 		
@@ -1162,6 +1332,20 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.loadSpace(space);
 		
 	}
+	
+	
+	/**
+	 * Causes the client to reload data values the specified category upon next request.
+	 * 
+	 * @param field name
+	 * 
+	 */	
+	public void refreshMetadataCategory(String field) {
+		
+		metadataCategoriesForIdAccess.remove(field);
+		
+	}
+	
 	
 	
 	/**
@@ -1228,6 +1412,21 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 	}
 	
+	
+	/**
+	 * Sort spectra by the values of the specified attributes
+	 * 
+	 * @param spectrum_ids	list of ids to sort
+	 * @param attribute_names	attribute names to sort by
+	 * 
+	 * @return a AVMatchingListCollection object
+	 */
+	public AVMatchingListCollection sortByAttributes(ArrayList<Integer> spectrum_ids, String... attribute_names) throws SPECCHIOClientException {
+		
+		return realClient.sortByAttributes(spectrum_ids, attribute_names);
+	}
+
+
 	
 	/**
 	 * Test for the existence of a spectral file in the database.
@@ -1389,6 +1588,21 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Update the spectral vector of a spectrum
+	 * 
+	 * @param spectrum_id	the spectrum identifier
+	 * @param vector		new spectral data
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public void updateSpectrumVector(int spectrum_id, float[] vector) throws SPECCHIOClientException {
+		
+		realClient.updateSpectrumVector(spectrum_id, vector);
+		
+	}
+	
+	
 	
 	/**
 	 * Update the information about a user.
@@ -1402,5 +1616,7 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		realClient.updateUser(user);
 		
 	}
+
+
 
 }

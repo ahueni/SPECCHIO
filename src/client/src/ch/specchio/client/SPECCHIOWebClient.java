@@ -26,6 +26,8 @@ import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpaceQueryDescriptor;
 import ch.specchio.spaces.SpectralSpace;
+import ch.specchio.types.AVMatchingList;
+import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.Campaign;
@@ -50,10 +52,12 @@ import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
 import ch.specchio.types.SpectraMetadataUpdateDescriptor;
 import ch.specchio.types.SpectralFile;
+import ch.specchio.types.SpectralFileInsertResult;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
 import ch.specchio.types.SpectrumIdsDescriptor;
+import ch.specchio.types.Taxonomy;
 import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.attribute;
 import ch.specchio.types.campaign_node;
@@ -179,8 +183,9 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Connect to the SPECCHIO web application.
 	 * 
 	 * @throws SPECCHIOWebClientException could not log in to the server
+	 * @throws SPECCHIOClientException 
 	 */
-	public void connect() throws SPECCHIOWebClientException {
+	public void connect() throws SPECCHIOWebClientException, SPECCHIOClientException {
 		
 		// reset the capabilities for a possible new server
 		capabilities = null;
@@ -194,6 +199,23 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		}
 		
 	}
+	
+	
+	/**
+	 * Copy a spectrum to a specified hierarchy.
+	 * 
+	 * @param spectrum_id		the spectrum_id of the spectrum to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * 
+	 * @return new spectrum id
+	 * 
+	 * @throws SPECCHIOClientException could not log in
+	 */
+	public int copySpectrum(int spectrum_id, int target_hierarchy_id) throws SPECCHIOClientException {
+				
+		int new_spectrum_id = getInteger("spectrum", "copySpectrum", Integer.toString(spectrum_id), Integer.toString(target_hierarchy_id));
+		return new_spectrum_id;
+	}	
 	
 
 	/**
@@ -333,13 +355,93 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get the spectrum identifiers that do have a reference to the specified attribute.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttribute(ArrayList<Integer> spectrum_ids, String attribute_name) throws SPECCHIOClientException {
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(spectrum_ids, attribute_name);	
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "spectrum", "filterSpectrumIdsByHavingAttribute", mds));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}		
+		
+		return ids;		
+		
+	}
+	
+	
+	
+	
+	/**
+	 * Get the spectrum identifiers that do not have a reference to the specified attribute.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_id	attribute id to filter with
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByNotHavingAttribute(ArrayList<Integer> spectrum_ids, String attribute_name) throws SPECCHIOClientException {
+		
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(spectrum_ids, attribute_name);	
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "spectrum", "filterSpectrumIdsByNotHavingAttribute", mds));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}		
+		
+		return ids;
+		
+	}
+	
+
+	/**
+	 * Get the spectrum identifiers that do reference to the specified attribute of a specified value.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * @param value	attribute value to match
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttributeValue(ArrayList<Integer> spectrum_ids, String attribute_name, Object value) throws SPECCHIOClientException {
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(spectrum_ids, attribute_name, value);	
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "spectrum", "filterSpectrumIdsByHavingAttributeValue", mds));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}		
+		
+		return ids;			
+	}
+		
+	
+	/**
 	 * Get the attributes for a metadata category.
 	 * 
 	 * @param category	the category name
 	 * 
 	 * @return an array of attribute objects
+	 * @throws SPECCHIOClientException 
 	 */
-	public attribute[] getAttributesForCategory(String category) throws SPECCHIOWebClientException {
+	public attribute[] getAttributesForCategory(String category) throws SPECCHIOWebClientException, SPECCHIOClientException {
 		
 		return getArray(attribute.class, "metadata", "attributes", category);
 		
@@ -640,6 +742,21 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get the parent_id for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return id of the parent of given hierarchy
+	 */
+	public int getHierarchyParentId(int hierarchy_id) throws SPECCHIOClientException {
+		
+		return getInteger("browser", "get_hierarchy_parent_id", Integer.toString(hierarchy_id));
+		
+	}	
+		
+	
+	
+	/**
 	 * Get all of the institutes in the database.
 	 * 
 	 * @return an array of Institute objects
@@ -666,6 +783,31 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get instrument ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of instrument ids, zero where no instrument is defined
+	 */
+	public ArrayList<Integer> getInstrumentIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(spectrum_ids, "");	
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "metadata", "getInstrumentIds", mds));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}		
+		
+		return ids;	
+		
+	}
+		
+	
+	
+	/**
 	 * Get the calibration metadata for an instrument.
 	 * 
 	 * @param instrument_id	the instrument identifier
@@ -680,6 +822,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 	}
 	
+	
+
 	
 	/**
 	 * Get descriptors for all of the instruments in the database.
@@ -727,12 +871,27 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * @param field	the field name
 	 * 
 	 * @return a CategoryTable object, or null if the field does not exist
+	 * @throws SPECCHIOClientException 
 	 */
-	public CategoryTable getMetadataCategories(String field) throws SPECCHIOWebClientException {
+	public CategoryTable getMetadataCategoriesForIdAccess(String field) throws SPECCHIOWebClientException, SPECCHIOClientException {
 		
 		return getObject(CategoryTable.class, "metadata", "categories", field);
 		
 	}
+	
+	
+	/**
+	 * Get the metadata categories for a metadata field, ready for access via name
+	 * 
+	 * @param field	the field name
+	 * 
+	 * @return a CategoryTable object, or null if the field does not exist
+	 */
+	public Hashtable<String, Integer> getMetadataCategoriesForNameAccess(String field) throws SPECCHIOClientException {
+		
+		return null; // this should never be called as always caught by the cache
+	}
+	
 	
 	
 	/**
@@ -1117,6 +1276,32 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return getObject(TaxonomyNodeObject.class, "metadata", "get_taxonomy_object", Integer.toString(taxonomy_id));
 	}
 	
+	/**
+	 * Get the id for a given taxonomy node in a given taxonomy
+	 * 
+	 * @param attribute_id	attribute_id that defines the taxonomy
+	 *  @param name		name of the node of which the id is required
+	 * 
+	 */
+	public int getTaxonomyId(int attribute_id, String name)  throws SPECCHIOClientException {
+		return 0; 
+	}
+	
+	
+	/**
+	 * Get the taxonomy hash for a given taxonomy
+	 * 
+	 * @param attribute_id	attribute_id that defines the taxonomy
+	 * 
+	 */
+	public Hashtable<String, Integer> getTaxonomyHash(int attribute_id)  throws SPECCHIOClientException {
+		
+		Taxonomy t = getObject(Taxonomy.class, "metadata", "get_taxonomy",Integer.toString( attribute_id));
+		
+		return t.getHashtable();
+		
+	}
+		
 	
 	
 	/**
@@ -1248,11 +1433,13 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @return a list of spectrum identifiers that were inserted into the database
 	 */
-	public List<Integer> insertSpectralFile(SpectralFile spec_file) throws SPECCHIOWebClientException {
+	public SpectralFileInsertResult insertSpectralFile(SpectralFile spec_file) throws SPECCHIOWebClientException {
 
-		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
-		return adapter.unmarshalList(postForList(XmlInteger.class, "spectral_file", "insert", spec_file));
+//		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+//		return adapter.unmarshalList(postForList(XmlInteger.class, "spectral_file", "insert", spec_file));
 		
+		SpectralFileInsertResult insert_result = postForObject(SpectralFileInsertResult.class, "spectral_file", "insert", spec_file);
+		return insert_result;
 	}
 	
 	
@@ -1311,6 +1498,19 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return postForObject(Space.class, "spectrum", "loadSpace", space);
 		
 	}
+	
+	
+	/**
+	 * Causes the client to reload data values the specified category upon next request.
+	 * 
+	 * @param field name
+	 * 
+	 */	
+	public void refreshMetadataCategory(String field) {
+		
+		// should always be handled by the client cache
+		
+	}	
 	
 	
 	/**
@@ -1388,6 +1588,25 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		}
 		
 	}
+	
+	
+	/**
+	 * Sort spectra by the values of the specified attributes
+	 * 
+	 * @param spectrum_ids	list of ids to sort
+	 * @param attribute_names	attribute names to sort by
+	 * 
+	 * @return a AVMatchingListCollection object
+	 */
+	public AVMatchingListCollection sortByAttributes(ArrayList<Integer> spectrum_ids, String... attribute_names) throws SPECCHIOClientException {
+		
+		
+		AVMatchingList av_list = new AVMatchingList(spectrum_ids, attribute_names);
+		
+		return postForObject(AVMatchingListCollection.class, "spectrum", "sortByAttributes", av_list);
+		
+	}
+	
 	
 	
 	/**
@@ -1558,6 +1777,32 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		postForInteger("spectrum", "update_metadata", new SpectraMetadataUpdateDescriptor(ids, field, id));
 		
 	}
+	
+	/**
+	 * Update the spectral vector of a spectrum
+	 * 
+	 * @param spectrum_id	the spectrum identifier
+	 * @param vector		new spectral data
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public void updateSpectrumVector(int spectrum_id, float[] vector) throws SPECCHIOClientException {
+		
+		Spectrum s = new Spectrum();
+		
+		Float[] vector_ = new Float[vector.length];
+		
+		for (int i=0;i<vector.length;i++)
+		{
+			vector_[i] = vector[i];
+		}				
+		s.setMeasurementVector(vector_);
+		s.setSpectrumId(spectrum_id);
+		
+		postForInteger("spectrum", "update_vector", s);
+		
+	}
+	
 	
 	
 	/**

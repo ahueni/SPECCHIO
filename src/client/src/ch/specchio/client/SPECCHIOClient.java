@@ -14,6 +14,7 @@ import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpectralSpace;
+import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.Campaign;
@@ -33,6 +34,7 @@ import ch.specchio.types.ReferenceBrand;
 import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
 import ch.specchio.types.SpectralFile;
+import ch.specchio.types.SpectralFileInsertResult;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
@@ -56,6 +58,20 @@ public interface SPECCHIOClient {
 	 * @throws SPECCHIOClientException could not log in
 	 */
 	public void connect() throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Copy a spectrum to a specified hierarchy.
+	 * 
+	 * @param spectrum_id		the spectrum_id of the spectrum to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * 
+	 * @return new spectrum id
+	 * 
+	 * @throws SPECCHIOClientException could not log in
+	 */
+	public int copySpectrum(int spectrum_id, int target_hierarchy_id) throws SPECCHIOClientException;
+	
 	
 	/**
 	 * Clears the known metaparameter list held by the server for this user
@@ -147,6 +163,42 @@ public interface SPECCHIOClient {
 	 * Disconnect from the server.
 	 */
 	public void disconnect() throws SPECCHIOClientException;
+	
+
+	/**
+	 * Get the spectrum identifiers that do have a reference to the specified attribute.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttribute(ArrayList<Integer> spectrum_ids, String attribute_name) throws SPECCHIOClientException;
+	
+	
+	
+	/**
+	 * Get the spectrum identifiers that do not have a reference to the specified attribute.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	public ArrayList<Integer> filterSpectrumIdsByNotHavingAttribute(ArrayList<Integer> spectrum_ids, String attribute_name) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Get the spectrum identifiers that do reference to the specified attribute of a specified value.
+	 * 
+	 * @param spectrum_ids	list of ids to filter
+	 * @param attribute_name	attribute name to filter with
+	 * @param value	attribute value to match
+	 * 
+	 * @return an array list of spectrum identifiers that match the filter
+	 */
+	
+	public ArrayList<Integer> filterSpectrumIdsByHavingAttributeValue(ArrayList<Integer> spectrum_ids, String attribute_name, Object value) throws SPECCHIOClientException;
 	
 	
 	/**
@@ -328,7 +380,17 @@ public interface SPECCHIOClient {
 	 * @return the identifier of the child of parent_id with the given name, or -1 if the node does not exist
 	 */
 	public int getHierarchyId(Campaign campaign, String name, int parent_id) throws SPECCHIOClientException;
+
 	
+	/**
+	 * Get the parent_id for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return id of the parent of given hierarchy
+	 */
+	public int getHierarchyParentId(int hierarchy_id) throws SPECCHIOClientException;
+		
 	
 	/**
 	 * Get all of the institutes in the database.
@@ -346,6 +408,16 @@ public interface SPECCHIOClient {
 	 * @return a new Instrument object, or null if the instrument does not exist
 	 */
 	public Instrument getInstrument(int instrument_id) throws SPECCHIOClientException;
+
+	
+	/**
+	 * Get instrument ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of instrument ids, zero where no instrument is defined
+	 */
+	public ArrayList<Integer> getInstrumentIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException;	
 	
 	
 	/**
@@ -385,13 +457,23 @@ public interface SPECCHIOClient {
 	
 	
 	/**
-	 * Get the metadata categories for a metadata field.
+	 * Get the metadata categories for a metadata field, ready for access via ID
 	 * 
 	 * @param field	the field name
 	 * 
 	 * @return a CategoryTable object, or null if the field does not exist
 	 */
-	public CategoryTable getMetadataCategories(String field) throws SPECCHIOClientException;
+	public CategoryTable getMetadataCategoriesForIdAccess(String field) throws SPECCHIOClientException;
+
+	
+	/**
+	 * Get the metadata categories for a metadata field, ready for access via name
+	 * 
+	 * @param field	the field name
+	 * 
+	 * @return a CategoryTable object, or null if the field does not exist
+	 */
+	public Hashtable<String, Integer> getMetadataCategoriesForNameAccess(String field) throws SPECCHIOClientException;
 	
 	
 	/**
@@ -422,6 +504,10 @@ public interface SPECCHIOClient {
 	 * @return a new MeasurementUnit object, or null if the coding does not exist
 	 */	
 	public MeasurementUnit getMeasurementUnitFromCoding(int coding) throws SPECCHIOWebClientException;
+	
+	
+
+	
 	
 	/**
 	 * Get the data usage policies for a space.
@@ -626,6 +712,25 @@ public interface SPECCHIOClient {
 	 */
 	public TaxonomyNodeObject getTaxonomyNode(int taxonomy_id) throws SPECCHIOClientException;
 	
+	/**
+	 * Get the id for a given taxonomy node in a given taxonomy
+	 * 
+	 * @param attribute_id	attribute_id that defines the taxonomy
+	 *  @param name		name of the node of which the id is required
+	 * 
+	 */
+	public int getTaxonomyId(int attribute_id, String name)  throws SPECCHIOClientException;
+
+	
+	/**
+	 * Get the taxonomy hash fora given taxonomy
+	 * 
+	 * @param attribute_id	attribute_id that defines the taxonomy
+	 * 
+	 */
+	public Hashtable<String, Integer> getTaxonomyHash(int attribute_id)  throws SPECCHIOClientException;
+		
+	
 	
 	/**
 	 * Get a list of all of the users in the database.
@@ -717,7 +822,7 @@ public interface SPECCHIOClient {
 	 * 
 	 * @return a list of spectrum identifiers that were inserted into the database
 	 */
-	public List<Integer> insertSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException;
+	public SpectralFileInsertResult insertSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException;
 	
 	
 	/**
@@ -760,6 +865,13 @@ public interface SPECCHIOClient {
 	 */
 	public Space loadSpace(Space space) throws SPECCHIOClientException;
 	
+	/**
+	 * Causes the client to reload data values the specified category upon next request.
+	 * 
+	 * @param field name
+	 * 
+	 */	
+	public void refreshMetadataCategory(String field);
 	
 	/**
 	 * Remove an item of EAV metadata.
@@ -803,6 +915,17 @@ public interface SPECCHIOClient {
 	 * @param pr	the progress report; use null to report no progress
 	 */
 	public void setProgressReport(ProgressReportInterface pr);
+
+	
+	/**
+	 * Sort spectra by the values of the specified attributes
+	 * 
+	 * @param spectrum_ids	list of ids to sort
+	 * @param attribute_names	attribute names to sort by
+	 * 
+	 * @return a AVMatchingListCollection object
+	 */
+	public AVMatchingListCollection sortByAttributes(ArrayList<Integer> spectrum_ids, String... attribute_names) throws SPECCHIOClientException;
 	
 	
 	/**
@@ -916,6 +1039,18 @@ public interface SPECCHIOClient {
 	 * @param id
 	 */
 	public void updateSpectraMetadata(ArrayList<Integer> ids, String field, int id) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Update the spectral vector of a spectrum
+	 * 
+	 * @param spectrum_id	the spectrum identifier
+	 * @param vector		new spectral data
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public void updateSpectrumVector(int spectrum_id, float[] vector) throws SPECCHIOClientException;
+	
 	
 	
 	/**
