@@ -113,6 +113,36 @@ public class SpectralBrowserService extends SPECCHIOService {
 	
 	
 	/**
+	 * Get the parent_id for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return id of the parent of given hierarchy
+	 * 
+	 * @throws SPECCHIOFactoryException	could not get the node
+	 */
+	@GET
+	@Path("get_hierarchy_parent_id/{hierarchy_id}")
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger get_hierarchy_parent_id(
+			@PathParam("hierarchy_id") Integer hierarchy_id
+		) throws SPECCHIOFactoryException {
+		
+		SpectralBrowserFactory factory = new SpectralBrowserFactory(
+				getClientUsername(),
+				getClientPassword()
+			);
+		
+		int parent_id = factory.getHierarchyParentId(hierarchy_id);
+		factory.dispose();
+		
+		
+		return new XmlInteger(parent_id);
+		
+	}	
+	
+	
+	/**
 	 * Get the identifiers of all the spectra that descend from a given node 
 	 * 
 	 * @param node	the node
