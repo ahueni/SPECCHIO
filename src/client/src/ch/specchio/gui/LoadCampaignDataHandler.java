@@ -92,7 +92,7 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 			// add errors to error text area
 			for (int i=0;i<file_errors.size();i++)
 			{
-				str = str + file_errors.get(i);					
+				str = str + file_errors.get(i) + "\n";					
 			}
 			
 			error_text_area.setText(str);				
