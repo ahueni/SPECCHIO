@@ -77,7 +77,7 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 		if (file_errors.size()>0)
 		{
 			// report on errors
-			JFrame report = new JFrame("File Error List");
+			JFrame report = new JFrame("File Loading Issues List");
 			report.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			report.setLayout(new BorderLayout());
 			
