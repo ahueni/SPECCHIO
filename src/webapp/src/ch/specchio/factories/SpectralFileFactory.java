@@ -746,19 +746,26 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					md.add_entry(mp);											
 				}
 				
+				SpecchioMessage msg = new SpecchioMessage();
 			
 				// file format
 				int file_format_id = getIdForFileFormat(spec_file.getFileFormatName());
 				
-				int sensor_id = getDataCache().get_sensor_id_for_file(spec_file, spec_no);
+				int sensor_id = getDataCache().get_sensor_id_for_file(spec_file, spec_no, this.getDatabaseUserName(), msg);
 				
+				if (msg.getMessage() != null)
+				{
+					insert_result.addError(msg);
+				}				
+				
+				// this should not happen, as we auto-insert sensor ...
 				if (sensor_id == 0)
 				{
 					insert_result.addError(new SpecchioMessage("No matching sensor found.", SpecchioMessage.WARNING));
 				}
 				
-				SpecchioMessage msg = new SpecchioMessage();
 				
+				msg = new SpecchioMessage();
 				Instrument instrument = getDataCache().get_instrument_id_for_file(spec_file, spec_no, msg);
 				
 				String instrument_id = "null";
