@@ -31,7 +31,7 @@ public class TXT_FileLoader extends SpectralFileLoader {
 		f.setFilename(file.getName());
 		f.setFileFormatName(this.file_format_name);
 		
-		f.setCompany("Unknown");
+		f.setCompany("");
 		
 		//f.measurement_unit = 2;
 		
