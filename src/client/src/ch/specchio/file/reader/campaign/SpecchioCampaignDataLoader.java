@@ -197,11 +197,11 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 							if(insert_result.getErrors().size() > 0)
 							{
 								// concatenate all errors into one message
-								StringBuffer buf = new StringBuffer("Issues found in " + spec_file.getFilename() + ": \n");
+								StringBuffer buf = new StringBuffer("Issues found in " + spec_file.getFilename() + ":");
 
 								for (SpecchioMessage error : insert_result.get_nonredudant_errors()) {
 										
-									buf.append("\t");
+									buf.append("\n\t");
 			
 									buf.append(error.toString());
 								}
