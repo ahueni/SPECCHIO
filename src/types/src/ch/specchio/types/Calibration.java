@@ -30,7 +30,9 @@ public class Calibration {
 	private double[] uncertainty;
 	private int measurement_unit_id;
 	
-	public Calibration() {}
+	public Calibration() {
+		calibration_id = 0;
+	}
 	
 	
 	@XmlElement(name="includes_uncertainty")
