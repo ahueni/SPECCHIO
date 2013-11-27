@@ -395,9 +395,9 @@ public class DataCache {
 	
 	
 
-	public Instrument get_instrument_id_for_file(SpectralFile spec_file, int spec_no, SpecchioMessage msg) throws SQLException {
+	public Instrument get_instrument_id_for_file(SpectralFile spec_file, int spec_no, SpecchioMessage msg) throws SQLException, SPECCHIOFactoryException {
 		
-		Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no);
+		Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no, "", msg);
 		
 		Instrument instr = get_instrument_by_serial_id(spec_file.getInstrumentNumber(), sensor_id);
 		 
@@ -412,7 +412,7 @@ public class DataCache {
 	}
 	
 	
-	private Instrument get_instrument_by_centre_wvls(SpectralFile spec_file, int spec_no, SpecchioMessage msg) throws SQLException {
+	private Instrument get_instrument_by_centre_wvls(SpectralFile spec_file, int spec_no, SpecchioMessage msg) throws SQLException, SPECCHIOFactoryException {
 		
 		Instrument instrument = null;
 		Instrument i;
@@ -432,7 +432,7 @@ public class DataCache {
 		}
 		else
 		{
-			Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no);
+			Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no, "", msg);
 			if (sensor_id != 0)
 				d_wvls = this.get_sensor(sensor_id).getAverageWavelengths();
 		}
@@ -492,7 +492,7 @@ public class DataCache {
 		{
 			Integer sensor_id;
 			try {
-				sensor_id = this.get_sensor_id_for_file(spec_file, spec_no);
+				sensor_id = this.get_sensor_id_for_file(spec_file, spec_no, "", msg);
 
 				if(sensor_id != 0)
 				{					
@@ -721,7 +721,16 @@ public class DataCache {
 	}	
 		
 	
-	
+	public void deleteCalibration(int calibration_id) throws SQLException {
+		
+		ListIterator<Calibration> iter = calibrations.listIterator();
+		while (iter.hasNext()) {
+			if (iter.next().getCalibration_id() == calibration_id) {
+				iter.remove();
+			}
+		}
+		
+	}	
 	
 	
 	
@@ -788,6 +797,7 @@ public class DataCache {
 			while(li.hasNext() && sensor == null)
 			{
 				s = li.next();
+				
 				if(s.getNumberOfChannels().value == wvls.length && s.getManufacturerShortName().get_value().equals(company))
 				{
 					// check of the centre wavelengths match
@@ -852,65 +862,125 @@ public class DataCache {
 	
 	// returns the sensor_id based on information read from the input file
 	// or 'null' if sensor could not be found in the database
-	public Integer get_sensor_id_for_file(SpectralFile spec_file, int spec_no) throws SQLException {
+	public Integer get_sensor_id_for_file(SpectralFile spec_file, int spec_no, String username, SpecchioMessage msg) throws SQLException, SPECCHIOFactoryException {
 		Integer sensor_id = 0;
+		Sensor s = null;
 		
 		try {
 			
-			if (spec_file.getCompany().equals("APOGEE")) {
-				
-				Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
-	
-				return s.getSensorId();
-	
-			}
-			
-			if (spec_file.getCompany().equals("PP Systems" ) && (spec_file.getFileFormatName().equals("UniSpec_SPU"))) {
-				
-				Sensor s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
-	
-				return s.getSensorId();	
-				
-			}
-					
-	
-			if (spec_file.getCompany().equals("COST_OO_CSV")) {
-	
-				Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)], "OceanOptics");
-	
-				return s.getSensorId();
-	
-			}
-	
-			// last case: for ASD calibration files where the instrument type number
-			// is set to zero for the *.ILL and *.REF files
-			if (spec_file.getCompany().equals("ASD") && spec_file.getInstrumentTypeNumber() == 0) {
-				Sensor s = get_sensor(new Float[spec_file.getNumberOfChannels(0)]);
-				if (s == null)
-					return sensor_id; // "null"
-				else
+			// we get a company in most cases, which helps identifyting sensors
+			if(spec_file.getCompany() != null && !spec_file.getCompany().equals(""))
+			{
+
+				if (spec_file.getCompany().equals("APOGEE")) {
+
+					s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
+
 					return s.getSensorId();
-			}
-	
-			// get sensor id via the instrument if instrument number is defined
-			if (spec_file.getInstrumentNumber() != null) {
-				
-				Instrument i = get_instrument(spec_file.getInstrumentNumber(), spec_file.getCompany());
-				
-				if (i != null)
-				{
-					return i.getSensor().getSensorId();
+
 				}
-	
+
+				if (spec_file.getCompany().equals("PP Systems" ) && (spec_file.getFileFormatName().equals("UniSpec_SPU"))) {
+
+					s = get_sensor(spec_file.getWvls(0), spec_file.getCompany());
+
+					return s.getSensorId();	
+
+				}
+
+
+				if (spec_file.getCompany().equals("COST_OO_CSV")) {
+
+					s = get_sensor(new Float[spec_file.getNumberOfChannels(0)], "OceanOptics");
+
+					return s.getSensorId();
+
+				}
+
+				// last case: for ASD calibration files where the instrument type number
+				// is set to zero for the *.ILL and *.REF files
+				if (spec_file.getCompany().equals("ASD") && spec_file.getInstrumentTypeNumber() == 0) {
+					s = get_sensor(new Float[spec_file.getNumberOfChannels(0)]);
+					if (s == null)
+						return sensor_id; // "null"
+					else
+						return s.getSensorId();
+				}
+
+				// get sensor id via the instrument if instrument number is defined
+				if (spec_file.getInstrumentNumber() != null) {
+
+					Instrument i = get_instrument(spec_file.getInstrumentNumber(), spec_file.getCompany());
+
+					if (i != null)
+					{
+						return i.getSensor().getSensorId();
+					}
+
+				}
+
+				s = get_sensor(spec_file.getCompany(), spec_file.getInstrumentTypeNumber());
+				return s.getSensorId();
+			}
+			else
+			{
+				// file without a company
+				// find via number of channel and wvls matching
+				s = get_sensor(spec_file.getWvls(spec_no));
+
 			}
 			
-			Sensor s = get_sensor(spec_file.getCompany(), spec_file.getInstrumentTypeNumber());
 	
-			return (s != null)? s.getSensorId() : 0;
+			return s.getSensorId();
+			//return (s != null)? s.getSensorId() : 0;
 			
 		}
 		catch(NullPointerException e)
 		{
+			
+			// we got an unknown sensor at hand
+			// at this point we auto-insert a new sensor
+			
+			
+			// TODO Insert Sensor
+			InstrumentationFactory factory = new InstrumentationFactory();
+			
+			s = new Sensor();
+			
+			String range = "(" + spec_file.getWvls(spec_no)[0] + "-" + spec_file.getWvls(spec_no)[spec_file.getWvls(spec_no).length-1] + " [nm])";
+			
+			if (!spec_file.getCompany().equals(""))
+			{
+				s.setName(spec_file.getCompany() + ", " + spec_file.getWvls(spec_no).length + " bands " + range);
+			}
+			else
+			{
+				s.setName("Unknown Sensor, " + spec_file.getWvls(spec_no).length + " bands " + range);
+			}
+			
+			s.setDescription("Auto-Inserted by SPECCHIO based on "  + spec_file.getFileFormatName() + " file by " + username);
+			s.setManufacturerName(spec_file.getCompany());
+			s.setManufacturerName(spec_file.getCompany());
+			s.setSensorTypeNumber(spec_file.getInstrumentTypeNumber());
+			s.setNumberOfChannels(spec_file.getWvls(spec_no).length); // safer than calling NumberOfChannels, as some file readers do not set it properly
+			
+			// convert to double: the sensor entity should be subjected to major DB revision
+			Float[] wvls = spec_file.getWvls(spec_no);
+			double[] d_wvls = new double[spec_file.getWvls(spec_no).length];
+			for (int j=0;j<d_wvls.length;j++) d_wvls[j] = wvls[j];
+			
+			s.setAverageWavelengths(d_wvls);		
+			
+			sensor_id = factory.insertSensor(s);
+			
+			factory.dispose();
+			
+			add_sensor(s);
+			
+			// add info to the spectral file
+			msg.setMessage("Added new sensor: " + s.getName().value);
+			msg.setType(SpecchioMessage.INFO);			
+						
 			
 			return sensor_id;
 		}
