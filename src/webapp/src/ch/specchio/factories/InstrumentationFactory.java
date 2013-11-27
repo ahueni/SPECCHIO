@@ -29,6 +29,7 @@ import ch.specchio.types.Reference;
 import ch.specchio.types.ReferenceBrand;
 import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
+import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 
 
@@ -75,8 +76,14 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		
 		try {
 			Statement stmt = getStatementBuilder().createStatement();
-			String query = "delete from calibration where calibration_id = " + Integer.toString(calibration_id);
+			
+			String query = "delete from calibration where calibration_id = " + calibration_id;
 			stmt.executeUpdate(query);
+			
+			query = "delete from instrumentation_factors USING instrumentation_factors, calibration where (instrumentation_factors_id = cal_factors OR instrumentation_factors_id = uncertainty) and calibration_id = " + calibration_id;
+			
+			stmt.executeUpdate(query);						
+
 			stmt.close();
 		} catch (SQLException ex) {
 			// database error
@@ -98,20 +105,32 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		try {
 			Statement stmt = getStatementBuilder().createStatement();
 			String query;
+			int calibration_id = 0;
 			
 			// delete the instrument's calibration data
-			query = "delete from calibration where instrument_id = " + Integer.toString(instrument_id);
-			stmt.executeUpdate(query);
+			query = "select calibration_id from calibration where instrument_id = " + instrument_id;
+			
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				calibration_id = rs.getInt(1);
+				deleteCalibration(calibration_id);
+				getDataCache().deleteCalibration(calibration_id);
+			}
+			rs.close();								
+			
+			query = "delete from calibration where instrument_id = " + instrument_id;
+			stmt.executeUpdate(query);			
 			
 			// delete the instrument from the database
-			query = "delete from instrument where instrument_id = " + Integer.toString(instrument_id);
+			query = "delete from instrument where instrument_id = " + instrument_id;
 			stmt.executeUpdate(query);
 			
 			// clean up
 			stmt.close();
 			
-			// delete the instrument from the cache
+			// delete the instrument and calibration from the cache
 			getDataCache().delete_instrument(instrument_id);
+			
 		}
 		catch (SQLException ex) {
 			// bad SQL
@@ -804,7 +823,8 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		
 		try {
 			// get the sensor id
-			int sensor_id = getDataCache().get_sensor_id_for_file(spec_file, spec_no);
+			SpecchioMessage msg = new SpecchioMessage();
+			int sensor_id = getDataCache().get_sensor_id_for_file(spec_file, spec_no, this.getDatabaseUserName(), msg);
 			if (sensor_id == 0) {
 				return 0;
 			}
@@ -980,10 +1000,11 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		int type_no, no_of_channels;
 		int sensor_id = 0;
 		
+		Sensor s = new Sensor();
+		
 		String line;
 		double[] wavelengths;
-		
-		try {
+
 			// use buffered stream to read lines
 			DataInputStream data_in = new DataInputStream(is);
 			BufferedReader d = new BufferedReader(new InputStreamReader(data_in));
@@ -1015,16 +1036,120 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 				// second token is the wavelength				
 				wavelengths[cnt++] = Double.valueOf(tokens[1]).doubleValue();			
 			}
+
 			
-			SQL_StatementBuilder SQL = getStatementBuilder();
-			Statement stmt = SQL.createStatement();
+			// fill the sensor with the known data
+			s.setName(sensor_name);
+			s.setDescription(sensor_desc);
+			s.setManufacturerName(company);
+			s.setSensorTypeNumber(type_no);
+			s.setNumberOfChannels(no_of_channels);
+			s.setAverageWavelengths(wavelengths);
+			
+//			// check if manufacturer exists
+//			int manufacturer_id = 0;
+//			String query = "select manufacturer_id from manufacturer where name = '" + company + "' OR short_name = '" + company + "'";
+//			ResultSet rs = stmt.executeQuery(query);
+//			
+//			while (rs.next()) {
+//				manufacturer_id = rs.getInt(1);
+//			}
+//
+//			if(manufacturer_id == 0) // insert manufacturer
+//			{
+//				String cmd = "insert into manufacturer (name, short_name) " +
+//						"values (" + SQL.quote_string(company) + "," + SQL.quote_string(company) + ")";
+//				stmt.executeUpdate(cmd);
+//				 
+//				rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+//				 
+//				 while (rs.next())
+//					 manufacturer_id = rs.getInt(1);	
+//			}
+//			
+//			hdr[2] = Integer.toString(manufacturer_id); // replace had information
+//			
+//			// insert sensor			
+//			 String cmd = "insert into sensor (name, description, manufacturer_id, sensor_type_no, no_of_channels) " +
+//			 		"values (" + getStatementBuilder().conc_values(hdr) +
+//			 ")";
+//			 stmt.executeUpdate(cmd);
+//			 rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+//			 while (rs.next())
+//				 sensor_id = rs.getInt(1);
+//			 rs.close();
+			 
+			 // insert all elements
+//			 short sensor_element_type_id = 0;
+//			 short sensor_element_types[] = new short[no_of_channels];
+//			 query = "select sensor_element_type_id from sensor_element_type where code = 0";
+//			 rs = stmt.executeQuery(query);
+//			 while (rs.next()) {
+//				 sensor_element_type_id = rs.getShort(1);
+//			 }
+//			 for(int i = 0; i < no_of_channels;i++)
+//			 {
+//				 // by default we assume narrow bands. Broadband channels must be defined manually in the database
+//				 cmd = "insert into sensor_element (avg_wavelength, sensor_id, sensor_element_type_id) values (" + 
+//				 Double.toString(wavelengths[i]) + ", " + Integer.toString(sensor_id) + ", " + Short.toString(sensor_element_type_id) + ")";
+//				 stmt.executeUpdate(cmd);
+//				 sensor_element_types[i] = sensor_element_type_id;
+//			 }
+//
+//			 // clean up
+//			 stmt.close();
+			 
+			 // add the new sensor to the cache
+			sensor_id = insertSensor(s);
 			
 			
+			 //Sensor s = new Sensor(sensor_id);
+			s.setSensorId(sensor_id);
+			
+//			 s.setName(sensor_name);
+//			 s.setDescription(sensor_desc);
+//			 if (manufacturer_id != 0) {
+//				 s.setManufacturerId(manufacturer_id);
+//			 }
+//			 s.setManufacturerName(company);
+//			 s.setSensorTypeNumber(type_no);
+			 
+//			 s.setAverageWavelengths(wavelengths);
+//			 s.setElementTypes(sensor_element_types);
+			 getDataCache().add_sensor(s);
+
+		
+		return sensor_id;
+	
+	}
+	
+	
+	/**
+	 * Load a sensor definition from an input stream.
+	 * 
+	 * @param s	the sensor to insert. The passed sensor instance is updated.
+	 * 
+	 * @return the identifier of the new sensor
+	 *
+	 * @throws SPECCHIOFactoryException	error inserting the sensor
+	 */
+	public int insertSensor(Sensor s) throws SPECCHIOFactoryException{
+		
+		SQL_StatementBuilder SQL = getStatementBuilder();
+		Statement stmt;
+		int sensor_id = 0;
+		
+		
+		try {
+			stmt = SQL.createStatement();
+
+
+
 			// check if manufacturer exists
 			int manufacturer_id = 0;
-			String query = "select manufacturer_id from manufacturer where name = '" + company + "' OR short_name = '" + company + "'";
+			String query = "select manufacturer_id from manufacturer where name = '" + s.getManufacturerName().value + "' OR short_name = '" + s.getManufacturerName().value + "'";
 			ResultSet rs = stmt.executeQuery(query);
-			
+
 			while (rs.next()) {
 				manufacturer_id = rs.getInt(1);
 			}
@@ -1032,69 +1157,69 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			if(manufacturer_id == 0) // insert manufacturer
 			{
 				String cmd = "insert into manufacturer (name, short_name) " +
-						"values (" + SQL.quote_string(company) + "," + SQL.quote_string(company) + ")";
+						"values (" + SQL.quote_string(s.getManufacturerName().value) + "," + SQL.quote_string(s.getManufacturerName().value) + ")";
 				stmt.executeUpdate(cmd);
-				 
+
 				rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
-				 
-				 while (rs.next())
-					 manufacturer_id = rs.getInt(1);	
+
+				while (rs.next())
+					manufacturer_id = rs.getInt(1);	
+
+			}
+
+			s.setManufacturerId(manufacturer_id);
+
+			// insert sensor			
+			String cmd = "insert into sensor (name, description, manufacturer_id, sensor_type_no, no_of_channels) " +
+					"values ('"  +
+					s.getName().value +
+					"', '" +
+					s.getDescription().value +
+					"', " +
+					s.getManufacturerId() +
+					", " +
+					s.getSensorTypeNumber() +
+					", " +
+					s.getNumberOfChannels().value +
+					")";
+			stmt.executeUpdate(cmd);
+			rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+			while (rs.next())
+				sensor_id = rs.getInt(1);
+			rs.close();
+			
+			s.setSensorId(sensor_id);
+
+			// insert all elements
+			short sensor_element_type_id = 0;
+			short sensor_element_types[] = new short[s.getNumberOfChannels().value];
+			query = "select sensor_element_type_id from sensor_element_type where code = 0";
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				sensor_element_type_id = rs.getShort(1);
+			}
+
+			for(int i = 0; i < s.getNumberOfChannels().value;i++)
+			{
+				// by default we assume narrow bands. Broadband channels must be defined manually in the database
+				cmd = "insert into sensor_element (avg_wavelength, sensor_id, sensor_element_type_id) values (" + 
+						s.getAverageWavelength(i) + ", " + Integer.toString(sensor_id) + ", " + Short.toString(sensor_element_type_id) + ")";
+				stmt.executeUpdate(cmd);
+				sensor_element_types[i] = sensor_element_type_id;
 			}
 			
-			hdr[2] = Integer.toString(manufacturer_id); // replace had information
-			
-			// insert sensor			
-			 String cmd = "insert into sensor (name, description, manufacturer_id, sensor_type_no, no_of_channels) " +
-			 		"values (" + getStatementBuilder().conc_values(hdr) +
-			 ")";
-			 stmt.executeUpdate(cmd);
-			 rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
-			 while (rs.next())
-				 sensor_id = rs.getInt(1);
-			 rs.close();
-			 
-			 // insert all elements
-			 short sensor_element_type_id = 0;
-			 short sensor_element_types[] = new short[no_of_channels];
-			 query = "select sensor_element_type_id from sensor_element_type where code = 0";
-			 rs = stmt.executeQuery(query);
-			 while (rs.next()) {
-				 sensor_element_type_id = rs.getShort(1);
-			 }
-			 for(int i = 0; i < no_of_channels;i++)
-			 {
-				 // by default we assume narrow bands. Broadband channels must be defined manually in the database
-				 cmd = "insert into sensor_element (avg_wavelength, sensor_id, sensor_element_type_id) values (" + 
-				 Double.toString(wavelengths[i]) + ", " + Integer.toString(sensor_id) + ", " + Short.toString(sensor_element_type_id) + ")";
-				 stmt.executeUpdate(cmd);
-				 sensor_element_types[i] = sensor_element_type_id;
-			 }
+			s.setElementTypes(sensor_element_types);
 
-			 // clean up
-			 stmt.close();
-			 
-			 // add the new sensor to the cache
-			 Sensor s = new Sensor(sensor_id);
-			 s.setName(sensor_name);
-			 s.setDescription(sensor_desc);
-			 if (manufacturer_id != 0) {
-				 s.setManufacturerId(manufacturer_id);
-			 }
-			 s.setManufacturerName(company);
-			 s.setSensorTypeNumber(type_no);
-			 s.setNumberOfChannels(no_of_channels);
-			 s.setAverageWavelengths(wavelengths);
-			 s.setElementTypes(sensor_element_types);
-			 getDataCache().add_sensor(s);
-			 
-		}
-		catch (SQLException ex) {
-			// bad SQL
-			throw new SPECCHIOFactoryException(ex);
-		}
+			// clean up
+			stmt.close();
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		
 		return sensor_id;
-	
+		
 	}
 	
 	
