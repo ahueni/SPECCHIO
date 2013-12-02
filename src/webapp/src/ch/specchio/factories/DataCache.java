@@ -512,6 +512,11 @@ public class DataCache {
 						instrument_designator= " #" + spec_file.getInstrumentNumber();
 					}
 					
+					if (spec_file.getInstrumentName() != null)
+					{
+						instrument_designator= spec_file.getInstrumentName();
+					}					
+					
 					if (instrument_designator.length() == 0 && spec_file.getCaptureDate(spec_no).toString() != null)
 					{
 						instrument_designator = new SimpleDateFormat("yyyyMMdd").format(spec_file.getCaptureDate(spec_no)) + " (sample time)"; // try to augment with date of spectrum capture
@@ -522,7 +527,14 @@ public class DataCache {
 						instrument_designator = new SimpleDateFormat("yyyyMMdd_HHmm").format(Calendar.getInstance().getTime())  + " (insert time)"; // augment with current time/date
 					}
 
-					instr.setInstrumentName(s.getName().get_value() + " " + instrument_designator);
+					if (spec_file.getInstrumentName() != null)
+					{
+						instr.setInstrumentName(instrument_designator);
+					}
+					else
+					{
+						instr.setInstrumentName(s.getName().get_value() + " " + instrument_designator);
+					}
 					instr.setSensorId(sensor_id);
 					instr.setInstrumentNumber(spec_file.getInstrumentNumber());
 					instr.setSensor(s);
@@ -787,10 +799,10 @@ public class DataCache {
 	
 	public Sensor get_sensor(Float[] wvls, String company)
 	{
-		float nm_diff_threshold = 10.0f; // could make this configurable for better control
+		//float nm_diff_threshold = 10.0f; // could make this configurable for better control
 		Sensor sensor = null;
 		Sensor s;
-		boolean wvls_match = true;
+		//boolean wvls_match = true;
 			// search through sensor list
 			ListIterator<Sensor> li = sensors.listIterator();
 			
@@ -801,24 +813,36 @@ public class DataCache {
 				if(s.getNumberOfChannels().value == wvls.length && s.getManufacturerShortName().get_value().equals(company))
 				{
 					// check of the centre wavelengths match
-//					int band = 0;
-//					for(Float wvl : wvls)
-//					{
-//						wvls_match = wvls_match & ((wvl - s.getAverageWavelengths()[band++]) < nm_diff_threshold);
-//						
-//						if (wvls_match == false) break;
-//					}
-					
-					// quick check: first and last band					
-					wvls_match = (wvls[0] - s.getAverageWavelengths()[0]) < nm_diff_threshold & (wvls[wvls.length-1] - s.getAverageWavelengths()[s.getNumberOfChannels().get_value()-1]) < nm_diff_threshold;
-					
-					if(wvls_match) sensor = s;		
+////					int band = 0;
+////					for(Float wvl : wvls)
+////					{
+////						wvls_match = wvls_match & ((wvl - s.getAverageWavelengths()[band++]) < nm_diff_threshold);
+////						
+////						if (wvls_match == false) break;
+////					}
+				
+					if(simple_wvls_match(s, wvls)) sensor = s;		
+
 				}
+					
+					
+					
 			}
 				
 		return sensor;		
 	}
 	
+	
+	private boolean simple_wvls_match(Sensor s,Float[]  wvls)
+	{
+
+		float nm_diff_threshold = 10.0f; // could make this configurable for better control
+		
+		// quick check: first and last band	
+		boolean wvls_match = (wvls[0] - s.getAverageWavelengths()[0]) < nm_diff_threshold & (wvls[wvls.length-1] - s.getAverageWavelengths()[s.getNumberOfChannels().get_value()-1]) < nm_diff_threshold;
+		
+		return 	wvls_match;		
+	}
 	
 	
 	// should also check if the wvls are matching!
@@ -826,17 +850,19 @@ public class DataCache {
 	{
 		Sensor sensor = null;
 		Sensor s;
-			// search through sensor list
-			ListIterator<Sensor> li = sensors.listIterator();
+		// search through sensor list
+		ListIterator<Sensor> li = sensors.listIterator();
 
-			while(li.hasNext() && sensor == null)
-			{
-				s = li.next();
-				int no_of_sensor_bands = s.getNumberOfChannels().value;
-				if(no_of_sensor_bands == wvls.length)
-					sensor = s;			
+		while(li.hasNext() && sensor == null)
+		{
+			s = li.next();
+			int no_of_sensor_bands = s.getNumberOfChannels().value;
+			if(no_of_sensor_bands == wvls.length)
+			{					
+				if(simple_wvls_match(s, wvls)) sensor = s;		
 			}
-				
+		}
+
 		return sensor;		
 	}
 	
