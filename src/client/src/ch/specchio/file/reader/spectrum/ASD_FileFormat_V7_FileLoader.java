@@ -128,7 +128,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		try {
 			MetaParameter mp = MetaParameter.newInstance(this.attributes_name_hash.get("Spectrum Number"));
 			mp.setValue( Integer.valueOf(spectranumber), "RAW");
-			smd.add_entry(mp);						
+			smd.addEntry(mp);						
 
 		} catch (NumberFormatException e) {
 			// exception: must be a system calibration file
@@ -311,7 +311,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		String file_version = read_string(in, 3);
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("File Version"));
 		mp.setValue( file_version, "String");
-		smd.add_entry(mp);					
+		smd.addEntry(mp);					
 
 		// comments
 		hdr.setComment(read_string(in, 157));
@@ -341,13 +341,13 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		{
 			mp = MetaParameter.newInstance(attributes_name_hash.get("Automatic Dark Current Correction"));
 			mp.setValue( "ON", "String");
-			smd.add_entry(mp);	
+			smd.addEntry(mp);	
 		}
 		else
 		{
 			mp = MetaParameter.newInstance(attributes_name_hash.get("Automatic Dark Current Correction"));
 			mp.setValue( "OFF", "String");
-			smd.add_entry(mp);				
+			smd.addEntry(mp);				
 		}
 
 		// read dc_time: Time of last dc, seconds since 1/1/1970
@@ -415,7 +415,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		int_time = this.read_int(in);
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
 		mp.setValue( int_time, "ms");
-		smd.add_entry(mp);			
+		smd.addEntry(mp);			
 
 		// read foreoptic
 		hdr.setForeopticDegrees(read_short(in));
@@ -438,7 +438,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		// read number of samples in the average
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Number of internal Scans"));
 		mp.setValue(read_short(in), "RAW");		
-		smd.add_entry(mp);			
+		smd.addEntry(mp);			
 
 		// read instrument type
 		hdr.setInstrumentTypeNumber(in.readByte());
@@ -450,19 +450,19 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Gain_SWIR1"));
 		mp.setValue( gain_swir1, "RAW");
-		smd.add_entry(mp);			
+		smd.addEntry(mp);			
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Gain_SWIR2"));
 		mp.setValue( gain_swir2, "RAW");
-		smd.add_entry(mp);	
+		smd.addEntry(mp);	
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Offset_SWIR1"));
 		mp.setValue( this.read_short(in), "RAW");
-		smd.add_entry(mp);		
+		smd.addEntry(mp);		
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Offset_SWIR2"));
 		mp.setValue( this.read_short(in), "RAW");
-		smd.add_entry(mp);		
+		smd.addEntry(mp);		
 		
 		
 		hdr.addEavMetadata(smd);

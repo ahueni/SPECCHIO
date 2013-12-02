@@ -41,7 +41,7 @@ public class GER_FileLoader extends SpectralFileLoader {
 		// spectrum number is contained in the extension		
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Spectrum Number"));
 		mp.setValue(Integer.valueOf(ger_file.getExt()), "RAW");
-		smd.add_entry(mp);				
+		smd.addEntry(mp);				
 		
 						
 		ger_file.addSpectrumFilename(ger_file.getFilename()); // target name
@@ -145,7 +145,7 @@ public class GER_FileLoader extends SpectralFileLoader {
 			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Number of internal Scans"));
 			mp.setValue(Integer.valueOf(avg[0]), "RAW");			
 			
-			smd.add_entry(mp);
+			smd.addEntry(mp);
 			
 
 		}

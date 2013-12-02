@@ -13,11 +13,15 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.text.DateFormatSymbols;
 
+import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 
 public class JAZ_FileLoader extends SpectralFileLoader {
 	
 	SpectralFile spec_file;
+	private Metadata smd;
 
 	public JAZ_FileLoader() {
 		super("JAZ WTF");
@@ -32,21 +36,10 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 		spec_file.setFilename(file.getName());
 		spec_file.setFileFormatName(this.file_format_name);
 		
-		// spectrum number is contained in the extension
-//		spec_file.spectra_numbers[0] = Integer.valueOf(spec_file.base_name.substring(spec_file.base_name.length()-4));
-//		spec_file.spectra_numbers[1] = spec_file.spectra_numbers[0];
-//		spec_file.spectra_numbers[2] = spec_file.spectra_numbers[0];
-						
-		spec_file.addSpectrumFilename(spec_file.getFilename()); // target name
-//		spec_file.spectra_filenames[1] = spec_file.filename(); // reference name
-//		spec_file.spectra_filenames[2] = spec_file.filename(); // reflectance name
-//
-//		
-//		spec_file.measurement_units[0] = 2;
-//		spec_file.measurement_units[1] = 2;
-//		spec_file.measurement_units[2] = 1;
+		smd = new Metadata();
 		
-//		spec_file.capture_dates = new Date[spec_file.no_of_spectra()]; 
+						
+		spec_file.addSpectrumFilename(spec_file.getFilename()); 
 		
 		file_input = new FileInputStream (file);			
 				
@@ -54,7 +47,7 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 		
 		read_JAZ_file(data_in, spec_file);
 		
-		
+		spec_file.addEavMetadata(smd);
 		
 		data_in.close ();
 		
@@ -76,7 +69,7 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 			String[] tokens = line.split(": ");
 			
 			// analyse the tokens
-			hdr_ended = analyse_HR1024_file(tokens, d, f);						
+			hdr_ended = analyse_JAZ_file(tokens, d, f);						
 		}		
 		
 		// read the measurements
@@ -86,7 +79,7 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 		
 	}
 	
-	public boolean analyse_HR1024_file(String[] tokens, BufferedReader in, SpectralFile hdr)
+	public boolean analyse_JAZ_file(String[] tokens, BufferedReader in, SpectralFile hdr)
 	{
 		String t1 = tokens[0];
 		boolean hdr_ended = false;
@@ -96,17 +89,51 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 			hdr.setCompany("OceanOptics");
 		}
 		
-//		if(t1.equals("instrument"))
-//		{
-//			tokens[1] = tokens[1].replace(" ", ""); // remove spaces from token 2
-//			String[] instr_data = tokens[1].split(":");			
-//			hdr.instrument_type_number = 1024;
-//			hdr.instrument_number = Integer.valueOf(instr_data[1]);			
-//		}
+		if(t1.equals("Spectrometers"))
+		{		
+			hdr.setInstrumentName(tokens[1]);
+		}
 		
-//		Date: Tue Apr 06 14:03:39 CEST 2010
+		if(t1.equals("Integration Time (usec)"))
+		{		
+			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
+			try {
+				String[] sub_tokens = tokens[1].split(" ");
+				
+				mp.setValue(Integer.valueOf(sub_tokens[0]) / 1000, "ms");
+				smd.addEntry(mp);				
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MetaParameterFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}	
+		
+		if(t1.equals("Spectra Averaged"))
+		{		
+			String[] sub_tokens = tokens[1].split(" ");
+			
+			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Number of internal Scans"));
+			try {
+				mp.setValue(Integer.valueOf(sub_tokens[0]), "RAW");
+				smd.addEntry(mp);
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MetaParameterFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+		
+
 
 		
+//		Date: Tue Apr 06 14:03:39 CEST 2010		
 		if(t1.equals("Date"))
 		{
 

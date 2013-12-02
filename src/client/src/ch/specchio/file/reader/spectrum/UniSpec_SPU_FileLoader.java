@@ -77,48 +77,48 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 		if (f.getCapturingSoftwareName() != null) {
 			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Capturing Software Name"));
 			mp.setValue(f.getCapturingSoftwareName(), "String");
-			smd_a.add_entry(mp);
-			smd_b.add_entry(mp);
+			smd_a.addEntry(mp);
+			smd_b.addEntry(mp);
 		}		
 		
 
 		if (f.getCapturingSoftwareName() != null) {
 			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Capturing Software Version"));
 			mp.setValue(f.getCapturingSoftwareVersion(), "String");
-			smd_a.add_entry(mp);
-			smd_b.add_entry(mp);
+			smd_a.addEntry(mp);
+			smd_b.addEntry(mp);
 		}		
 		
 		if (this.spectral_interpolation) {
 			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("UniSpec Spectral Resampling"));
 			mp.setValue("ON", "String");
-			smd_b.add_entry(mp); // only applies to channel B
+			smd_b.addEntry(mp); // only applies to channel B
 		}		
 		else
 		{
 			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("UniSpec Spectral Resampling"));
 			mp.setValue("OFF", "String");
-			smd_b.add_entry(mp); // only applies to channel B		
+			smd_b.addEntry(mp); // only applies to channel B		
 		}
 		
 		// channel information
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Instrument Channel"));
 		mp.setValue("A", "String");
-		smd_a.add_entry(mp);
+		smd_a.addEntry(mp);
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Instrument Channel"));
 		mp.setValue("B", "String");		
-		smd_b.add_entry(mp);
+		smd_b.addEntry(mp);
 		
 		
 		// Processing level information
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Processing Level"));
 		mp.setValue(0.0);
-		smd_a.add_entry(mp);
+		smd_a.addEntry(mp);
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Processing Level"));
 		mp.setValue(0.0);	
-		smd_b.add_entry(mp);		
+		smd_b.addEntry(mp);		
 		
 		
 		f.addEavMetadata(smd_b);
@@ -316,16 +316,16 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 					
 					MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
 					mp.setValue(Integer.valueOf(int_time_str), "ms");
-					smd_a.add_entry(mp);
-					smd_b.add_entry(mp);										
+					smd_a.addEntry(mp);
+					smd_b.addEntry(mp);										
 				}
 				
 				if (tag.equals("Number Scans")) 
 				{													
 					MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Number of internal Scans"));
 					mp.setValue(Integer.valueOf(Integer.valueOf(remove_leading_spaces(val))), "RAW");
-					smd_a.add_entry(mp);
-					smd_b.add_entry(mp);					
+					smd_a.addEntry(mp);
+					smd_b.addEntry(mp);					
 				}				
 				
 			}

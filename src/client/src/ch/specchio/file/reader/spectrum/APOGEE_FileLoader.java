@@ -93,7 +93,7 @@ public class APOGEE_FileLoader extends SpectralFileLoader {
 				
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
 				mp.setValue(Integer.valueOf(int_time_str), "ms");
-				smd.add_entry(mp);				
+				smd.addEntry(mp);				
 				
 			}
 			
@@ -101,7 +101,7 @@ public class APOGEE_FileLoader extends SpectralFileLoader {
 			{
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Number of internal Scans"));
 				mp.setValue(Integer.valueOf(val), "RAW");		
-				smd.add_entry(mp);					
+				smd.addEntry(mp);					
 			}
 		}
 

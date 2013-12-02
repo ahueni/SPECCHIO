@@ -298,7 +298,7 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 				
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
 				mp.setValue((int)(timint*1000), "ms");
-				smd.add_entry(mp);		
+				smd.addEntry(mp);		
 				
 				specpr_file.addEavMetadata(smd);
 				

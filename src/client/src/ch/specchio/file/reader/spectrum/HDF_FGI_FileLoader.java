@@ -899,19 +899,19 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 			if (hdf5_fgi_file.getFgiDataStructureVersion() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("File Version"));
 				mp.setValue(hdf5_fgi_file.getFgiDataStructureVersion(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 
 			if (hdf5_fgi_file.getInstrumentExtendedName() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Extended Instrument Name"));
 				mp.setValue(hdf5_fgi_file.getInstrumentExtendedName(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 
 			if (hdf5_fgi_file.getCampaignName() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Campaign Name"));
 				mp.setValue(hdf5_fgi_file.getCampaignName(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 
 			if (hdf5_fgi_file.getAuthors() != null) {
@@ -921,58 +921,58 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 				for (int i = 0; i < hdf5_fgi_file.getAuthors().length; i++) {
 					MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Investigator"));
 					mp.setValue(hdf5_fgi_file.getAuthor(i), "String");
-					smd.add_entry(mp);
+					smd.addEntry(mp);
 				}
 
 			}
 			if (hdf5_fgi_file.getLightSourceParam() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Light Source Parameters"));
 				mp.setValue(hdf5_fgi_file.getLightSourceParam(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getTargetDescription() != null
 					&& hdf5_fgi_file.getTargetDescription().length() > 1) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Target Description"));
 				mp.setValue(hdf5_fgi_file.getTargetDescription(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getWhiteReferenceTarget() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("White Reference Panel Name"));
 				mp.setValue(hdf5_fgi_file.getWhiteReferenceTarget(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getProcessing() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Processing Algorithm"));
 				mp.setValue(hdf5_fgi_file.getProcessing(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getProcessingList() != null) {
 				for (int i = 0; i < hdf5_fgi_file.getProcessingList().length; i++) {
 					MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Processing Algorithm"));
 					mp.setValue(hdf5_fgi_file.getProcessingList()[i], "String");
-					smd.add_entry(mp);
+					smd.addEntry(mp);
 				}
 			}
 			if (hdf5_fgi_file.getRawDataFormat() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Raw Data Format"));
 				mp.setValue(hdf5_fgi_file.getRawDataFormat(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getSourceFile() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Source File"));
 				mp.setAttributeName("Source file");
 				mp.setValue(hdf5_fgi_file.getSourceFile(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getAzimuthSensorType() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Azimuth Sensor Type"));
 				mp.setValue(hdf5_fgi_file.getAzimuthSensorType(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getCalibrationSeries() != -1) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Calibration Number"));
 				mp.setValue(hdf5_fgi_file.getCalibrationSeries(), "RAW");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 
 			if (hdf5_fgi_file.getKeywords() != null
@@ -981,7 +981,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 				for (int i = 0; i < hdf5_fgi_file.getKeywords().length; i++) {
 					MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Keyword"));
 					mp.setValue(hdf5_fgi_file.getKeyword(i), "String");
-					smd.add_entry(mp);
+					smd.addEntry(mp);
 				}
 
 			}
@@ -993,7 +993,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 						mp.setValue(
 								hdf5_fgi_file.getFgiCalculationProcess(0, i),
 								"String");
-						smd.add_entry(mp);
+						smd.addEntry(mp);
 					}
 				} else if (hdf5_fgi_file.getFgiHdrfBrfFlag(spec_no)
 						.equals("BRF")
@@ -1003,7 +1003,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 						mp.setValue(
 								hdf5_fgi_file.getFgiCalculationProcess(1, i),
 								"String");
-						smd.add_entry(mp);
+						smd.addEntry(mp);
 					}
 				} else if (hdf5_fgi_file.getFgiHdrfBrfFlag(spec_no)
 						.equals("HDRF")
@@ -1013,7 +1013,7 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 						mp.setValue(
 								hdf5_fgi_file.getFgiCalculationProcess(0, i),
 								"String");
-						smd.add_entry(mp);
+						smd.addEntry(mp);
 					}
 				} else if (hdf5_fgi_file.getFgiHdrfBrfFlag(spec_no)
 						.equals("BRF")
@@ -1023,20 +1023,20 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 						mp.setValue(
 								hdf5_fgi_file.getFgiCalculationProcess(0, i),
 								"String");
-						smd.add_entry(mp);
+						smd.addEntry(mp);
 					}
 				}
 			}
 			if (hdf5_fgi_file.getFgiFileLoaderComment() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Data Ingestion Notes"));
 				mp.setValue(hdf5_fgi_file.getFgiFileLoaderComment(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			if (hdf5_fgi_file.getPolarizations() != null
 					&& hdf5_fgi_file.getPolarization(spec_no) != null && !hdf5_fgi_file.getPolarization(spec_no).equals("-")) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Polarization"));
 				mp.setValue(hdf5_fgi_file.getPolarization(spec_no), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 			
 			if (hdf5_fgi_file.getPolarizationDirections() != null
@@ -1044,28 +1044,28 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 							.equals(new Double(0.0 / 0.0))) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Polarization Direction"));
 				mp.setValue(hdf5_fgi_file.getPolarizationDirection(spec_no), "RAW");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 
 			if (hdf5_fgi_file.getWeatherComment() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Weather Conditions"));
 				mp.setAttributeName("Weather Conditions");
 				mp.setValue(hdf5_fgi_file.getWeatherComment(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 
 			if (hdf5_fgi_file.getFgiComments() != null) {
 				for(int i = 0; i < hdf5_fgi_file.getFgiComments().length; i++){
 					MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Comments"));
 					mp.setValue(hdf5_fgi_file.getFgiComment(i), "String");
-					smd.add_entry(mp);
+					smd.addEntry(mp);
 				}
 			}
 			
 			if (hdf5_fgi_file.getFgiOptics() != null) {
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Optics Name"));
 				mp.setValue(hdf5_fgi_file.getFgiOptics(), "String");
-				smd.add_entry(mp);
+				smd.addEntry(mp);
 			}
 
 			hdf5_fgi_file.addEavMetadata(spec_no, smd);

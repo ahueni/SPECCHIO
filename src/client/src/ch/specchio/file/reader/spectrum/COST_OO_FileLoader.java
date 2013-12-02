@@ -70,7 +70,7 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 		
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Spectrum Number"));
 		mp.setValue(no, "RAW");
-		smd.add_entry(mp);				
+		smd.addEntry(mp);				
 		
 		spec_file.addEavMetadata(smd);
 		spec_file.addEavMetadata(smd);
@@ -225,9 +225,9 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 						//System.out.println(mp.getAttribute_name());
 						
 						mp.setValue(val);
-						spec_file.getEavMetadata(0).add_entry(mp);
-						spec_file.getEavMetadata(1).add_entry(mp);
-						spec_file.getEavMetadata(2).add_entry(mp);
+						spec_file.getEavMetadata(0).addEntry(mp);
+						spec_file.getEavMetadata(1).addEntry(mp);
+						spec_file.getEavMetadata(2).addEntry(mp);
 
 
 					}

@@ -46,7 +46,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		try {			
 			MetaParameter mp = MetaParameter.newInstance(this.attributes_name_hash.get("Spectrum Number"));
 			mp.setValue(Integer.valueOf(asd_file.getExt()), "RAW");
-			smd.add_entry(mp);				
+			smd.addEntry(mp);				
 			
 		} catch (NumberFormatException e) {
 			// exception: must be a system calibration file
@@ -151,7 +151,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		// integration time in ms
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
 		mp.setValue( this.read_int(in), "ms");
-		smd.add_entry(mp);				
+		smd.addEntry(mp);				
 		
 		// read foreoptic
 		hdr.setForeopticDegrees(read_short(in));
@@ -175,7 +175,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		//hdr.internal_average_cnt = read_short(in);
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Number of internal Scans"));
 		mp.setValue(read_short(in), "RAW");		
-		smd.add_entry(mp);	
+		smd.addEntry(mp);	
 		
 		// read instrument type
 		hdr.setInstrumentTypeNumber(in.readByte());
@@ -184,19 +184,19 @@ public class ASD_FileLoader extends SpectralFileLoader {
 
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Gain_SWIR1"));
 		mp.setValue( this.read_short(in), "RAW");
-		smd.add_entry(mp);			
+		smd.addEntry(mp);			
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Gain_SWIR2"));
 		mp.setValue( this.read_short(in), "RAW");
-		smd.add_entry(mp);	
+		smd.addEntry(mp);	
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Offset_SWIR1"));
 		mp.setValue( this.read_short(in), "RAW");
-		smd.add_entry(mp);		
+		smd.addEntry(mp);		
 		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Offset_SWIR2"));
 		mp.setValue( this.read_short(in), "RAW");
-		smd.add_entry(mp);		
+		smd.addEntry(mp);		
 		
 		hdr.addEavMetadata(smd);
 		
