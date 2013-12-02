@@ -50,8 +50,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			root_hierarchy_id = insert_hierarchy(f.getName(), 0);
 			load_directory(root_hierarchy_id, f, false);
 			
-			// force a refresh of the client cache for potentially new instruments and calibrations
-			// TODO: only refresh if new instruments and/or calibrations were actually inserted
+			// force a refresh of the client cache for potentially new sensors, instruments and calibrations
+			// TODO: only refresh if new sensors, instruments and/or calibrations were actually inserted
+			specchio_client.refreshMetadataCategory("sensor");
 			specchio_client.refreshMetadataCategory("instrument");
 			specchio_client.refreshMetadataCategory("calibration");
 			
