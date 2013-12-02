@@ -1,14 +1,21 @@
 package ch.specchio.gui;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import java.awt.Color;
+import java.awt.Container;
 import java.awt.Desktop;
+import java.awt.GridBagLayout;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -23,6 +30,7 @@ import ch.specchio.types.attribute;
 
 
 class MainMenu implements ActionListener, ItemListener {
+	URI uri;
    JMenuBar menuBar;
    String create_new_campaign = "Create new campaign";
    String load_campaign_data = "Load campaign data";
@@ -193,6 +201,12 @@ class MainMenu implements ActionListener, ItemListener {
       
       // Help 
       menu = new JMenu("Help");
+      try {
+		uri = new URI("http://www.specchio.ch");
+	} catch (URISyntaxException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
       
       menuItem = new JMenuItem(list_eav_metadata_attributes);
       menuItem.addActionListener(this);
@@ -509,19 +523,61 @@ class MainMenu implements ActionListener, ItemListener {
       
       if(info.equals(e.getActionCommand()))
       {
-         ImageIcon icon = new ImageIcon("SPECCHIO_Icon_Mid_Res_small.jpg");
+//         ImageIcon icon = new ImageIcon("SPECCHIO_Icon_Mid_Res_small.jpg");
          
          
-         JOptionPane.showMessageDialog(null,
-        		 SPECCHIOApplication.version + "\n" + 
-        		 "(c) 2006-2012 by Remote Sensing Laboratories (RSL),\n" +
+//         JOptionPane.showMessageDialog(null,
+//        		 SPECCHIOApplication.version + "\n" + 
+//        		 "(c) 2006-2012 by Remote Sensing Laboratories (RSL),\n" +
+//        		 "Dept of Geography, " +
+//        		 "University of Zurich\n" + 
+//        		 "www.specchio.ch\n\n" +
+//        		 "Please refer to the User Guide for more information.\n",
+//        		    "About",
+//        		    JOptionPane.INFORMATION_MESSAGE,
+//        		    icon);
+    	  
+    	  BufferedImage myPicture;
+		try {
+			myPicture = ImageIO.read(new File("SPECCHIO_Icon_Mid_Res_small.jpg"));
+			JLabel picLabel = new JLabel(new ImageIcon(myPicture));	  
+
+
+    	  
+         
+         JFrame frame = new JFrame("About");
+         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+         frame.setSize(550, 200);
+         Container container = frame.getContentPane();
+         container.setLayout(new GridBagLayout());
+         
+         container.add(picLabel);
+         
+         JButton button = new JButton();
+        
+         button.setText("<html>" + SPECCHIOApplication.version + "<br>" + 
+        		 "(c) 2006-2013 by Remote Sensing Laboratories (RSL)<br>" +
         		 "Dept of Geography, " +
-        		 "University of Zurich\n" + 
-        		 "www.specchio.ch\n\n" +
-        		 "Please refer to the User Guide for more information.\n",
-        		    "About",
-        		    JOptionPane.INFORMATION_MESSAGE,
-        		    icon);
+        		 "University of Zurich<br>" +
+        		 " For more information visit: " +
+        		 "<FONT color=\"#000099\"><U>www.specchio.ch</U></FONT>" +
+        		 " or <br>" +
+        		 "refer to the user guide." +
+        		 " </HTML>");
+         button.setHorizontalAlignment(SwingConstants.LEFT);
+         button.setBorderPainted(false);
+         button.setOpaque(false);
+         button.setBackground(Color.WHITE);
+         button.setToolTipText(uri.toString());
+         button.addActionListener(new OpenUrlAction());
+         container.add(button);
+         frame.setVisible(true);     
+         
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();         
+         
+		}
          
       }   
       
@@ -702,8 +758,23 @@ class MainMenu implements ActionListener, ItemListener {
    public void itemStateChanged(ItemEvent e) {
 
    }
+   
+   
+   // URL example from: http://stackoverflow.com/questions/527719/how-to-add-hyperlink-in-jlabel
+   
+   private static void open(URI uri) {
+	    if (Desktop.isDesktopSupported()) {
+	      try {
+	        Desktop.getDesktop().browse(uri);
+	      } catch (IOException e) { /* TODO: error handling */ }
+	    } else { /* TODO: error handling */ }
+	  }   
 
-
+   class OpenUrlAction implements ActionListener {
+	      @Override public void actionPerformed(ActionEvent e) {
+	        open(uri);
+	      }
+	    }
 
 
 }
