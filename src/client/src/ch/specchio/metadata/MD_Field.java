@@ -8,6 +8,7 @@ public abstract class MD_Field implements Comparable<MD_Field> {
 	
 	ConflictInfo conflict;
 	private Object new_value;
+	private String description; // help string
 
 	public void textReport() {
 		// TODO Auto-generated method stub
@@ -53,6 +54,14 @@ public abstract class MD_Field implements Comparable<MD_Field> {
 		// order by label
 		return getLabel().compareTo(other.getLabel());
 		
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	

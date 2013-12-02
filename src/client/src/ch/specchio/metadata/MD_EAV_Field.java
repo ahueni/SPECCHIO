@@ -13,7 +13,7 @@ public class MD_EAV_Field extends MD_Field {
 	{
 		this.mp = mp;
 		this.conflict = conflictInfo;
-		
+		this.setDescription(mp.getDescription());
 		
 	}
 	

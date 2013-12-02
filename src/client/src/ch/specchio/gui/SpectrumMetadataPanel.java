@@ -738,6 +738,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			// create a label for this component
 			label = new JLabel(field.getLabelWithUnit());
 			label.setHorizontalAlignment(JLabel.RIGHT);
+			label.setToolTipText(field.getDescription());
 			add(label);
 			
 		}
