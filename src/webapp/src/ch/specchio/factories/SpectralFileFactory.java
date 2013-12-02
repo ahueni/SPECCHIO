@@ -654,24 +654,24 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		
 					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Longitude", "Location"));
 					mp.setValue(spec_file.getPos(spec_no).longitude, "Degrees");
-					md.add_entry(mp);			
+					md.addEntry(mp);			
 					
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Latitude", "Location"));
 					mp.setValue(spec_file.getPos(spec_no).latitude, "Degrees");
-					md.add_entry(mp);	
+					md.addEntry(mp);	
 					
 					if(spec_file.getPos(spec_no).altitude != null)
 					{
 						mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Altitude", "Location"));
 						mp.setValue(spec_file.getPos(spec_no).altitude, "Degrees");
-						md.add_entry(mp);	
+						md.addEntry(mp);	
 					}
 					
 					if (!spec_file.getPos(spec_no).location_name.equals(""))
 					{
 						mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Location Name", "Location"));
 						mp.setValue(spec_file.getPos(spec_no).location_name, "String");
-						md.add_entry(mp);	
+						md.addEntry(mp);	
 					}
 		
 				}
@@ -716,34 +716,34 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				{
 					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Illumination Azimuth", "Sampling Geometry"));
 					mp.setValue(spec_file.getIlluminationAzimuth(spec_no), "Degrees");
-					md.add_entry(mp);										
+					md.addEntry(mp);										
 				}
 				
 				if (spec_file.getIlluminationZeniths().size() > 0)
 				{
 					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Illumination Zenith", "Sampling Geometry"));
 					mp.setValue(spec_file.getIlluminationZenith(spec_no), "Degrees");
-					md.add_entry(mp);										
+					md.addEntry(mp);										
 				}		
 				
 				if (spec_file.getSensorAzimuths().size() > 0)
 				{
 					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor Azimuth", "Sampling Geometry"));
 					mp.setValue(spec_file.getSensorAzimuth(spec_no), "Degrees");
-					md.add_entry(mp);										
+					md.addEntry(mp);										
 				}	
 				
 				if (spec_file.getSensorZeniths().size() > 0)
 				{
 					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor Zenith", "Sampling Geometry"));
 					mp.setValue(spec_file.getSensorZenith(spec_no), "Degrees");
-					md.add_entry(mp);										
+					md.addEntry(mp);										
 				}		
 				
 				if (spec_file.getArmLengths() != null && spec_file.getArmLength(spec_no) != null) {
 					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Sensor Distance", "Sampling Geometry"));
 					mp.setValue(spec_file.getArmLength(spec_no), "m");
-					md.add_entry(mp);											
+					md.addEntry(mp);											
 				}
 				
 				SpecchioMessage msg = new SpecchioMessage();
@@ -840,14 +840,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				// filename
 				MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("File Name", "General"));
 				mp.setValue(spec_file.getSpectrumFilename(spec_no), "String");
-				md.add_entry(mp);
+				md.addEntry(mp);
 				
 				// capture and insert times
 				Date capture_date = spec_file.getCaptureDate(spec_no);
 				if (capture_date != null) {
 					MetaDate mpd = (MetaDate)MetaParameter.newInstance(getAttributes().get_attribute_info("Acquisition Time", "General"));
 					mpd.setValue(capture_date);
-					md.add_entry(mpd);
+					md.addEntry(mpd);
 				}
 				
 				// UTC insert time
@@ -855,7 +855,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				Calendar cal = Calendar.getInstance(tz);	
 				MetaDate mpd = (MetaDate)MetaParameter.newInstance(getAttributes().get_attribute_info("Loading Time", "General"));	
 				mpd.setValue(cal.getTime());
-				md.add_entry(mpd);				
+				md.addEntry(mpd);				
 				
 				// add instrument number as EAV if instrument is not defined in DB but not empty
 				if(instrument_id.equals("null") &&
@@ -864,7 +864,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				{			
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Instrument Serial Number", "Instrument"));
 					mp.setValue(spec_file.getInstrumentNumber());
-					md.add_entry(mp);				
+					md.addEntry(mp);				
 				}
 				
 				// cloud cover (convert from oktas)
@@ -876,7 +876,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Cloud Cover", "Environmental Conditions"));
 					mp.setValue(cloud_cover, "%");
-					md.add_entry(mp);				
+					md.addEntry(mp);				
 					
 		
 				}
@@ -886,14 +886,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				{
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("FOV", "Optics"));
 					mp.setValue(spec_file.getForeopticDegrees(), "Degrees");
-					md.add_entry(mp);								
+					md.addEntry(mp);								
 				}
 				
 				if(spec_file.getComment() != null)
 				{
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("File Comments", "General"));
 					mp.setValue(spec_file.escape_string(spec_file.getComment()), "String");
-					md.add_entry(mp);								
+					md.addEntry(mp);								
 				}		
 		
 				// update the EAV with possible garbage flags
@@ -901,7 +901,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				{
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Garbage Flag", "General"));
 					mp.setValue(1, "Raw");
-					md.add_entry(mp);
+					md.addEntry(mp);
 				}		
 				
 				
@@ -909,7 +909,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				 if (spec_file.getSpectraNames().size() > 0) {			 
 					 mp = MetaParameter.newInstance(getAttributes().get_attribute_info(spec_file.getSpectrumNameType(), "Names"));
 					 mp.setValue(spec_file.getSpectrumName(spec_no), "String");
-					 md.add_entry(mp);			 
+					 md.addEntry(mp);			 
 				 }
 				
 		
