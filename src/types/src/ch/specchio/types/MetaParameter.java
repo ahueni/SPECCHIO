@@ -23,7 +23,7 @@ public abstract class MetaParameter {
 	private String unit_name;
 	private Integer default_unit_id = 0;
 	private Integer eav_id = 0;
-	
+	private String description; // help string
 	
 	protected MetaParameter() {
 		
@@ -52,6 +52,7 @@ public abstract class MetaParameter {
 		this.attribute_name = attr.getName();
 		this.unit_id = attr.default_unit_id;
 		this.default_storage_field = attr.getDefaultStorageField();
+		this.description = attr.description;
 	}
 	
 	
@@ -162,6 +163,18 @@ public abstract class MetaParameter {
 	}
 	
 	
+	
+	@XmlElement(name="description")
+	public String getDescription() {
+		return description;
+	}
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}	
+	
+	
+	
 	public static MetaParameter newInstance()
 	{
 		return new MetaSimple();
@@ -225,5 +238,7 @@ public abstract class MetaParameter {
 	public abstract void setEmptyValue();
 	
 	public abstract String valueAsString();
+
+
 
 }
