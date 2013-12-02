@@ -215,11 +215,6 @@ public class Metadata {
 		
 	}
 	
-	
-	public void add_entry(MetaParameter mp)
-	{
-		entries.add(mp);
-	}
 
 
 }
