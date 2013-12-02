@@ -65,6 +65,7 @@ import ch.specchio.queries.Query;
 import ch.specchio.queries.QueryCondition;
 import ch.specchio.queries.QueryConditionChangeInterface;
 import ch.specchio.queries.QueryConditionObject;
+import ch.specchio.queries.RQueryBuilder;
 import ch.specchio.query_builder.QueryController;
 import ch.specchio.spaces.Space;
 import ch.specchio.types.Campaign;
@@ -154,6 +155,9 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 			JMenuItem menuItem = new JMenuItem("Copy Matlab-ready query to clipboard");
 		    menuItem.addActionListener(this);
 		    popup.add(menuItem);	    
+		    menuItem = new JMenuItem("Copy R-ready query to clipboard");
+		    menuItem.addActionListener(this);
+		    popup.add(menuItem);	    		    
 		    
 			PopupListener popupListener = new PopupListener();
 			addMouseListener(popupListener);				    
@@ -174,6 +178,19 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 				}
 				
 			}
+			
+			if("Copy R-ready query to clipboard".equals(e.getActionCommand()))
+			{
+				try {
+					qb.copy_r_query_to_clipboard();
+				}
+				catch (IOException ex) {
+					// write error; probably never happens
+					JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not copy to the clipboard", JOptionPane.ERROR_MESSAGE);
+				}
+				
+			}
+			
 
 			
 		}
@@ -185,6 +202,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		this("Query Builder (V3)");
 	}
 	
+
 	public QueryBuilder(String title) throws SPECCHIOClientException
 	{
 		this(title, "combined");		
@@ -445,6 +463,21 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	}
 	
 	
+	public void copy_r_query_to_clipboard()  throws IOException {
+		// write the R code into a string
+		RQueryBuilder rqb = new RQueryBuilder();
+		StringWriter writer = new StringWriter();
+		rqb.writeMatlabCode(writer, query);
+		
+		// copy the string to the clipboard
+		StringSelection stringSelection = new StringSelection(writer.toString());
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+	    clipboard.setContents(stringSelection , this);
+		
+	}
+	
+	
+	
 	public void changed(boolean changed)
 	{
 		if(changed == true)
@@ -702,8 +735,6 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      {
 	    	  try {
 				ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
-				
-				int x = 1;
 				
 			} catch (SPECCHIOWebClientException e1) {
 				// TODO Auto-generated catch block
