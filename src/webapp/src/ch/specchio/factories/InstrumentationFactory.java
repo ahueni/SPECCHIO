@@ -116,7 +116,17 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 				deleteCalibration(calibration_id);
 				getDataCache().deleteCalibration(calibration_id);
 			}
-			rs.close();								
+			rs.close();						
+			
+			// delete the instrument's pictures
+			query = "select instrumentation_picture_id from instrument_x_picture where instrument_id = " + instrument_id;
+			
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				int picture_id = rs.getInt(1);
+				deletePicture(picture_id);
+			}
+			rs.close();									
 			
 			query = "delete from calibration where instrument_id = " + instrument_id;
 			stmt.executeUpdate(query);			
@@ -187,6 +197,16 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			// get SQL-building objects
 			Statement stmt = getStatementBuilder().createStatement();
 			String query;
+			
+			// delete the references's pictures
+			query = "select instrumentation_picture_id from reference_x_picture where reference_id = " + reference_id;
+			
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				int picture_id = rs.getInt(1);
+				deletePicture(picture_id);
+			}
+			rs.close();					
 			
 			// delete the references's calibration data
 			query = "delete from calibration where reference_id = " + Integer.toString(reference_id);
