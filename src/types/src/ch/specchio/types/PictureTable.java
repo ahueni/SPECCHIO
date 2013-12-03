@@ -12,6 +12,7 @@ import ch.specchio.jaxb.XmlMapAdapter;
  * This class represents a table of picture data.
  */
 @XmlRootElement(name="picture_table")
+@XmlSeeAlso(Picture.class)
 public class PictureTable {
 	
 	/** picture */
