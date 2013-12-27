@@ -6,14 +6,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.ListIterator;
+import java.util.Set;
 import java.util.TimeZone;
 
+import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.MetaDate;
@@ -51,6 +56,13 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	public SpectralFileFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
 
 		super(db_user, db_password);
+		
+	}
+	
+	
+	public SpectralFileFactory() throws SPECCHIOFactoryException {
+
+		super();
 		
 	}
 	
@@ -195,6 +207,65 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			getSubHierarchyId(subhierarchies, subhierarchies.get("Radiance"), "Targets");
 			getSubHierarchyId(subhierarchies, subhierarchies.get("Radiance"), "References");		
 
+		}
+		
+		if (spec_file.getCompany().equals("Spectral Evolution")) {
+			
+			boolean contains_targets_and_references = false;
+			boolean contains_several_units = false;
+			
+			HashSet<Integer> hs = new HashSet<Integer>();
+			hs.addAll(spec_file.getMeasurementUnits());
+			
+			if(hs.size() > 1)
+			{
+				contains_several_units = true;
+			}
+			
+			// contains targets and references if there duplication of units
+			if(hs.size() < spec_file.getMeasurementUnits().size())
+			{
+				contains_targets_and_references = true;
+			}
+			
+			
+			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.DN) && contains_several_units)
+			{
+				getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
+				
+				if (contains_targets_and_references)
+				{
+					getSubHierarchyId(subhierarchies, subhierarchies.get("DN"), "Targets");
+					getSubHierarchyId(subhierarchies, subhierarchies.get("DN"), "References");							
+				}
+				
+			}
+			
+			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.Radiance) && contains_several_units)
+			{
+				getSubHierarchyId(subhierarchies, hierarchy_id, "Radiance");
+				
+				if (contains_targets_and_references)
+				{
+					getSubHierarchyId(subhierarchies, subhierarchies.get("Radiance"), "Targets");
+					getSubHierarchyId(subhierarchies, subhierarchies.get("Radiance"), "References");							
+				}
+				
+			}	
+			
+			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.Reflectance) && contains_targets_and_references)
+			{
+				getSubHierarchyId(subhierarchies, hierarchy_id, "Reflectance");
+			}
+			
+			
+			if(contains_targets_and_references && !contains_several_units)
+			{
+				getSubHierarchyId(subhierarchies, hierarchy_id, "Targets");
+				getSubHierarchyId(subhierarchies, hierarchy_id, "References");
+			}
+			
+			
 		}
 		
 //		if (spec_file.getCompany().equals("PP Systems") && spec_file.getCapturingSoftwareName() != null && ( 
@@ -454,6 +525,120 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			}
 
 		}
+		
+		
+		if (spec_file.getCompany().equals("Spectral Evolution")) {
+			
+			SpectralFileInsertResult tgt_spectrum_result = null, ref_result = null;
+			
+			boolean contains_targets_and_references = false;
+			boolean contains_several_units = false;
+			
+			HashSet<Integer> hs = new HashSet<Integer>();
+			hs.addAll(spec_file.getMeasurementUnits());
+			
+			if(hs.size() > 1)
+			{
+				contains_several_units = true;
+			}
+			
+			// contains targets and references if there duplication of units
+			if(hs.size() < spec_file.getMeasurementUnits().size())
+			{
+				contains_targets_and_references = true;
+			}
+			
+			if (contains_several_units || contains_targets_and_references)
+			{
+				special_hierarchy_files = true;
+				
+			
+				// loop over all spectra and insert into appropriate hierarchy
+				for (int i=0;i<spec_file.getNumberOfSpectra();i++)
+				{
+					String first_sub_hierarchy = "";
+					int first_sub_hierarchy_id = 0;
+					
+					if(spec_file.getMeasurementUnits(i) == MeasurementUnit.DN)
+					{						
+						first_sub_hierarchy = "DN";
+						
+						first_sub_hierarchy_id = subhierarchies.get(first_sub_hierarchy);
+						
+					}
+					
+					if(spec_file.getMeasurementUnits(i) == MeasurementUnit.Radiance)
+					{						
+						first_sub_hierarchy = "Radiance";
+						
+						first_sub_hierarchy_id = subhierarchies.get(first_sub_hierarchy);
+					}	
+					
+					if(spec_file.getMeasurementUnits(i) == MeasurementUnit.Reflectance)
+					{						
+						first_sub_hierarchy = "Reflectance";
+						
+						first_sub_hierarchy_id = subhierarchies.get(first_sub_hierarchy);
+					}						
+					
+					
+					if(contains_targets_and_references)
+					{
+						if(spec_file.getMeasurandDesignator(i) != SpectralFile.UNSPECIFIED)
+						{
+							if(spec_file.getMeasurandDesignator(i) == SpectralFile.TARGET)
+							{
+								hierarchy_id = getSubHierarchyId(first_sub_hierarchy_id, "Targets");								
+							}
+							else
+							{
+								hierarchy_id = getSubHierarchyId(first_sub_hierarchy_id, "References");
+							}
+							
+						}
+						else
+						{
+							hierarchy_id = first_sub_hierarchy_id;
+						}
+					}
+					else
+					{
+						// in this case the first_sub_hierarchy must be set, otherwise we would not be here ...
+						
+						hierarchy_id = first_sub_hierarchy_id;
+						
+					}
+					
+					
+					SpectralFileInsertResult res = insertSpectrumAndHierarchyLink(spec_file, i, hierarchy_id);
+					
+					insert_result.add(res);
+					
+					if(spec_file.getMeasurandDesignator(i) == SpectralFile.REFERENCE)
+					{
+						ref_result = res;
+					}
+
+					
+					if(spec_file.getMeasurandDesignator(i) == SpectralFile.TARGET)
+					{
+						tgt_spectrum_result = res;
+						// as targets appear after the reference in the input file, we can safely assume that these last two can be linked
+						insertLink(new SpectrumDataLink(tgt_spectrum_result.getSpectrumIds().get(0), ref_result.getSpectrumIds().get(0), "Spectralon data"));						
+					}
+					
+					
+					if(spec_file.getMeasurementUnits(i) == MeasurementUnit.Reflectance && contains_targets_and_references)
+					{
+						insertLink(new SpectrumDataLink(res.getSpectrumIds().get(0), tgt_spectrum_result.getSpectrumIds().get(0), "Radiance data"));
+					}
+						
+			
+				}
+			}
+			
+		}
+		
 		
 //		if (spec_file.getCompany().equals("PP Systems") && spec_file.getCapturingSoftwareName() != null && ( 
 //				spec_file.getCapturingSoftwareName().equals("UnispecDCcf")
@@ -751,6 +936,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				// file format
 				int file_format_id = getIdForFileFormat(spec_file.getFileFormatName());
 				
+				// check if this is an unknown file format in this database
+				if(file_format_id == -1)
+				{
+					// add new file format to DB
+					SpectralFileFactory sff = new SpectralFileFactory(); // connects as admin
+					file_format_id = sff.addFileFormat(spec_file);
+				}
+				
 				int sensor_id = getDataCache().get_sensor_id_for_file(spec_file, spec_no, this.getDatabaseUserName(), msg);
 				
 				if (msg.getMessage() != null)
@@ -843,7 +1036,10 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				md.addEntry(mp);
 				
 				// capture and insert times
+//				TimeZone tz = TimeZone.getTimeZone("UTC");
+//				Calendar cal = Calendar.getInstance(tz);	
 				Date capture_date = spec_file.getCaptureDate(spec_no);
+//				cal.setTime(capture_date);
 				if (capture_date != null) {
 					MetaDate mpd = (MetaDate)MetaParameter.newInstance(getAttributes().get_attribute_info("Acquisition Time", "General"));
 					mpd.setValue(capture_date);
@@ -853,6 +1049,11 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				// UTC insert time
 				TimeZone tz = TimeZone.getTimeZone("UTC");
 				Calendar cal = Calendar.getInstance(tz);	
+				
+//				SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd HHmm");
+//				formatter.setTimeZone(tz);		
+//				String out=formatter.format(cal.getTime());			
+				
 				MetaDate mpd = (MetaDate)MetaParameter.newInstance(getAttributes().get_attribute_info("Loading Time", "General"));	
 				mpd.setValue(cal.getTime());
 				md.addEntry(mpd);				
@@ -950,6 +1151,39 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	}
 	
 	
+	private int addFileFormat(SpectralFile spec_file) {
+		
+		int file_format_id = -1;
+		String query;
+		ResultSet rs;
+		SQL_StatementBuilder SQL = new SQL_StatementBuilder(getConnection());
+		
+		query = "insert into file_format (name, file_extension) values (" + SQL.quote_string(spec_file.getFileFormatName()) + ", " + SQL.quote_string(spec_file.getExt()) + ")";
+		
+		try {
+			Statement stmt = SQL.createStatement();
+			
+			stmt.executeUpdate(query);
+			
+			// get the identifier of the new instrument
+			query = "select last_insert_id()";
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				file_format_id = rs.getInt(1);
+			}
+			rs.close();					
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return file_format_id;
+		
+	}
+
+
 	/**
 	 * Helper method for insertSpectra(). Insert both a spectrum and a hierarchy link.
 	 * 
