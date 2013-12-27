@@ -12,9 +12,9 @@ public class SensorAndInstrumentSpace extends SpectralSpace {
 	int sensor_id;
 	int calibration_id;
 
-	String instr_name = "";
-	String sensor_name = "";
-	String calib_no = "";
+//	String instr_name = "";
+//	String sensor_name = "";
+//	String calib_no = "";
 	
 	Sensor sensor;
 	Instrument instrument;
@@ -46,17 +46,17 @@ public class SensorAndInstrumentSpace extends SpectralSpace {
 	public int getCalibrationId() { return this.calibration_id; }
 	public void setCalibrationId(int calibration_id) { this.calibration_id = calibration_id; }
 	
-	@XmlElement(name="instr_name")
-	public String getInstrumentName() { return this.instr_name; }
-	public void setInstrumentName(String instr_name) { this.instr_name = instr_name; }
+//	@XmlElement(name="instr_name")
+//	public String getInstrumentName() { return this.instr_name; }
+//	public void setInstrumentName(String instr_name) { this.instr_name = instr_name; }
 	
-	@XmlElement(name="sensor_name")
-	public String getSensorName() { return this.sensor_name; }
-	public void seSensorName(String sensor_name) { this.sensor_name = sensor_name; }
+//	@XmlElement(name="sensor_name")
+//	public String getSensorName() { return this.sensor_name; }
+//	public void seSensorName(String sensor_name) { this.sensor_name = sensor_name; }
 	
-	@XmlElement(name="calib_no")
-	public String getCalibrationNumber() { return this.calib_no; }
-	public void setCalibrationNumber(String calib_no) { this.calib_no = calib_no; }
+//	@XmlElement(name="calib_no")
+//	public String getCalibrationNumber() { return this.calib_no; }
+//	public void setCalibrationNumber(String calib_no) { this.calib_no = calib_no; }
 	
 	@XmlElement(name="sensor")
 	public Sensor getSensor() { return this.sensor; }
