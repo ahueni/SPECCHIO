@@ -402,8 +402,14 @@ public class DataCache {
 		Instrument instr = get_instrument_by_serial_id(spec_file.getInstrumentNumber(), sensor_id);
 		 
 		
-		if(instr == null) // try via centre wvls
+		if(instr == null && spec_file.getInstrumentNumber() != null) // this means that we must insert it as new instrument
 		{
+			instr = insertNewInstrument(spec_file, spec_no, msg);
+		}
+		
+		if(instr == null)
+		{
+			// try via centre wvls
 			instr = get_instrument_by_centre_wvls(spec_file, spec_no, msg);
 		}
 
@@ -490,103 +496,135 @@ public class DataCache {
 //		if(instrument == null && spec_file.getInstrumentNumber() != null)
 		if(instrument == null)
 		{
-			Integer sensor_id;
-			try {
-				sensor_id = this.get_sensor_id_for_file(spec_file, spec_no, "", msg);
+			instrument = insertNewInstrument(spec_file, spec_no, msg);
+		}
+			
+		
+		return instrument;
+	}
+	
+	
+	private double[] getAsDoubleVector(Float[] wvls)
+	{
+		double[] d_wvls = null;
+		d_wvls = new double[wvls.length];
+		for (int j=0;j<d_wvls.length;j++) d_wvls[j] = wvls[j];
 
-				if(sensor_id != 0)
-				{					
+		return d_wvls;
+	}
+	
+	
+	private Instrument insertNewInstrument(SpectralFile spec_file, int spec_no, SpecchioMessage msg)
+	{
+		Instrument instr = null;		
+		double[] d_wvls;
+		Integer sensor_id;
+		try {
+			sensor_id = this.get_sensor_id_for_file(spec_file, spec_no, "", msg);		
+			
+				
+			if(spec_file.getWvls().size() >= spec_no + 1)
+			{
+				d_wvls = getAsDoubleVector(spec_file.getWvls(spec_no));
+			}
+			else
+			{
+				// special case for e.g. ASD where the sensor is preloaded and all instruments have common wavelengths
+				d_wvls = this.get_sensor(sensor_id).getAverageWavelengths();
+			}
 
-					// connect to DB as admin to insert a new instrument
+			if(sensor_id != 0)
+			{					
 
-					InstrumentationFactory factory = new InstrumentationFactory();
+				// connect to DB as admin to insert a new instrument
 
-					Instrument instr = new Instrument();
+				InstrumentationFactory factory = new InstrumentationFactory();
 
-					Sensor s = this.get_sensor(sensor_id);
-					
-					String instrument_designator = "";
-					
-					if (spec_file.getInstrumentNumber() != null)
-					{
-						instrument_designator= " #" + spec_file.getInstrumentNumber();
-					}
-					
-					if (spec_file.getInstrumentName() != null)
-					{
-						instrument_designator= spec_file.getInstrumentName();
-					}					
-					
-					if (instrument_designator.length() == 0 && spec_file.getCaptureDate(spec_no).toString() != null)
-					{
-						instrument_designator = new SimpleDateFormat("yyyyMMdd").format(spec_file.getCaptureDate(spec_no)) + " (sample time)"; // try to augment with date of spectrum capture
-					}
-					
-					if (instrument_designator.length() == 0)
-					{
-						instrument_designator = new SimpleDateFormat("yyyyMMdd_HHmm").format(Calendar.getInstance().getTime())  + " (insert time)"; // augment with current time/date
-					}
+				instr = new Instrument();
 
-					if (spec_file.getInstrumentName() != null)
-					{
-						instr.setInstrumentName(instrument_designator);
-					}
-					else
-					{
-						instr.setInstrumentName(s.getName().get_value() + " " + instrument_designator);
-					}
-					instr.setSensorId(sensor_id);
-					instr.setInstrumentNumber(spec_file.getInstrumentNumber());
-					instr.setSensor(s);
-					instr.setAverageWavelengths(d_wvls);
+				Sensor s = this.get_sensor(sensor_id);
 
-					factory.insertInstrument(instr);					
-					
-					// create new calibration with wavelength calibration factors
+				String instrument_designator = "";
+
+				if (spec_file.getInstrumentNumber() != null)
+				{
+					instrument_designator= " #" + spec_file.getInstrumentNumber();
+				}
+
+				if (spec_file.getInstrumentName() != null)
+				{
+					instrument_designator= spec_file.getInstrumentName();
+				}					
+
+				if (instrument_designator.length() == 0 && spec_file.getCaptureDate(spec_no).toString() != null)
+				{
+					instrument_designator = new SimpleDateFormat("yyyyMMdd").format(spec_file.getCaptureDate(spec_no)) + " (sample time)"; // try to augment with date of spectrum capture
+				}
+
+				if (instrument_designator.length() == 0)
+				{
+					instrument_designator = new SimpleDateFormat("yyyyMMdd_HHmm").format(Calendar.getInstance().getTime())  + " (insert time)"; // augment with current time/date
+				}
+
+				if (spec_file.getInstrumentName() != null)
+				{
+					instr.setInstrumentName(instrument_designator);
+				}
+				else
+				{
+					instr.setInstrumentName(s.getName().get_value() + " " + instrument_designator);
+				}
+				instr.setSensorId(sensor_id);
+				instr.setInstrumentNumber(spec_file.getInstrumentNumber());
+				instr.setSensor(s);
+				instr.setAverageWavelengths(d_wvls);
+
+				factory.insertInstrument(instr);					
+
+				// create new calibration with wavelength calibration factors: only for instruments where wvls are not resampled to blueprint (e.g. ASD is always blueprint)
+				if(spec_no < spec_file.getWvls().size())
+				{
 					SpectralFile wvl_cal = new SpectralFile(spec_file);
 					wvl_cal.setNumberOfSpectra(1);
-					wvl_cal.setMeasurements(new Float[wvls.length][1]);
-					wvl_cal.setMeasurement(0, wvls);
+					wvl_cal.setMeasurements(new Float[spec_file.getWvls(spec_no).length][1]);
+					wvl_cal.setMeasurement(0, spec_file.getWvls(spec_no));
 					wvl_cal.setWvls(spec_file.getWvls());
 					wvl_cal.setNumberOfChannels(spec_file.getNumberOfChannels());
 					wvl_cal.addMeasurementUnits(100); // wavelength code
 					wvl_cal.setInstrumentTypeNumber(spec_file.getInstrumentTypeNumber()); // needed for some files to identify the sensor
-					
+	
 					Calibration cal = new Calibration();
 					cal.setIncludesUncertainty(false);
 					cal.setSpectralFile(wvl_cal);
 					cal.setInstrumentId(instr.getInstrumentId());
 					cal.setComments("Wavelength Calibration auto-generated by SPECCHIO file loader process");
 					int cal_id = factory.insertInstrumentCalibration(cal);
-					
+	
 					instr.setCalibrationId(cal_id);
-					
-					factory.dispose();
-					
-					// update cache with new instrument
-					add_instrument(instr);
-
-					instrument = instr;
-					
-					// add info to the spectral file
-					msg.setMessage("Added new instrument: " + instr.getInstrumentName().get_value());
-					msg.setType(SpecchioMessage.INFO);
 				}
 
+				factory.dispose();
 
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SPECCHIOFactoryException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// update cache with new instrument
+				add_instrument(instr);
+
+
+				// add info to the spectral file
+				msg.setMessage("Added new instrument: " + instr.getInstrumentName().get_value());
+				msg.setType(SpecchioMessage.INFO);
 			}
 
 
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SPECCHIOFactoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-			
+
+		return instr;
 		
-		return instrument;
 	}
 	
 	
