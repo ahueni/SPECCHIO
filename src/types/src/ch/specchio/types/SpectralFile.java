@@ -23,6 +23,12 @@ public class SpectralFile {
 	public static int RECOVERABLE_ERROR = 1;
 	public static int UNRECOVERABLE_ERROR = 2;
 	
+	
+	// static measurand designators
+	public static int UNSPECIFIED = 0;
+	public static int REFERENCE = 1;
+	public static int TARGET = 2;
+	
 	// these three fields are used by the "insert spectral file" web service
 	private String campaign_type;
 	private int campaign_id;
@@ -51,6 +57,7 @@ public class SpectralFile {
 									// raw (acc. ASD specification)
 	private int[] measurement_type; // CASE number according to Nicodemus and
 									// Schaepman-Strub -> beam geometries
+	private ArrayList<Integer> measurand_designator  = new ArrayList<Integer>(); // internal designator for Reference panel, Target and others in future
 	private ArrayList<Float> sensor_azimuth = new ArrayList<Float>();
 	private ArrayList<Float> sensor_zenith = new ArrayList<Float>();
 	private ArrayList<Float> illumination_azimuth = new ArrayList<Float>();
@@ -167,6 +174,7 @@ public class SpectralFile {
 			this.spectra_filenames.add(filename);
 		}
 		this.setFileErrorCode(SpectralFile.NO_ERRORS);
+		this.setMeasurementUnits(spec_file.getMeasurementUnits());
 	}
 
 	@XmlElement(name="arm_length")
@@ -418,6 +426,15 @@ public class SpectralFile {
 	public void setManualHistories(String[] man_history) { this.man_history = man_history; }
 	public String getManualHistory(int i) { return this.man_history[i]; }
 	public void setManualHistory(int i, String man_history) { this.man_history[i] = man_history; }
+	
+	@XmlElement(name="measurand_designator")
+	public ArrayList<Integer> getMeasurandDesignators() { return this.measurand_designator; }
+	public void setMeasurandDesignators(ArrayList<Integer> measurand_designator) { this.measurand_designator = measurand_designator; }
+	public Integer getMeasurandDesignator(int i) { return (i < this.measurand_designator.size())? this.measurand_designator.get(i) : 0; }
+	public void setMeasurandDesignator(int i, int measurand_designator) { this.measurand_designator.set(i, measurand_designator); }
+	public void addMeasurandDesignator(int measurand_designator) { this.measurand_designator.add(measurand_designator); }
+	public void addMeasurandDesignator(int i, int measurand_designator) { this.measurand_designator.add(i, measurand_designator); }
+	
 	
 	@XmlElement(name="measurements")
 	public Float[][] getMeasurements() { return this.measurements; }
