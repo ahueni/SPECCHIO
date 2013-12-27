@@ -319,7 +319,12 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				loader = new APOGEE_FileLoader();
 			
 			else if (exts.contains("xls"))
-				loader = new XLS_FileLoader();			
+				loader = new XLS_FileLoader();		
+			
+			// cx for Spectral Evoluation files
+			else if (exts.contains("sed"))
+				loader = new Spectral_Evolution_FileLoader();		
+			
 			
 			// cx for UNISPEC SPT files
 			else if (exts.contains("SPT"))
@@ -380,7 +385,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
 				}
 	
-				// cx for TXT (kneub format) files
+				// cx for TXT (ENVI format) files
 				else if (exts.contains("txt") || exts.contains("TXT")) {
 					loader = new TXT_FileLoader();
 				}
