@@ -317,6 +317,42 @@ public class MetadataFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Get calibration_ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of calibration_id , zero where no calibration is defined
+	 * @throws SPECCHIOFactoryException 
+	 */		
+	public ArrayList<Integer> getCalibrationIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOFactoryException {
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		
+		try {
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			String conc_ids = SQL.conc_ids(spectrum_ids);
+			String query = "select calibration_id, spectrum_id from spectrum where spectrum_id in (" + conc_ids + ")" +
+			"order by FIELD (spectrum_id, "+ conc_ids +")";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				ids.add(rs.getInt(1));
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		return ids;
+	}
+
+	
+	
+	
+	/**
 	 * Get instrument ids for a list of spectra.
 	 * 
 	 * @param spectrum_ids	the spectrum identifiers
