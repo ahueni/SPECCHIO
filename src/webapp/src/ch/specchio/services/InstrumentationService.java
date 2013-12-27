@@ -141,6 +141,28 @@ public class InstrumentationService extends SPECCHIOService {
 	
 	
 	/**
+	 * Get a calibrated instrument object.
+	 * 
+	 * @param calibration_id	the calibration identifier
+	 * 
+	 * @return a new Instrument object, or null if the calibrated instrument does not exist
+	 * 
+	 * @throws SPECCHIOFactoryException	the instrument does not exist
+	 */
+	@GET
+	@Path("getCalibratedInstrument/{calibration_id: [0-9]+}")
+	@Produces(MediaType.APPLICATION_XML)
+	public Instrument getCalibratedInstrument(@PathParam("calibration_id") int calibration_id) throws SPECCHIOFactoryException {
+		
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		Instrument instrument = factory.getCalibratedInstrument(calibration_id);
+		factory.dispose();
+		
+		return instrument;
+	}	
+	
+	
+	/**
 	 * Get the calibration metadata for an instrument.
 	 * 
 	 * @param instrument_id	the identifier of the the instrument
