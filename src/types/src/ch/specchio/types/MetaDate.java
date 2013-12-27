@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -118,7 +119,12 @@ public class MetaDate extends MetaParameter {
 	
 	public static String formatDate(Date date, String format_specifier) {
 		
+		TimeZone tz = TimeZone.getTimeZone("UTC");
 		SimpleDateFormat formatter = new SimpleDateFormat(format_specifier);
+		formatter.setTimeZone(tz);
+		
+		
+//		String out=formatter.format(date);				
 	
 		return formatter.format(date);
 		
