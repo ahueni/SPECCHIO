@@ -181,6 +181,31 @@ public class MetadataService extends SPECCHIOService {
 	
 	
 	/**
+	 * Get calibration ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of calibration ids, zero where no calibration is defined
+	 */	
+	@POST
+	@Path("getCalibrationIds")
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	public XmlInteger[] getCalibrationIds(MetadataSelectionDescriptor msd) throws SPECCHIOFactoryException {
+
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword());
+		
+		ArrayList<Integer> ids = factory.getCalibrationIds(msd.getIds());
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);		
+		
+	}
+		
+	
+	
+	
+	/**
 	 * Get the list of metaparameter values for given spectrum ids and attribute.
 	 * 
 	 * @param ms_d	metadata selection descriptor
