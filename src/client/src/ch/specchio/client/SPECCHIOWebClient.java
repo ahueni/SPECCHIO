@@ -593,7 +593,43 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return getArray(Campaign.class, "campaign", "list", "specchio");
 		
 	}
+
 	
+	/**
+	 * Get calibration ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of calibration ids, zero where no calibration is defined
+	 */
+	public ArrayList<Integer> getCalibrationIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(spectrum_ids, "");	
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "metadata", "getCalibrationIds", mds));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}		
+		
+		return ids;	
+		
+	}
+	
+	/**
+	 * Get a calibrated instrument.
+	 * 
+	 * @param calibration_id	the calibration identifier
+	 * 
+	 * @return a new Instrument object, or null if the calibrated instrument does not exist
+	 */
+	public Instrument getCalibratedInstrument(int calibration_id) throws SPECCHIOClientException {
+				
+		return getObject(Instrument.class, "instrumentation", "getCalibratedInstrument", Integer.toString(calibration_id));
+		
+	}
 	
 	/**
 	 * Get the value of a capability.

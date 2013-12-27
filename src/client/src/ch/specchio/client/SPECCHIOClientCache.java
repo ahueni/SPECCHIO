@@ -494,6 +494,32 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Get calibration ids for a list of spectra.
+	 * 
+	 * @param spectrum_ids	the spectrum identifiers
+	 * 
+	 * @return list of calibration ids, zero where no calibration is defined
+	 */
+	public ArrayList<Integer> getCalibrationIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
+		
+		return realClient.getCalibrationIds(spectrum_ids);
+		
+	}
+	
+	/**
+	 * Get a calibrated instrument.
+	 * 
+	 * @param calibration_id	the calibration identifier
+	 * 
+	 * @return a new Instrument object, or null if the calibrated instrument does not exist
+	 */
+	public Instrument getCalibratedInstrument(int calibration_id) throws SPECCHIOClientException {
+		
+		return realClient.getCalibratedInstrument(calibration_id);
+		
+	}
+	
 	
 	/**
 	 * Get the value of a capability.
