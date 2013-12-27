@@ -224,6 +224,51 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		
 	}
 	
+	/**
+	 * Get a calibrated instrument object.
+	 * 
+	 * @param calibration_id	the calibration identifier
+	 * 
+	 * @return a new Instrument object, or null if the calibrated instrument does not exist
+	 * 
+	 * @throws SPECCHIOFactoryException	the instrument does not exist
+	 */
+	public Instrument getCalibratedInstrument(int calibration_id) throws SPECCHIOFactoryException {
+		
+		
+		CalibrationMetadata cm = getCalibrationMetadata(calibration_id);
+		
+		Instrument i = this.getInstrument(cm.getInstrumentId());
+		
+		// fill wavelength calibration for instrument if there is a wavelength calibration
+		// TODO: should check if this is really a wavelength calibration
+		i.setAverageWavelengths(cm.getFactors());
+		
+		
+		return i;
+	}
+	
+	/**
+	 * Get the calibration metadata for an instrument or reference.
+	 * 
+	 * @param object_type	"instrument" or "reference"
+	 * @param object_id		the instrument or reference identifier
+	 * 
+	 * @return an array of calibration metatdata objects associated with the instrument
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	private CalibrationMetadata getCalibrationMetadata(int calibration_id) throws SPECCHIOFactoryException {
+				
+		String query = "select calibration_id,calibration_no,calibration_date,comments, cal_factors, uncertainty, reference_id, instrument_id from calibration " +
+				" where calibration_id " + "=" + Integer.toString(calibration_id);
+
+		List<CalibrationMetadata> cmlist = getCalibrationMetadata(query);
+
+		return cmlist.get(0); // there can be only one per calibration id!
+		
+	}	
+	
 	
 	/**
 	 * Get the calibration metadata for an instrument or reference.
@@ -236,17 +281,37 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 	 * @throws SPECCHIOFactoryException	database error
 	 */
 	private CalibrationMetadata[] getCalibrationMetadata(String object_type, int object_id) throws SPECCHIOFactoryException {
+				
+		// work out column name
+		String id_column = object_type + "_id";
+
+		String query = "select calibration_id,calibration_no,calibration_date,comments, cal_factors, uncertainty, reference_id, instrument_id from calibration " +
+				" where " + id_column + "=" + Integer.toString(object_id);
+
+		List<CalibrationMetadata> cmlist = getCalibrationMetadata(query);
+
+		return cmlist.toArray(new CalibrationMetadata[cmlist.size()]);
+		
+	}
+	
+	
+	/**
+	 * Get the calibration metadata for a defined query.
+	 * 
+	 * @param String	query
+	 * 
+	 * @return an list of calibration metatdata objects
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	private List<CalibrationMetadata> getCalibrationMetadata(String query) throws SPECCHIOFactoryException {
 		
 		List<CalibrationMetadata> cmlist = new ArrayList<CalibrationMetadata>();
 		
-		// work out column name
-		String id_column = object_type + "_id";
 		
 		try {
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
-			String query = "select calibration_id,calibration_no,calibration_date,comments, cal_factors, uncertainty from calibration " +
-					" where " + id_column + "=" + Integer.toString(object_id);
 			ResultSet rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				CalibrationMetadata cm = new CalibrationMetadata(rs.getInt(1));
@@ -256,7 +321,13 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 				cm.setCalFactorsId(rs.getInt(5));
 				cm.setCalibrationFactorsPlot(getCalibrationPlotsMetadata(cm.getCalFactorsId(), "cal_factors"));
 				cm.setUncertainty_id(rs.getInt(6));
-				cm.setCalibrationUncertaintyPlot(getCalibrationPlotsMetadata(cm.getUncertainty_id(), "uncertainty"));
+				cm.setCalibrationUncertaintyPlot(getCalibrationPlotsMetadata(cm.getUncertainty_id(), "uncertainty"));				
+				cm.setReferenceId(rs.getInt(7));
+				cm.setInstrumentId(rs.getInt(8));
+				
+				// fill factors from space
+				cm.setFactors(cm.getCalibrationFactorsPlot().getSpace().getVectors().get(0));
+				
 				cmlist.add(cm);
 			}
 			rs.close();
@@ -267,9 +338,9 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			throw new SPECCHIOFactoryException(ex);
 		}
 		
-		return cmlist.toArray(new CalibrationMetadata[cmlist.size()]);
+		return cmlist;
 		
-	}
+	}	
 
 
 	/**
