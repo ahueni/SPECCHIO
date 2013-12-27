@@ -287,6 +287,12 @@ public class SpaceFactory extends SPECCHIOFactory {
 			sais.setSensor(getDataCache().get_sensor(sais.getSensorid()));
 			sais.setInstrument(getDataCache().get_instrument(sais.getInstrumentId(), sais.getCalibrationId()));
 			
+//			if(sais.getInstrument() == null)
+//			{
+//				// try again without calibration id
+//				sais.setInstrument(getDataCache().get_instrument(sais.getInstrumentId()));
+//			}
+			
 			if(sais.getInstrument() == null)
 			{
 				// create a dummy instrument, only existing to provide empty attributes for reports
