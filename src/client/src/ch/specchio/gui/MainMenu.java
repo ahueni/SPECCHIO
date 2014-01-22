@@ -509,7 +509,7 @@ class MainMenu implements ActionListener, ItemListener {
          
          JOptionPane.showMessageDialog(null,
         		 SPECCHIOApplication.version + "\n" + 
-        		 "(c) 2006-2012 by Remote Sensing Laboratories (RSL),\n" +
+        		 "(c) 2006-2013 by Remote Sensing Laboratories (RSL),\n" +
         		 "Dept of Geography, " +
         		 "University of Zurich\n" + 
         		 "www.specchio.ch\n\n" +
