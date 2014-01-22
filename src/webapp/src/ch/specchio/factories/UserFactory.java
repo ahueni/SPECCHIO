@@ -96,6 +96,7 @@ public class UserFactory extends SPECCHIOFactory {
 				user.setInstitute(getDataCache().get_institute_by_id(instituteId));
 			}
 			user.setExternalId(rs.getString("external_id"));
+			user.setDescription(rs.getString("description"));
 			user.setRole(rs.getString("group_name"));
 			
 			return user;
@@ -125,7 +126,7 @@ public class UserFactory extends SPECCHIOFactory {
 		StringBuffer query = new StringBuffer();
 
 		// start with no restrictions
-		query.append("select user_id, specchio_user.user, first_name, last_name, title, email, www, institute_id, external_id, group_name");
+		query.append("select user_id, specchio_user.user, first_name, last_name, title, email, www, institute_id, external_id, description, group_name");
 		query.append(" from specchio_user, specchio_user_group");
 		query.append(" where specchio_user.user=specchio_user_group.user");
 		
@@ -616,6 +617,8 @@ public class UserFactory extends SPECCHIOFactory {
 			throw new IllegalArgumentException("E-mail addresses cannot contain more than " + Limits.MAX_LEN_EMAIL + " characters.");
 		} else if (user.getWwwAddress() != null && user.getWwwAddress().length() > Limits.MAX_LEN_WWW) {
 			throw new IllegalArgumentException("WWW address cannot contain more than " + Limits.MAX_LEN_WWW + " characters.");
+		} else if (user.getDescription() != null && user.getDescription().length() > Limits.MAX_LEN_BIOGRAPHY) {
+			throw new IllegalArgumentException("User description cannot contain more than " + Limits.MAX_LEN_BIOGRAPHY + " characters.");
 		}
 		
 		try {
@@ -639,7 +642,7 @@ public class UserFactory extends SPECCHIOFactory {
 			String instIdString = (inst != null)? Integer.toString(inst.getInstituteId()) : "null";
 			
 			// update user table
-			query = "insert into specchio_user(user,first_name,last_name,institute_id,email,www,admin,password,external_id) values(" +
+			query = "insert into specchio_user(user,first_name,last_name,institute_id,email,www,admin,password,external_id,description) values(" +
 					SQL.quote_string(user.getUsername()) + "," +
 					SQL.quote_string(user.getFirstName()) + "," +
 					SQL.quote_string(user.getLastName()) + "," +
@@ -648,7 +651,8 @@ public class UserFactory extends SPECCHIOFactory {
 					SQL.quote_string(user.getWwwAddress()) + "," +
 					(user.isInRole(UserRoles.ADMIN)? "1" : "0") + "," +
 					"MD5(" + SQL.quote_string(user.getPassword()) + ")," +
-					SQL.quote_string(user.getExternalId()) +
+					SQL.quote_string(user.getExternalId()) + "," +
+					SQL.quote_string(user.getDescription()) +
 				")";
 			stmt.executeUpdate(query);
 			
@@ -714,6 +718,7 @@ public class UserFactory extends SPECCHIOFactory {
 			attr_and_vals.add("email"); attr_and_vals.add(user.getEmailAddress());
 			attr_and_vals.add("www"); attr_and_vals.add(user.getWwwAddress());
 			attr_and_vals.add("external_id"); attr_and_vals.add(user.getExternalId());
+			attr_and_vals.add("description"); attr_and_vals.add(user.getDescription());
 			query = SQL.assemble_sql_update_query(
 					SQL.conc_attr_and_vals("specchio_user", attr_and_vals.toArray(new String[attr_and_vals.size()])),
 					"specchio_user",

@@ -1178,6 +1178,7 @@ CREATE TABLE `specchio_user` (
   `admin` tinyint(1) NOT NULL DEFAULT '0',
   `password` varchar(100) DEFAULT NULL,
   `external_id` varchar(255) DEFAULT NULL,
+  `description` varchar(250) DEFAULT NULL,
   PRIMARY KEY (`user_id`),
   KEY `FK_specchio_user_1` (`institute_id`),
   CONSTRAINT `FK_specchio_user_1` FOREIGN KEY (`institute_id`) REFERENCES `institute` (`institute_id`)

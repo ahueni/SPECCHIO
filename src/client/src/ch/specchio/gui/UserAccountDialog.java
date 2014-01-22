@@ -20,10 +20,11 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import au.ands.org.researchdata.ResearchDataAustralia;
-
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOClientFactory;
@@ -438,8 +439,14 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		/** label for the the user WWW address */
 		private JLabel wwwLabel;
 		
-		/** text field for user WWW address */
+		/** text field for the user WWW address */
 		private JTextField wwwField;
+		
+		/** label for the user description */
+		private JLabel descriptionLabel;
+		
+		/** text area for the user description */
+		private JTextArea descriptionField;
 		
 		/** ANDS information panel */
 		private AndsInformationPanel andsInformationPanel;
@@ -523,6 +530,17 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			add(wwwField, constraints);
 			constraints.gridy++;
 			
+			// add user description field
+			constraints.gridx = 0;
+			descriptionLabel = new JLabel("Description:");
+			add(descriptionLabel, constraints);
+			constraints.gridx = 1;
+			descriptionField = new JTextArea(5, 30);
+			descriptionField.setLineWrap(true);
+			descriptionField.setWrapStyleWord(true);
+			add(new JScrollPane(descriptionField), constraints);
+			constraints.gridy++;
+			
 			// create ANDS panel but do not add it yet
 			andsInformationPanel = new AndsInformationPanel(
 					(user != null)? user.getExternalId() : null
@@ -593,6 +611,9 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			if (emailField.getText().length() == 0) {
 				throw new SPECCHIOUserInterfaceException("You must provide an e-mail address.");
 			}
+			if (descriptionField.getText().length() == 0) {
+				throw new SPECCHIOUserInterfaceException("You must provide a description.");
+			}
 			
 			// build the user object
 			User user = new User();
@@ -602,6 +623,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			user.setInstitute((Institute)instituteField.getSelectedItem());
 			user.setEmailAddress(emailField.getText());
 			user.setWwwAddress(wwwField.getText());
+			user.setDescription(descriptionField.getText());
 			user.setRole(UserRoles.USER);
 			if (andsInformationPanel != null) {
 				user.setExternalId(andsInformationPanel.getPartyId());
@@ -625,6 +647,9 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			for (Component c : getComponents()) {
 				c.setEnabled(enabled);
 			}
+			
+			// set the enablement of the description field, which is not a direct child
+			descriptionField.setEnabled(enabled);
 			
 		}
 		
@@ -682,6 +707,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				setInstitute(user.getInstitute());
 				emailField.setText(user.getEmailAddress());
 				wwwField.setText(user.getWwwAddress());
+				descriptionField.setText(user.getDescription());
 				if (andsInformationPanel != null) {
 					andsInformationPanel.setPartyId(user.getExternalId());
 				}
@@ -692,6 +718,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				instituteField.setSelectedIndex(-1);
 				emailField.setText(null);
 				wwwField.setText(null);
+				descriptionField.setText(null);
 				if (andsInformationPanel != null) {
 					andsInformationPanel.setPartyId(null);
 				}
