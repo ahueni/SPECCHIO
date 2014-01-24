@@ -33,7 +33,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	public void run() {
 		try {
 			
-			// clear EAV known metadata entries because some delete operation might have happended in the meantime
+			// clear EAV known metadata entries because some delete operation might have happened in the meantime
 			specchio_client.clearMetaparameterRedundancyList();
 
 			// tell the listener that we're about to begin
@@ -48,9 +48,6 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			// now we create the root hierarchy for this campaign
 			root_hierarchy_id = insert_hierarchy(f.getName(), 0);
 			load_directory(root_hierarchy_id, f, false);
-			
-			// tell the listener that we're finished
-			listener.campaignDataLoaded(successful_file_counter, this.file_errors);
 
 		}
 		catch (SPECCHIOClientException ex) {
@@ -59,6 +56,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		catch (IOException ex) {
 			listener.campaignDataLoadError(ex.getMessage());
 		}
+		
+		// tell the listener that we're finished
+		listener.campaignDataLoaded(successful_file_counter, this.file_errors);
 
 	}
 

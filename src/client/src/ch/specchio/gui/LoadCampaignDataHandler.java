@@ -31,9 +31,6 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	 */
 	public void campaignDataLoadError(String message) {
 
-		if (p_rep != null) {
-			p_rep.set_operation("Loading aborted!");
-		}
 		JOptionPane.showMessageDialog(null, "Error while loading files: " + message);
 		
 	}
