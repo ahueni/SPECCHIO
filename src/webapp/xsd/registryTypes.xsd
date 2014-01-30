@@ -1,8 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema version="1.4" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://ands.org.au/standards/rif-cs/registryObjects" targetNamespace="http://ands.org.au/standards/rif-cs/registryObjects" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<?xml version="1.0"?>
+<xsd:schema version="1.4" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="http://ands.org.au/standards/rif-cs/registryObjects"
+    targetNamespace="http://ands.org.au/standards/rif-cs/registryObjects"
+    elementFormDefault="qualified" attributeFormDefault="unqualified">
 
     <!-- Point to a local cached version of the W3 XML schema to avoid 20s+ wait times in validation -->
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="http://services.ands.org.au/documentation/rifcs/xml/xml.xsd"/>
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+        schemaLocation="http://services.ands.org.au/documentation/rifcs/xml/xml.xsd"/>
 
     <xsd:annotation>
         <xsd:documentation>Type library for Registry Schema</xsd:documentation>
@@ -194,8 +198,10 @@ date.</xsd:documentation>
             <xsd:element name="address" minOccurs="0" maxOccurs="unbounded">
                 <xsd:complexType>
                     <xsd:choice minOccurs="0" maxOccurs="unbounded">
-                        <xsd:element name="electronic" type="electronicAddressType" minOccurs="0" maxOccurs="unbounded"/>
-                        <xsd:element name="physical" type="physicalAddressType" minOccurs="0" maxOccurs="unbounded"/>
+                        <xsd:element name="electronic" type="electronicAddressType" minOccurs="0"
+                            maxOccurs="unbounded"/>
+                        <xsd:element name="physical" type="physicalAddressType" minOccurs="0"
+                            maxOccurs="unbounded"/>
                     </xsd:choice>
                 </xsd:complexType>
             </xsd:element>
@@ -322,7 +328,8 @@ date.</xsd:documentation>
         <xsd:choice minOccurs="1" maxOccurs="3">
             <xsd:element name="rightsStatement" type="rightsInfoType" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="licence" type="rightsTypedInfoType" minOccurs="0" maxOccurs="1"/>
-            <xsd:element name="accessRights" type="rightsTypedInfoType" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="accessRights" type="rightsTypedInfoType" minOccurs="0" maxOccurs="1"
+            />
         </xsd:choice>
     </xsd:complexType>
 
@@ -389,7 +396,8 @@ date.</xsd:documentation>
 
     <xsd:complexType name="relatedInfoType">
         <xsd:choice minOccurs="1" maxOccurs="unbounded">
-            <xsd:element name="identifier" type="identifierType" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="identifier" type="identifierType" minOccurs="1" maxOccurs="unbounded"/>
+            <xsd:element name="relation" type="relationType" minOccurs="0" maxOccurs="unbounded"/>
             <xsd:element name="title" type="xsd:string" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="notes" type="xsd:string" minOccurs="0" maxOccurs="1"/>
             <xsd:element minOccurs="0" name="format" type="relatedInfoFormatType"/>
@@ -421,8 +429,10 @@ date.</xsd:documentation>
             <xsd:element name="citationMetadata" minOccurs="1" maxOccurs="1">
                 <xsd:complexType>
                     <xsd:choice minOccurs="0" maxOccurs="unbounded">
-                        <xsd:element name="identifier" type="identifierType" minOccurs="1" maxOccurs="1"/>
-                        <xsd:element name="contributor" type="citationNameType" minOccurs="1" maxOccurs="unbounded"/>
+                        <xsd:element name="identifier" type="identifierType" minOccurs="1"
+                            maxOccurs="1"/>
+                        <xsd:element name="contributor" type="citationNameType" minOccurs="1"
+                            maxOccurs="unbounded"/>
                         <xsd:element name="title" type="xsd:string" minOccurs="1" maxOccurs="1"/>
                         <xsd:element name="version" type="xsd:string" minOccurs="0" maxOccurs="1"/>
                         
@@ -434,8 +444,10 @@ date.</xsd:documentation>
                         </xsd:element>
                         
                         <xsd:element name="publisher" type="xsd:string" minOccurs="1" maxOccurs="1"/>
-                        <xsd:element name="placePublished" type="xsd:string" minOccurs="0" maxOccurs="1"/>
-                        <xsd:element name="date" type="citationDateType" minOccurs="1" maxOccurs="unbounded"/>
+                        <xsd:element name="placePublished" type="xsd:string" minOccurs="0"
+                            maxOccurs="1"/>
+                        <xsd:element name="date" type="citationDateType" minOccurs="1"
+                            maxOccurs="unbounded"/>
                         <xsd:element name="url" type="xsd:string" minOccurs="0" maxOccurs="1"/>
                         <xsd:element name="context" type="xsd:string" minOccurs="0" maxOccurs="1"/>
                     </xsd:choice>
