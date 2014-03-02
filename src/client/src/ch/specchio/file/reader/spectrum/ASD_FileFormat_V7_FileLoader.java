@@ -81,7 +81,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 	byte no_of_cal_buffers;
 
-	int int_time;
+	float int_time;
 	int gain_swir1;
 	int gain_swir2;
 
@@ -413,6 +413,9 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		// integration time in ms
 		int_time = this.read_int(in);
+		
+		if(int_time == 8) int_time = 8.5F;
+		
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
 		mp.setValue( int_time, "ms");
 		smd.addEntry(mp);			
@@ -1062,7 +1065,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 	Date read_asd_time(DataInputStream in) throws IOException {
 		
-		TimeZone tz = TimeZone.getDefault();
+		// TimeZone tz = TimeZone.getDefault();
+		TimeZone tz = TimeZone.getTimeZone("UTC");
 		Calendar cal = Calendar.getInstance(tz);
 
 		Integer sec = read_short(in);
@@ -1081,6 +1085,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
 		formatter.setTimeZone(tz);
+		
+		String out=formatter.format(cal.getTime());
 
 		return cal.getTime();
 	}
