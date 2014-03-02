@@ -34,7 +34,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	public void run() {
 		try {
 			
-			// clear EAV known metadata entries because some delete operation might have happended in the meantime
+			// clear EAV known metadata entries because some delete operation might have happened in the meantime
 			specchio_client.clearMetaparameterRedundancyList();
 
 			// tell the listener that we're about to begin
@@ -66,6 +66,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		catch (IOException ex) {
 			listener.campaignDataLoadError(ex.getMessage());
 		}
+		
+		// tell the listener that we're finished
+		listener.campaignDataLoaded(successful_file_counter, this.file_errors);
 
 	}
 
