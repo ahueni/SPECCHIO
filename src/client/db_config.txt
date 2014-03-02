@@ -8,3 +8,29 @@
 #   https, www.specchio.ch, 8181, /specchio, your_user_name, your_password
 #   https, www.specchio.ch, 8181, /specchio, , 
 #   https, www.specchio.ch, 8181, /specchio_test, , 
+http, localhost, 8080, /SPECCHIO_Web_Application, sdb_admin, xXY7!fe@
+http, localhost, 8080, /SPECCHIO_Web_Application, sdb_admin, xXY7!fe@, jdbc/specchio_test
+
+
+http, localhost, 8080, /SPECCHIO_Web_Application, JGamon, JGamon
+https, localhost, 8181, /SPECCHIO_Web_Application, sdb_admin, xXY7!fe@
+https, localhost, 8181, /SPECCHIO_Web_Application, NSheppa, NSheppa
+https, gsw1-dc10-dev-vm.intersect.org.au, 8181, /specchio_service, TUser, specchio
+https, gsw1-dc10-dev-vm.intersect.org.au, 8181, /specchio_service, sdb_admin, xXY7!fe@
+https, localhost, 8181, /SPECCHIO_Web_Application, AHuni, zu9Anu
+https, 130.60.16.127, 8183,  /SPECCHIO_Web_Application, sdb_admin, xXY7!fe@
+
+https, localhost, 8181, /SPECCHIO_Web_Application, AHueni, amY3E8
+
+https, sati.its.uow.edu.au, 8181, /specchio_service, AHueni, A9evat
+
+https, lvps91-250-103-85.dedicated.hosteurope.de,8183,/specchio_service,sdb_admin, BDjsgo9R3
+
+https, v473.vanager.de, 8181, /specchio_service, sdb_admin, 0nJun3rd, jdbc/specchio
+https, v473.vanager.de, 8181, /specchio_service, sdb_admin, 0nJun3rd, jdbc/specchio_test
+https, v473.vanager.de, 8181, /specchio_service, sdb_admin, 0nJun3rd, jdbc/specchio_prod
+
+
+
+https, v473.vanager.de, 8181, /specchio_service, AHueni, 6Ybuva
+https, v473.vanager.de, 8181, /specchio_service, AHueni1, qY2Ebe
