@@ -43,10 +43,17 @@
 		<!-- core SPECCHIO client package -->
 		<pack name="SPECCHIO Client" required="yes">
 		
-			<!-- define the files to installed -->
 			<description>The SPECCHIO client application and supporting libraries</description>
+			
+			<!-- copy all files except db_config.txt, over-writing existing files -->
 			<fileset dir="." targetdir="${INSTALL_PATH}" override="true">
 				<include name="**/*" />
+				<exclude name="db_config.txt" />
+			</fileset>
+			
+			<!-- db_config.txt, asking the user whether or not to overwrite -->
+			<fileset dir="." targetdir="${INSTALL_PATH}" override="askfalse">
+				<include name="db_config.txt" />
 			</fileset>
 			
 			<!-- insert installation path into start-up scripts -->
