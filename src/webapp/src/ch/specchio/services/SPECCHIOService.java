@@ -1,6 +1,7 @@
 package ch.specchio.services;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HeaderParam;
@@ -49,8 +50,12 @@ public class SPECCHIOService {
 	/** the user name associated with the request*/
 	private String username = null;
 	
-	/** the password associated with the reqeust */
+	/** the password associated with the request */
+
 	private String password = null;
+	
+	/** the datasource associated with the request */
+	private String ds_name = null;	
 	
 	
 	/**
@@ -91,8 +96,19 @@ public class SPECCHIOService {
 			capabilities.setCapability(ResearchDataAustralia.ANDS_SERVER_CAPABILITY, "enabled");
 		}
 		
+		// enable or disable license features
+		String license = config.getInitParameter("END_USER_LICENSE");
+		if (license != null && !license.equalsIgnoreCase("disabled")) {
+			capabilities.setCapability("END_USER_LICENSE", "enabled");
+			capabilities.setCapability("END_USER_LICENSE_SHORT_TEXT", config.getInitParameter("END_USER_LICENSE_SHORT_TEXT"));
+			capabilities.setCapability("END_USER_LICENSE_URL", config.getInitParameter("END_USER_LICENSE_URL"));
+		}	
+		
+		
+		
 		// set database capabilities
-		SPECCHIOFactory factory = new SPECCHIOFactory();
+		SPECCHIOFactory factory = new SPECCHIOFactory(getDataSourceName());
+
 		Long maxObjectSize = factory.getMaximumQuerySize() - 1024;
 		capabilities.setCapability(Capabilities.MAX_OBJECT_SIZE, maxObjectSize.toString());
 		factory.dispose();
@@ -130,12 +146,43 @@ public class SPECCHIOService {
 		return username;
 			
 	}
+
+	/**
+	 * Get the data source name associated with the request.
+	 * 
+	 * @return the data source name sent in the "Authorization" header
+	 */
+	public String getDataSourceName() {
+		
+		if (ds_name == null) {
+			
+			Cookie[] cookies = request.getCookies();
+			
+			// first cookie should contain the data source name
+			if(cookies != null && cookies.length > 0 && cookies[0].getName().equals("DataSourceName"))
+			{
+				ds_name = cookies[0].getValue();
+			}
+			else
+			{
+				ds_name = "jdbc/specchio"; // default name
+			}
+			
+		}
+		
+		return ds_name;
+			
+	}	
 	
 	
 	/**
 	 * Get the current request.
 	 * 
+<<<<<<< .merge_file_DGrXfg
+	 * @return the HttpServletRequest object for the current request
+=======
 	 * @return the HttpServletRequest object for the current reuest
+>>>>>>> .merge_file_wDkp6h
 	 */
 	public HttpServletRequest getRequest() {
 		

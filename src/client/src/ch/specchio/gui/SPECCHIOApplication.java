@@ -13,8 +13,8 @@ public class SPECCHIOApplication {
 	private static JFrame frame;
 	private static SPECCHIOApplication instance = null;
 	private SPECCHIOClient client = null;
-	public static String version = "SPECCHIO V3";
-	public static Float min_db_version = 2.2F;
+	public static String version = "SPECCHIO V3.1";
+	public static Float min_db_version = 3.1F;
 	
 	/* progress report in the operations pane */
 	static ProgressReportTextPanel p_rep = null;
@@ -132,10 +132,11 @@ public class SPECCHIOApplication {
 			   
 			   	// add connection details to the operations pane
 			   if (p_rep == null) {
-				   p_rep = new ProgressReportTextPanel("Database connection status", d.getDisplayName(false));
+				   p_rep = new ProgressReportTextPanel("Database connection status", d.getDisplayName(false, false));
 	  		  		op.add_report(p_rep);	
 			   }
-			   p_rep.set_operation("Connected as " + d.getDisplayUser() + " to:");
+			   p_rep.set_operation("Connected as " + d.getDisplayUser() + " to '" + d.getDataSourceName() + "' on:");
+			   p_rep.set_component(d.getDisplayName(false, false));
 			   
 			   try {
 				   // enable menu items appropriate for this connection

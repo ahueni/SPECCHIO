@@ -24,6 +24,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.types.Category;
+import ch.specchio.types.Instrument;
 import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.Units;
 import ch.specchio.types.attribute;
@@ -218,6 +219,7 @@ class MainMenu implements ActionListener, ItemListener {
       menu.add(menuItem);      
       public_menu_items.put(info, menuItem);
       
+      // uncomment for sandbox
 //      menuItem = new JMenuItem(test);
 //      menuItem.addActionListener(this);
 //      menu.add(menuItem);      
@@ -555,10 +557,11 @@ class MainMenu implements ActionListener, ItemListener {
          
          JButton button = new JButton();
         
-         button.setText("<html>" + SPECCHIOApplication.version + "<br>" + 
-        		 "(c) 2006-2013 by Remote Sensing Laboratories (RSL)<br>" +
-        		 "Dept of Geography, " +
-        		 "University of Zurich<br>" +
+         button.setText("<html>" + SPECCHIOApplication.version + "<br><br>" + 
+        		 "(c) 2006-2014 by Remote Sensing Laboratories (RSL)<br>" +
+        		 "Dept. of Geography, " +
+        		 "University of Zurich (CH)<br>" +
+        		 "(c) 2013-2014 by University of Wollongong (AU)<br><br>" +
         		 " For more information visit: " +
         		 "<FONT color=\"#000099\"><U>www.specchio.ch</U></FONT>" +
         		 " or <br>" +
@@ -679,15 +682,27 @@ class MainMenu implements ActionListener, ItemListener {
     	  SPECCHIOClient specchio_client = SPECCHIOApplication.getInstance().getClient();
     	  
     	  try {
-			int tax_id = specchio_client.getTaxonomyId(160, "Hemispherical-conical (CASE 8)");
+			String has_license = specchio_client.getCapability("END_USER_LICENSE");
+			
+			String short_license = specchio_client.getCapability("END_USER_LICENSE_SHORT_TEXT");
+			
 			int x = 1;
-    		  
-//    		  specchio_client.getInstrumentIds(spectrum_ids)  
-    		  
-    		  
-		} catch (SPECCHIOClientException e1) {
-			e1.printStackTrace();
+		} catch (SPECCHIOClientException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
 		}
+    	  
+//    	  try {
+//			//int tax_id = specchio_client.getTaxonomyId(160, "Hemispherical-conical (CASE 8)");
+////    		Instrument i = specchio_client.getCalibratedInstrument(22);
+////			int x = 1;
+//    		  
+////    		  specchio_client.getInstrumentIds(spectrum_ids)  
+//    		  
+//    		  
+//		} catch (SPECCHIOClientException e1) {
+//			e1.printStackTrace();
+//		}
     	  
       }
   	
