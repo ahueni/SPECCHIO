@@ -3,6 +3,8 @@ package ch.specchio.gui;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Desktop;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -10,6 +12,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -20,7 +24,9 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import au.ands.org.researchdata.ResearchDataAustralia;
 
@@ -43,6 +49,9 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 	/** server descriptor panel */
 	private ServerDescriptorPanel serverPanel;
 	
+	/** main panel of this dialog */
+	private JPanel rootPanel;
+	
 	/** button for connecting to the server */
 	private JButton connectButton;
 	
@@ -54,6 +63,8 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 	
 	/** button for cancelling the dialogue */
 	private JButton cancelButton;
+
+	private JCheckBox licenseCheckBox;
 	
 	/** button text for connecting to the server */
 	private static final String CONNECT = "Connect";
@@ -82,6 +93,10 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		"Ms."
 	};
 	
+	URI uri;
+
+	private boolean license_is_shown = false;
+	
 	
 	/**
 	 * Constructor.
@@ -100,7 +115,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		this.specchio_client = specchio_client;
 		
 		// set up the panel with a box layout
-		JPanel rootPanel = new JPanel();
+		rootPanel = new JPanel();
 		rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
 		getContentPane().add(rootPanel);
 		
@@ -206,7 +221,77 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				// enable the user input fields
 				userAccountPanel.setEnabled(true);
 				userAccountPanel.enableAndsFeatures(specchio_client.getCapability(ResearchDataAustralia.ANDS_SERVER_CAPABILITY) != null);
-				submitButton.setEnabled(true);
+				
+				
+				// add licensing box if this server holds license information
+				String has_license = specchio_client.getCapability("END_USER_LICENSE");
+				if(has_license != null && !license_is_shown )
+				{
+					license_is_shown = true; // prevents that the panel is added again when 'connect' is pressed several times
+					String short_license = specchio_client.getCapability("END_USER_LICENSE_SHORT_TEXT");
+					
+					String license_url = specchio_client.getCapability("END_USER_LICENSE_URL");
+					
+					JPanel licensePanel = new JPanel();
+					rootPanel.add(licensePanel);	
+					
+					licensePanel.setLayout(new GridBagLayout());
+					GridBagConstraints constraints = new GridBagConstraints();
+					constraints.gridx = 0;
+					constraints.gridy = 0;
+					constraints.insets = new Insets(4, 4, 4, 4);
+					constraints.anchor = GridBagConstraints.WEST;
+					
+					// add checkbox and text panel for short license text
+					licenseCheckBox = new JCheckBox("");
+					licenseCheckBox.setActionCommand("LICENSE_ACCEPTED");
+					licenseCheckBox.addActionListener(this);					
+					licensePanel.add(licenseCheckBox, constraints);
+					
+					
+					constraints.gridx++;				
+					
+					JTextArea textArea = new JTextArea(8, 40);
+					textArea.setText(short_license);
+					textArea.setLineWrap(true);
+					textArea.setWrapStyleWord(true);
+					
+					Font font = textArea.getFont();
+					float size = font.getSize() / 1.2f;
+					textArea.setFont( font.deriveFont(size) );					
+					
+					licensePanel.add(textArea, constraints);
+					
+					constraints.gridwidth = 2;
+					constraints.gridy++;
+					constraints.gridx = 0;
+					
+			        JButton button = new JButton();
+			        
+					uri = new URI(license_url);
+
+			        
+			         button.setText("<html>" + 
+			        		 " Data License: " +
+			        		 "<FONT color=\"#000099\"><U>" + license_url + "</U></FONT>" +
+			        		 " </HTML>");
+			         button.setHorizontalAlignment(SwingConstants.LEFT);
+			         button.setBorderPainted(false);
+			         button.setOpaque(false);
+			         button.setBackground(Color.WHITE);
+			         button.setToolTipText(uri.toString());
+			         button.addActionListener(new OpenUrlAction());
+			         
+			         licensePanel.add(button, constraints);					
+				}
+				else if (license_is_shown)
+				{
+					submitButton.setEnabled(false);
+				}
+				else
+				{
+					submitButton.setEnabled(true);
+				}
 				
 				// need to re-layout the dialogue since the combo box and panel sizes might have changed
 				pack();
@@ -219,6 +304,9 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 						ex
 					);
 				error.setVisible(true);
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			endOperation();
 			
@@ -363,7 +451,21 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			
 			setVisible(false);
 			
+		} else if ("LICENSE_ACCEPTED".equals(event.getActionCommand())) {
+			
+			if(licenseCheckBox.isSelected())
+			{
+				submitButton.setEnabled(true);
+			}
+			else
+			{
+				submitButton.setEnabled(false);
+			}
+			
+			
 		}
+		
+		
 		
 	}
 	
@@ -445,7 +547,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		private AndsInformationPanel andsInformationPanel;
 		
 		/** is the ANDS information panel displayed? */
-		private boolean andsInformationDisplayed;
+		private boolean andsInformationDisplayed = true;
 		
 		
 		/**
@@ -812,5 +914,20 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		}
 		
 	}
+	
+	
+	   private static void open(URI uri) {
+		    if (Desktop.isDesktopSupported()) {
+		      try {
+		        Desktop.getDesktop().browse(uri);
+		      } catch (IOException e) { /* TODO: error handling */ }
+		    } else { /* TODO: error handling */ }
+		  }   
+
+	   class OpenUrlAction implements ActionListener {
+		      @Override public void actionPerformed(ActionEvent e) {
+		        open(uri);
+		      }
+		    }	
 
 }
