@@ -401,6 +401,7 @@ public interface SPECCHIOClient {
 	public int getHierarchyId(Campaign campaign, String name, int parent_id) throws SPECCHIOClientException;
 
 	
+	
 	/**
 	 * Get the parent_id for a given hierarchy_id
 	 * 
@@ -714,6 +715,20 @@ public interface SPECCHIOClient {
 	 * @returns an array of SpectrumDataLink objects
 	 */
 	public SpectrumDataLink[] getTargetReferenceLinks(ArrayList<Integer> target_ids, ArrayList<Integer> reference_ids) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Get the identifier of a sub-hierarchy with a given name, creating the
+	 * hierarchy if it doesn't exist.
+	 * 
+	 * @param campaign	the campaign into which to insert the hierarchy
+	 * @param parent_id			the identifier of the the parent of the hierarchy
+	 * @param hierarchy_name	the name of the desired hierarchy
+	 * 
+	 * @return the identifier of the child of parent_id with the name hierarchy_name
+	 */
+	public int getSubHierarchyId(Campaign campaign, String name, int parent_id) throws SPECCHIOClientException;
+	
 	
 		
 	/**

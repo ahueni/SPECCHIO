@@ -53,16 +53,16 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SpectralFileFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public SpectralFileFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password);
+		super(db_user, db_password, ds_name);
 		
 	}
 	
 	
-	public SpectralFileFactory() throws SPECCHIOFactoryException {
+	public SpectralFileFactory(String ds_name) throws SPECCHIOFactoryException {
 
-		super();
+		super(ds_name);
 		
 	}
 	
@@ -78,9 +78,9 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SpectralFileFactory(String db_user, String db_password, String campaign_type, int campaign_id) throws SPECCHIOFactoryException {
+	public SpectralFileFactory(String db_user, String db_password, String ds_name, String campaign_type, int campaign_id) throws SPECCHIOFactoryException {
 		
-		this(db_user, db_password);
+		this(db_user, db_password, ds_name);
 		
 		// save campaign information for later
 		campaign_factory = CampaignFactory.getInstance(this, campaign_type);
@@ -147,13 +147,13 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * hierarchy if it doesn't exist.
 	 * 
 	 * @param parent_id			the identifier of the the parent of the hierarchy
-	 * @param hierarchy_name	the name of the desired heirarchy
+	 * @param hierarchy_name	the name of the desired hierarchy
 	 * 
 	 * @return the identifier of the child of parent_id with the name hierarchy_name
 	 *
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	private int getSubHierarchyId(int parent_id, String hierarchy_name) throws SPECCHIOFactoryException {
+	public int getSubHierarchyId(int parent_id, String hierarchy_name) throws SPECCHIOFactoryException {
 		
 		// see if the node already exists
 		int sub_hierarchy_id = campaign_factory.getHierarchyNodeId(campaign.getId(), hierarchy_name, parent_id);
@@ -940,7 +940,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				if(file_format_id == -1)
 				{
 					// add new file format to DB
-					SpectralFileFactory sff = new SpectralFileFactory(); // connects as admin
+					SpectralFileFactory sff = new SpectralFileFactory(getSourceName()); // connects as admin
 					file_format_id = sff.addFileFormat(spec_file);
 				}
 				

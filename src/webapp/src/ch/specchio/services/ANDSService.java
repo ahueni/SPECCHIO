@@ -35,11 +35,11 @@ public class ANDSService extends SPECCHIOService {
 		String andsXMLFileLocation = getRequest().getServletContext().getInitParameter("ANDSXMLFileLocation");
 		
 		andsPartyExport = new ANDSPartyExport();
-		andsPartyExport.initialize( getClientUsername(), getClientPassword(), andsXMLFileLocation);
+		andsPartyExport.initialize( getClientUsername(), getClientPassword(), getDataSourceName(), andsXMLFileLocation);
 		andsPartyExport.exportPartyXML( collection_d);
 
 		andsCollectionExport = new ANDSCollectionExport();
-		andsCollectionExport.initialize( getClientUsername(), getClientPassword(), andsXMLFileLocation);
+		andsCollectionExport.initialize( getClientUsername(), getClientPassword(), getDataSourceName(), andsXMLFileLocation);
 		try {
 			collectionId = andsCollectionExport.exportCollectionXML( collection_d);
 		} catch (MetaParameterFormatException e) {

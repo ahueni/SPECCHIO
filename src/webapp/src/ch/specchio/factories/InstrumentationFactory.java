@@ -53,15 +53,15 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public InstrumentationFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public InstrumentationFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password);
+		super(db_user, db_password, ds_name);
 		
 	}
 	
 	
-	public InstrumentationFactory() throws SPECCHIOFactoryException {
-		super();
+	public InstrumentationFactory(String ds_name) throws SPECCHIOFactoryException {
+		super(ds_name);
 	}
 
 

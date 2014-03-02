@@ -60,11 +60,11 @@ public class ANDSCollectionExport {
 	private File andsCollectionFile;
 //	private FileReader andsFileReader;
 	
-	public void initialize( String dbUser, String dbPassword, String _andsXMLFileLocation) {
+	public void initialize( String dbUser, String dbPassword, String dataSourceName, String _andsXMLFileLocation) {
 		try {
-			userFactory = new UserFactory( dbUser, dbPassword);
-			specchioCampaignFactory = new SpecchioCampaignFactory(dbUser, dbPassword);
-			metadataFactory = new MetadataFactory(dbUser, dbPassword);
+			userFactory = new UserFactory( dbUser, dbPassword, dataSourceName);
+			specchioCampaignFactory = new SpecchioCampaignFactory(dbUser, dbPassword, dataSourceName);
+			metadataFactory = new MetadataFactory(dbUser, dbPassword, dataSourceName);
 			eavDBServices = new EAVDBServices( userFactory.getStatementBuilder() , userFactory.getAttributes(), userFactory.getDatabaseUserName());
 			andsXMLFileLocation = _andsXMLFileLocation;
 		} catch (SPECCHIOFactoryException e) {

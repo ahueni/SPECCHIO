@@ -48,11 +48,11 @@ public class ANDSPartyExport {
 	private File andsPartyFile;
 //	private FileReader andsFileReader;
 	
-	public void initialize( String dbUser, String dbPassword, String _andsXMLFileLocation) {
+	public void initialize( String dbUser, String dbPassword, String dataSourceName, String _andsXMLFileLocation) {
 		try {
-			userFactory = new UserFactory( dbUser, dbPassword);
-			metadataFactory = new MetadataFactory(dbUser, dbPassword);
-			specchioCampaignFactory = new SpecchioCampaignFactory(dbUser, dbPassword);
+			userFactory = new UserFactory( dbUser, dbPassword, dataSourceName);
+			metadataFactory = new MetadataFactory(dbUser, dbPassword, dataSourceName);
+			specchioCampaignFactory = new SpecchioCampaignFactory(dbUser, dbPassword, dataSourceName);
 			andsXMLFileLocation = _andsXMLFileLocation;
 			//setANDSPartyFilenameDir( andsXMLFileLocation);
 		} catch (SPECCHIOFactoryException e) {

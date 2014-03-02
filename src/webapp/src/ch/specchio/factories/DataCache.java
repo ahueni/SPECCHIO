@@ -28,6 +28,7 @@ import ch.specchio.types.SpectralFile;
 
 public class DataCache {
 	
+	String datasource_name;
 	SQL_StatementBuilder SQL;
 	
 	ArrayList<Calibration> calibrations;
@@ -42,9 +43,10 @@ public class DataCache {
 	
 	
 	
-	public DataCache(SQL_StatementBuilder SQL) throws SQLException
+	public DataCache(SQL_StatementBuilder SQL, String datasource_name) throws SQLException
 	{
 		this.SQL = SQL;
+		this.datasource_name = datasource_name;
 		load_cache();
 	}
 	
@@ -538,7 +540,7 @@ public class DataCache {
 
 				// connect to DB as admin to insert a new instrument
 
-				InstrumentationFactory factory = new InstrumentationFactory();
+				InstrumentationFactory factory = new InstrumentationFactory(datasource_name);
 
 				instr = new Instrument();
 
@@ -1007,7 +1009,7 @@ public class DataCache {
 			
 			
 			// TODO Insert Sensor
-			InstrumentationFactory factory = new InstrumentationFactory();
+			InstrumentationFactory factory = new InstrumentationFactory(datasource_name);
 			
 			s = new Sensor();
 			

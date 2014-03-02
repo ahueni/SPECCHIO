@@ -29,10 +29,11 @@ public interface SPECCHIOServerDescriptor {
 	 * Get the display name of this server.
 	 * 
 	 * @param showUser	include the user account details in the display?
+	 * @param show_datasource_name	include the JNDI details in the display?
 	 * 
 	 * @return a string describing the server, suitable for display to the user
 	 */
-	public String getDisplayName(boolean showUser);
+	public String getDisplayName(boolean showUser, boolean show_datasource_name);
 	
 	
 	/**
@@ -41,6 +42,13 @@ public interface SPECCHIOServerDescriptor {
 	 * @return a string describing the user account under which this client is to log in
 	 */
 	public String getDisplayUser();
+	
+	/**
+	 * Get a name of the datasource (JNDI).
+	 * 
+	 * @return a string holding the name of the datasource (JNDI)
+	 */
+	public String getDataSourceName();	
 	
 	
 	/**

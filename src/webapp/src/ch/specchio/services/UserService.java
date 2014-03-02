@@ -30,7 +30,7 @@ public class UserService extends SPECCHIOService {
 	@Path("list")
 	public User[] list() throws SPECCHIOFactoryException {
 		
-		UserFactory factory = new UserFactory(getClientUsername(), getClientPassword());
+		UserFactory factory = new UserFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		User users[] = factory.getUsers();
 		factory.dispose();
 		
@@ -51,7 +51,7 @@ public class UserService extends SPECCHIOService {
 	@Path("login")
 	public User login() throws SPECCHIOFactoryException {
 		
-		UserFactory factory = new UserFactory(getClientUsername(), getClientPassword());
+		UserFactory factory = new UserFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		User user = factory.getUser(getClientUsername());
 		factory.dispose();
 		
@@ -103,7 +103,7 @@ public class UserService extends SPECCHIOService {
 			}
 		}
 		
-		UserFactory factory = new UserFactory(getClientUsername(), getClientPassword());
+		UserFactory factory = new UserFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.updateUser(user);
 		factory.dispose();
 		

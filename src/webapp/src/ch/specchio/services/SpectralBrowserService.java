@@ -46,7 +46,7 @@ public class SpectralBrowserService extends SPECCHIOService {
 		
 		SpectralBrowserFactory factory = new SpectralBrowserFactory(
 				getClientUsername(),
-				getClientPassword()
+				getClientPassword(), getDataSourceName()
 			);
 		campaign_node node = factory.getCampaignNode(Integer.valueOf(campaign_id), Boolean.valueOf(restrict_to_view), order_by);
 		factory.dispose();
@@ -73,7 +73,7 @@ public class SpectralBrowserService extends SPECCHIOService {
 		
 		SpectralBrowserFactory factory = new SpectralBrowserFactory(
 				getClientUsername(),
-				getClientPassword()
+				getClientPassword(), getDataSourceName()
 			);
 		List<spectral_node_object> nodes = factory.getChildNodes(node);
 		factory.dispose();
@@ -103,7 +103,7 @@ public class SpectralBrowserService extends SPECCHIOService {
 		
 		SpectralBrowserFactory factory = new SpectralBrowserFactory(
 				getClientUsername(),
-				getClientPassword()
+				getClientPassword(), getDataSourceName()
 			);
 		database_node node = factory.getDatabaseNode(order_by, Boolean.valueOf(restrict_to_view));
 		factory.dispose();
@@ -130,7 +130,7 @@ public class SpectralBrowserService extends SPECCHIOService {
 		
 		SpectralBrowserFactory factory = new SpectralBrowserFactory(
 				getClientUsername(),
-				getClientPassword()
+				getClientPassword(), getDataSourceName()
 			);
 		
 		int parent_id = factory.getHierarchyParentId(hierarchy_id);
@@ -159,7 +159,7 @@ public class SpectralBrowserService extends SPECCHIOService {
 		
 		SpectralBrowserFactory factory = new SpectralBrowserFactory(
 				getClientUsername(),
-				getClientPassword()
+				getClientPassword(), getDataSourceName()
 			);
 		List<Integer> ids = factory.getDescendentSpectrumIds(node);
 		factory.dispose();

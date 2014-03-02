@@ -1094,6 +1094,9 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.getSpectrumQueryCount(query);
 		
 	}	
+	
+	
+	
 	/**
 	 * Get the spectrum data links that refer to a given set of targets and/or references.
 	 * 
@@ -1107,6 +1110,23 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.getTargetReferenceLinks(target_ids, reference_ids);
 		
 	}
+	
+	/**
+	 * Get the identifier of a sub-hierarchy with a given name, creating the
+	 * hierarchy if it doesn't exist.
+	 * 
+	 * @param campaign	the campaign into which to insert the hierarchy
+	 * @param parent_id			the identifier of the the parent of the hierarchy
+	 * @param hierarchy_name	the name of the desired hierarchy
+	 * 
+	 * @return the identifier of the child of parent_id with the name hierarchy_name
+	 */
+	public int getSubHierarchyId(Campaign campaign, String name, int parent_id) throws SPECCHIOClientException {
+		
+		return realClient.getSubHierarchyId(campaign, name, parent_id);
+		
+	}
+	
 	
 		
 	/**

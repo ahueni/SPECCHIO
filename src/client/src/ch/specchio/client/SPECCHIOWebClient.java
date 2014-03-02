@@ -10,6 +10,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import javax.net.ssl.SSLContext;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 
 import au.ands.org.researchdata.RDACollectionDescriptor;
@@ -107,6 +108,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 
 	private Hashtable<Integer, attribute> attributes_id_hash = null;
 	private Hashtable<String, attribute> attributes_name_hash = null;
+
+	private String dataSourceName;
 	
 	/**
 	 * Construct an anonymous connection to the web application server.
@@ -115,9 +118,9 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @throws SPECCHIOClientException	invalid URL
 	 */
-	SPECCHIOWebClient(URL url) throws SPECCHIOClientException {
+	SPECCHIOWebClient(URL url, String dataSourceName) throws SPECCHIOClientException {
 		
-		this(url, null, null);
+		this(url, null, null, dataSourceName);
 		
 	}
 	
@@ -131,11 +134,12 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @throws SPECCHIOClientException	invalid URL
 	 */
-	SPECCHIOWebClient(URL url, String username, String password) throws SPECCHIOClientException {
+	SPECCHIOWebClient(URL url, String username, String password, String dataSourceName) throws SPECCHIOClientException {
 		
 		// configure member variables
 		this.url = url;
 		this.username = username;
+		this.dataSourceName = dataSourceName;
 		
 		// create the web services client configuration
 		ClientConfig config = new DefaultClientConfig();
@@ -1102,7 +1106,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 				url.getProtocol(),
 				url.getHost(),
 				url.getPort(),
-				url.getPath()
+				url.getPath(),
+				dataSourceName
 			);
 		if (user != null) {
 			d.setUser(user);
@@ -1881,6 +1886,30 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return path.toString();
 		
 	}
+	
+	
+	/**
+	 * Get web resource builder with cookie for data source
+	 * 
+	 * @param service	the service name
+	 * @param method	the service method
+	 * @param args		the service arguments
+	 * 
+	 * @return builder for this web resource, including a cookie stating the requested data source
+	 */
+	private WebResource.Builder getWRBuilder(String service, String method, String ... args) {
+		
+		WebResource wr = web_service.path(buildPath(service, method, args));
+		Cookie cookie = new Cookie("DataSourceName", dataSourceName);
+		
+		WebResource.Builder builder = wr.cookie(cookie);
+		
+//		ConsumerCredentials consumerCredentials = new ConsumerCredentials(user.getUsername(), user.getPassword());
+//		
+//		OAuth1AuthorizationFlow authFlow = OAuth1ClientSupport.builder(consumerCredentials);
+
+		return builder;
+	}	
 
 
 	/**
@@ -1901,7 +1930,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 			// get the array class
 			Class<?> arrayClass = Array.newInstance(objectClass, 0).getClass();
 
-			return (T[]) web_service.path(buildPath(service, method, args)).accept(MediaType.APPLICATION_XML).get(arrayClass);
+			return (T[]) getWRBuilder(service, method, args).accept(MediaType.APPLICATION_XML).get(arrayClass);
 			
 		}
 		catch (UniformInterfaceException ex) {
@@ -1929,7 +1958,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private InputStream getInputStream(String service, String method, String ... args) throws SPECCHIOWebClientException {
 		
 		try {
-			ClientResponse response = web_service.path(buildPath(service, method, args)).accept(MediaType.APPLICATION_OCTET_STREAM).get(ClientResponse.class);
+			ClientResponse response = getWRBuilder(service, method, args).accept(MediaType.APPLICATION_OCTET_STREAM).get(ClientResponse.class);
 			if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
 				throw new ClientHandlerException(
 					web_service.path(buildPath(service, method, args)) +
@@ -1966,7 +1995,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private Integer getInteger(String service, String method, String ... args) throws SPECCHIOWebClientException {
 		
 		try {
-			return web_service.path(buildPath(service, method, args)).accept(MediaType.APPLICATION_XML).get(XmlInteger.class).getInteger();
+			return getWRBuilder(service, method, args).accept(MediaType.APPLICATION_XML).get(XmlInteger.class).getInteger();
 			
 		}
 		catch (UniformInterfaceException ex) {
@@ -1995,7 +2024,15 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private <T> T getObject(Class<? extends T> objectClass, String service, String method, String ... args) throws SPECCHIOWebClientException {
 		
 		try {
-			return web_service.path(buildPath(service, method, args)).accept(MediaType.APPLICATION_XML).get(objectClass);
+			
+//			WebResource wr = web_service.path(buildPath(service, method, args));
+//			Cookie cookie = new Cookie("DataSourceName", "jdbc/specchio");
+//			
+//			builder = wr.cookie(cookie);
+
+			//return web_service.path(buildPath(service, method, args)).accept(MediaType.APPLICATION_XML).get(objectClass);
+			
+			return getWRBuilder(service, method, args).accept(MediaType.APPLICATION_XML).get(objectClass);
 			
 		}
 		catch (UniformInterfaceException ex) {
@@ -2023,7 +2060,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private String getString(String service, String method, String ... args) throws SPECCHIOWebClientException {
 		
 		try {
-			return web_service.path(buildPath(service, method, args)).accept(MediaType.APPLICATION_XML).get(String.class);
+			return getWRBuilder(service, method, args).accept(MediaType.APPLICATION_XML).get(String.class);
 			
 		}
 		catch (UniformInterfaceException ex) {
@@ -2036,6 +2073,25 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		}
 		
 	}
+	
+	/**
+	 * Get the identifier of a sub-hierarchy with a given name, creating the
+	 * hierarchy if it doesn't exist.
+	 * 
+	 * @param campaign	the campaign into which to insert the hierarchy
+	 * @param parent_id			the identifier of the the parent of the hierarchy
+	 * @param hierarchy_name	the name of the desired hierarchy
+	 * 
+	 * @return the identifier of the child of parent_id with the name hierarchy_name
+	 */
+	public int getSubHierarchyId(Campaign campaign, String name, int parent_id) throws SPECCHIOClientException {
+		
+		return getInteger(
+				"campaign", "getSubHierarchyId",
+				"specchio", Integer.toString(campaign.getId()), Integer.toString(parent_id), name
+			);
+		
+	}	
 	
 	
 	/**
@@ -2056,7 +2112,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 			// get the array class
 			Class<?> arrayClass = Array.newInstance(objectClass, 0).getClass();
 
-			return (T[]) web_service.path(buildPath(service, method)).accept(MediaType.APPLICATION_XML).post(arrayClass, arg);
+			return (T[]) getWRBuilder(service, method).accept(MediaType.APPLICATION_XML).post(arrayClass, arg);
 			
 		}
 		catch (UniformInterfaceException ex) {
@@ -2084,7 +2140,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private Boolean postForBoolean(String service, String method, Object arg) throws SPECCHIOWebClientException {
 
 		try {
-			return web_service.path(buildPath(service, method)).accept(MediaType.APPLICATION_XML).post(XmlBoolean.class, arg).getBoolean();
+			return getWRBuilder(service, method).accept(MediaType.APPLICATION_XML).post(XmlBoolean.class, arg).getBoolean();
 			
 		}
 		catch (UniformInterfaceException ex) {
@@ -2187,7 +2243,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private Integer postForInteger(String service, String method, Object arg) throws SPECCHIOWebClientException {
 
 		try {
-			return web_service.path(buildPath(service, method)).accept(MediaType.APPLICATION_XML).post(XmlInteger.class, arg).getInteger();
+			return getWRBuilder(service, method).accept(MediaType.APPLICATION_XML).post(XmlInteger.class, arg).getInteger();
 		}
 		catch (UniformInterfaceException ex) {
 			// could represent any kind of HTTP error
@@ -2215,7 +2271,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private <T> T postForObject(Class<? extends T> objectClass, String service, String method, Object arg) throws SPECCHIOWebClientException {
 		
 		try {
-			return web_service.path(buildPath(service, method)).accept(MediaType.APPLICATION_XML).post(objectClass, arg);
+			return getWRBuilder(service, method).accept(MediaType.APPLICATION_XML).post(objectClass, arg);
 		}
 		catch (UniformInterfaceException ex) {
 			// could represent any kind of HTTP error
@@ -2242,7 +2298,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private String postForString(String service, String method, Object arg) throws SPECCHIOWebClientException {
 
 		try {
-			return web_service.path(buildPath(service, method)).accept(MediaType.APPLICATION_XML).post(String.class, arg);
+			return getWRBuilder(service, method).accept(MediaType.APPLICATION_XML).post(String.class, arg);
 		}
 		catch (UniformInterfaceException ex) {
 			// could represent any kind of HTTP error
@@ -2268,7 +2324,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private void postInputStream(InputStream is, String service, String method, String ... args) throws SPECCHIOWebClientException {
 		
 		try {
-			ClientResponse response = web_service.path(buildPath(service, method, args)).entity(is).post(ClientResponse.class);
+			ClientResponse response = getWRBuilder(service, method, args).entity(is).post(ClientResponse.class);
 			if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
 				throw new ClientHandlerException(
 					web_service.path(buildPath(service, method, args)) +

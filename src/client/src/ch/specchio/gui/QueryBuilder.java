@@ -734,9 +734,20 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      if ("Test".equals(e.getActionCommand()))
 	      {
 	    	  try {
-				ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
+				// ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
+	    		  Spectrum s = specchio_client.getSpectrum(ids_matching_query.get(0), false);
+	    		  int current_hierarchy_id = s.getHierarchyLevelId();
+	    		  int first_parent_id = specchio_client.getHierarchyParentId(current_hierarchy_id);
+	    		  
+	    		
+				Campaign campaign = specchio_client.getCampaign(s.getCampaignId());
+				
+				specchio_client.getSubHierarchyId(campaign, "Reflectance", first_parent_id);
 				
 			} catch (SPECCHIOWebClientException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (SPECCHIOClientException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}	    	  

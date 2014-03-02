@@ -22,6 +22,9 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 	
 	/** database password */
 	private String password;
+	
+	/** datasource name (JNDI) */
+	private String dataSourceName;
 	   
 	
 	/**
@@ -33,11 +36,12 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 	 * @param user		the username
 	 * @param password	the password
 	 */
-	public SPECCHIODatabaseDescriptor(String server, int port, String schema, String user, String password) {
+	public SPECCHIODatabaseDescriptor(String server, int port, String schema, String dataSourceName, String user, String password) {
 		
 		this.server = server;
 		this.port = port;
 		this.schema = schema;
+		this.dataSourceName = dataSourceName;
 		this.user = user;
 		this.password = password;
 		
@@ -53,11 +57,12 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 	 * @param user		the username
 	 * @param password	the password
 	 */
-	public SPECCHIODatabaseDescriptor(String server, int port, String schema) {
+	public SPECCHIODatabaseDescriptor(String server, int port, String schema, String dataSourceName) {
 		
 		this.server = server;
 		this.port = port;
 		this.schema = schema;
+		this.dataSourceName = dataSourceName;
 		
 	}
 	
@@ -116,7 +121,8 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 			port + ", " +
 			schema + ", " +
 			user + ", " +
-			password;
+			password + ", " +
+			dataSourceName;
 		
 	}
 
@@ -140,9 +146,9 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 	 * 
 	 * @return a string describing the server, suitable for display to the user
 	 */
-	public String getDisplayName(boolean showUser) {
+	public String getDisplayName(boolean showUser, boolean show_datasource_name) {
 		
-		return "jdbc:mysql://" + (showUser ? user + "@" : "") + server + ":" + port + "/" + schema;
+		return "jdbc:mysql://" + (showUser ? user + "@" : "") + server + ":" + port + "/" + schema + "@" + dataSourceName;
 		
 	}
 	
@@ -212,8 +218,18 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 	 */
 	public String toString() {
 		
-		return getDisplayName(true);
+		return getDisplayName(true, true);
 		
+	}
+
+
+	public String getDataSourceName() {
+		return dataSourceName;
+	}
+
+
+	public void setDataSourceName(String dataSourceName) {
+		this.dataSourceName = dataSourceName;
 	}
 
 }

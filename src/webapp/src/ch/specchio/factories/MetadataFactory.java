@@ -37,9 +37,9 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public MetadataFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public MetadataFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password);
+		super(db_user, db_password, ds_name);
 		
 	}
 	

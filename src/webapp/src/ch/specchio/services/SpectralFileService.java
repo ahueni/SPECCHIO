@@ -38,7 +38,7 @@ public class SpectralFileService extends SPECCHIOService {
 		
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
-				getClientPassword(),
+				getClientPassword(), getDataSourceName(),
 				spec_file.getCampaignType(),
 				spec_file.getCampaignId()				
 			);
@@ -67,7 +67,7 @@ public class SpectralFileService extends SPECCHIOService {
 		
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
-				getClientPassword()
+				getClientPassword(), getDataSourceName()
 			);
 		int id = factory.getIdForFileFormat(file_format_name);
 		factory.dispose();
@@ -94,7 +94,7 @@ public class SpectralFileService extends SPECCHIOService {
 
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
-				getClientPassword(),
+				getClientPassword(), getDataSourceName(),
 				spec_file.getCampaignType(),
 				spec_file.getCampaignId()
 			);

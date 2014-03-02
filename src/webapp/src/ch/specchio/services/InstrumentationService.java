@@ -44,7 +44,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String delete(@PathParam("instrument_id") int instrument_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.deleteInstrument(instrument_id);
 		factory.dispose();
 		
@@ -66,7 +66,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String deleteCalibration(@PathParam("calibration_id") int calibration_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.deleteCalibration(calibration_id);
 		factory.dispose();
 		
@@ -88,7 +88,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String deletePicture(@PathParam("picture_id") int picture_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.deletePicture(picture_id);
 		factory.dispose();
 		
@@ -110,7 +110,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String deleteReference(@PathParam("reference_id") int reference_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.deleteReference(reference_id);
 		factory.dispose();
 		
@@ -132,7 +132,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public Instrument get(@PathParam("instrument_id") int instrument_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		Instrument instrument = factory.getInstrument(instrument_id);
 		factory.dispose();
 		
@@ -154,7 +154,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public Instrument getCalibratedInstrument(@PathParam("calibration_id") int calibration_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		Instrument instrument = factory.getCalibratedInstrument(calibration_id);
 		factory.dispose();
 		
@@ -176,7 +176,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public CalibrationMetadata[] getInstrumentCalibrationMetadata(@PathParam("instrument_id") int instrument_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		CalibrationMetadata[] cm = factory.getInstrumentCalibrationMetadata(instrument_id);
 		factory.dispose();
 		
@@ -198,7 +198,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public PictureTable getInstrumentPictures(@PathParam("instrument_id") int instrument_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		PictureTable pictures = factory.getInstrumentPictures(instrument_id);
 		factory.dispose();
 		
@@ -219,7 +219,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public Reference getReference(@PathParam("reference_id") int reference_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		Reference reference = factory.getReference(reference_id);
 		factory.dispose();
 		
@@ -241,7 +241,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public CalibrationMetadata[] getReferenceCalibrationMetadata(@PathParam("reference_id") int reference_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		CalibrationMetadata[] cm = factory.getReferenceCalibrationMetadata(reference_id);
 		factory.dispose();
 		
@@ -264,7 +264,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public PictureTable getReferencePictures(@PathParam("reference_id") int reference_id) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		PictureTable pictures = factory.getReferencePictures(reference_id);
 		factory.dispose();
 		
@@ -285,7 +285,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String insert(@PathParam("instrument_name") String instrument_name) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.insertInstrument(instrument_name);
 		factory.dispose();
 		
@@ -308,7 +308,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String insertInstrumentCalibration(Calibration cal) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.insertInstrumentCalibration(cal);
 		factory.dispose();
 		
@@ -331,7 +331,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger insertInstrumentPicture(Picture picture) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		int picture_id = factory.insertInstrumentPicture(picture.getObjectId(), picture.getImageData(), picture.getCaption());
 		factory.dispose();
 		
@@ -354,7 +354,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String insertReference(@PathParam("reference_name") String reference_name) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.insertReference(reference_name);
 		factory.dispose();
 		
@@ -377,7 +377,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String insertReferenceCalibration(Calibration cal) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.insertReferenceCalibration(cal);
 		factory.dispose();
 		
@@ -400,7 +400,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger insertReferencePicture(Picture picture) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		int picture_id = factory.insertReferencePicture(picture.getObjectId(), picture.getImageData(), picture.getCaption());
 		factory.dispose();
 		
@@ -421,7 +421,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public InstrumentDescriptor[] list() throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		InstrumentDescriptor[] instruments = factory.getInstrumentDescriptors();
 		factory.dispose();
 		
@@ -442,7 +442,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public ReferenceBrand[] listReferenceBrands() throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		ReferenceBrand[] brands = factory.getReferenceBrands();
 		factory.dispose();
 		
@@ -465,7 +465,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public ReferenceDescriptor[] listReferences() throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		ReferenceDescriptor[] references = factory.getReferenceDescriptors();
 		factory.dispose();
 		
@@ -486,7 +486,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public Sensor[] listSensors() throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		Sensor sensors[] = factory.getSensorDescriptors();
 		factory.dispose();
 		
@@ -511,7 +511,7 @@ public class InstrumentationService extends SPECCHIOService {
 		
 		int sensor_id;
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		try {
 			sensor_id = factory.loadSensorDefinition(getRequest().getInputStream());
 		}
@@ -543,7 +543,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String update(Instrument instrument) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.updateInstrument(instrument);
 		factory.dispose();
 		
@@ -567,7 +567,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String updateCalibrationMetadata(CalibrationMetadata cm) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.updateCalibrationMetadata(cm);
 		factory.dispose();
 		
@@ -591,7 +591,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String updateInstrumentPicture(Picture picture) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.updateInstrumentPicture(picture);
 		factory.dispose();
 		
@@ -615,7 +615,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String updateReference(Reference reference) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.updateReference(reference);
 		factory.dispose();
 		
@@ -639,7 +639,7 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String updateReferencePicture(Picture picture) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword());
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.updateReferencePicture(picture);
 		factory.dispose();
 		

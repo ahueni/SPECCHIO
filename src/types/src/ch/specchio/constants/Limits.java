@@ -14,5 +14,8 @@ public class Limits {
 	
 	/** maximum length of a WWW address */
 	public static final int MAX_LEN_WWW = 250;
+	
+	/** maximum length of a user biography */
+	public static final int MAX_LEN_BIOGRAPHY = 250;
 
 }

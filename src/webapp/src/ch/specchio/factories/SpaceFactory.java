@@ -43,9 +43,9 @@ public class SpaceFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SpaceFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public SpaceFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password);
+		super(db_user, db_password, ds_name);
 		
 	}
 	

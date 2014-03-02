@@ -12,6 +12,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.factories.CampaignFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
+import ch.specchio.factories.SpectralFileFactory;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.types.Campaign;
 
@@ -208,6 +209,44 @@ public class CampaignService extends SPECCHIOService {
 		return new XmlInteger(id);
 		
 	}
+	
+	/**
+	 * Get the identifier of a sub-hierarchy with a given name, creating the
+	 * hierarchy if it doesn't exist.
+	 * 
+	 * @param campaign	the campaign into which to insert the hierarchy
+	 * @param parent_id			the identifier of the the parent of the hierarchy
+	 * @param hierarchy_name	the name of the desired hierarchy
+	 * 
+	 * @return the identifier of the child of parent_id with the name hierarchy_name
+	 *
+	 * @throws SPECCHIOFactoryException
+	 */
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("getSubHierarchyId/{campaign_type}/{campaign_id: [0-9]+}/{parent_id: [0-9]+}/{hierarchy_name}")	
+	public XmlInteger getSubHierarchyId(
+			@PathParam("campaign_type") String campaign_type,
+			@PathParam("campaign_id") int campaign_id,			
+			@PathParam("parent_id") int parent_id,
+			@PathParam("hierarchy_name") String hierarchy_name
+			) throws SPECCHIOFactoryException {
+		
+		SpectralFileFactory factory = new SpectralFileFactory(
+				getClientUsername(),
+				getClientPassword(),
+				getDataSourceName(),
+				campaign_type,
+				campaign_id
+			);		
+		
+		int id = factory.getSubHierarchyId(parent_id, hierarchy_name);
+		
+		factory.dispose();
+		
+		return new XmlInteger(id);		
+	}
+	
 	
 	
 	/**

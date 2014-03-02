@@ -31,9 +31,9 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public SpecchioCampaignFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public SpecchioCampaignFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 		
-		super(db_user, db_password);
+		super(db_user, db_password, ds_name);
 		
 	}
 	

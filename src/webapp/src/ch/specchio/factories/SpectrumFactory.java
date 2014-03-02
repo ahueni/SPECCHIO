@@ -52,9 +52,9 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public SpectrumFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public SpectrumFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password);
+		super(db_user, db_password, ds_name);
 		
 		MF = new MetadataFactory(this);
 		

@@ -30,6 +30,9 @@ public abstract class ServerDescriptorPanel extends JPanel {
 	/* port number field */
 	private JTextField port_field;
 	
+	private JTextField datasource_name_field;	
+	
+	
 	/** username field */
 	private JTextField user_field;
 	
@@ -54,7 +57,7 @@ public abstract class ServerDescriptorPanel extends JPanel {
 	 * @param app		the server descriptor with which to initialise the panel (may be null)
 	 * @param anonymous	if true, do not display the username and password fields
 	 */
-	protected ServerDescriptorPanel(SPECCHIOServerDescriptor app, String server_label, String path_label, boolean anonymous)
+	protected ServerDescriptorPanel(SPECCHIOServerDescriptor app, String server_label, String path_label, String datasource_name_label, boolean anonymous)
 	{
 	  	super();
 		   	
@@ -90,6 +93,15 @@ public abstract class ServerDescriptorPanel extends JPanel {
 		path_field = new JTextField(field_length);   
 		constraints.gridx = 1;	
 		l.insertComponent(path_field, constraints);
+		
+		constraints.gridx = 0;
+		constraints.gridy++;
+		l.insertComponent(new JLabel(datasource_name_label), constraints);		
+		
+		datasource_name_field = new JTextField(field_length);   
+		constraints.gridx = 1;	
+		l.insertComponent(datasource_name_field, constraints);		
+		
 		
 		if (!anonymous) {
 			
@@ -166,6 +178,17 @@ public abstract class ServerDescriptorPanel extends JPanel {
 	
 	
 	/**
+	 * Get the contents of the data source name field.
+	 * 
+	 * @return the contents of the data source name field
+	 */
+	public String getDataSourceName() {
+		
+		return datasource_name_field.getText();
+		
+	}	
+	
+	/**
 	 * Get the contents of the server name field.
 	 * 
 	 * @return the contents of the server name field
@@ -199,6 +222,18 @@ public abstract class ServerDescriptorPanel extends JPanel {
 		return anonymous;
 		
 	}
+	
+	
+	/**
+	 * Set the contents of the path field.
+	 * 
+	 * @param	the path
+	 */
+	public void setDataSourceName(String dataSourceName) {
+		
+		datasource_name_field.setText(dataSourceName);
+		
+	}	
 	
 	
 	/**
@@ -296,7 +331,7 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
     */
    public WebAppDescriptorPanel(SPECCHIOWebAppDescriptor app, boolean anonymous)
    {
-	   	super(app, "Web Application Server", "Application Path", anonymous);
+	   	super(app, "Web Application Server", "Application Path", "Data Source Name", anonymous);
    }
    
    
@@ -326,14 +361,16 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 				port,
 				getPath(),
 				getUsername(),
-				getPassword()
+				getPassword(),
+				getDataSourceName()
 			);
 		} else {
 			return new SPECCHIOWebAppDescriptor(
 				(protocol != null) ? protocol : "https",
 				getServerName(),
 				port,
-				getPath()
+				getPath(),
+				getDataSourceName()
 			);
 		}
 		   
@@ -353,6 +390,7 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 		   setServerName(app.getServer());
 		   setPath(app.getPath());
 		   setPort(app.getPort());
+		   setDataSourceName(app.getDataSourceName());
 		   if (!isAnonymous()) {
 			   setUsername(app.getDisplayUser());
 			   setPassword(app.getPassword());
@@ -362,6 +400,7 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 		   setServerName(null);
 		   setPath(null);
 		   setPort(0);
+		   setDataSourceName(null);
 		   if (!isAnonymous()) {
 			   setUsername(null);
 			   setPassword(null);
@@ -390,7 +429,7 @@ class DatabaseDescriptorPanel extends ServerDescriptorPanel
 	 */
 	public DatabaseDescriptorPanel(SPECCHIODatabaseDescriptor app, boolean anonymous)
 	{
-	  	super(app, "Database Hostname", "Database Schema Name", anonymous);
+	  	super(app, "Database Hostname", "Database Schema Name", "Data Source Name", anonymous);
 			   
 	}
 	   
@@ -420,13 +459,15 @@ class DatabaseDescriptorPanel extends ServerDescriptorPanel
 				port,
 				getPath(),
 				getUsername(),
-				getPassword()
+				getPassword(),
+				getDataSourceName()
 			);
 		} else {
 			return new SPECCHIODatabaseDescriptor(
 				getServerName(),
 				port,
-				getPath()
+				getPath(),
+				getDataSourceName()
 			);
 		}
 		   
@@ -445,6 +486,7 @@ class DatabaseDescriptorPanel extends ServerDescriptorPanel
 		   setServerName(app.getServer());
 		   setPath(app.getDatabaseName());
 		   setPort(app.getPort());
+		   setDataSourceName(app.getDataSourceName());
 		   if (!isAnonymous()) {
 			   setUsername(app.getDisplayUser());
 			   setPassword(app.getPassword());
@@ -453,6 +495,7 @@ class DatabaseDescriptorPanel extends ServerDescriptorPanel
 		   setServerName(null);
 		   setPath(null);
 		   setPort(0);
+		   setDataSourceName(null);
 		   if (!isAnonymous()) {
 			   setUsername(null);
 			   setPassword(null);

@@ -32,6 +32,9 @@ public class User {
 	/** WWW address */
 	private String www;
 	
+	/** description */
+	private String description;
+	
 	/** institute */
 	private Institute inst;
 	
@@ -64,8 +67,13 @@ public class User {
 		this.role = other.role;
 		this.inst = new Institute(other.inst);
 		this.externalId = other.externalId;
+		this.description = other.description;
 	}
 	
+	
+	@XmlElement(name="description")
+	public String getDescription() { return this.description; }
+	public void setDescription(String description) { this.description = description; }
 	
 	@XmlElement(name="email")
 	public String getEmailAddress() { return this.email; }

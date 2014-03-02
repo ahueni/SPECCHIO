@@ -62,7 +62,7 @@ public class PublicService extends SPECCHIOService {
 		}
 		
 		// create a user factory to do the work
-		UserFactory factory = new UserFactory();
+		UserFactory factory = new UserFactory(getDataSourceName());
 		try {
 		
 			// create the account
@@ -106,7 +106,7 @@ public class PublicService extends SPECCHIOService {
 	@Path("insertInstitute")
 	public XmlInteger insertInstitute(Institute institute) throws SPECCHIOFactoryException {
 		
-		UserFactory factory = new UserFactory();
+		UserFactory factory = new UserFactory(getDataSourceName());
 		int institute_id = factory.insertInstitute(institute);
 		factory.dispose();
 		
@@ -127,7 +127,7 @@ public class PublicService extends SPECCHIOService {
 	@Path("listCountries")
 	public Country[] listCountries() throws SPECCHIOFactoryException {
 		
-		UserFactory factory = new UserFactory();
+		UserFactory factory = new UserFactory(getDataSourceName());
 		Country countries[] = factory.getCountries();
 		factory.dispose();
 		
@@ -148,7 +148,7 @@ public class PublicService extends SPECCHIOService {
 	@Path("listInstitutes")
 	public Institute[] listInstitutes() throws SPECCHIOFactoryException {
 		
-		UserFactory factory = new UserFactory();
+		UserFactory factory = new UserFactory(getDataSourceName());
 		Institute institutes[] = factory.getInstitutes();
 		factory.dispose();
 		

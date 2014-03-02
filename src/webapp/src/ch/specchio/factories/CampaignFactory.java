@@ -21,9 +21,9 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public CampaignFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public CampaignFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 		
-		super(db_user, db_password);
+		super(db_user, db_password, ds_name);
 		
 	}
 	
@@ -87,7 +87,7 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	public static CampaignFactory getInstance(String db_user, String db_password, String type) throws SPECCHIOFactoryException {
 		
 		if ("specchio".equals(type)) {
-			return new SpecchioCampaignFactory(db_user, db_password);
+			return new SpecchioCampaignFactory(db_user, db_password, datasource_name);
 		} else {
 			throw new SPECCHIOFactoryException("Unknown campaign type \"" + type + "\".");
 		}

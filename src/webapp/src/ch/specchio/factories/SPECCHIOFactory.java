@@ -24,6 +24,9 @@ public class SPECCHIOFactory {
 	/** the suffix used for the name of the temporary database */
 	private static final String TEMP_DATABASE_SUFFIX = "_temp";
 	
+	/** the data source name */
+	protected static String datasource_name = null;	
+	
 	/** the data source */
 	private static DataSource ds = null;
 	
@@ -60,11 +63,12 @@ public class SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SPECCHIOFactory() throws SPECCHIOFactoryException {
+	public SPECCHIOFactory(String ds_name) throws SPECCHIOFactoryException {
 		
 		try {
 			// set up database connection
-			init(getDataSource().getConnection());
+			SPECCHIOFactory.datasource_name = ds_name;
+			init(getDataSource(ds_name).getConnection());
 			this.my_conn = true;
 		}
 		catch (SQLException ex) {
@@ -76,18 +80,19 @@ public class SPECCHIOFactory {
 	
 	
 	/**
-	 * Construct a factory using a specific suer's connection to the database.
+	 * Construct a factory using a specific user's connection to the database.
 	 * 
 	 * @param db_user		database account user name
 	 * @param db_password	database account password
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SPECCHIOFactory(String db_user, String db_password) throws SPECCHIOFactoryException {
+	public SPECCHIOFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 		
 		try {
 			// set up database connection
-			init(getDataSource().getConnection(db_user, db_password));
+			SPECCHIOFactory.datasource_name = ds_name;
+			init(getDataSource(ds_name).getConnection(db_user, db_password));
 			this.my_conn = true;
 		}
 		catch (SQLException ex) {
@@ -126,7 +131,7 @@ public class SPECCHIOFactory {
 			
 			try {
 				// get an SQL statement builder using the default connection to the database
-				Connection conn = getDataSource().getConnection();
+				Connection conn = getDataSource(datasource_name).getConnection();
 				SQL_StatementBuilder sql = new SQL_StatementBuilder(conn);
 			
 				if (SPECCHIOFactory.attr == null) {
@@ -136,7 +141,7 @@ public class SPECCHIOFactory {
 				
 				if (SPECCHIOFactory.cache == null) {
 					// construct and populate the data cache
-					SPECCHIOFactory.cache = new DataCache(sql);
+					SPECCHIOFactory.cache = new DataCache(sql, datasource_name);
 				}
 				
 				// close the connection
@@ -277,18 +282,18 @@ public class SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish the initial context
 	 */
-	private static DataSource getDataSource() throws SPECCHIOFactoryException {
+	private static DataSource getDataSource(String DataSource) throws SPECCHIOFactoryException {
 		
-		if (ds == null) {
+		//if (ds == null) {
 			try {
 				Context ctx = new InitialContext();
-				ds = (DataSource)ctx.lookup("jdbc/specchio");
+				ds = (DataSource)ctx.lookup(DataSource); // "jdbc/specchio_test"
 			}
 			catch (NamingException ex) {
 				// not sure what causes this
 				throw new SPECCHIOFactoryException(ex);
 			}
-		}
+		//}
 		
 		return ds;
 		
@@ -374,6 +379,18 @@ public class SPECCHIOFactory {
 		return databaseUserName;
 		
 	}
+	
+	
+	/**
+	 * Get the datasource name of the current source identifying the database to be used.
+	 * 
+	 * @return datasource name
+	 * 
+	 */
+	public String getSourceName() {
+		
+		return SPECCHIOFactory.datasource_name;		
+	}	
 	
 	
 	/**
