@@ -138,6 +138,15 @@ public class ANDSPartyExport {
 			{
 				name.setNamePartList(namePartList);
 			}
+			boolean userDescriptionBoolean = false;
+			Description description = new Description();
+//			description.setValue("My description is this description");
+			if(userSpecchio.getDescription() != null && userSpecchio.getDescription().length() > 0)
+			{
+				description.setType("brief");
+				description.setValue(userSpecchio.getDescription());
+				userDescriptionBoolean = true;
+			}
 
 			Location location = new Location();
 			Address address = new Address();
@@ -182,6 +191,10 @@ public class ANDSPartyExport {
 			if( namePartList.size() > 0 )
 			{
 				party.setName(name);
+			}
+			if(userDescriptionBoolean)
+			{
+				party.setDescription(description);
 			}
 			if(physicalAddressBoolean || emailAddressBoolean)
 			{

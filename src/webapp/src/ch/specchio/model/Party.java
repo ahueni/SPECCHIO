@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType(propOrder = { "name", "location", "relatedObject", "subjectList", "description" , "relatedInfoList" })
+@XmlType(propOrder = { "name", "description", "location", "relatedObject", "subjectList",  "relatedInfoList" })
 public class Party {
 
 	@XmlAttribute(name="type")
