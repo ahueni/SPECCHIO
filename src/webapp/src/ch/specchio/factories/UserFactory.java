@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -201,14 +202,10 @@ public class UserFactory extends SPECCHIOFactory {
 	 */
 	private String generateUsername(String first, String last) throws SPECCHIOFactoryException {
 		
-		// start with the first character of the first name and first six characters of the surname
+		// start with the first valid character of the first name and first valiad six characters of the surname
 		StringBuffer username = new StringBuffer();
-		username.append(first.charAt(0));
-		if  (last.length() >= 6) {
-			username.append(last.substring(0, 6));
-		} else {
-			username.append(last);
-		}
+		username.append(normalizeString(first, 1));
+		username.append(normalizeString(last, 6));
 		int baseLength = username.length();
 		
 		try {
@@ -719,6 +716,34 @@ public class UserFactory extends SPECCHIOFactory {
 		}
 		
 		return user.getUserId();
+		
+	}
+	
+	
+	/**
+	 * Ensure that a string forms a valid SQL identifier.
+	 * 
+	 * @param s		the string
+	 * @param max	the maximum length of the identifier
+	 * 
+	 * @return a valid SQL identifier
+	 */
+	private String normalizeString(String s, int max) {
+		
+		// convert to ASCII, from http://stackoverflow.com/questions/8519669/replace-non-ascii-character-from-string
+		String norm = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("[^\\x00-\\x7F]", "");
+		
+		// take the first 'max' letters
+		StringBuffer sbuf = new StringBuffer();
+		int i = 0;
+		while (sbuf.length() < max && i < norm.length()) {
+			if (Character.isLetter(norm.charAt(i))) {
+				sbuf.append(norm.charAt(i));
+			}
+			i++;
+		}
+		
+		return sbuf.toString();
 		
 	}
 	
