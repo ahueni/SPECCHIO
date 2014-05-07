@@ -14,6 +14,10 @@ public class Location {
 	@XmlElement(name = "address")
 	Address address;
 
+	public Address getAddress() {
+		return this.address;
+	}
+	
 	public void setAddress(Address address) {
 		this.address = address;
 	}

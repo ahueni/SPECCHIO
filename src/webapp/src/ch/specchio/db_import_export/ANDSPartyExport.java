@@ -3,6 +3,7 @@ package ch.specchio.db_import_export;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -34,6 +35,8 @@ public class ANDSPartyExport {
 	private String andsXMLFileLocation;
 	private File andsPartyFile;
 	
+	private List<String> errors;
+	
 	
 	/**
 	 *  Constructor.
@@ -46,6 +49,7 @@ public class ANDSPartyExport {
 		throws SPECCHIOFactoryException {
 
 		andsXMLFileLocation = _andsXMLFileLocation;
+		errors = new ArrayList<String>();
 	}
 	
 	private boolean createFileAndDirectory( String directoryString, User user) 
@@ -79,66 +83,43 @@ public class ANDSPartyExport {
 	}
 	
 	/**
-	 * Export a RIF-CS file describing the collector of a collection.
+	 * Build the description element for a user.
 	 * 
-	 * @param user			the SPECCHIO user to be exported
-	 * @param collectionId	the collection identifier
-	 * @param collection	the ANDS collection object
+	 * @param user	the user
 	 * 
-	 * @throws JAXBException could not create JAXB instance
+	 * @return a new Description element, or null if the user does not have a suitable description
 	 */
-	public void exportPartyXML(User user, String collectionId, Collection collection)
-		throws JAXBException
-	{
-		RegistryObject ro = new RegistryObject();
-		ro.setGroup(user.getInstitute().getInstituteName());
-		ro.setKey(user.getExternalId());
-		ro.setOriginatingSource("http://researchdata.ands.org.au/registry/orca/register_my_data");
-		ArrayList<RegistryObject> registryObjectList = new ArrayList<RegistryObject>();
-		registryObjectList.add(ro);
-		RegistryObjects ros = new RegistryObjects();
-		ros.setRegistryObjectList(registryObjectList);
-		Name name = new Name();
-		name.setType("primary");
-		ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
-		if(user.getLastName() != null && user.getLastName().length() > 0)
-		{
-			NamePart familyNamePart = new NamePart();
-			familyNamePart.setType("family");
-			familyNamePart.setValue(user.getLastName());
-			namePartList.add(familyNamePart);
-		}
-		if(user.getFirstName() != null && user.getFirstName().length() > 0)
-		{
-			NamePart givenNamePart = new NamePart();
-			givenNamePart.setType("given");
-			givenNamePart.setValue(user.getFirstName());
-			namePartList.add(givenNamePart);
-		}
-		if(namePartList.size() > 0)
-		{
-			name.setNamePartList(namePartList);
-		}
-		boolean userDescriptionBoolean = false;
-		Description description = new Description();
+	private Description obtainDescription(User user) {
+
 		if(user.getDescription() != null && user.getDescription().length() > 0)
-		{
+		{	
+			Description description = new Description();
 			description.setType("brief");
 			description.setValue(user.getDescription());
-			userDescriptionBoolean = true;
+			return description;
+		} else {
+			return null;
 		}
+		
+	}
+	
+	/**
+	 * Build the Location element for a user.
+	 * 
+	 * @param user	the user
+	 * 
+	 * @return a new Location element, or null if the user does not have any location data
+	 */
+	private Location obtainLocation(User user) {
 
-		Location location = new Location();
+		// build the Address element
 		Address address = new Address();
-		boolean emailAddressBoolean = false;
-		boolean physicalAddressBoolean = false;
 		if( user.getEmailAddress() != null && user.getEmailAddress().length() > 0)
 		{
 			ElectronicAddress electronicAddress = new ElectronicAddress();
 			electronicAddress.setType("email");
 			electronicAddress.setValue(user.getEmailAddress());
 			address.setElectronicAddress(electronicAddress);
-			emailAddressBoolean = true;
 		}
 		if( (user.getInstitute() != null 
 				&& ( user.getInstitute().getDepartment() != null && user.getInstitute().getDepartment().length() > 0)
@@ -161,26 +142,114 @@ public class ANDSPartyExport {
 			addressPart.setValue(addressString);
 			physicalAddress.setAddressPart(addressPart);
 			address.setPhysicalAddress(physicalAddress);
-			physicalAddressBoolean = true;
 		}
 
-		location.setAddress(address);
+		// build the Location element
+		if(address.getPhysicalAddress() != null || address.getElectronicAddress() != null)
+		{
+			Location location = new Location();
+			location.setAddress(address);
+			return location;
+		}
+		else
+		{
+			return null;
+		}
+		
+	}
+	
+	/**
+	 * Build the Name element for a user.
+	 * 
+	 * @param user	the user
+	 * 
+	 * @return a new Name element, or null if the user does not have a name
+	 */
+	private Name obtainName(User user) {
+		
+		// build the NamePartList element for this user
+		ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
+		if(user.getLastName() != null && user.getLastName().length() > 0)
+		{
+			NamePart familyNamePart = new NamePart();
+			familyNamePart.setType("family");
+			familyNamePart.setValue(user.getLastName());
+			namePartList.add(familyNamePart);
+		}
+		if(user.getFirstName() != null && user.getFirstName().length() > 0)
+		{
+			NamePart givenNamePart = new NamePart();
+			givenNamePart.setType("given");
+			givenNamePart.setValue(user.getFirstName());
+			namePartList.add(givenNamePart);
+		}
+		
+		// put the name part list into a Name element
+		if(namePartList.size() > 0)
+		{
+			Name name = new Name();
+			name.setType("primary");
+			name.setNamePartList(namePartList);
+			return name;
+		} else {
+			return null;
+		}
+		
+	}
+	
+	/**
+	 * Export a RIF-CS file describing the collector of a collection.
+	 * 
+	 * @param user			the SPECCHIO user to be exported
+	 * @param collectionId	the collection identifier
+	 * @param collection	the ANDS collection object
+	 * 
+	 * @return the user's ANDS party identifier, or null if there was an error
+	 * 
+	 * @throws JAXBException could not create JAXB instance
+	 */
+	public String exportPartyXML(User user, String collectionId, Collection collection)
+		throws JAXBException
+	{
+		// reset the error ist
+		errors.clear();
+		
+		// check that the user has an ANDS party identifier, and give up if not
+		if (user.getExternalId() == null || user.getExternalId().length() == 0) {
+			errors.add(obtainMissingFieldString(user, "an ANDS party identifier."));
+			return null;
+		}
+
+		// create a party element
 		Party party = new Party();
 		party.setType("person");
 		party.setDateModified(new Date());
-		if( namePartList.size() > 0 )
-		{
-			party.setName(name);
-		}
-		if(userDescriptionBoolean)
-		{
-			party.setDescription(description);
-		}
-		if(physicalAddressBoolean || emailAddressBoolean)
-		{
-			party.setLocation(location);
+		
+		// set the party name
+		Name name = obtainName(user);
+		party.setName(name);
+		if (name == null) {
+			errors.add(obtainMissingFieldString(user, "a name"));
 		}
 		
+		// set the party description
+		Description description = obtainDescription(user);
+		party.setDescription(description);
+		if (description == null) {
+			errors.add(obtainMissingFieldString(user, "a description"));
+		}
+		
+		// set the party location
+		Location location = obtainLocation(user);
+		party.setLocation(location);
+		if (location == null || location.getAddress().getElectronicAddress() == null) {
+			errors.add(obtainMissingFieldString(user, "an e-mail address"));
+		}
+		if (location == null || location.getAddress().getPhysicalAddress() == null) {
+			errors.add(obtainMissingFieldString(user, "an institution"));
+		}
+		
+		// add the relation with the collection
 		Relation relation = new Relation();
 		relation.setType("isCollectorOf");
 		relation.setDescription(user.getDescription());
@@ -191,20 +260,80 @@ public class ANDSPartyExport {
 		party.setSubjectList(collection.getSubjectList());
 		party.setRelatedInfoList(collection.getRelatedInfoList());
 		
-		ro.setParty(party);
+		if (!hasErrors()) {
 			
-	    // create JAXB context and instantiate marshaller
-	    JAXBContext context = JAXBContext.newInstance(RegistryObjects.class);
-	    Marshaller m = context.createMarshaller();
-	    m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "http://ands.org.au/standards/rif-cs/registryObjects http://services.ands.org.au/documentation/rifcs/schema/registryObjects.xsd");
-	    m.setProperty("com.sun.xml.bind.namespacePrefixMapper",new MyNsPrefixMapper());
-	    m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+			// create registry object for the party
+			RegistryObject ro = new RegistryObject();
+			ro.setGroup(user.getInstitute().getInstituteName());
+			ro.setKey(user.getExternalId());
+			ro.setOriginatingSource("http://researchdata.ands.org.au/registry/orca/register_my_data");
+			ro.setParty(party);
+			
+			// put the registry object into a list
+			ArrayList<RegistryObject> registryObjectList = new ArrayList<RegistryObject>();
+			registryObjectList.add(ro);
+			RegistryObjects ros = new RegistryObjects();
+			ros.setRegistryObjectList(registryObjectList);
 
-	    // Write to File
-	    setANDSPartyFilenameDir( user);
-	    
-	    m.marshal( ros, andsPartyFile);
+			// create JAXB context and instantiate marshaller
+			JAXBContext context = JAXBContext.newInstance(RegistryObjects.class);
+			Marshaller m = context.createMarshaller();
+			m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "http://ands.org.au/standards/rif-cs/registryObjects http://services.ands.org.au/documentation/rifcs/schema/registryObjects.xsd");
+			m.setProperty("com.sun.xml.bind.namespacePrefixMapper",new MyNsPrefixMapper());
+			m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+
+			// write to File
+			setANDSPartyFilenameDir(user);
+			m.marshal(ros, andsPartyFile);
+			
+			return ro.getKey();
+			
+		} else {
+			
+			return null;
+			
+		}
 	  
+	}
+	
+	/**
+	 * Get the list of errors from the last invocation of exportPartyXML().
+	 * 
+	 * @return a list of strings describing all of the error found
+	 */
+	public List<String> getErrors() {
+		
+		return errors;
+		
+	}
+	
+	/**
+	 * Check whether or not there were errors in the last invocation of exportPartyXML().
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasErrors() {
+		
+		return !errors.isEmpty();
+		
+	}
+	
+	/**
+	 * Build an error string for a missing field.
+	 * 
+	 * @param user		the user for which the error is to be reported
+	 * @param field		the field name that is missing, including "a" or "an"
+	 * 
+	 * @return a string describing the error and how to fix it
+	 */
+	private String obtainMissingFieldString(User user, String field) {
+		
+		return String.format(
+				"User \"%s\" does not have %s. Please add one.",
+				user.getUsername(),
+				field
+			);
+		
 	}
 
 }

@@ -128,13 +128,24 @@ public class ANDSCollectionExport {
 	
 	
 	/**
-	 * Get the list of errors from the last execution of exportCollectionXML.
+	 * Get the list of errors from the last invocation of exportCollectionXML().
 	 * 
 	 * @return a list of strings describing all of the error found
 	 */
 	public List<String> getErrors() {
 		
 		return errors;
+		
+	}
+	
+	/**
+	 * Check whether or not there were errors in the last invocation of exportCollectionXML().
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasErrors() {
+		
+		return !errors.isEmpty();
 		
 	}
 	
@@ -755,7 +766,7 @@ public class ANDSCollectionExport {
 		// set the rights
 		collection.setRights(obtainRights(rdaCollectionDescriptor));
 		
-		if (errors.isEmpty()) {
+		if (!hasErrors()) {
 			// everything is okay; create a collection identifier
 			String collectionId = obtainCollectionIdString(rdaCollectionDescriptor);
 			
@@ -784,9 +795,9 @@ public class ANDSCollectionExport {
 		    m.setProperty("com.sun.xml.bind.namespacePrefixMapper",new MyNsPrefixMapper());
 		    m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 
+
+		    // write to File
 		    setANDSCollectionFilenameDir(pi, collectionId);
-		    
-		    // Write to File
 		    m.marshal(ros, andsCollectionFile);
 		    
 			// export the party information for the collection
