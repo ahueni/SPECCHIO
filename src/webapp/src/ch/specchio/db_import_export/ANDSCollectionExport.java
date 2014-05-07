@@ -4,6 +4,8 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -14,6 +16,7 @@ import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.factories.MetadataFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpecchioCampaignFactory;
+import ch.specchio.factories.SpectrumFactory;
 import ch.specchio.factories.UserFactory;
 import ch.specchio.model.Address;
 import ch.specchio.model.AddressPart;
@@ -42,6 +45,7 @@ import ch.specchio.model.Temporal;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.Spectrum;
 import ch.specchio.types.User;
 import ch.specchio.types.attribute;
 
@@ -65,6 +69,9 @@ public class ANDSCollectionExport {
 	
 	/** campaign factory */
 	private SpecchioCampaignFactory specchioCampaignFactory;
+	
+	/** spectrum factory */
+	private SpectrumFactory spectrumFactory;
 	
 	/** output file location */
 	private String andsXMLFileLocation;
@@ -100,12 +107,20 @@ public class ANDSCollectionExport {
 	public ANDSCollectionExport( String dbUser, String dbPassword, String _andsXMLFileLocation)
 		throws SPECCHIOFactoryException {
 
-		userFactory = new UserFactory( dbUser, dbPassword);
-		specchioCampaignFactory = new SpecchioCampaignFactory(dbUser, dbPassword);
-		metadataFactory = new MetadataFactory(dbUser, dbPassword);
+		// create factories, using the same database connection for each
+		userFactory = new UserFactory(dbUser, dbPassword);
+		specchioCampaignFactory = new SpecchioCampaignFactory(userFactory);
+		metadataFactory = new MetadataFactory(userFactory);
+		spectrumFactory = new SpectrumFactory(userFactory);
+		
+		// initialise EAV services
 		eavDBServices = new EAVDBServices( userFactory.getStatementBuilder() , userFactory.getAttributes(), userFactory.getDatabaseUserName());
+		
+		// initialise ANDS XML stuff
 		andsXMLFileLocation = _andsXMLFileLocation;
 		andsPartyExport = new ANDSPartyExport(andsXMLFileLocation);
+		
+		// initialise error list
 		errors = new ArrayList<String>();
 	}
 	
@@ -161,6 +176,35 @@ public class ANDSCollectionExport {
 		{
 		    createFileAndDirectory( System.getProperty("user.home") + andsXMLFileLocation + System.getProperty("file.separator"), pi, collectionIdString);
 		} 
+	}
+	
+	/**
+	 * Get a list of campaigns from which the collection is drawn.
+	 * 
+	 * @param rdaCollectionDescriptor	the collection descriptor
+	 * 
+	 * @return a list of Campaign objects
+	 * 
+	 * @throws SPECCHIOFactoryException database error
+	 */
+	private List<Campaign> obtainCampaigns(RDACollectionDescriptor rdaCollectionDescriptor)
+		throws SPECCHIOFactoryException {
+		
+		// build a set of campaign identifiers
+		Set<Integer> campaignIds = new TreeSet<Integer>();
+		for (int spectrumId : rdaCollectionDescriptor.getSpectrumIds()) {
+			Spectrum s = spectrumFactory.getSpectrum(spectrumId, false);
+			campaignIds.add(s.getSpectrumId());
+		}
+		
+		// build a list of Campaign objects
+		List<Campaign> campaignList = new ArrayList<Campaign>(campaignIds.size());
+		for (int campaignId : campaignIds) {
+			campaignList.add(specchioCampaignFactory.getCampaign(campaignId));
+		}
+		
+		return campaignList;
+		
 	}
 	
 	/**
@@ -271,22 +315,36 @@ public class ANDSCollectionExport {
 	 * error list.
 	 * 
 	 * @param rdaCollectionDescriptor	the collection descriptor
+	 * @param campaigns					the campaigns from which the collection is drawn
 	 * 
 	 * @return a Description object representing the collection
 	 * 
 	 * @throws SPECCHIOFactoryException database error
 	 */
-	private Description obtainCollectionDescription(RDACollectionDescriptor rdaCollectionDescriptor)
+	private Description obtainCollectionDescription(RDACollectionDescriptor rdaCollectionDescriptor, List<Campaign> campaigns)
 		throws SPECCHIOFactoryException {
 
-		// TODO: use the campaigns that make up the collection
-		Campaign [] campaigns = specchioCampaignFactory.getCampaigns();
-		Campaign campaign = specchioCampaignFactory.getCampaign(campaigns[0].getId());
+		// build a string containing the descriptions of all of the campaigns in the collection
+		StringBuffer sb = new StringBuffer();
+		for (Campaign campaign : campaigns) {
+			if (campaign.getDescription() != null && campaign.getDescription().length() > 0) {
+				if (sb.length() > 0) {
+					// insert a blank line between descriptions
+					sb.append("\n\n");
+				}
+				sb.append(campaign.getDescription());
+			} else {
+				errors.add(
+					"The campaign \"" + campaign.getName() + "\" does not have a description. " +
+					"Please add one."
+				);
+			}
+		}
 
 		// build the description object
 		Description description = new Description();
 		description.setType("brief");
-		description.setValue(campaign.getDescription());
+		description.setValue(sb.toString());
 		
 		return description;
 		
@@ -299,31 +357,40 @@ public class ANDSCollectionExport {
 	 * the current error list.
 	 * 
 	 * @param rdaCollectionDescriptor	the collection descriptor
+	 * @param campaigns					the campaigns from which the collection is drawn
 	 * 
 	 * @return a Name object describing the collection
 	 * 
 	 * @throws SPECCHIOFactoryException database error
 	 */
-	private Name obtainCollectionNames(RDACollectionDescriptor rdaCollectionDescriptor)
+	private Name obtainCollectionNames(RDACollectionDescriptor rdaCollectionDescriptor, List<Campaign> campaigns)
 		throws SPECCHIOFactoryException {
-
-		// TODO: use the campaigns that make up the collection
-		Campaign [] campaigns = specchioCampaignFactory.getCampaigns();
-		Campaign campaign = specchioCampaignFactory.getCampaign(campaigns[0].getId());
-		String description = campaign.getDescription();
+		
+		// build a string containing the descriptions of all of the campaigns in the collection
+		StringBuffer sb = new StringBuffer();
+		for (Campaign campaign : campaigns) {
+			if (campaign.getDescription() != null && campaign.getDescription().length() > 0) {
+				if (sb.length() > 0) {
+					// insert a blank line between descriptions
+					sb.append("\n\n");
+				}
+				sb.append(campaign.getDescription());
+			} else {
+				errors.add(
+					"The campaign \"" + campaign.getName() + "\" does not have a description. " +
+					"Please add one."
+				);
+			}
+		}
 
 		// build the Name object
 		Name name = new Name();
-		if (description != null && description.length() > 0) {
-			name.setType("primary");
-			NamePart namePart = new NamePart();
-			namePart.setValue(campaign.getDescription());
-			ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
-			namePartList.add(namePart);
-			name.setNamePartList(namePartList);
-		} else {
-			errors.add("There is no description available for this collection. Please add one.");
-		}
+		name.setType("primary");
+		NamePart namePart = new NamePart();
+		namePart.setValue(sb.toString());
+		ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
+		namePartList.add(namePart);
+		name.setNamePartList(namePartList);
 		
 		return name;
 		
@@ -717,6 +784,9 @@ public class ANDSCollectionExport {
 		// get the first and last dates of the items in the collection
 		List<java.util.Date> fromToDateList = obtainFirstLastDates (rdaCollectionDescriptor);
 		
+		// get the campaigns from which the collection is drawn
+		List<Campaign> campaignList = obtainCampaigns(rdaCollectionDescriptor);
+		
 		// create the "collection" element, modified at the current time
 		Collection collection = new Collection();
 		collection.setType("collection");
@@ -736,8 +806,8 @@ public class ANDSCollectionExport {
 		collection.setIdentifierList(obtainIdentifierList(rdaCollectionDescriptor));
 		
 		// set the collection name and description
-		collection.setName(obtainCollectionNames(rdaCollectionDescriptor));
-		collection.setDescription(obtainCollectionDescription(rdaCollectionDescriptor));
+		collection.setName(obtainCollectionNames(rdaCollectionDescriptor, campaignList));
+		collection.setDescription(obtainCollectionDescription(rdaCollectionDescriptor, campaignList));
 		
 		// set location
 		collection.setLocation(obtainLocation(rdaCollectionDescriptor));
