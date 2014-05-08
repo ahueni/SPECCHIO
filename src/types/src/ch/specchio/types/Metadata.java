@@ -215,6 +215,19 @@ public class Metadata {
 		
 	}
 	
+	public ArrayList<MetaParameter> get_all_entries(String name) {
+		
+		ArrayList<MetaParameter> matches = new ArrayList<MetaParameter>();
+		for (MetaParameter mp : entries) {
+			if (mp.getAttributeName().equals(name)) {
+				matches.add(mp);
+			}
+		}
+		
+		return matches;
+		
+	}
+	
 	
 	public void add_entry(MetaParameter mp)
 	{

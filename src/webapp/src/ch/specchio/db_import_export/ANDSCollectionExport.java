@@ -45,6 +45,7 @@ import ch.specchio.model.Temporal;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.User;
 import ch.specchio.types.attribute;
@@ -277,12 +278,14 @@ public class ANDSCollectionExport {
 	
 	
 	/**
-	 * Construct a collection identifier. This method creates a new identifier
-	 * and associates it with every spectrum in the collection. So, it should only
-	 * be called if the collection is ready to be created.
+	 * Obtain a collection identifier and associates it with every spectrum in the
+	 * collection. This method should only be called if the collection is ready to
+	 * be created; otherwise it will create and associate an invalid collection key.
 	 * 
-	 * The collection identifier is COLLECTION_PREFIX followed by the EAV ID of
-	 * the new ANDS Collection Key metadata item.
+	 * If all of spectra in the collection already have the same collection key, this
+	 * method will return that key. Otherwise, it creates a new key consisting of
+	 * COLLECTION_PREFIX followed by the EAV ID of the new ANDS Collection Key metadata
+	 * parameter.
 	 * 
 	 * @param rdaCollectionDescriptor	the collection descriptor
 	 * 
@@ -292,22 +295,52 @@ public class ANDSCollectionExport {
 	 */
 	private String obtainCollectionIdString(RDACollectionDescriptor rdaCollectionDescriptor) throws  SPECCHIOFactoryException
 	{
-		String collectionIdString;
-		
-		try {
-			attribute attr = eavDBServices.ATR.get_attribute_info((eavDBServices.ATR.get_attribute_id(ANDS_COLLECTION_KEY_METAPARAMETER)));
-			MetaParameter mp = MetaParameter.newInstance(attr);
-			int collectionId = metadataFactory.updateMetadata(mp, convertIntArray( rdaCollectionDescriptor.getSpectrumIds()));
-			collectionIdString = COLLECTION_PREFIX + collectionId;
-			mp.setValue(collectionIdString);
-			metadataFactory.updateMetadata(mp, convertIntArray( rdaCollectionDescriptor.getSpectrumIds()));
+
+		// get any existing ANDS collections key for the spectra
+		boolean useExistingKey = false;
+		MetaParameter andsCollectionKey = null;
+		for (int spectrumId : rdaCollectionDescriptor.getSpectrumIds()) {
+			Metadata md = metadataFactory.getMetadataForSpectrum(spectrumId);
+			for (MetaParameter mp : md.get_all_entries(ANDS_COLLECTION_KEY_METAPARAMETER)) {
+				if (andsCollectionKey == null) {
+					// this is the first key we've found
+					andsCollectionKey = mp;
+					useExistingKey = true;
+				} else if (!mp.getEavId().equals(andsCollectionKey.getEavId())) {
+					// found a second key, so we can't use the existing on
+					useExistingKey = false;
+				}
+			}
 		}
-		catch (MetaParameterFormatException e) {
-			// collection key attribute does not have type string; re-throw as a database error
-			throw new SPECCHIOFactoryException(e);
+		
+		// convert int spectrum identifiers to Integer spectrum identifiers... grrr
+		Integer[] spectrumIds = new Integer[rdaCollectionDescriptor.getSpectrumIds().length];
+		int i = 0;
+		for(int value : rdaCollectionDescriptor.getSpectrumIds())
+		{
+			spectrumIds[i++] = Integer.valueOf(value);
 		}
 		
-		return collectionIdString;
+		if (!useExistingKey) {
+		
+			// no usable existing key; create a new one
+			try {
+				attribute attr = eavDBServices.ATR.get_attribute_info((eavDBServices.ATR.get_attribute_id(ANDS_COLLECTION_KEY_METAPARAMETER)));
+				andsCollectionKey = MetaParameter.newInstance(attr);
+				int collectionId = metadataFactory.updateMetadata(andsCollectionKey, spectrumIds);
+				andsCollectionKey.setValue(COLLECTION_PREFIX + collectionId);
+			}
+			catch (MetaParameterFormatException e) {
+				// collection key attribute does not have type string; re-throw as a database error
+				throw new SPECCHIOFactoryException(e);
+			}
+			
+		}
+		
+		// associate the collection key with all spectra in the collection
+		metadataFactory.updateMetadata(andsCollectionKey, spectrumIds);
+		
+		return (String)andsCollectionKey.getValue();
 	}
 	
 	/**
@@ -740,17 +773,6 @@ public class ANDSCollectionExport {
 		}
 		
 		return subjectList;
-	}
-	
-	private Integer[] convertIntArray(int[] intArray)
-	{
-		Integer [] newIntegerArray = new Integer[intArray.length];
-		int i = 0;
-		for(int value : intArray)
-		{
-			newIntegerArray[i++] = Integer.valueOf(value);
-		}
-		return newIntegerArray;
 	}
 	
 	
