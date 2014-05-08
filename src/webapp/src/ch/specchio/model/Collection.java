@@ -29,24 +29,16 @@ public class Collection {
 	@XmlElement(name = "relatedObject")
 	private ArrayList<RelatedObject> relatedObjectList;
 	
-	// XmlElement sets the name of the entities
-	@XmlElement(name = "subject")
 	private ArrayList<Subject> subjectList;
 	
 	private Description description;
 	
 	private Coverage coverage;
 	
-	// XmlElement sets the name of the entities
-	@XmlElement(name = "relatedInfo")
 	private ArrayList<RelatedInfo> relatedInfoList;
 	
-	// XmlElement sets the name of the entities
-	@XmlElement(name = "rights")
 	private ArrayList<Rights> rights;
 	
-	// XmlElement sets the name of the entities
-	@XmlElement(name = "citationInfo")
 	private ArrayList<CitationInfo> citationInfo;
 
 	public void setType(String type) {
@@ -96,7 +88,8 @@ public class Collection {
 	public void setRelatedObjectList(ArrayList<RelatedObject> relatedObjectList) {
 		this.relatedObjectList = relatedObjectList;
 	}
-	
+
+	@XmlElement(name = "subject")
 	public ArrayList<Subject> getSubjectList() {
 		return this.subjectList;
 	}
@@ -104,7 +97,8 @@ public class Collection {
 	public void setSubjectList(ArrayList<Subject> subjectList) {
 		this.subjectList = subjectList;
 	}
-	
+
+	@XmlElement(name = "relatedInfo")
 	public ArrayList<RelatedInfo> getRelatedInfoList() {
 		return this.relatedInfoList;
 	}

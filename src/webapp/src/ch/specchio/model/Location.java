@@ -11,9 +11,10 @@ public class Location {
 	@XmlAttribute(name="dateTo")
 	private String dateTo;
 	
-	@XmlElement(name = "address")
-	Address address;
+	private Address address;
 
+
+	@XmlElement(name = "address")
 	public Address getAddress() {
 		return this.address;
 	}
