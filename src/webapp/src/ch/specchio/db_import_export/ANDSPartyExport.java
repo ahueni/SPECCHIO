@@ -31,6 +31,7 @@ public class ANDSPartyExport {
 	private static final String ANDS_PARTY_FILE_NAME_PREFIX = "spectral-party-";
 	private static final String XML_FILE_POSTFIX = ".xml";
 	private static final String PARTY_PREFIX = "uow.edu.au/PTY/SL/";
+	private static final String ORIGINATING_SOURCE = "http://www.uow.edu.au";
 	
 	private String andsXMLFileLocation;
 	private File andsPartyFile;
@@ -266,7 +267,7 @@ public class ANDSPartyExport {
 			RegistryObject ro = new RegistryObject();
 			ro.setGroup(user.getInstitute().getInstituteName());
 			ro.setKey(user.getExternalId());
-			ro.setOriginatingSource("http://researchdata.ands.org.au/registry/orca/register_my_data");
+			ro.setOriginatingSource(ORIGINATING_SOURCE);
 			ro.setParty(party);
 			
 			// put the registry object into a list
