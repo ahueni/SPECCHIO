@@ -22,4 +22,19 @@ public class Name {
 		this.type = type;
 	}
 	
+	public String toString() {
+		
+		// concatenate all name parts
+		StringBuffer sb = new StringBuffer();
+		for (NamePart namePart : namePartList) {
+			if (sb.length() > 0) {
+				sb.append(" ");
+			}
+			sb.append(namePart.toString());
+		}
+		
+		return sb.toString();
+		
+	}
+	
 }
