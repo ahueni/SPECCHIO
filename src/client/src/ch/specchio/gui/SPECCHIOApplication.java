@@ -13,7 +13,7 @@ public class SPECCHIOApplication {
 	private static JFrame frame;
 	private static SPECCHIOApplication instance = null;
 	private SPECCHIOClient client = null;
-	public static String version = "SPECCHIO V3.0.1";
+	public static String version = "SPECCHIO V3.0.2";
 	
 	/* progress report in the operations pane */
 	static ProgressReportTextPanel p_rep = null;

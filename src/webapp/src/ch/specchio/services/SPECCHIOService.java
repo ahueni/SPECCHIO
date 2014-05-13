@@ -21,7 +21,7 @@ import ch.specchio.types.Capabilities;
 public class SPECCHIOService {
 	
 	/** service version number */
-	private static final String VERSION = "3.0.1";
+	private static final String VERSION = "3.0.2";
 	
 	/** server capabilities */
 	private Capabilities capabilities = null;
