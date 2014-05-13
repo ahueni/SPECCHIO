@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
+import java.util.prefs.BackingStoreException;
 
 public class SPECCHIOClientFactory {
 	
@@ -20,7 +21,7 @@ public class SPECCHIOClientFactory {
 	/**
 	 * Constructor.
 	 * 
-	 * @throws SPECCHIOClientException	the configuration file is invalid
+	 * @throws SPECCHIOClientException	the configuration data is invalid or inaccessible
 	 */
 	private SPECCHIOClientFactory() throws SPECCHIOClientException {
 		
@@ -42,6 +43,19 @@ public class SPECCHIOClientFactory {
 			}
 		}
 		
+		// load server descriptors from the preferences store
+		try {
+			SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorPreferencesStore();
+			Iterator<SPECCHIOServerDescriptor> iter = s.getIterator();
+			while (iter.hasNext()) {
+				apps.add(iter.next());
+			}
+		}
+		catch (BackingStoreException ex) {
+			// the backing store failed; re-throw as a SPECCHIO client exception
+			throw new SPECCHIOClientException(ex);
+		}
+		
 		// set up SSL trust store
 		System.setProperty("javax.net.ssl.trustStore", "specchio.keystore");
 		System.setProperty("javax.net.ssl.trustStorePassword", "specchio");
@@ -59,9 +73,15 @@ public class SPECCHIOClientFactory {
 	 */
 	public void addAccountConfiguration(SPECCHIOServerDescriptor d) throws IOException, SPECCHIOClientException {
 		
-		// update the store
-		SPECCHIOServerDescriptorLegacyStore store = new SPECCHIOServerDescriptorLegacyStore(legacyConfigFile);
-		store.addServerDescriptor(d);
+		try {
+			// all new accounts are saved to the Java preferences store
+			SPECCHIOServerDescriptorStore store = new SPECCHIOServerDescriptorPreferencesStore();
+			store.addServerDescriptor(d);
+		}
+		catch (BackingStoreException ex) {
+			// the backing store failed; re-throw as an IOException
+			throw new IOException(ex);
+		}
 		
 		// update the internal list of server descriptors
 		apps.add(d);
