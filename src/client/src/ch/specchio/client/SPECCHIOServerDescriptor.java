@@ -17,12 +17,6 @@ public interface SPECCHIOServerDescriptor {
 	 * @throws SPECCHIOClientException	could not create the client
 	 */
 	public SPECCHIOClient createClient() throws SPECCHIOClientException;
-	
-	
-	/**
-	 * Get the string describing the account configuration for db_config.txt
-	 */
-	public String getAccountConfigurationString();
 
 
 	/**

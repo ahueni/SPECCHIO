@@ -66,36 +66,6 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		this(protocol, server, port, path, null, null);
 		
 	}
-	
-	
-	/**
-	 * Constructor for SPECCHIOClientFactory.process_line().
-	 * 
-	 * @param tokens	the array of strings read from the input file
-	 * 
-	 * @throws SPECCHIOWebClientException	the tokens are not correctly formatted
-	 */
-	public SPECCHIOWebAppDescriptor(String tokens[]) throws SPECCHIOWebClientException {
-		
-		// check that we have the correct number of tokens
-		if (tokens.length < 6) {
-			throw new SPECCHIOWebClientException("Insufficient configuration informaton provided for a SPECCHIO web application server.");
-		}
-		
-		try {
-			this.protocol = tokens[0];
-			this.server = tokens[1];
-			this.port = Integer.parseInt(tokens[2]);
-			this.path = tokens[3];
-			this.user = tokens[4];
-			this.password = tokens[5];
-		}
-		catch (NumberFormatException ex) {
-			// invalid port number
-			throw new SPECCHIOWebClientException("Invalid port number provided for a SPECCHIO web application server.");
-		}
-		
-	}
 		
 	
 	/**
@@ -115,23 +85,6 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 			// create a named client
 			return new SPECCHIOWebClient(getUrl(), getDisplayUser(), getPassword());
 		}
-		
-	}
-	
-	
-	/**
-	 * Get the string describing the account configuration for db_config.txt
-	 */
-	public String getAccountConfigurationString() {
-		
-		// format is: protocol, server, port, path, username, password
-		return
-			protocol + ", " +
-			server + ", " +
-			port + ", " +
-			path + ", " +
-			user + ", " +
-			password;
 		
 	}
 
@@ -225,6 +178,16 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		
 		return url;
 	
+	}
+	
+	
+	/**
+	 * Get the username.
+	 */
+	public String getUsername() {
+		
+		return user;
+		
 	}
 	
 	
