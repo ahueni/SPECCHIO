@@ -93,9 +93,6 @@
 	<!-- build installation packages -->
 	<target name="package" description="Build installation package" depends="dist">
 		
-		<!-- plain zip file -->
-		<zip destfile="${pkg.dir}/specchio-client.zip" basedir="${dist.dir}" />
-		
 		<!-- izpack self-installer -->
 		<izpack izPackDir="${izpack.home}" installerType="standard" input="install.xml" basedir="${dist.dir}" output="${pkg.dir}/specchio-client-installer.jar" />
 	
