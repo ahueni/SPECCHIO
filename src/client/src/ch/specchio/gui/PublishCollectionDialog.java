@@ -307,22 +307,23 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 			
 			// get the conflict data for the given attribute
 			ConflictInfo collectionNameConflicts = conflicts.get(attr.id);
+			if (collectionNameConflicts != null) {
 			
-			// search the conflict list for an EAV without conflicts
-			Enumeration<Integer> eavIds = collectionNameConflicts.eavIds();
-			while (eavIds.hasMoreElements()) {
-				Integer eavId = eavIds.nextElement();
-				ConflictStruct conflict = collectionNameConflicts.getConflictData(eavId);
-				if (conflict.getNumberOfSharingRecords() == conflict.getNumberOfSelectedRecords()) {
-					// found it; extract the value from the first spectrum in the list
-					for (MetaParameter mp : md.get_all_entries(attr.id)) {
-						if (mp.getEavId().equals(eavId)) {
-							value = (String)mp.getValue();
-						}
-					}	
+				// search the conflict list for an EAV without conflicts
+				Enumeration<Integer> eavIds = collectionNameConflicts.eavIds();
+				while (eavIds.hasMoreElements()) {
+					Integer eavId = eavIds.nextElement();
+					ConflictStruct conflict = collectionNameConflicts.getConflictData(eavId);
+					if (conflict.getNumberOfSharingRecords() == conflict.getNumberOfSelectedRecords()) {
+						// found it; extract the value from the first spectrum in the list
+						for (MetaParameter mp : md.get_all_entries(attr.id)) {
+							if (mp.getEavId().equals(eavId)) {
+								value = (String)mp.getValue();
+							}
+						}	
+					}
 				}
 			}
-			
 		}
 		
 		return value;
