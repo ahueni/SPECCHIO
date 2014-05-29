@@ -51,10 +51,10 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 		}
 		catch (SPECCHIOClientException ex) {
-			listener.campaignDataLoadError(ex.getMessage());
+			listener.campaignDataLoadException(ex.getMessage(), ex);
 		}
 		catch (IOException ex) {
-			listener.campaignDataLoadError(ex.getMessage());
+			listener.campaignDataLoadException(ex.getMessage(), ex);
 		}
 		
 		// tell the listener that we're finished
@@ -206,10 +206,10 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
 					}
 					catch (IOException ex) {
-						listener.campaignDataLoadError(file + ": " + ex.getMessage());
+						listener.campaignDataLoadException(file + ": " + ex.getMessage(), ex);
 					}
 					catch (MetaParameterFormatException ex) {
-						listener.campaignDataLoadError(file + ": " + ex.getMessage());
+						listener.campaignDataLoadException(file + ": " + ex.getMessage(), ex);
 					}
 				}
 			} else {

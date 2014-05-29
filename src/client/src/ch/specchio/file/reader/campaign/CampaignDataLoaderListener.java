@@ -10,11 +10,20 @@ public interface CampaignDataLoaderListener {
 	
 	
 	/**
-	 * Called when the loader experiences a fatal error.
-	 *
+	 * Called when the loader encounters a fatal error.
+	 * 
 	 * @param message	the error message
 	 */
 	public void campaignDataLoadError(String message);
+	
+	
+	/**
+	 * Called when the loader encounters a fatal exception.
+	 *
+	 * @param message	the error message
+	 * @param ex		the exception that caused the error
+	 */
+	public void campaignDataLoadException(String message, Exception ex);
 	
 	
 	/**

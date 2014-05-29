@@ -24,6 +24,20 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 		
 	}
 	
+	
+	/**
+	 * Handler for exceptions during loading.
+	 * 
+	 * @param message	the error message
+	 * @param ex		the exception that caused the error
+	 */
+	public void campaignDataLoadException(String message, Exception ex) {
+		
+		ErrorDialog d = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Error while loading files", message, ex);
+		d.setVisible(true);
+		
+	}
+	
 	/**
 	 * Handler for errors during loading.
 	 *
