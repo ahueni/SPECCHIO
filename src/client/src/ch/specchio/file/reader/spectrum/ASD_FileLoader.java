@@ -79,18 +79,6 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		
 		// comments
 		hdr.setComment(read_string(in, 157));
-		Character first_char = hdr.getComment().charAt(0);
-
-		 int i = 0;
-		 
-		 while(i < hdr.getComment().length() && hdr.getComment().charAt(i) != 0) i++; // cut string at first zero		 
-		 
-		 hdr.setComment(hdr.getComment().substring(0, i));
-
-		if(first_char == 0)
-		{
-			hdr.setComment("");
-		}
 		
 		// date
 		hdr.setCaptureDate(0, read_asd_time(in));
