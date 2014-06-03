@@ -64,7 +64,12 @@ CREATE TEMPORARY TABLE `specchio_temp`.`for_x_taxonomy` (
 	`code` CHAR(2) PRIMARY KEY NOT NULL,
 	`taxonomy_id` INT(10) NOT NULL
 );
-INSERT INTO `specchio_temp`.`for_x_taxonomy`(`code`, `taxonomy_id`) SELECT `code`,`taxonomy_id` FROM `specchio`.`taxonomy` WHERE `attribute_id` = (select `attribute_id` from `specchio`.`attribute` where name = 'FOR Code');
+INSERT INTO `specchio_temp`.`for_x_taxonomy`(`code`, `taxonomy_id`)
+	SELECT `code`,`taxonomy_id` FROM `specchio`.`taxonomy`
+	WHERE
+		`attribute_id` = (SELECT `attribute_id` FROM `specchio`.`attribute` WHERE name = 'FOR Code')
+		AND
+		`code` LIKE '__';
 
 --
 -- Insert four-digit FOR codes as children of their two-digit parent
