@@ -394,7 +394,6 @@ public class ANDSCollectionExport {
 		relatedObject.setKey(pi.getExternalId());
 		Relation relation = new Relation();
 		relation.setType("hasCollector");
-		relation.setDescription(pi.getDescription());
 		relatedObject.setRelation(relation);
 		
 		return relatedObject;
