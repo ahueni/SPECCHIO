@@ -527,11 +527,6 @@ public class ANDSCollectionExport {
 		Location location = new Location();
 		Address address = new Address();
 		
-		// set the dates of collection
-		List<java.util.Date> fromToDateList = obtainFirstLastDates (rdaCollectionDescriptor);
-		location.setDateFrom(sdf.format(fromToDateList.get(0)));
-		location.setDateTo(sdf.format(fromToDateList.get(fromToDateList.size()-1)));
-		
 		// set e-mail address
 		if( pi.getEmailAddress() != null && pi.getEmailAddress().length() > 0)
 		{
