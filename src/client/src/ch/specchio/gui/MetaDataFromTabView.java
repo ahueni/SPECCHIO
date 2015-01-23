@@ -13,7 +13,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.TimeZone;
@@ -51,6 +53,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+
+import org.joda.time.DateTime;
+
 import jxl.Cell;
 import jxl.DateCell;
 import jxl.Sheet;
@@ -447,9 +452,13 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 						Object value = values_iter.next();
 						Object matched_table_value = (matched_table_values_iter.hasNext())? matched_table_values_iter.next() : null;
 						
-						if (value instanceof Date) {
+						if (value instanceof DateTime) {
 							// display dates using SPECCHIO's internal format
-							table_model.setValueAt(MetaDate.formatDate((Date)value), r, 1);
+							table_model.setValueAt(MetaDate.formatDate((DateTime)value), r, 1);
+						} else if (value instanceof Date) {
+							// displays dates using SPECCHIO's internal format
+							//matched_display_value = MetaDate.formatDate((Date)matched_table_value);
+							throw new SPECCHIOClientException("updateMatchingInfoPanel: Trying to display a Date object, but should be DateTime!");
 						} else {
 							table_model.setValueAt(value, r, 1);
 						}
@@ -459,9 +468,13 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 							if (value instanceof Integer && matched_table_value instanceof Number) {
 								// make sure the match displays as an integer
 								matched_display_value = new Integer(((Number)matched_table_value).intValue());
+							} else if (matched_table_value instanceof DateTime) {
+								// displays dates using SPECCHIO's internal format
+								matched_display_value = MetaDate.formatDate((DateTime)matched_table_value);
 							} else if (matched_table_value instanceof Date) {
 								// displays dates using SPECCHIO's internal format
-								matched_display_value = MetaDate.formatDate((Date)matched_table_value);
+								//matched_display_value = MetaDate.formatDate((Date)matched_table_value);
+								throw new SPECCHIOClientException("updateMatchingInfoPanel: Trying to display a Date object, but should be DateTime!");
 							}
 							table_model.setValueAt(matched_display_value, r, 2);
 						}
@@ -952,7 +965,19 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		if (cell instanceof DateCell) {
 			// format dates using SPECCHIO's internal format instead of Java Excel's format, correcting for the local time zone
 			Date date = new Date(((DateCell)cell).getDate().getTime() - TimeZone.getDefault().getRawOffset());
-			return MetaDate.formatDate(date);
+			
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			
+
+			SimpleDateFormat formatter_1 = new SimpleDateFormat(MetaDate.DEFAULT_DATE_FORMAT);
+			
+			String out=formatter_1.format(cal.getTime());	
+			
+			DateTime dt = MetaDate.getDateFormatter().parseDateTime(out);
+			
+			
+			return MetaDate.formatDate(dt);
 		} else {
 			return cell.getContents();
 		}
