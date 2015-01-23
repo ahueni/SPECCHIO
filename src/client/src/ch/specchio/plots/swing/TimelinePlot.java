@@ -7,6 +7,7 @@ import java.awt.GridBagConstraints;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.TimeZone;
 
 import java.util.Date;
 
@@ -33,6 +34,7 @@ import org.jfree.data.general.SeriesException;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.joda.time.DateTime;
 
 import ch.specchio.gui.GridbagLayouter;
 import ch.specchio.interfaces.ProgressReportInterface;
@@ -81,7 +83,7 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 		int i = 0;
 		for(Object t : time_vector2)
 		{
-			time_vector[i] = (Date) t;	
+			time_vector[i] = ((DateTime)t).toDate();	
 			i++;
 		}
 		
@@ -209,11 +211,14 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 	private TimeSeriesCollection getDataSet() throws SeriesException
 	{
 		
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+		
 		TimeSeriesCollection dataset = new TimeSeriesCollection();
 		
 		Integer inc_band = band+ 1;
 		
 		TimeSeries s = new TimeSeries("Band " + inc_band.toString() + "(" + space.get_wvl_of_band(band) + "nm]" + " Time Plot");
+		
 		
 		ArrayList<double[]> vectors = space.getVectors();
 
