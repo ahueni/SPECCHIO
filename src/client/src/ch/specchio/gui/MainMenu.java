@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -21,6 +22,7 @@ import java.util.Hashtable;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.client.SPECCHIOClientFactory;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.types.Category;
@@ -38,6 +40,7 @@ class MainMenu implements ActionListener, ItemListener {
    String create_user_account = "Create a new user account";
    String connect_to_db = "Connect to database";
    String edit_user_account = "Edit user information";
+   String edit_db_config_file = "Edit db_config file";
    String metadata_editor = "Edit metadata";
    String metadata_from_xls = "Get metadata from XLS";
    String data_removal = "Remove data";
@@ -100,6 +103,14 @@ class MainMenu implements ActionListener, ItemListener {
       menuItem.addActionListener(this);
       menu.add(menuItem);
       user_menu_items.put(edit_user_account, menuItem);
+      
+      menu.addSeparator();
+      
+      menuItem = new JMenuItem(edit_db_config_file);
+      menuItem.addActionListener(this);
+      menu.add(menuItem);
+      public_menu_items.put(edit_db_config_file, menuItem);
+      
       
       menuBar.add(menu);
       
@@ -328,6 +339,7 @@ class MainMenu implements ActionListener, ItemListener {
       {
     	  try {
     		  DatabaseConnectionDialog d = new DatabaseConnectionDialog();
+    		  d.setLocationRelativeTo(SPECCHIOApplication.getInstance().get_frame());
     		  d.setVisible(true);
     	  }
     	  catch (SPECCHIOClientException ex) {
@@ -337,7 +349,21 @@ class MainMenu implements ActionListener, ItemListener {
     				  "Invalid configuration",
     				  JOptionPane.ERROR_MESSAGE
     			);
-    	  }
+    	  } catch (FileNotFoundException e1) {
+    		  JOptionPane.showMessageDialog(
+    				  SPECCHIOApplication.getInstance().get_frame(),
+    				  e1.getMessage(),
+    				  "Could not read db_config.txt file",
+    				  JOptionPane.ERROR_MESSAGE
+    			);
+		} catch (IOException e1) {
+  		  JOptionPane.showMessageDialog(
+				  SPECCHIOApplication.getInstance().get_frame(),
+				  e1.getMessage(),
+				  "Could not read db_config.txt file",
+				  JOptionPane.ERROR_MESSAGE
+			);
+		}
       }
       
       if(edit_user_account.equals(e.getActionCommand()))
@@ -360,6 +386,32 @@ class MainMenu implements ActionListener, ItemListener {
         		);
           }
       }
+      
+      if(edit_db_config_file.equals(e.getActionCommand()))
+      {
+    	  File temp = new File(SPECCHIOClientFactory.getDBConfigFilename());
+
+    	  try {
+    		  Desktop.getDesktop().open(temp);
+    		  
+    		  SPECCHIOClientFactory.getInstance().reloadDBConfigFile();
+    		  
+    	  } catch (IOException e1) {
+    		  // TODO Auto-generated catch block
+    		  e1.printStackTrace();
+    	  } catch (SPECCHIOClientException ex) {
+        	  JOptionPane.showMessageDialog(
+        			  SPECCHIOApplication.getInstance().get_frame(),
+        			  ex.getMessage(),
+        			  "Error",
+        			  JOptionPane.ERROR_MESSAGE
+        		);
+		}		
+
+
+      }
+      
+      
 
       if(metadata_editor.equals(e.getActionCommand()))
       {
@@ -541,7 +593,7 @@ class MainMenu implements ActionListener, ItemListener {
     	  
     	  BufferedImage myPicture;
 		try {
-			myPicture = ImageIO.read(new File("SPECCHIO_Icon_Mid_Res_small.jpg"));
+			myPicture = ImageIO.read(new File(SPECCHIOClientFactory.getApplicationConfFilename("SPECCHIO_Icon_Mid_Res_small.jpg")));
 			JLabel picLabel = new JLabel(new ImageIcon(myPicture));	  
 
 
