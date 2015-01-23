@@ -1,10 +1,12 @@
 package ch.specchio.gui;
 
 import java.awt.*;
+
 import javax.swing.*;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.client.SPECCHIOClientFactory;
 import ch.specchio.client.SPECCHIOServerDescriptor;
 
 
@@ -13,7 +15,7 @@ public class SPECCHIOApplication {
 	private static JFrame frame;
 	private static SPECCHIOApplication instance = null;
 	private SPECCHIOClient client = null;
-	public static String version = "SPECCHIO V3.1";
+	public static String version = "SPECCHIO V3.1.3";
 	public static Float min_db_version = 3.1F;
 	
 	/* progress report in the operations pane */
@@ -40,12 +42,13 @@ public class SPECCHIOApplication {
 	{
 		return frame;
 	}
+	
 
 	public Component createComponents() {
 
 		JPanel pane = new JPanel(new BorderLayout());
 		OperationsPane op = OperationsPane.getInstance();
-		ImageIcon i =new ImageIcon("SPECCHIO_Icon_Mid_Res_small.jpg");
+		ImageIcon i =new ImageIcon(SPECCHIOClientFactory.getApplicationConfFilename("SPECCHIO_Icon_Mid_Res_small.jpg"));
 		  
 		JLabel test = new JLabel("Spectral Database System", i, JLabel.CENTER);
 		test.setVerticalTextPosition(JLabel.BOTTOM);
@@ -75,7 +78,7 @@ public class SPECCHIOApplication {
 	    */
 	   private static void createAndShowGUI() 
 	   {
-	   
+	   System.out.println("Welcome to " + version);
 	      //Create and set up the window.
 	      frame = new JFrame(version);
 	      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
