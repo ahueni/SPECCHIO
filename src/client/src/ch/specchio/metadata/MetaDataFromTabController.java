@@ -11,6 +11,8 @@ import java.util.Iterator;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
+import org.joda.time.DateTime;
+
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.gui.MetaDataFromTabView;
@@ -380,9 +382,11 @@ public class MetaDataFromTabController  {
 				
 				// check for a match
 				boolean match;
-				if (value instanceof Date) {
+				if (value instanceof DateTime) {
 					// use internal date format for comparison
-					match = MetaDate.formatDate((Date)value).matches(regex);
+					match = MetaDate.formatDate((DateTime)value).matches(regex);
+				} else if (value instanceof Date) {
+					throw new SPECCHIOClientException("getRegexMatchingIndices: Trying to use a Date object, but should be DateTime!");
 				} else {
 					match = db_val.toString().matches(regex);
 				}

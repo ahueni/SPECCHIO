@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.ListIterator;
 
+import org.joda.time.DateTime;
+
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.gui.SPECCHIOApplication;
@@ -409,8 +411,10 @@ public class MetaDataFromTabModel {
 				regex = regex_start + value.toString() + regex_end;
 			}
 		} else if (cl.isAssignableFrom(Date.class)) {
-			if (value instanceof Date) {
-				regex = regex_start + MetaDate.formatDate((Date)value) + regex_end;
+			if (value instanceof DateTime) {
+				regex = regex_start + MetaDate.formatDate((DateTime)value) + regex_end;
+			} else if (value instanceof Date) {
+				throw new SPECCHIOClientException("getRegexForClass: Trying to use a Date object, but should be DateTime!");
 			} else {
 				regex = regex_start + value.toString() + regex_end;
 			}
