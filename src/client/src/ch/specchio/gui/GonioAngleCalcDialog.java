@@ -352,6 +352,8 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			// add a string representation of the data to the list
 			listModel.add(i, sbuf.toString());
 			
+			//System.out.println(sbuf.toString());
+			
 			// increment counter
 			i++;
 		}
@@ -513,7 +515,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			// initialise counters
 			CelestialAngle angle = new CelestialAngle(180, 75);
 			CelestialAngle delta = new CelestialAngle(30, -15);
-			int opposite = 1;
+			int opposite = -1;
 			
 			// create and display a progress report
 			ProgressReportDialog pr = new ProgressReportDialog(GonioAngleCalcDialog.this, "Gonio Angle Calculator", false, 20);
