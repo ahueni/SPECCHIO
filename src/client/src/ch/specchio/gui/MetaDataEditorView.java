@@ -21,6 +21,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.metadata.MDE_Controller;
 import ch.specchio.metadata.MDE_Form;
 import ch.specchio.metadata.MD_ChangeListener;
@@ -46,6 +47,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	ArrayList<MD_Field> changed_fields = new ArrayList<MD_Field>();
 	ArrayList<MD_Field> removed_fields = new ArrayList<MD_Field>();
 	ArrayList<MD_Field> added_fields = new ArrayList<MD_Field>();
+	ArrayList<MD_Field> changed_annotations = new ArrayList<MD_Field>();
 
 
 	public MetaDataEditorView() throws SPECCHIOClientException {
@@ -226,6 +228,21 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 	}
 	
+	
+	private void updateChangedAnnotations() throws SPECCHIOWebClientException {
+		
+		for (MD_Field field : changed_annotations) {
+		
+			mdec.updateAnnotation(field);
+		}
+		
+		// reset changed lists
+		changed_annotations.clear();		
+		
+		// update button states
+		setUpdateResetButtonsState();		
+	}	
+	
 	// check all fields for multiple updates and ask user if it should be applied
 	private void removeFields() throws SPECCHIOClientException
 	{
@@ -296,6 +313,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 					updateCampaign();
 				} else if (metadata_tabs.getSelectedIndex() == metadata_tab_index) {
 					updateChangedFields();
+					updateChangedAnnotations();
 					removeFields();
 				}
 			}
@@ -334,6 +352,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 					changed_fields.clear();
 					removed_fields.clear();
 					added_fields.clear();
+					changed_annotations.clear();
 					
 					buildGUI();
 					
@@ -357,6 +376,9 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 	}
 	
+
+
+
 	public void valueChanged(ListSelectionEvent arg0) {
 		
 		startOperation();
@@ -424,7 +446,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		if (metadata_tabs.getSelectedIndex() == campaign_tab_index) {
 			update_reset_state = campaign_panel.hasUnsavedChanges();
 		} else if (metadata_tabs.getSelectedIndex() == metadata_tab_index) {
-			update_reset_state = this.changed_fields.size()>0 || this.removed_fields.size()>0;
+			update_reset_state = this.changed_fields.size()>0 || this.removed_fields.size()>0 || this.changed_annotations.size()>0;
 		}
 		
 		update.setEnabled(update_reset_state);
@@ -463,6 +485,21 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	}
 	
 	
+	@Override
+	public void metadataFieldAnnotationChanged(MD_Field field, String annotation) {
+		
+		field.setAnnotation(annotation);
+		
+		if(!changed_annotations.contains(field))
+		{
+			changed_annotations.add(field);
+		}	
+		
+		setUpdateResetButtonsState();
+		
+	}	
+	
+	
 	/**
 	 * Handler for ending a potentially long-running operation.
 	 */
@@ -483,6 +520,9 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		
 	}
+
+
+
 
 }
 
