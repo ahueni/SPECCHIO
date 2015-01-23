@@ -69,6 +69,7 @@ import ch.specchio.queries.RQueryBuilder;
 import ch.specchio.query_builder.QueryController;
 import ch.specchio.spaces.Space;
 import ch.specchio.types.Campaign;
+import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.Spectrum;
 
 public class QueryBuilder extends JFrame  implements ActionListener, TreeSelectionListener, ChangeListener, ClipboardOwner, QueryConditionChangeInterface 
@@ -112,6 +113,11 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 
 	private JMenu menu;
 	private JMenu test_menu;
+
+
+	private ArrayList<Integer> unsorted_spectrum_ids;
+	
+	private boolean sorted_ids_ready = false;
 	
 	
 	// new class for a JTextArea to include a popup listener
@@ -477,6 +483,24 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	}
 	
 	
+	public ArrayList<Integer> get_ids_matching_query()
+	{
+		if(!this.sorted_ids_ready)
+		{
+			changed(true); // initiate loading of sorted ids
+		}
+		
+		return ids_matching_query;
+	}
+	
+	public ArrayList<Integer> get_ids_matching_query_not_sorted()
+	{	
+		if (unsorted_spectrum_ids == null) // this is true for id selections not carried out in the spectral data browser
+			return this.ids_matching_query;
+		else
+			return this.unsorted_spectrum_ids;
+	}	
+	
 	
 	public void changed(boolean changed)
 	{
@@ -487,19 +511,9 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 				query.setQueryType(Query.SELECT_QUERY);
 				ids_matching_query = specchio_client.getSpectrumIdsMatchingQuery(query);
 				
-				// clear the old list of matching ids
-				//ids_matching_query.clear();
-				SQL_query.setText(null);
+				setQueryInfoFields(ids_matching_query);
 				
-				// add the new list of ids
-				for (Integer id : ids_matching_query) {
-					//ids_matching_query.add(id);
-					if (SQL_query.getText().length() > 0) {
-						SQL_query.append(", ");
-					}
-					SQL_query.append(Integer.toString(id));
-				}
-				resulting_rows.setText(Integer.toString(ids_matching_query.size()));
+				sorted_ids_ready = true;
 				
 				// enable the action buttons if there were any matches
 				setButtonsEnabled(ids_matching_query.size() > 0);
@@ -509,9 +523,44 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 				SQL_query.setText(ex.getUserMessage());
 				resulting_rows.setText("Error!");
 				setButtonsEnabled(false);
+				sorted_ids_ready = false;
 			}
 		}
 		
+		
+	}
+	
+	
+	private void setQueryInfoFields(ArrayList<Integer> ids)
+	{
+		
+		// clear the old list of matching ids
+		//ids_matching_query.clear();
+		SQL_query.setText(null);
+		
+		// add the new list of ids
+		int max_no_of_ids_in_SQL_query = 500;
+		int max_ind = ids.size();
+		
+		if(ids.size() > max_no_of_ids_in_SQL_query)
+		{
+			max_ind = max_no_of_ids_in_SQL_query;
+		}
+		
+		for (Integer id : ids.subList(0, max_ind)) {
+			//ids_matching_query.add(id);
+			if (SQL_query.getText().length() > 0) {
+				SQL_query.append(", ");
+			}
+			SQL_query.append(Integer.toString(id));
+		}
+		
+		if(ids.size() > max_no_of_ids_in_SQL_query)
+		{
+			SQL_query.append(" ... (Displayed ID list is truncated)");
+		}
+		
+		resulting_rows.setText(Integer.toString(ids.size()));		
 		
 	}
 	
@@ -553,7 +602,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      {
 	    	  startOperation();
 	    	  ReportThread thread = new ReportThread(
-    				  ids_matching_query,
+	    			  get_ids_matching_query(),
     				  split_spaces_by_sensor.isSelected(),
     				  split_spaces_by_sensor_and_unit.isSelected(),
     				  sdb.get_order_by_field()
@@ -567,7 +616,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    	  startOperation();
 	    	  try {
 	    		  Space spaces[] = specchio_client.getSpaces(
-	    				  ids_matching_query,
+	    				  get_ids_matching_query(),
 	    				  split_spaces_by_sensor.isSelected(),
 	    				  split_spaces_by_sensor_and_unit.isSelected(),
 	    				  sdb.get_order_by_field()
@@ -598,7 +647,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      {	
 	    	  	try {
 		        	Space[] spaces = specchio_client.getSpaces(
-		        			ids_matching_query,
+		        			get_ids_matching_query(),
 		        			this.split_spaces_by_sensor.isSelected(),
 		        			this.split_spaces_by_sensor_and_unit.isSelected(),
 		        			sdb.get_order_by_field()
@@ -623,15 +672,13 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      
 	      if(VisualisationSelectionDialog.gonio_hem_expl.equals(e.getActionCommand()) 
 	    		  || VisualisationSelectionDialog.sampling_points_plot.equals(e.getActionCommand())
-	    		  || VisualisationSelectionDialog.spectral_multiplot.equals(e.getActionCommand())
-	    	  || VisualisationSelectionDialog.spectral_scatter_multiplot.equals(e.getActionCommand())
 	    	  || VisualisationSelectionDialog.time_line_plot.equals(e.getActionCommand())
 	    	  || VisualisationSelectionDialog.time_line_expl.equals(e.getActionCommand()))
 	      {	 
 	    	  startOperation();
 	    	  VisualisationThread thread = new VisualisationThread(
 	    			  e.getActionCommand(),
-    				  ids_matching_query,
+	    			  get_ids_matching_query(),
     				  split_spaces_by_sensor.isSelected(),
     				  split_spaces_by_sensor_and_unit.isSelected(),
     				  sdb.get_order_by_field()
@@ -641,13 +688,28 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      }	      
 	      
 	      
+	      if(VisualisationSelectionDialog.spectral_multiplot.equals(e.getActionCommand())
+	    	  || VisualisationSelectionDialog.spectral_scatter_multiplot.equals(e.getActionCommand()))
+	      {	 
+	    	  startOperation();
+	    	  VisualisationThread thread = new VisualisationThread(
+	    			  e.getActionCommand(),
+	    			  this.get_ids_matching_query_not_sorted(),
+    				  split_spaces_by_sensor.isSelected(),
+    				  split_spaces_by_sensor_and_unit.isSelected(),
+    				  sdb.get_order_by_field()
+    			);
+	    	  thread.start();
+	    	  endOperation();	 			  
+	      }	      	      
+	      
 	      if("refl".equals(e.getActionCommand()))
 	      {        	   
 	    	  startOperation();
 	    	  try {
 		    	  DataProcessor d = new DataProcessor(specchio_client);
 	
-		    	  d.set_ids(ids_matching_query);
+		    	  d.set_ids(get_ids_matching_query());
 		    	  d.setVisible(true);
 		    	  ProcessingPlane pp = d.getProcessingPlane();
 		    	  ArrayList<SpaceProcessingChainComponent> spaces = pp.get_spaces();
@@ -682,7 +744,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    		  
 	    		  if (publicationAllowed()) {
 	    			  
-	    			  PublishCollectionDialog d = new PublishCollectionDialog(this, ids_matching_query, true);
+	    			  PublishCollectionDialog d = new PublishCollectionDialog(this, get_ids_matching_query(), true);
 				   	  d.setVisible(true);
 				   	  RDACollectionDescriptor collection_d = d.getCollectionDescriptor();
 				   	  if (collection_d != null) {
@@ -734,15 +796,19 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      if ("Test".equals(e.getActionCommand()))
 	      {
 	    	  try {
-				// ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
-	    		  Spectrum s = specchio_client.getSpectrum(ids_matching_query.get(0), false);
-	    		  int current_hierarchy_id = s.getHierarchyLevelId();
-	    		  int first_parent_id = specchio_client.getHierarchyParentId(current_hierarchy_id);
 	    		  
-	    		
-				Campaign campaign = specchio_client.getCampaign(s.getCampaignId());
-				
-				specchio_client.getSubHierarchyId(campaign, "Reflectance", first_parent_id);
+	    		  MatlabAdaptedArrayList<Object> out = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Acquisition Time");
+	    		  
+	    		  int x = 1;
+				// ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
+//	    		  Spectrum s = specchio_client.getSpectrum(get_ids_matching_query().get(0), false);
+//	    		  int current_hierarchy_id = s.getHierarchyLevelId();
+//	    		  int first_parent_id = specchio_client.getHierarchyParentId(current_hierarchy_id);
+//	    		  
+//	    		
+//				Campaign campaign = specchio_client.getCampaign(s.getCampaignId());
+//				
+//				specchio_client.getSubHierarchyId(campaign, "Reflectance", first_parent_id);
 				
 			} catch (SPECCHIOWebClientException e1) {
 				// TODO Auto-generated catch block
@@ -821,20 +887,24 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	{
 
 		try {
-			ArrayList<Integer> spectrum_ids = sdb.get_selected_spectrum_ids();
+			unsorted_spectrum_ids = sdb.get_selected_spectrum_ids();
 		
 			
-			if(spectrum_ids != null && spectrum_ids.size() > 0)
+			if(unsorted_spectrum_ids != null && unsorted_spectrum_ids.size() > 0)
 			{
 				query.remove_all_conditions();
 					
 				QueryConditionObject condition = new QueryConditionObject("spectrum", "spectrum_id");
 				condition.setOperator("in");
-				condition.setValue(spectrum_ids);
+				condition.setValue(unsorted_spectrum_ids);
 				query.add_condition(condition);
 				query.add_join("spectrum", condition);
 				setButtonsEnabled(true);
-				changed(true);
+				sorted_ids_ready = false;
+				//changed(true);
+				
+				setQueryInfoFields(unsorted_spectrum_ids);
+				
 			}
 			else
 			{
