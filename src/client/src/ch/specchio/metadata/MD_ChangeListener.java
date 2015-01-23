@@ -29,5 +29,14 @@ public interface MD_ChangeListener {
 	 * @param field	the field
 	 */
 	public void metadataFieldRemoved(MD_Field field);
+	
+	
+	/**
+	 * Respond to the change of an annotation.
+	 * 
+	 * @param field	the field
+	 * @param annotation 
+	 */
+	public void metadataFieldAnnotationChanged(MD_Field field, String annotation);	
 
 }

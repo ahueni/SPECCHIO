@@ -9,6 +9,7 @@ public abstract class MD_Field implements Comparable<MD_Field> {
 	ConflictInfo conflict;
 	private Object new_value;
 	private String description; // help string
+	private String annotation = null; // currently used for binary content
 
 	public void textReport() {
 		// TODO Auto-generated method stub
@@ -63,6 +64,14 @@ public abstract class MD_Field implements Comparable<MD_Field> {
 	public void setDescription(String description) {
 		this.description = description;
 	}
+	
+	public String getAnnotation() {
+		return annotation;
+	}
+
+	public void setAnnotation(String annotation) {
+		this.annotation = annotation;
+	}	
 
 	
 	

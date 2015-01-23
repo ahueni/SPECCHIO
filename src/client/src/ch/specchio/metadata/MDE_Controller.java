@@ -8,6 +8,7 @@ import java.util.ListIterator;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
@@ -156,10 +157,14 @@ public class MDE_Controller {
 			try {
 				MD_EAV_Field eav_field = (MD_EAV_Field) field;
 				MetaParameter mp = eav_field.getMetaParameter();
+				
 				mp.setValue(field.getNewValue());
+
 				int old_eav_id = mp.getEavId();
 				int eav_id = specchio_client.updateEavMetadata(mp, ids);
-				eav_field.setEavId(eav_id, old_eav_id);
+				eav_field.setEavId(eav_id, old_eav_id);					
+
+
 			}
 			catch (MetaParameterFormatException ex) {
 				// should never happen
@@ -174,6 +179,19 @@ public class MDE_Controller {
 			spectrum_field.setId((Integer) field.getNewValue());
 			specchio_client.updateSpectraMetadata(ids, spectrum_field.db_field_name, spectrum_field.getId());			
 		}
+		
+		
+	}
+	
+	
+	public void updateAnnotation(MD_Field field) throws SPECCHIOWebClientException {
+		
+		MD_EAV_Field eav_field = (MD_EAV_Field) field;
+		MetaParameter mp = eav_field.getMetaParameter();
+		
+		mp.setAnnotation(field.getAnnotation());
+		
+		int eav_id = specchio_client.updateEavMetadataAnnotation(mp, ids);
 		
 		
 	}
