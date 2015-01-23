@@ -31,6 +31,12 @@ public class KeylistenerTextFieldNumeric extends KeylistenerTextField
 			return true;
 		}
 		
+		int id = e.getKeyCode();
+		
+		//System.out.println(id);
+		
+		//int c_num = e.getKeyChar();
+		
 		char c = e.getKeyChar();
 		
 		// digits and minus signs are always allowed
@@ -52,6 +58,11 @@ public class KeylistenerTextFieldNumeric extends KeylistenerTextField
 		if (c == KeyEvent.VK_COPY || c == KeyEvent.VK_CUT || c == KeyEvent.VK_PASTE) {
 			return true;
 		}
+		
+		// allow copy and paste (this appears to work for MacOS X)
+		if (id == KeyEvent.VK_C || id == KeyEvent.VK_X || id == KeyEvent.VK_V) {
+			return true;
+		}		
 		
 		// assume not allowed
 		return false;
