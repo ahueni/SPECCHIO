@@ -171,6 +171,22 @@ public class SpectrumMetadataPanel extends JPanel {
 		
 	}
 	
+	/**
+	 * Fire the "metadata annnotation changed" event.
+	 * 
+	 * @param field	the field that was changed
+	 * @param annotation	the new annotation of the field
+	 */	
+	private void fireMetadataAnnotationChanged(MD_Field field,
+			String annotation) {
+		// notify all listeners
+		for (MD_ChangeListener listener : listeners) {
+			listener.metadataFieldAnnotationChanged(field, annotation);
+		}
+		
+	}
+	
+	
 	
 	/**
 	 * Get the metadata form associated with this panel.
@@ -396,12 +412,12 @@ public class SpectrumMetadataPanel extends JPanel {
 			fieldPanel.add(c);
 			
 			if (field instanceof MD_EAV_Field) {
-				// remove this field from the pop-up menu
+				// remove this field from the pop-up menu if its cardinality is 1
 				MetaParameter mp = ((MD_EAV_Field)field).getMetaParameter();
 				for (int i = 0; i < popupMenu.getComponentCount(); i++) {
 					JMenuItem menuItem = (JMenuItem)popupMenu.getComponent(i);
 					attribute a = (attribute)menuItem.getClientProperty(ATTRIBUTE);
-					if (a.id == mp.getAttributeId()) {
+					if (a.id == mp.getAttributeId() && a.cardinality == 1) {
 						popupMenu.remove(i);
 						break;
 					}
@@ -577,7 +593,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				// add an option to re-add the field to the pop-up menu
 				MetaParameter mp = ((MD_EAV_Field)field).getMetaParameter();
 				for (attribute a : mdcc.getPossibleEAVFields()) {
-					if (a.id == mp.getAttributeId()) {
+					if (a.id == mp.getAttributeId()  && a.cardinality == 1) {
 						addMenuItem(a);
 						break;
 					}
@@ -852,7 +868,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			combo_table_data nil_item = new combo_table_data("NIL", 0);
 			box.addItem(nil_item);
 			
-			// fill the box with tiems
+			// fill the box with items
 			CategoryTable items = field.getCategoryValues();
 			Enumeration<Integer> e = items.keys();
 			while(e.hasMoreElements())
@@ -861,7 +877,8 @@ public class SpectrumMetadataPanel extends JPanel {
 				String value = items.get(key);
 				combo_table_data cdt = new combo_table_data(value, key);
 				box.addItem(cdt);
-				if(key == field.getId())
+				//System.out.println(key);
+				if(key.intValue() == field.getId().intValue())
 				{
 					box.setSelectedItem(cdt);
 				}
@@ -1136,7 +1153,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			super(container, field);
 			
 			// set up date and format
-			Date date = (Date)field.getMetaParameter().getValue();
+			Date date = ((MetaDate)field.getMetaParameter()).valueAsDate();
 			
 			// build the calendar control
 			cal_combo = new JCalendarCombo(JCalendar.DISPLAY_DATE | JCalendar.DISPLAY_TIME,  false);			
@@ -1145,7 +1162,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			cal_combo.addDateListener(this);
 			
 			// build the text field
-			text = new JTextField(MetaDate.formatDate(date), 20);
+			text = new JTextField(((MetaDate) field.getMetaParameter()).valueAsString(), 20);
 			text.setEditable(false);
 			
 			// start with the combo box on display
@@ -1323,7 +1340,7 @@ public class SpectrumMetadataPanel extends JPanel {
 	/**
 	 * Component for image-type metadata.
 	 */
-	private class SpectrumImageEavMetadataComponent extends SpectrumEavMetadataComponent {
+	private class SpectrumImageEavMetadataComponent extends SpectrumEavMetadataComponent  implements DocumentListener {
 		
 		/** serialisation version identifier */
 		private static final long serialVersionUID = 1L;
@@ -1333,6 +1350,8 @@ public class SpectrumMetadataPanel extends JPanel {
 		
 		/** the label for multiple images */
 		private JLabel label;
+
+		private JTextField text;
 		
 		
 		/**
@@ -1366,6 +1385,18 @@ public class SpectrumMetadataPanel extends JPanel {
 						ip.setPreferredSize(new Dimension(width , heigth));
 						
 						add(ip);
+						
+						if(field.getMetaParameter().getAnnotation() != null)
+						{
+							text = new JTextField(20);
+							text.setText(field.getMetaParameter().getAnnotation());
+							add(text);
+							
+							// set up event handler
+							text.getDocument().addDocumentListener(this);
+							
+						}
+						
 					} else {
 						label = new JLabel("-- image data not available --");
 						add(label);
@@ -1391,6 +1422,39 @@ public class SpectrumMetadataPanel extends JPanel {
 			}
 			
 		}
+		
+		/**
+		 * Convert the contents of the input field into the appropriate Java type.
+		 * 
+		 * @return an Object containing the parsed value, or null if it is not legal input
+		 */
+		private Object getValidatedInput() {
+			
+			Object oldValue = getMetaParameter().getValue();
+			Object newValue = null;
+			String input = text.getText();
+			if (oldValue instanceof Integer) {
+				try {
+					newValue = Integer.parseInt(input);
+				}
+				catch (NumberFormatException ex) {
+					// nothing to do because newValue is already null
+				}
+			} else if (oldValue instanceof Double) {
+				try {
+					newValue = Double.parseDouble(input);
+				}
+				catch (NumberFormatException ex) {
+					// nothing to do because newValue is already null
+				}
+			} else {
+				// should be a string
+				newValue = input;
+			}
+			
+			return newValue;
+			
+		}		
 		
 		
 		/**
@@ -1418,6 +1482,51 @@ public class SpectrumMetadataPanel extends JPanel {
 			}
 			
 		}
+		
+		/**
+		 * Handle updates to the text component.
+		 * 
+		 * @param event	the event to handle
+		 */
+		public void changedUpdate(DocumentEvent event) {
+			
+			String newValue = (String) getValidatedInput();
+			if (newValue != null) {				
+				fireMetadataAnnotationChanged(getField(), newValue);
+			}	
+		}
+		
+
+		/**
+		 * Handle insertions in the text component.
+		 * 
+		 * @param event	the event to handle
+		 */
+		public void insertUpdate(DocumentEvent event) {
+			
+			String newValue = (String) getValidatedInput();
+			if (newValue != null) {				
+				fireMetadataAnnotationChanged(getField(), newValue);
+			}				
+		}
+
+
+		/**
+		 * Handle deletions from the text component.
+		 * 
+		 * @param event	the event to handle
+		 */
+		public void removeUpdate(DocumentEvent event) {
+			
+			String newValue = (String) getValidatedInput();
+			if (newValue != null) {				
+				fireMetadataAnnotationChanged(getField(), newValue);
+			}	
+			
+		}		
+		
+			
+			
 		
 	}
 	
