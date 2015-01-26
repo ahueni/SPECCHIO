@@ -11,6 +11,7 @@ import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
+import ch.specchio.types.SpectralFiles;
 
 public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
@@ -208,7 +209,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				}
 				
 				// check existence of all spectral files
-				SpectralFileInsertResult sfs = new SpectralFileInsertResult(); // actually should use the class SpectralFiles here, but that one does not work?!?!?!?!
+				SpectralFiles sfs = new SpectralFiles(); // actually should use the class SpectralFiles here, but that one does not work?!?!?!?!
 				
 				ArrayList<SpectralFile> spectral_light_file_list = new ArrayList<SpectralFile>();
 				
