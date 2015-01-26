@@ -44,6 +44,7 @@ public abstract class MetaFile extends MetaParameter {
 	 * 
 	 * @param category_name		the category name
 	 * @param category_value	the category value
+	 * @param meta_value		the metaparameter value
 	 * 
 	 * @throws MetaParameterFormatException	meta_value cannot be assigned to a file meta-parameter
 	 */
@@ -53,6 +54,20 @@ public abstract class MetaFile extends MetaParameter {
 		setDefaultStorageField("binary_val");
 		
 	}
+	
+	/**
+	 * Constructor from attribute and value
+	 * 
+	 * @param attr	the attribute
+	 * @param meta_value		the metaparameter value
+	 * 
+	 * @throws MetaParameterFormatException	meta_value cannot be assigned to a file meta-parameter
+	 */
+	
+	protected MetaFile(attribute attr, Object meta_value) throws MetaParameterFormatException
+	{
+		super(attr, meta_value);
+	}		
 	
 	
 	/**

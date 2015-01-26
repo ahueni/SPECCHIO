@@ -27,6 +27,11 @@ public class MetaImage extends MetaFile {
 		this.setAnnotation(""); // enforces the creation of an empty text field in the metadata editor to add annotations
 	}
 	
+	protected MetaImage(attribute attr, Object meta_value) throws MetaParameterFormatException
+	{
+		super(attr, meta_value);
+	}		
+	
 	
 	/** constructor from category name and value */
 	protected MetaImage(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException

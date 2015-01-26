@@ -20,6 +20,21 @@ public class MetaSimple extends MetaParameter {
 		super(category_name, category_value, meta_value);
 		
 	}
+	
+	/**
+	 * Constructor from attribute and value
+	 * 
+	 * @param attr	the attribute
+	 * @param meta_value		the metaparameter value
+	 * 
+	 * @throws MetaParameterFormatException	meta_value cannot be assigned to a file meta-parameter
+	 */
+	
+	protected MetaSimple(attribute attr, Object meta_value) throws MetaParameterFormatException
+	{
+		super(attr, meta_value);
+	}				
+		
 		
 
 	protected MetaSimple() {
