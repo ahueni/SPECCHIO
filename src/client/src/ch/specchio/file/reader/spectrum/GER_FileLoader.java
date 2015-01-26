@@ -7,10 +7,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.ListIterator;
-import java.util.Date;
-import java.util.TimeZone;
+
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
@@ -52,7 +53,7 @@ public class GER_FileLoader extends SpectralFileLoader {
 		ger_file.addMeasurementUnits(2);
 		ger_file.addMeasurementUnits(2);
 		
-		ger_file.setCaptureDates(new Date[ger_file.getNumberOfSpectra()]); 
+		ger_file.setCaptureDates(new DateTime[ger_file.getNumberOfSpectra()]); 
 		
 		file_input = new FileInputStream (file);			
 				
@@ -123,13 +124,16 @@ public class GER_FileLoader extends SpectralFileLoader {
 			String[] date = time_data[0].split(":");
 			String[] time = time_data[1].split(":");
 			
-			TimeZone tz = TimeZone.getTimeZone("UTC");
-			Calendar cal = Calendar.getInstance(tz);
-			cal.set(Integer.valueOf(date[2]), Integer.valueOf(date[1])-1, // month is zero based!
-					Integer.valueOf(date[0]), Integer.valueOf(time[0]), 
-					Integer.valueOf(time[1]), Integer.valueOf(time[2]));
+//			TimeZone tz = TimeZone.getTimeZone("UTC");
+//			Calendar cal = Calendar.getInstance(tz);
+//			cal.set(Integer.valueOf(date[2]), Integer.valueOf(date[1])-1, // month is zero based!
+//					Integer.valueOf(date[0]), Integer.valueOf(time[0]), 
+//					Integer.valueOf(time[1]), Integer.valueOf(time[2]));
 			
-			hdr.setCaptureDate(0, cal.getTime());		
+			
+			DateTime dt = new DateTime(Integer.valueOf(date[2]), Integer.valueOf(date[1]), Integer.valueOf(date[0]), Integer.valueOf(time[0]), Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC);
+			
+			hdr.setCaptureDate(0, dt);		
 			hdr.setCaptureDate(1, hdr.getCaptureDate(0)); // time for both measurements is taken as the same
 		}
 		
