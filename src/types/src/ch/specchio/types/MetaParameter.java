@@ -24,6 +24,7 @@ public abstract class MetaParameter {
 	private Integer default_unit_id = 0;
 	private Integer eav_id = 0;
 	private String description; // help string
+	private String annotation;
 	
 	protected MetaParameter() {
 		
@@ -171,8 +172,17 @@ public abstract class MetaParameter {
 	
 	public void setDescription(String description) {
 		this.description = description;
-	}	
+	}		
 	
+	
+	@XmlElement(name="annotation")
+	public String getAnnotation() {
+		return annotation;
+	}
+	
+	public void setAnnotation(String annotation) {
+		this.annotation = annotation;
+	}	
 	
 	
 	public static MetaParameter newInstance()
