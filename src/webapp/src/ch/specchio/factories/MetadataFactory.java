@@ -7,6 +7,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Stopwatch;
 
 import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.eav_db.SQL_StatementBuilder;
@@ -443,7 +446,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			Statement stmt = SQL.createStatement();
 			String primary_id_name = getEavServices().get_primary_id_name();
 			String primary_x_eav_tablename = getEavServices().get_primary_x_eav_tablename();
-			String temp_tablename = SQL.prefix(getTempDatabaseName(), "eav_frame_compilation");
+//			String temp_tablename = SQL.prefix(getTempDatabaseName(), "eav_frame_compilation");
 			
 			
 			attribute attr;
@@ -452,35 +455,57 @@ public class MetadataFactory extends SPECCHIOFactory {
 				// get the descriptor of the desired attribute
 				attr = getAttributes().get_attribute_info(attrId);
 				
-				// create temporary table
-				String ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " + temp_tablename + " " +
-						"(eav_id INT NOT NULL, " +
-						primary_id_name + " " +
-						"INT NOT NULL, " +
-						"id INT NOT NULL " +
-						"AUTO_INCREMENT, PRIMARY KEY (id))";
-				stmt.executeUpdate(ddl_string);
+//				long startTime = System.currentTimeMillis();
 				
-				// insert eav idenifiers into the temporary table
+				// create temporary table
+//				String ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " + temp_tablename + " " +
+//						"(eav_id INT NOT NULL, " +
+//						primary_id_name + " " +
+//						"INT NOT NULL, " +
+//						"id INT NOT NULL " +
+//						"AUTO_INCREMENT, PRIMARY KEY (id))";
+//				stmt.executeUpdate(ddl_string);
+				
+//				long stopTime = System.currentTimeMillis();
+//			      long elapsedTime = stopTime - startTime;
+//				System.out.println("CREATE TEMPORARY TABLE" + elapsedTime);
+//				startTime = System.currentTimeMillis();
+
+				// insert eav identifiers into the temporary table
+				
+				
 				String conc_ids = SQL.conc_ids(ids);
-				String query = "insert into " + temp_tablename + " " +
-						"(eav_id, " +  primary_id_name + ") " +
-						"select eav_id, " + primary_id_name + " from " + primary_x_eav_tablename +
-							" where " + primary_id_name + " in (" + conc_ids + ") " +
-							" order by FIELD (" + primary_id_name + ", "+ conc_ids +")";
-				stmt.executeUpdate(query);
+//				String query = "insert into " + temp_tablename + " " +
+//						"(eav_id, " +  primary_id_name + ") " +
+//						"select eav_id, " + primary_id_name + " from " + primary_x_eav_tablename +
+//							" where " + primary_id_name + " in (" + conc_ids + ") " +
+//							" order by FIELD (" + primary_id_name + ", "+ conc_ids +")";
+//				stmt.executeUpdate(query);
+				
+//				stopTime = System.currentTimeMillis();
+//				elapsedTime = stopTime - startTime;
+//				System.out.println("insert into TEMPORARY TABLE" + elapsedTime);
+//				startTime = System.currentTimeMillis();
 				
 				// build the list of metaparameters
-				query = "select " + ((distinct)? "distinct " : "") + SQL.prefix("eav", attr.getDefaultStorageField()) + " " +
-						"from eav, " + temp_tablename + " efc " +
-						"where eav.attribute_id = "  + Integer.toString(attrId) + " and eav.eav_id = efc.eav_id order by efc.id";
+//				query = "select " + ((distinct)? "distinct " : "") + SQL.prefix("eav", attr.getDefaultStorageField()) + " " +
+//						"from eav, " + temp_tablename + " efc " +
+//						"where eav.attribute_id = "  + Integer.toString(attrId) + " and eav.eav_id = efc.eav_id order by efc.id";
+				
+				
+				String query = "select " + ((distinct)? "distinct " : "") + SQL.prefix("eav", attr.getDefaultStorageField()) + ", eav.eav_id " +
+						"from eav, " + primary_x_eav_tablename + " where " + primary_id_name + " in (" + conc_ids + ") and " +
+						primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = "  + Integer.toString(attrId) + " order by FIELD (" + primary_id_name + ", "+ conc_ids +")";
+				
 				ResultSet rs = stmt.executeQuery(query);
 				while (rs.next()) 
 				{
 					Object o = rs.getObject(1);
+					Integer id = rs.getInt(2);
 					if (o != null) {
 						try {
 							MetaParameter mp = MetaParameter.newInstance(attr);
+							mp.setEavId(id);
 							mp.setValue(o);
 							mp_list.add(mp);
 						}
@@ -492,10 +517,15 @@ public class MetadataFactory extends SPECCHIOFactory {
 				}
 				rs.close();						
 				
+//				stopTime = System.currentTimeMillis();
+//				elapsedTime = stopTime - startTime;
+//				System.out.println("get metaparameters" + elapsedTime);
+//				startTime = System.currentTimeMillis();
+				
 				
 				// clear temporary table
-				query = "delete from " + temp_tablename;
-				stmt.executeUpdate(query);
+//				query = "delete from " + temp_tablename;
+//				stmt.executeUpdate(query);
 				
 				// clean up
 				stmt.close();
@@ -843,6 +873,21 @@ public class MetadataFactory extends SPECCHIOFactory {
 		
 		return eav_id;
 		
+	}
+
+
+	public int updateMetadataAnnotation(MetaParameter mp, Integer[] ids)  throws SPECCHIOFactoryException {
+
+		try {
+			
+			EAVDBServices eav = getEavServices();
+			eav.update_eav_annotation(mp.getEavId(), mp.getAnnotation());
+
+		} catch (SQLException e) {
+			throw new SPECCHIOFactoryException(e);
+		}		
+
+		return mp.getEavId();
 	}
 
 
