@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
@@ -37,12 +40,12 @@ public class XLS_FileLoader extends SpectralFileLoader {
 			
 			// get spectrum file names
 			// set capture dates: equal to loading date
-			TimeZone tz = TimeZone.getTimeZone("UTC");
-			Calendar cal = Calendar.getInstance(tz);
+//			TimeZone tz = TimeZone.getTimeZone("UTC");
+//			Calendar cal = Calendar.getInstance(tz);
 			for(int c = 1;c<sheet.getColumns();c++)
 			{
 				f.addSpectrumFilename(file.getName() + "_" + sheet.getCell(c, 0).getContents());
-				f.setCaptureDate(c-1, cal.getTime());	
+				f.setCaptureDate(c-1, new DateTime(DateTimeZone.UTC));	
 			}
 			
 			// get wvls
