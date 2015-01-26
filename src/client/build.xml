@@ -10,6 +10,7 @@
 	<property name="dist.dir" value="dist" />
 	<property name="jar.file" value="specchio-client.jar" />
 	<property name="pkg.dir" value="${repo.home}/pkg" />
+	<property name="macos_pkg.dir" value="${repo.home}/macos_pkg" />
 	
 	<!-- IzPack configuration -->
 	<property name="izpack.home" value="${user.home}/IzPack" />
@@ -37,7 +38,7 @@
     
     	<!-- compile class files -->
         <mkdir dir="${build.dir}" />
-        <javac srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false">
+        <javac target="1.6" source="1.6" srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false">
             <classpath refid="build.classpath" />
         </javac>
         
@@ -73,6 +74,7 @@
     	<copy file="db_config.txt" todir="${dist.dir}" />
     	<copy file="specchio.keystore" todir="${dist.dir}" />
     	<copy file="SPECCHIO_Icon_Mid_Res_small.jpg" todir="${dist.dir}" />
+    	<copy file="SPECCHIO.icns" todir="${dist.dir}" />
     	
     	<!-- build jar -->
     	<manifestclasspath property="manifest.classpath" jarfile="${dist.dir}/${jar.file}">
@@ -101,6 +103,51 @@
 		<izpack izPackDir="${izpack.home}" installerType="standard" input="install.xml" basedir="${dist.dir}" output="${pkg.dir}/specchio-client-installer.jar" />
 	
 	</target>
+	
+	<!-- build MacOS application -->
+    <taskdef name="bundleapp"
+             classname="com.oracle.appbundler.AppBundlerTask"   
+             classpath="lib/appbundler-1.0.jar" />
+
+    <target name="SPECCHIO_MacOSXApp">
+        <bundleapp outputdirectory="${macos_pkg.dir}"
+            name="SPECCHIO"
+            displayname="SPECCHIO"
+            identifier="ch.specchio.gui.SPECCHIOApplication"
+            shortversion="3.1"
+            icon="dist/SPECCHIO.icns"
+            mainclassname="ch.specchio.gui.SPECCHIOApplication">
+            <classpath file="dist/*" />
+        	<option value="-Dncsa.hdf.hdf5lib.H5.hdf5lib=%{INSTALL_PATH}/SPECCHIO.app/Contents/Java/macosx/libjhdf5.jnilib"/>
+        	<option value="-Xdock:icon=Contents/Resources/${bundle.icon}"/>
+        	<option value="-Dcom.apple.macos.useScreenMenuBar=true"/>
+        </bundleapp>
+    	
+    	<!-- copy OS-dependent files -->
+    	<copy todir="${macos_pkg.dir}/SPECCHIO.app/Contents/Java" flatten="false">
+    		<fileset dir="${osdep.dir}">
+    			<include name="macosx/libjhdf5.jnilib" />
+    		</fileset>
+    	</copy>   
+    	
+  	
+    	
+    	<!-- move db_config.txt outside of the application to allow overwrite check during installation -->		
+    	<move file="${macos_pkg.dir}/SPECCHIO.app/Contents/Java/db_config.txt" todir="${macos_pkg.dir}"/>
+    	
+    	<copy file="${osdep.dir}/macosx/installation_cleanup" todir="${macos_pkg.dir}"/>
+    	<chmod file="${macos_pkg.dir}/installation_cleanup" perm="755" />
+    	
+    </target>	
+	
+	
+	<!-- build MacOS installation packages -->
+	<target name="MacOSXpackage" description="Build MacOSX installation package" depends="dist">
+				
+		<!-- izpack self-installer -->
+		<izpack izPackDir="${izpack.home}" installerType="standard" input="installMacOSX.xml" basedir="${macos_pkg.dir}" output="${pkg.dir}/specchio-client-MacOSX-installer.jar" />
+	
+	</target>	
     
     
     <!-- clean up -->
