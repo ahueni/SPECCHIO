@@ -38,6 +38,20 @@ public class MetaDocument extends MetaFile {
 		
 	}
 	
+	/**
+	 * Constructor from attribute and value
+	 * 
+	 * @param attr	the attribute
+	 * @param meta_value		the metaparameter value
+	 * 
+	 * @throws MetaParameterFormatException	meta_value cannot be assigned to a file meta-parameter
+	 */
+	
+	protected MetaDocument(attribute attr, Object meta_value) throws MetaParameterFormatException
+	{
+		super(attr, meta_value);
+	}			
+	
 
 	/** returns "true" to indicate that documents can be inserted monolithic statements */
 	@Override

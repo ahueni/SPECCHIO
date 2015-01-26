@@ -45,6 +45,11 @@ public abstract class MetaParameter {
 		setValue(meta_value);
 	}
 	
+	protected MetaParameter(attribute attr, Object meta_value) throws MetaParameterFormatException
+	{
+		this(attr);
+		setValue(meta_value);
+	}
 	
 	protected MetaParameter(attribute attr)
 	{
@@ -195,7 +200,7 @@ public abstract class MetaParameter {
 	{
 		MetaParameter mp;
 		
-		// construct a meta-parameter of the type appropirate to the attribute
+		// construct a meta-parameter of the type appropriate to the attribute
 		if (attr.default_storage_field.equals("datetime_val"))
 			mp = new MetaDate(attr);
 		else if (attr.cat_name.equals("Pictures"))
@@ -214,22 +219,22 @@ public abstract class MetaParameter {
 	}
 	
 	
-	public static MetaParameter newInstance(String category_name, String category_value, Object meta_value) throws MetaParameterFormatException
+	public static MetaParameter newInstance(attribute attr, Object meta_value) throws MetaParameterFormatException
 	{
 		MetaParameter mp;
 		
-		if (MetaDate.supportsValue(meta_value)) {
-			mp = new MetaDate(category_name, category_value, meta_value);
+		if (attr.getDefaultStorageField().equals("datetime_val") && MetaDate.supportsValue(meta_value)) {
+			mp = new MetaDate(attr, meta_value);
 		} else if (MetaImage.supportsValue(meta_value)) {
-			mp = new MetaImage(category_name, category_value, meta_value);
+			mp = new MetaImage(attr, meta_value);
 		} else if (MetaDocument.supportsValue(meta_value)) {
-			mp = new MetaDocument(category_name, category_value, meta_value);
+			mp = new MetaDocument(attr, meta_value);
 		} else if (MetaMatrix.supportsValue(meta_value)) {
-			mp = new MetaMatrix(category_name, category_value, meta_value);
-		} else if (MetaTaxonomy.supportsValue(meta_value)) {
-			mp = new MetaTaxonomy(category_name, category_value, meta_value);
+			mp = new MetaMatrix(attr, meta_value);
+		} else if (attr.getDefaultStorageField().equals("taxonomy_id") && MetaTaxonomy.supportsValue(meta_value)) {
+			mp = new MetaTaxonomy(attr, meta_value);
 		} else {
-			mp = new MetaSimple(category_name, category_value, meta_value);
+			mp = new MetaSimple(attr, meta_value);
 		}
 		 
 		 return mp;
@@ -237,10 +242,10 @@ public abstract class MetaParameter {
 	}
 	
 	
-	public static MetaParameter newInstance(String category_name, String category_value) throws MetaParameterFormatException
-	{	
-		return newInstance(category_name, category_value, null);	
-	}
+//	public static MetaParameter newInstance(String category_name, String category_value) throws MetaParameterFormatException
+//	{	
+//		return newInstance(category_name, category_value, null);	
+//	}
 	
 	
 	public abstract boolean allows_multi_insert();

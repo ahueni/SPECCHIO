@@ -22,6 +22,11 @@ public class MetaTaxonomy extends MetaParameter {
 		setDefaultStorageField("taxonomy_id");
 		
 	}
+	
+	protected MetaTaxonomy(attribute attr, Object meta_value) throws MetaParameterFormatException
+	{
+		super(attr, meta_value);
+	}		
 		
 
 	protected MetaTaxonomy() {

@@ -35,6 +35,10 @@ public class MetaDate extends MetaParameter {
 		setDefaultStorageField("datetime_val");
 	}
 	
+	protected MetaDate(attribute attr, Object meta_value) throws MetaParameterFormatException
+	{
+		super(attr, meta_value);
+	}	
 	
 	protected MetaDate(attribute attr) {
 		super(attr);
