@@ -19,7 +19,7 @@
 	<!-- compile class files -->
     <target name="build" description="Build class files">
         <mkdir dir="${build.dir}" />
-        <javac srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false">
+        <javac target="1.6" source="1.6" srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false">
             <classpath refid="lib.path" />
         </javac>
     </target>
