@@ -610,7 +610,7 @@ class MainMenu implements ActionListener, ItemListener {
          JButton button = new JButton();
         
          button.setText("<html>" + SPECCHIOApplication.version + "<br><br>" + 
-        		 "(c) 2006-2014 by Remote Sensing Laboratories (RSL)<br>" +
+        		 "(c) 2006-2015 by Remote Sensing Laboratories (RSL)<br>" +
         		 "Dept. of Geography, " +
         		 "University of Zurich (CH)<br>" +
         		 "(c) 2013-2014 by University of Wollongong (AU)<br><br>" +
