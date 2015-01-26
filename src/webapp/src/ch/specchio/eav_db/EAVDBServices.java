@@ -11,11 +11,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Hashtable;
 import java.util.ListIterator;
+
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameterFormatException;
@@ -61,7 +63,7 @@ public class EAVDBServices extends Thread {
 		// prepare insert statement
 		String query = "insert into eav_view (campaign_id, attribute_id, int_val, double_val, string_val, binary_val, datetime_val, taxonomy_id, unit_id) values";
 		ArrayList<String> value_strings = new ArrayList<String>();
-		
+		double reduction_count = 0;
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		ArrayList<MetaParameter> multi_insert_eavs = new ArrayList<MetaParameter>();
@@ -92,6 +94,7 @@ public class EAVDBServices extends Thread {
 				else
 				{
 					eav_ids.add(e.getEavId());
+					reduction_count++;
 				}
 			}
 			
@@ -120,6 +123,8 @@ public class EAVDBServices extends Thread {
 			    rs.close();
 			
 			}
+			
+//			System.out.println("Redundancy reduction = " + (reduction_count / eav_ids.size() *100) + "%");
 		
 		
 		return eav_ids;
@@ -210,6 +215,18 @@ public class EAVDBServices extends Thread {
 	}
 	
 	
+	public void update_eav_annotation(int eav_id, String annotation) throws SQLException {
+		
+		String query = "update " + this.eav_view_name + " set string_val = '" + annotation + "' where eav_id = " + eav_id;
+		
+		Statement stmt = SQL.createStatement();
+		stmt.executeUpdate(query);		
+		
+		stmt.close();
+	}
+	
+	
+	
 	private void get_metaparameter_attribute_and_unit_ids(MetaParameter mp) throws SQLException
 	{
 		get_metaparameter_attribute_id(mp);
@@ -297,7 +314,7 @@ public class EAVDBServices extends Thread {
 			query.append(",");
 			query.append("binary_val".equals(fieldname) ? value : "null");
 			query.append(",");
-			query.append("datetime_val".equals(fieldname) ? SQL.quote_value(((MetaDate)e).valueAsString()) : "null");
+			query.append("datetime_val".equals(fieldname) ? value : "null");
 			query.append(",");
 			query.append("taxonomy_id".equals(fieldname) ? value : "null");
 			query.append(",");
@@ -1134,7 +1151,7 @@ public class EAVDBServices extends Thread {
 			double_val = rs.getObject(ind++);
 			string_val = rs.getObject(ind++);
 			binary_val = rs.getBlob(ind++);
-			datetime_val =  rs.getObject(ind++);
+			datetime_val =  rs.getString(ind++);
 			taxonomy_id = rs.getLong(ind++);
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
@@ -1155,7 +1172,7 @@ public class EAVDBServices extends Thread {
 				{
 					mp = MetaParameter.newInstance(category_name, category_value, double_val);
 				}
-				else if (string_val != null)
+				else if (string_val != null && binary_val == null)
 				{
 					mp = MetaParameter.newInstance(category_name, category_value, string_val);
 				}
@@ -1175,8 +1192,12 @@ public class EAVDBServices extends Thread {
 				}
 				else if (datetime_val != null)
 				{
-					Date d = new Date();
-					d.setTime(((Timestamp) datetime_val).getTime());
+//					Date d = new Date();
+//					d.setTime(((Timestamp) datetime_val).getTime());
+					DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT + ".S").withZoneUTC();
+
+					DateTime d = formatter.parseDateTime((String) datetime_val); 
+					
 					mp = MetaParameter.newInstance(category_name, category_value, d);
 				}
 				else if (taxonomy_id != null)
@@ -1233,7 +1254,7 @@ public class EAVDBServices extends Thread {
 			double_val = rs.getObject(ind++);
 			string_val = rs.getObject(ind++);
 			binary_val = rs.getBlob(ind++);
-			datetime_val = rs.getObject(ind++);
+			datetime_val = rs.getString(ind++);
 			taxonomy_id = rs.getLong(ind++);
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
@@ -1255,7 +1276,7 @@ public class EAVDBServices extends Thread {
 				{
 					mp = MetaParameter.newInstance(category_name, category_value, double_val);
 				}
-				else if (string_val != null)
+				else if (string_val != null && binary_val == null)
 				{
 					mp = MetaParameter.newInstance(category_name, category_value, string_val);
 				}
@@ -1265,8 +1286,19 @@ public class EAVDBServices extends Thread {
 				}	
 				else if (datetime_val != null)
 				{
-					Date d = new Date();
-					d.setTime(((Timestamp) datetime_val).getTime());
+//					TimeZone tz = TimeZone.getTimeZone("UTC");
+//					Calendar cal = Calendar.getInstance(tz);
+//					cal.setTime((Timestamp) datetime_val)).
+//					Date d = new Date();
+//					d.setTime(((Timestamp) datetime_val).getTime());
+					
+					DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT + ".S").withZoneUTC();
+
+					DateTime d = formatter.parseDateTime((String) datetime_val); 
+					
+					
+//					cal.setTime(d);
+					
 					mp = MetaParameter.newInstance(category_name, category_value, d);
 				}
 				else if (binary_val != null)
@@ -1291,6 +1323,11 @@ public class EAVDBServices extends Thread {
 					
 					// create a meta-parameter object of the appropriate type
 					mp = MetaParameter.newInstance(category_name, category_value, value);
+					
+					if (string_val != null)
+					{
+						mp.setAnnotation((String) string_val);
+					}
 					
 				}
 				else
