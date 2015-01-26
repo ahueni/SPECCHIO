@@ -8,6 +8,9 @@ import java.util.Date;
 import java.util.ListIterator;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import ch.specchio.types.MetaParameter;
@@ -1150,10 +1153,10 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 
 	}
 
-	Date get_time(Measurement m) throws IOException {
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		// TimeZone tz = TimeZone.getDefault();
-		Calendar cal = Calendar.getInstance(tz);
+	DateTime get_time(Measurement m) throws IOException {
+//		TimeZone tz = TimeZone.getTimeZone("UTC");
+//		// TimeZone tz = TimeZone.getDefault();
+//		Calendar cal = Calendar.getInstance(tz);
 
 		Integer sec = (int) m.UTC_Time[5];
 		Integer min = (int) m.UTC_Time[4];
@@ -1163,20 +1166,22 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 		Integer year = (int) m.UTC_Time[0];
 
 		// month must start at 0: this conforms with the java calendar class!
-		cal.set(year, month - 1, mday, hour, min, sec);
+//		cal.set(year, month - 1, mday, hour, min, sec);
 
 		// SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmm");
 		// formatter.setTimeZone(tz);
 		//
 		// String out=formatter.format(cal.getTime());
+		
+		DateTime dt = new DateTime(year, month, mday, hour, min, sec, DateTimeZone.UTC);
 
-		return cal.getTime();
+		return dt;
 	}
 
-	Date get_time(String date) throws IOException {
+	DateTime get_time(String date) throws IOException {
 		if (date.contains(":") && !date.contains("-")) {
-			TimeZone tz = TimeZone.getTimeZone("UTC");
-			Calendar cal = Calendar.getInstance(tz);
+			//TimeZone tz = TimeZone.getTimeZone("UTC");
+			//Calendar cal = Calendar.getInstance(tz);
 
 			String[] tokens_date = date.split(" ");
 			String[] tokens_date2 = tokens_date[0].split("\\.");
@@ -1189,12 +1194,14 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 			Integer month = Integer.parseInt(tokens_date2[1]);
 			Integer year = Integer.parseInt(tokens_date2[2]);
 
-			cal.set(year, month - 1, mday, hour, min, sec);
+			//cal.set(year, month - 1, mday, hour, min, sec);
+			
+			DateTime dt = new DateTime(year, month, mday, hour, min, sec, DateTimeZone.UTC);
 
-			return cal.getTime();
+			return dt;
 		} else if (date.contains("\\.")) { // if time is splitted with a dot
-			TimeZone tz = TimeZone.getTimeZone("UTC");
-			Calendar cal = Calendar.getInstance(tz);
+			//TimeZone tz = TimeZone.getTimeZone("UTC");
+			//Calendar cal = Calendar.getInstance(tz);
 
 			String[] tokens_date = date.split(" ");
 			String[] tokens_date2 = tokens_date[0].split("\\.");
@@ -1207,12 +1214,14 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 			Integer month = Integer.parseInt(tokens_date2[1]);
 			Integer year = Integer.parseInt(tokens_date2[2]);
 
-			cal.set(year, month - 1, mday, hour, min, sec);
+			//cal.set(year, month - 1, mday, hour, min, sec);
+			
+			DateTime dt = new DateTime(year, month, mday, hour, min, sec, DateTimeZone.UTC);
 
-			return cal.getTime();
+			return dt;
 		} else { // if date is splitted by a -
-			TimeZone tz = TimeZone.getTimeZone("UTC");
-			Calendar cal = Calendar.getInstance(tz);
+			//TimeZone tz = TimeZone.getTimeZone("UTC");
+			//Calendar cal = Calendar.getInstance(tz);
 
 			if (date.length() < 11) {
 				String[] tokens_date = date.split("-");
@@ -1225,9 +1234,11 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 
 				hdf5_fgi_file.setFgiFileLoaderComment("Time set to 00:00 as there is no time information available in spectral file");
 
-				cal.set(year, month - 1, mday, hour, min, sec);
+				//cal.set(year, month - 1, mday, hour, min, sec);
+				
+				DateTime dt = new DateTime(year, month, mday, hour, min, sec, DateTimeZone.UTC);
 
-				return cal.getTime();
+				return dt;
 
 			} else {
 				String[] tokens_date = date.split(" ");
@@ -1241,9 +1252,11 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 				Integer month = Integer.parseInt(tokens_date2[1]);
 				Integer year = Integer.parseInt(tokens_date2[0]);
 
-				cal.set(year, month - 1, mday, hour, min, sec);
+				//cal.set(year, month - 1, mday, hour, min, sec);
+				
+				DateTime dt = new DateTime(year, month, mday, hour, min, sec, DateTimeZone.UTC);
 
-				return cal.getTime();
+				return dt;
 			}
 		}
 
@@ -1287,9 +1300,9 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 //		
 //	}
 
-	Date get_short_time(String date) throws IOException {
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		Calendar cal = Calendar.getInstance(tz);
+	DateTime get_short_time(String date) throws IOException {
+		//TimeZone tz = TimeZone.getTimeZone("UTC");
+		//Calendar cal = Calendar.getInstance(tz);
 
 		String[] tokens = date.split("\\.");
 
@@ -1300,9 +1313,11 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 		Integer month = Integer.parseInt(tokens[1]);
 		Integer year = Integer.parseInt(tokens[2]);
 
-		cal.set(year, month - 1, mday, hour, min, sec);
+		//cal.set(year, month - 1, mday, hour, min, sec);
+		
+		DateTime dt = new DateTime(year, month, mday, hour, min, sec, DateTimeZone.UTC);
 
-		return cal.getTime();
+		return dt;
 	}
 
 	public static String arrayToString2(String[] a, String separator) {
