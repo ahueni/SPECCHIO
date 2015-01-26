@@ -5,13 +5,14 @@
 -- 25.05.2009, ahueni : update of the GRANTS, deactivated the INSERT into the specchio_user table
 -- 02.-0.2010, ahueni : added GRANT SUPER ON *.* TO sdb_admin;, TRIGGER for MySQL 5.1.6
 -- 01.03.2013, nsheppard : updated for SPECCHIO V3
+-- 26.01.2015, ahueni : removed insert of sdb_admin into specchio_user_group as already contained in DB dump
 
 
 -- Set the admin user name and password here - make sure the username and password is the same on each line!
 CREATE USER 'sdb_admin'@'localhost' IDENTIFIED BY 'sdb_admin_password';
 INSERT INTO `specchio`.`specchio_user` (`user`, `first_name`, `last_name`, `email`, `admin`, `password`)
 	VALUES ('sdb_admin', 'SPECCHIO', 'Administrator', '', 1, MD5('sdb_admin_password'));
-INSERT INTO `specchio`.`specchio_user_group` VALUES('sdb_admin', 'admin');
+-- INSERT INTO `specchio`.`specchio_user_group` VALUES('sdb_admin', 'admin');
 
 
 -- Grant administrator privileges
