@@ -2,6 +2,8 @@ package ch.specchio.explorers;
 
 import javax.swing.JPanel;
 
+import ch.specchio.gui.ErrorDialog;
+import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.PlotsCallback;
 import ch.specchio.plots.swing.SpectralLinePlot;
@@ -30,9 +32,22 @@ public class SpectralMultiPlot  extends JPanel implements PlotsCallback
 		else
 			sp = new SpectralScatterPlot(space, 700,500, pr);	
 		
-		sp.plot_all();
-				
-		this.add(sp);
+		try
+		{
+			sp.plot_all();
+					
+			this.add(sp);
+		}
+		catch(Exception e)
+		{
+			ErrorDialog error = new ErrorDialog(
+					SPECCHIOApplication.getInstance().get_frame(),
+					"Plotting failed",
+    				"For details see error message below.\n Increase the Java heap space in case of Out of Memory Error.",
+    				e
+    		);
+    		error.setVisible(true);			
+		}
 		
 	}
 
