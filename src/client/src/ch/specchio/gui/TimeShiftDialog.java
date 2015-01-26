@@ -7,8 +7,11 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.TimeZone;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -18,6 +21,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+
+import org.joda.time.DateTime;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
@@ -41,7 +46,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 	private SPECCHIOClient specchioClient;
 	
 	/** the currently-seleced spectrum identifiers */
-	private List<Integer> selectedIds;
+	private ArrayList<Integer> selectedIds;
 	
 	/** spectral data browser */
 	private SpectralDataBrowser sdb;
@@ -177,7 +182,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			startOperation();
 			try {
 				// get the number of hours to shift by
-				double shift = Double.parseDouble(timezoneField.getText());
+				int shift = Integer.parseInt(timezoneField.getText());
 			
 				if (selectedIds.size() > 0) {
 					// launch a thread to perform the actual work
@@ -274,11 +279,14 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 	 */
 	private class TimeShiftThread extends Thread {
 		
-		/** the spectrum identifiers to be processed */
-		private Integer spectrumIds[];
+		
+//		private Integer spectrumIds[];
 		
 		/** the amount of time by which to shift the time */
-		private double shift;
+		private int shift;
+
+		/** the spectrum identifiers to be processed */
+		private ArrayList<Integer> spectrumIdsIn;
 		
 		
 		/**
@@ -286,12 +294,13 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 		 * 
 		 * @param spectrumIdsIn	the list of spectrum identifiers to be processed
 		 */
-		public TimeShiftThread(List<Integer> spectrumIdsIn, double shiftIn) {
+		public TimeShiftThread(ArrayList<Integer> spectrumIdsIn, int shiftIn) {
 			
 			super();
 			
 			// save the input parameters for later
-			spectrumIds = spectrumIdsIn.toArray(new Integer[spectrumIdsIn.size()]);
+//			spectrumIds = spectrumIdsIn.toArray(new Integer[spectrumIdsIn.size()]);
+			this.spectrumIdsIn = spectrumIdsIn;
 			shift = shiftIn;
 			
 		}
@@ -304,7 +313,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 
 			// create a progress report
 			int progress = 0;
-			double tot = new Double(spectrumIds.length);
+			double tot = new Double(this.spectrumIdsIn.size());
 			ProgressReportDialog pr = new ProgressReportDialog(TimeShiftDialog.this, "UTC Time Correction", false, 20);
 			pr.set_operation("Updating acquisition times");
 			pr.setVisible(true);
@@ -315,34 +324,72 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 				
 				// shift the capture dates of the selected spectra
 				ArrayList<Integer> updatedIds = new ArrayList<Integer>();
-				for (Integer id : spectrumIds) {
+//				for (Integer id : spectrumIds) {
 					
 					// get the existing spectrum with metadata
-					Spectrum s = specchioClient.getSpectrum(id, true);
+					//Spectrum s = specchioClient.getSpectrum(id, true);
 					
-					// get the existing capture date
-					MetaDate mpAcquisitionTime = (MetaDate)s.getMetadata().get_first_entry("Acquisition Time");
-					if (mpAcquisitionTime != null) {
-						
-						// remove gmt offset
-						long time_in_millis = ((Date) mpAcquisitionTime.getValue()).getTime();
-						long gmt_offset_in_millis = (long)(shift*3600*1000);
-						time_in_millis -= gmt_offset_in_millis;
-						
-						// update the metadata object
-						mpAcquisitionTime.setValue(new Date(time_in_millis));
-						ArrayList<Integer> id_list = new ArrayList<Integer>();
-						id_list.add(id);
-						specchioClient.updateEavMetadata(mpAcquisitionTime, id_list);
-						
-						// add the identifier to the list of updated identifiers
-						updatedIds.add(id);
-						
-					}
+				ArrayList<MetaParameter> mpAcquisitionTimes = specchioClient.getMetaparameters(spectrumIdsIn, "Acquisition Time");
+				
+				ListIterator<MetaParameter> mp_li = mpAcquisitionTimes.listIterator();
+				ListIterator<Integer> spectrum_li = spectrumIdsIn.listIterator();
+				
+				while(mp_li.hasNext())
+				{
+					MetaParameter mp = mp_li.next();
 					
-					// update progress meter
+					DateTime t = (DateTime) mp.getValue();
+					
+					DateTime modified_t = t.minusHours(shift);
+					
+					mp.setValue(modified_t);
+					
+					ArrayList<Integer> tmpId = new ArrayList<Integer>();
+					tmpId.add(spectrum_li.next());
+					
+					specchioClient.updateEavMetadata(mp, tmpId, mp);
+					
+					// add the identifier to the list of updated identifiers
+					updatedIds.add(tmpId.get(0));					
+					
 					pr.set_progress(++progress * 100.0 / tot);
 				}
+				
+					
+					// get the existing capture date
+//					MetaDate mpAcquisitionTime = (MetaDate)s.getMetadata().get_first_entry("Acquisition Time");
+//					if (mpAcquisitionTime != null) {
+//						
+//						TimeZone tz = TimeZone.getTimeZone("UTC");
+//						//TimeZone tz = TimeZone.getDefault();
+//						Calendar cal = Calendar.getInstance(tz);
+//						
+//						cal.setTime((Date) mpAcquisitionTime.getValue());
+//						
+//						// remove gmt offset: to counteract the silly function of assuming local time for the retrieved UTC time, the offset of the local time zome to UTC is compensated for.
+//						// It appears to work at least during European summer time for data that was collected during European summer time ....
+//						long time_in_millis = ((Date) mpAcquisitionTime.getValue()).getTime();
+//						long gmt_offset_in_millis = (long)(shift*3600*1000);
+//						long local_utc_offset = TimeZone.getDefault().getOffset(time_in_millis);
+//						time_in_millis = time_in_millis - (gmt_offset_in_millis - local_utc_offset); // timezone.getOffset(time) - TimeZone.getDefault().getOffset(time)
+//						
+//						// update the metadata object
+//						
+//						cal.setTimeInMillis(time_in_millis);
+//						
+//						mpAcquisitionTime.setValue(cal.getTime());
+//						ArrayList<Integer> id_list = new ArrayList<Integer>();
+//						id_list.add(id);
+//						specchioClient.updateEavMetadata(mpAcquisitionTime, id_list);
+//						
+//						// add the identifier to the list of updated identifiers
+//						updatedIds.add(id);
+//						
+//					}
+					
+					// update progress meter
+//					
+//				}
 	
 				if (updatedIds.size() > 0) {
 					
