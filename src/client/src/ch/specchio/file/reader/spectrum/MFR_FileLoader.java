@@ -13,6 +13,12 @@ import java.util.Date;
 import java.util.ListIterator;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.SpectralFile;
 
 public class MFR_FileLoader extends SpectralFileLoader {
@@ -74,15 +80,18 @@ public class MFR_FileLoader extends SpectralFileLoader {
 		
 		// create the spectra_names from capture_time
 		//f.spectra_filenames = new String[f.no_of_spectra()];
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
-		// get UTC timezone
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		formatter.setTimeZone(tz);
+//		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
+//		// get UTC timezone
+//		TimeZone tz = TimeZone.getTimeZone("UTC");
+//		formatter.setTimeZone(tz);
+		
+		DateTimeFormatter fmt = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT).withZoneUTC();
+		
 		
 		for(int i = 0; i < f.getNumberOfSpectra(); i++)
 		{
 	
-			f.addSpectrumFilename(formatter.format(f.getCaptureDate(i)));
+			f.addSpectrumFilename(fmt.print(f.getCaptureDate(i)));
 		}
 		
 		
@@ -191,7 +200,7 @@ public class MFR_FileLoader extends SpectralFileLoader {
 		
 		// calculate dates from Julian days
 		// the dates are also alternating: total, diffuse, total, diffuse, etc
-		sf.setCaptureDates(new Date[line_cnt * 2]);
+		sf.setCaptureDates(new DateTime[line_cnt * 2]);
 		
 		int date_cnt = 0;
 		ListIterator<Double> days = julian_days.listIterator();
@@ -240,15 +249,17 @@ public class MFR_FileLoader extends SpectralFileLoader {
 			//Date jd_date = cal.getTime();
 			
 			// sum up all the millis to get the real date
-			cal.setTimeInMillis(jd_mil + time_mil + start_time_mil);
+//			cal.setTimeInMillis(jd_mil + time_mil + start_time_mil);
 			
 			
 			
-			Date day = cal.getTime();
+//			Date day = cal.getTime();
 			//System.out.println("  Capture time : " + formatter.format(cal.getTime()));	
 			
-			sf.setCaptureDate(date_cnt++, day); // entry for total irradiance
-			sf.setCaptureDate(date_cnt++, day); // entry for diffuse irradiance
+			DateTime dt = new DateTime(jd_mil + time_mil + start_time_mil, DateTimeZone.UTC);
+			
+			sf.setCaptureDate(date_cnt++, dt); // entry for total irradiance
+			sf.setCaptureDate(date_cnt++, dt); // entry for diffuse irradiance
 			
 		}
 		
