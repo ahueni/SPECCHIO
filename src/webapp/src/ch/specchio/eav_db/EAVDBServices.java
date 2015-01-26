@@ -1133,7 +1133,7 @@ public class EAVDBServices extends Thread {
 	 */
 	 public MetaParameter load_metaparameter(int eav_id) throws SQLException {
 		 
-		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, attr.name, unit.short_name, unit.unit_id, attr.attribute_id, cat.name, cat.string_val from eav eav, attribute attr, unit unit, category cat where " +
+		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, unit.short_name, unit.unit_id, attr.attribute_id, from eav eav, attribute attr, unit unit, category cat where " +
 		"eav.eav_id = " + Integer.toString(eav_id) + " and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
 
 		Statement stmt = SQL.createStatement();
@@ -1160,27 +1160,29 @@ public class EAVDBServices extends Thread {
 			String unit_name = rs.getString(ind++);
 			int unit_id = rs.getInt(ind++);
 			int attribute_id = rs.getInt(ind++);
-			String category_name = rs.getString(ind++);
-			String category_value = rs.getString(ind++);
+			//String category_name = rs.getString(ind++);
+			//String category_value = rs.getString(ind++);
+			
+			attribute attr = this.ATR.get_attribute_info(attribute_id);
 			
 			try {
 				if (int_val != null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, int_val);
+					mp = MetaParameter.newInstance(attr, int_val);
 				}
 				else if (double_val != null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, double_val);
+					mp = MetaParameter.newInstance(attr, double_val);
 				}
 				else if (string_val != null && binary_val == null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, string_val);
+					mp = MetaParameter.newInstance(attr, string_val);
 				}
 				else if (binary_val != null)
 				{
 					try {
 						ObjectInputStream ois = new ObjectInputStream(binary_val.getBinaryStream());
-						mp = MetaParameter.newInstance(category_name, category_value, ois.readObject());
+						mp = MetaParameter.newInstance(attr, ois.readObject());
 					} catch (IOException e) {
 						// don't know why this might happen
 						throw new SQLException(e);
@@ -1198,15 +1200,15 @@ public class EAVDBServices extends Thread {
 
 					DateTime d = formatter.parseDateTime((String) datetime_val); 
 					
-					mp = MetaParameter.newInstance(category_name, category_value, d);
+					mp = MetaParameter.newInstance(attr, d);
 				}
 				else if (taxonomy_id != null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, taxonomy_id);
+					mp = MetaParameter.newInstance(attr, taxonomy_id);
 				}			
 				else
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, null);
+					mp = MetaParameter.newInstance(attr, null);
 					System.out.println("EAV Null value read from DB!");
 				}
 			}
@@ -1233,7 +1235,7 @@ public class EAVDBServices extends Thread {
 	public void metadata_bulk_loader(Metadata md, ArrayList<Integer> metaparameter_ids) throws SQLException
 	{
 
-		String query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, eav.binary_val, eav.datetime_val, eav.taxonomy_id, attr.name, unit.short_name, unit.unit_id, attr.attribute_id, cat.name, cat.string_val, attr.description from eav eav, attribute attr, unit unit, category cat where " +
+		String query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, eav.binary_val, eav.datetime_val, eav.taxonomy_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
 		"eav.eav_id in (" + SQL.conc_ids(metaparameter_ids) + ") and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
 		
 
@@ -1259,30 +1261,32 @@ public class EAVDBServices extends Thread {
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
 			
-			String attribute_name = rs.getString(ind++);
+			//String attribute_name = rs.getString(ind++);
 			String unit_name = rs.getString(ind++);
 			int unit_id = rs.getInt(ind++);
 			int attribute_id = rs.getInt(ind++);
-			String category_name = rs.getString(ind++);
-			String category_value = rs.getString(ind++);
-			String description = rs.getString(ind++);
+			//String category_name = rs.getString(ind++);
+			//String category_value = rs.getString(ind++);
+			//String description = rs.getString(ind++);
+			
+			attribute attr = this.ATR.get_attribute_info(attribute_id);
 			
 			try {
 				if (int_val != null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, int_val);
+					mp = MetaParameter.newInstance(attr, int_val);
 				}
 				else if (double_val != null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, double_val);
+					mp = MetaParameter.newInstance(attr, double_val);
 				}
 				else if (string_val != null && binary_val == null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, string_val);
+					mp = MetaParameter.newInstance(attr, string_val);
 				}
 				else if (taxonomy_id != null)
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, taxonomy_id);
+					mp = MetaParameter.newInstance(attr, taxonomy_id);
 				}	
 				else if (datetime_val != null)
 				{
@@ -1299,7 +1303,7 @@ public class EAVDBServices extends Thread {
 					
 //					cal.setTime(d);
 					
-					mp = MetaParameter.newInstance(category_name, category_value, d);
+					mp = MetaParameter.newInstance(attr, d);
 				}
 				else if (binary_val != null)
 				{
@@ -1322,7 +1326,7 @@ public class EAVDBServices extends Thread {
 					}
 					
 					// create a meta-parameter object of the appropriate type
-					mp = MetaParameter.newInstance(category_name, category_value, value);
+					mp = MetaParameter.newInstance(attr, value);
 					
 					if (string_val != null)
 					{
@@ -1332,7 +1336,7 @@ public class EAVDBServices extends Thread {
 				}
 				else
 				{
-					mp = MetaParameter.newInstance(category_name, category_value, null);
+					mp = MetaParameter.newInstance(attr, null);
 				}
 			}
 			catch (MetaParameterFormatException e) {
@@ -1341,11 +1345,11 @@ public class EAVDBServices extends Thread {
 			}
 			
 			mp.setEavId(eav_id);
-			mp.setAttributeName(attribute_name);
+			mp.setAttributeName(attr.getName());
 			mp.setUnitName(unit_name);
 			mp.setAttributeId(attribute_id);
 			mp.setUnitId(unit_id);
-			mp.setDescription(description);
+			mp.setDescription(attr.description);
 			
 			md.addEntry(mp);
 			md.addEntryId(mp.getEavId());
