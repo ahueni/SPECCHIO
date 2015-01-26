@@ -1,13 +1,17 @@
 package ch.specchio.client;
 
+import javax.ws.rs.WebApplicationException;
 
-public class SPECCHIOClientException extends Exception {
+
+public class SPECCHIOClientException extends WebApplicationException {
 
 	/** serialisation version ID */
 	private static final long serialVersionUID = 1L;
 	
 	/** the detailed message */
 	protected String details;
+	
+	protected String message = "bollocks";
 	
 	/** the ultimate cause of the exception */
 	protected Throwable cause;
@@ -18,7 +22,10 @@ public class SPECCHIOClientException extends Exception {
 	 */
 	public SPECCHIOClientException(String message, Exception ex) {
 		
-		super(message, ex);
+		//super(message, ex);
+		super(ex);
+		
+		this.message = message;
 		
 		// initialise member variables
 		init(ex);
@@ -46,8 +53,8 @@ public class SPECCHIOClientException extends Exception {
 	 */
 	public SPECCHIOClientException(String message) {
 		
-		super(message);
-		
+		//super(message);
+		this.message = message;
 		// initialise member variables
 		init(null);
 		
