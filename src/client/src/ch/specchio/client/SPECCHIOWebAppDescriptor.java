@@ -152,7 +152,8 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 			port + ", " +
 			path + ", " +
 			user + ", " +
-			password;
+			password+ ", " +
+			dataSourceName;
 		
 	}
 	
