@@ -1,6 +1,8 @@
 package ch.specchio.services;
 
 
+import java.util.ArrayList;
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import javax.annotation.security.*;
@@ -10,6 +12,7 @@ import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpectralFileFactory;
 import ch.specchio.jaxb.XmlBoolean;
 import ch.specchio.jaxb.XmlInteger;
+import ch.specchio.jaxb.XmlIntegerAdapter;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
 
@@ -24,7 +27,7 @@ public class SpectralFileService extends SPECCHIOService {
 	/**
 	 * Test whether or not a given spectral file exists in the database.
 	 * 
-	 * @param descriptor	the descriptor o the spectrum file to test
+	 * @param descriptor	the descriptor of the spectrum file to test
 	 * 
 	 * @return true if the spectrum exists, or false if not
 	 * 
@@ -49,6 +52,50 @@ public class SpectralFileService extends SPECCHIOService {
 		
 		return  new XmlBoolean(b);
 	}	
+	
+	/**
+	 * Test whether or not a list of given spectral files exist in the database.
+	 * 
+	 * @param spec_files	list of spectral files
+	 * 
+	 * @return list of existence per file encoded as 0/1
+	 * 
+	 * @throws SPECCHIOFactoryException	could not access the database
+	 */
+	@POST
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	@Path("exist")
+	public XmlInteger[] exist(SpectralFileInsertResult spec_files) throws SPECCHIOFactoryException {
+		
+		SpectralFileFactory factory = new SpectralFileFactory(
+				getClientUsername(),
+				getClientPassword(), getDataSourceName(),
+				spec_files.getCampaignType(),
+				spec_files.getCampaignId()				
+			);
+		
+		ArrayList<Integer> exist_list = new ArrayList<Integer>();
+				
+//		ListIterator<SpectralFile> sf_li = spec_files.getSpectral_file_list().listIterator();
+//		
+//		while(sf_li.hasNext()) {
+//			SpectralFile spec_file = sf_li.next();		
+//			
+//			boolean exists = factory.spectrumExists(spec_file, spec_file.getHierarchyId());
+//		
+//			exist_list.add(exists ? 1 : 0);
+//		
+//		}
+		exist_list = factory.spectraExist(spec_files.getSpectral_file_list(), spec_files.getSpectral_file_list().get(0).getHierarchyId());
+		
+		
+		factory.dispose();		
+ 		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(exist_list);			
+
+	}		
 	
 	
 	/**
@@ -90,7 +137,7 @@ public class SpectralFileService extends SPECCHIOService {
 	@Path("insert")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public SpectralFileInsertResult insert(SpectralFile spec_file) throws SPECCHIOFactoryException {
+	public SpectralFileInsertResult insert(SpectralFile spec_file)  {
 
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
