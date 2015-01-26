@@ -47,6 +47,7 @@ public class MetaDatatype<E>
 		this.value = value;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public String toString()
 	{
 		if(value != null)
