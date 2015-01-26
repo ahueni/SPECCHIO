@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.ListIterator;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 
@@ -48,7 +51,9 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 		BufferedReader d = new BufferedReader(new InputStreamReader(data_in));
 		
 		// analyse header to get no of spectra
-		read_header(d, f, true);
+		boolean success = read_header(d, f, true);
+		
+		if (!success) return f;
 		
 		f.addSpectrumFilename(f.getFilename());
 		f.addSpectrumFilename(f.getFilename());
@@ -67,10 +72,11 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 	// reads the header line in order to get the number of spectra contained in this file
 	// or stores the spectra names (depending on the analyse flag)
 
-	public void read_header(BufferedReader d, SpectralFile f, boolean analyse) throws IOException
+	public boolean read_header(BufferedReader d, SpectralFile f, boolean analyse) throws IOException
 	{
 		
-		
+		try
+		{
 		
 		String line=d.readLine(); // line 1: File path
 		
@@ -99,22 +105,55 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 					while(start+1 < time_str.length() && (time_str.substring(start, start+1)).equals(" ")) start++;
 					time_str = time_str.substring(start);
 					
-					// "Time:       10/30/80  14:33:57"
+					// clean up tokens to have just one space between date and time
+					String[] tokens = time_str.split("\\s+");
 					
-					DateFormat sdf = new SimpleDateFormat("MM/dd/yy hh:mm:ss");
-				    Date date;
-					try {
-						date = sdf.parse(time_str);
+					if (tokens.length == 3 && !(time_str.contains("PM") || time_str.contains("AM")))
+					{
+						// looks like we got one of the odd three token items without AM/PM
+						time_str = tokens[0] + " " + tokens[1];
+					}
+					else
+					{
+						time_str = tokens[0];
+						for(int i=1;i<tokens.length;i++)
+						{
+							time_str = time_str + " " + this.remove_leading_spaces( tokens[i]);
+						}
+					}					
+					
+					// "Time:       10/30/80  14:33:57"
+					DateTimeFormatter formatter;
+					
+					if(time_str.contains("PM") || time_str.contains("AM"))
+					{
+						formatter = DateTimeFormat.forPattern("MM/dd/yy hh:mm:ss a").withZoneUTC();
+					}
+					else
+					{
+						formatter = DateTimeFormat.forPattern("MM/dd/yy HH:mm:ss").withZoneUTC();
+					}
+					
+					DateTime dt = formatter.parseDateTime(time_str);
+				
+//					DateTimeFormatter fmt = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+//					String date_str = fmt.print(dt);
+
+					
+//					DateFormat sdf = new SimpleDateFormat("MM/dd/yy hh:mm:ss");
+//				    Date date;
+//					try {
+//						date = sdf.parse(time_str);
 						
 //						System.out.println("Date and Time: " + date);
 						
-						f.setCaptureDate(0, date);		
-						f.setCaptureDate(1, date); // time for both measurements is taken as the same	
+						f.setCaptureDate(0, dt);		
+						f.setCaptureDate(1, dt); // time for both measurements is taken as the same	
 						
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+//					} catch (ParseException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
 
 					
 //					DateFormat df = DateFormat.getDateInstance();
@@ -175,6 +214,16 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 			
 		}
 		
+		} catch (NullPointerException e) {
+			
+			f.setFileErrorCode(SpectralFile.UNRECOVERABLE_ERROR);
+			ArrayList<SpecchioMessage> file_errors = new ArrayList<SpecchioMessage>();
+			file_errors.add(new SpecchioMessage("Incomplete File.", SpecchioMessage.ERROR));
+			f.setFileErrors(file_errors);
+
+			return false;
+		}
+		
 		d.reset();
 		
 		
@@ -211,6 +260,7 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 //
 //		f.set_no_of_spectra(1);
 		
+		return true;
 
 	}
 	
