@@ -273,6 +273,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			}
 			
 			rs.close();
+			stmt.close();
 			
 			return id;
 			
@@ -461,7 +462,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * Remove a campaign from the database.
 	 * 
 	 * @param id		the identifier of the campaign to be removed
-	 * @param is_admin	is the requesting user an administator?
+	 * @param is_admin	is the requesting user an administrator?
 	 * 
 	 * @throws SPECCHIOFactoryException	the campaign could not be removed
 	 */
@@ -524,7 +525,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @param hierarchy_id	the identifier of the node at the root of the sub-hierarchy
 	 * @param name			the name of the node
-	 * @param is_admin		is the requesting user an administator?
+	 * @param is_admin		is the requesting user an administrator?
 	 * 
 	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be remove
 	 */
@@ -536,15 +537,18 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			String table_name;
 			String cmd;
 			
+			ArrayList<Integer> spectrum_ids = new ArrayList<Integer>();
+			
 			// remove all spectrum nodes under this hierarchy
 			SpectrumFactory sf = new SpectrumFactory(this);
 			String query = "select spectrum_id from spectrum where hierarchy_level_id = " + Integer.toString(hierarchy_id);
 			ResultSet rs = stmt.executeQuery(query);	
 			while (rs.next()) {	
-				int spectrum_id = rs.getInt(1);
-				sf.removeSpectrum(spectrum_id, is_admin);
+				spectrum_ids.add(rs.getInt(1));
 			}
 			rs.close();
+			
+			sf.removeSpectra(spectrum_ids, is_admin);
 			
 			// remove all sub-hierarchies
 			query = "select hierarchy_level_id, name from hierarchy_level where parent_level_id = " + Integer.toString(hierarchy_id);
