@@ -17,6 +17,12 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
+import ch.specchio.types.MetaDate;
+
 
 // uses the Singleton Pattern
 public class SQL_StatementBuilder {
@@ -210,6 +216,8 @@ public class SQL_StatementBuilder {
 		   return value.toString();
 	   } else if (value instanceof Date) {
 		   return quote_string(DateAsString((Date)value));
+	   } else if (value instanceof DateTime) {
+		   return quote_string(JodaDateAsString((DateTime)value));		   
 	   } else {
 		   throw new SQLException("Cannot represent object of type " + value.getClass() + " as an SQL value.");
 	   }   
@@ -774,6 +782,15 @@ public class SQL_StatementBuilder {
 		
 		return out;
 	}
+	
+	public String JodaDateAsString(DateTime date)
+	{
+		
+		DateTimeFormatter fmt = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+		String date_str = fmt.print(date);
+		
+		return date_str;
+	}	
 	
 	
 	public String build_order_by_string(String order_by)
