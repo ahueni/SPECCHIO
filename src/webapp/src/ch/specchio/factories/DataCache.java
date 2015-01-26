@@ -10,8 +10,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.ListIterator;
+
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.constants.SensorType;
 import ch.specchio.eav_db.SQL_StatementBuilder;
@@ -20,6 +22,7 @@ import ch.specchio.types.Calibration;
 import ch.specchio.types.Country;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.ReferenceBrand;
 import ch.specchio.types.Sensor;
 import ch.specchio.types.SpecchioMessage;
@@ -110,6 +113,7 @@ public class DataCache {
 				
 			}
 			rs.close();
+			stmt.close();
 			
 
 //			SpaceFactory sf = new SpaceFactory(this);
@@ -452,10 +456,16 @@ public class DataCache {
 		while(li.hasNext() && instrument == null)
 		{
 			i = li.next();
+			
+			float wvl_err = 0.01f; // wvl error in nm allowed when looking for instruments: used to deal with rounding errors when data is read from DB again ...
 
 
-			// quick check: first and last band				
-			boolean possible_match = (d_wvls.length == i.getNoOfBands()) & (d_wvls[0] == i.getCentreWavelengths()[0]) & (d_wvls[d_wvls.length-1] == i.getCentreWavelengths()[i.getNoOfBands()-1]);
+			// quick check: first and last band		
+			boolean no_of_bands_match = d_wvls.length == i.getNoOfBands();
+			boolean band_1_match = Math.abs(d_wvls[0] - i.getCentreWavelengths()[0]) < wvl_err;
+			boolean band_2_match = Math.abs(d_wvls[d_wvls.length-1] - i.getCentreWavelengths()[i.getNoOfBands()-1]) < wvl_err;
+			
+			boolean possible_match = no_of_bands_match & band_1_match & band_2_match;
 
 			if(possible_match) // do a full check
 			{
@@ -463,7 +473,7 @@ public class DataCache {
 				int band = 0;
 				for(Double wvl : d_wvls)
 				{
-					wvls_match = wvls_match & (wvl == i.getCentreWavelengths()[band++]);
+					wvls_match = wvls_match & (Math.abs(wvl - i.getCentreWavelengths()[band++])  < wvl_err);
 
 					if (wvls_match == false) break;
 				}				
@@ -518,6 +528,9 @@ public class DataCache {
 	
 	private Instrument insertNewInstrument(SpectralFile spec_file, int spec_no, SpecchioMessage msg)
 	{
+		DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+		formatter.withZoneUTC();
+		
 		Instrument instr = null;		
 		double[] d_wvls;
 		Integer sensor_id;
@@ -558,14 +571,22 @@ public class DataCache {
 					instrument_designator= spec_file.getInstrumentName();
 				}					
 
-				if (instrument_designator.length() == 0 && spec_file.getCaptureDate(spec_no).toString() != null)
+				if (instrument_designator.length() == 0 && spec_file.getCaptureDate(spec_no) != null && spec_file.getCaptureDate(spec_no).toString() != null)
 				{
-					instrument_designator = new SimpleDateFormat("yyyyMMdd").format(spec_file.getCaptureDate(spec_no)) + " (sample time)"; // try to augment with date of spectrum capture
+	
+					
+					DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd");
+					String str = fmt.print(spec_file.getCaptureDate(spec_no));
+
+					instrument_designator = str + " (sample time)"; // try to augment with date of spectrum capture
 				}
 
 				if (instrument_designator.length() == 0)
 				{
-					instrument_designator = new SimpleDateFormat("yyyyMMdd_HHmm").format(Calendar.getInstance().getTime())  + " (insert time)"; // augment with current time/date
+					DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd");
+					String str = fmt.print(spec_file.getCaptureDate(spec_no));
+	
+					instrument_designator = str  + " (insert time)"; // augment with current time/date
 				}
 
 				if (spec_file.getInstrumentName() != null)
@@ -586,13 +607,21 @@ public class DataCache {
 				// create new calibration with wavelength calibration factors: only for instruments where wvls are not resampled to blueprint (e.g. ASD is always blueprint)
 				if(spec_no < spec_file.getWvls().size())
 				{
+					// catch the case when data insert happens from a non-specchio file loader, like a Matlab process
+					if (spec_file.getFilename() == null) spec_file.setFilename("external process");
+					
 					SpectralFile wvl_cal = new SpectralFile(spec_file);
 					wvl_cal.setNumberOfSpectra(1);
 					wvl_cal.setMeasurements(new Float[spec_file.getWvls(spec_no).length][1]);
 					wvl_cal.setMeasurement(0, spec_file.getWvls(spec_no));
 					wvl_cal.setWvls(spec_file.getWvls());
 					wvl_cal.setNumberOfChannels(spec_file.getNumberOfChannels());
-					wvl_cal.addMeasurementUnits(100); // wavelength code
+					
+					// create a new units array as otherwise the original copied spectral file is modified!!!! 
+					ArrayList<Integer> units = new ArrayList<Integer>();
+					units.add(100); // wavelength code = 100
+					wvl_cal.setMeasurementUnits(units); 
+					
 					wvl_cal.setInstrumentTypeNumber(spec_file.getInstrumentTypeNumber()); // needed for some files to identify the sensor
 	
 					Calibration cal = new Calibration();
@@ -1024,9 +1053,12 @@ public class DataCache {
 				s.setName("Unknown Sensor, " + spec_file.getWvls(spec_no).length + " bands " + range);
 			}
 			
-			s.setDescription("Auto-Inserted by SPECCHIO based on "  + spec_file.getFileFormatName() + " file by " + username);
+			if(spec_file.getFileFormatName() != null)
+				s.setDescription("Auto-Inserted by SPECCHIO based on "  + spec_file.getFileFormatName() + " file by " + username);
+			else
+				s.setDescription("Auto-Inserted by SPECCHIO, initiated by " + username);
 			s.setManufacturerName(spec_file.getCompany());
-			s.setManufacturerName(spec_file.getCompany());
+			s.setManufacturerShortName(spec_file.getCompany());
 			s.setSensorTypeNumber(spec_file.getInstrumentTypeNumber());
 			s.setNumberOfChannels(spec_file.getWvls(spec_no).length); // safer than calling NumberOfChannels, as some file readers do not set it properly
 			
@@ -1261,24 +1293,25 @@ public class DataCache {
 
 			String query = "select measurement_unit_id, ASD_coding, name from measurement_unit";
 
-		ResultSet rs;
-		rs = stmt.executeQuery(query);
+			ResultSet rs;
+			rs = stmt.executeQuery(query);
 
-		while (rs.next()) {
-			int measurement_unit_id = rs.getInt(1);
-			int ASD_coding = rs.getInt(2);
-			String name = rs.getString(3);
-			
-			MeasurementUnit mu = new MeasurementUnit();
-			mu.setUnitId(measurement_unit_id);
-			mu.setUnitNumber(ASD_coding);
-			mu.setUnitName(name);
-			
-			measurement_units.add(mu);
-		}
+			while (rs.next()) {
+				int measurement_unit_id = rs.getInt(1);
+				int ASD_coding = rs.getInt(2);
+				String name = rs.getString(3);
 
-			rs.close();					
-			
+				MeasurementUnit mu = new MeasurementUnit();
+				mu.setUnitId(measurement_unit_id);
+				mu.setUnitNumber(ASD_coding);
+				mu.setUnitName(name);
+
+				measurement_units.add(mu);
+			}
+
+			rs.close();	
+			stmt.close();
+
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -1331,7 +1364,7 @@ public class DataCache {
 				
 			}
 			rs.close();		
-
+			stmt.close();
 						
 			
 		} catch (SQLException e) {
