@@ -7,9 +7,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
 
 import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import org.joda.time.DateTime;
+
+import ch.specchio.jaxb.XmlDateTimeAdapter;
 
 
 /**
@@ -30,15 +34,15 @@ public class SpectralFile {
 	public static int TARGET = 2;
 	
 	// these three fields are used by the "insert spectral file" web service
-	private String campaign_type;
+	private String campaign_type = "specchio";
 	private int campaign_id;
 	private int hierarchy_id;
 
 	private String file_format_name;
 	private String company;
 	private String comment;
-	private Date[] capture_dates;
-	private Date capture_date; // in case there is a single one and we do not
+	private DateTime[] capture_dates;
+	private DateTime capture_date; // in case there is a single one and we do not
 								// know the number of spectra yet ...
 	private ArrayList<spatial_pos> pos = new ArrayList<spatial_pos>();
 	private spatial_pos single_pos;
@@ -242,14 +246,22 @@ public class SpectralFile {
 	public void setCampaignType(String campaign_type) { this.campaign_type = campaign_type; }
 	
 	@XmlElement(name="capture_date")
-	public Date getCaptureDate() { return this.capture_date; }
-	public void setCaptureDate(Date capture_date) { this.capture_date = capture_date; }
+	@XmlJavaTypeAdapter(XmlDateTimeAdapter.class)
+	public DateTime getCaptureDate() { return this.capture_date; }
+	public void setCaptureDate(DateTime capture_date) { this.capture_date = capture_date; }
 	
 	@XmlElement(name="capture_dates")
-	public Date[] getCaptureDates() { return this.capture_dates; }
-	public void setCaptureDates(Date[] capture_dates) { this.capture_dates = capture_dates; }
-	public Date getCaptureDate(int i) { return this.capture_dates[i]; }
-	public void setCaptureDate(int i, Date capture_date) { this.capture_dates[i] = capture_date; }
+	@XmlJavaTypeAdapter(XmlDateTimeAdapter.class)
+	public DateTime[] getCaptureDates() { return this.capture_dates; }
+	public void setCaptureDates(DateTime[] capture_dates) { this.capture_dates = capture_dates; }
+	public DateTime getCaptureDate(int i) { return this.capture_dates[i]; }
+	public void setCaptureDate(int i, DateTime date) { this.capture_dates[i] = date; }
+//	public DateTime getJodaCaptureDate(int i) { 
+//		DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+//		formatter.withZoneUTC();
+//		//return formatter.parseDateTime(this.capture_dates[i]); 
+//		return this.capture_dates[i];
+//	}
 	
 	@XmlElement(name="capturing_software_name")
 	public String getCapturingSoftwareName() { return this.capturing_software_name; }
@@ -488,7 +500,7 @@ public class SpectralFile {
 		this.no_of_spectra = no_of_spectra;
 		
 		// set the size of some arrays that depend on the number of spectra in the file
-		this.capture_dates = new Date[no_of_spectra];
+		this.capture_dates = new DateTime[no_of_spectra];
 		this.measurement_type = new int[no_of_spectra];
 	}
 	
