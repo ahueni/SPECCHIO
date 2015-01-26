@@ -368,6 +368,11 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				
 				// dismiss the dialogue
 				setVisible(false);
+				
+				// connect to the new account
+				DatabaseConnectionDialog dc = new DatabaseConnectionDialog();
+				dc.connect(d);
+				
 			}
 			catch (SPECCHIOUserInterfaceException ex) {
 				// one of the required fields is missing or invalid
