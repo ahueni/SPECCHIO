@@ -952,6 +952,33 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get metaparameters for spectrum ids and EAV attribute
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute		attribute name
+	 * 
+	 * @return list of metaparameters, or null if the field does not exist	 
+	 */
+	public ArrayList<MetaParameter> getMetaparameters(ArrayList<Integer> ids, String attribute_name) throws SPECCHIOWebClientException {
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(ids, attribute_name);
+		
+		MetaParameter[] mps = postForArray(MetaParameter.class, "metadata", "get_list_of_metaparameter_vals", mds);
+		
+		
+		ArrayList<MetaParameter> out_list = new ArrayList<MetaParameter>();
+		
+		for (int i = 0; i < mps.length; i++) {
+			out_list.add(mps[i]);
+		}		
+		
+		
+		return out_list;
+		
+	}	
+	
+	
+	/**
 	 * Get values for spectrum ids and EAV attribute
 	 * 
 	 * @param ids		spectrum ids
@@ -1474,12 +1501,17 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @return a list of spectrum identifiers that were inserted into the database
 	 */
-	public SpectralFileInsertResult insertSpectralFile(SpectralFile spec_file) throws SPECCHIOWebClientException {
-
-//		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
-//		return adapter.unmarshalList(postForList(XmlInteger.class, "spectral_file", "insert", spec_file));
+	public SpectralFileInsertResult insertSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException {
 		
-		SpectralFileInsertResult insert_result = postForObject(SpectralFileInsertResult.class, "spectral_file", "insert", spec_file);
+		SpectralFileInsertResult insert_result = null;
+		try {
+			insert_result = postForObject(SpectralFileInsertResult.class, "spectral_file", "insert", spec_file);
+		} catch (SPECCHIOWebClientException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			System.out.println(e.getDetails());
+			throw e;
+		}
 		return insert_result;
 	}
 	
@@ -1637,7 +1669,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * @param spectrum_ids	list of ids to sort
 	 * @param attribute_names	attribute names to sort by
 	 * 
-	 * @return a AVMatchingListCollection object
+	 * @return a AVMatchingListCollection object (Attention: order of spectrum ids is not guaranteed!)
 	 */
 	public AVMatchingListCollection sortByAttributes(ArrayList<Integer> spectrum_ids, String... attribute_names) throws SPECCHIOClientException {
 		
@@ -1653,7 +1685,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	/**
 	 * Test for the existence of a spectral file in the database.
 	 * 
-	 * @param spec_file		spectral file to be checked
+	 * @param spec_file		spectral file object to check
 	 * 
 	 * @return true if the file already exists in the database, false otherwise
 	 */
@@ -1662,6 +1694,34 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return postForBoolean("spectral_file", "exists", spec_file);
 		
 	}
+	
+	/**
+	 * Test for the existence of a spectral files in the database.
+	 * 
+	 * @param spec_files	container with arraylist of spectral files to check
+	 * 
+	 * @return array of boolean values indicating existence
+	 */
+	public boolean[] spectralFilesExist(SpectralFileInsertResult spec_files) throws SPECCHIOClientException {
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		
+		XmlInteger[] tmp = postForArray(XmlInteger.class, "spectral_file", "exist", spec_files);
+		
+		Integer[] exists_array_ = adapter.unmarshalArray(tmp);
+		
+		boolean[] exists_array = new boolean[exists_array_.length];
+		
+		for(int i=0;i<exists_array_.length;i++)
+		{
+			exists_array[i] = exists_array_[i] == 1;
+		}
+		
+		return exists_array;
+		
+	}
+	
+		
 	
 	
 	/**
@@ -1732,6 +1792,28 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return eav_id;
 		
 	}
+	
+	/**
+	 * Update EAV metadata annotation.
+	 * 
+	 * @param mp			the meta-parameter to update
+	 * @param spectrum_ids	the identifiers for which to update the parameter
+	 * 
+	 * @return the identifier of the inserted metadata
+	 */
+	public int updateEavMetadataAnnotation(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
+		
+		MetaParameter mp_ = MetaParameter.newInstance();
+		mp_.setEavId(mp.getEavId());
+		mp_.setAnnotation(mp.getAnnotation());
+		
+		
+		int eav_id = postForInteger("metadata", "update_annotation", new MetadataUpdateDescriptor(mp_, spectrum_ids));
+
+		
+		return eav_id;
+		
+	}	
 	
 	
 	/**

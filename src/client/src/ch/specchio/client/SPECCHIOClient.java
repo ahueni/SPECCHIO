@@ -35,6 +35,7 @@ import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
+import ch.specchio.types.SpectralFiles;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
@@ -495,6 +496,16 @@ public interface SPECCHIOClient {
 	 */
 	public Hashtable<String, Integer> getMetadataCategoriesForNameAccess(String field) throws SPECCHIOClientException;
 	
+	/**
+	 * Get metaparameters for spectrum ids and EAV attribute
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute		attribute name
+	 * 
+	 * @return list of metaparameters, or null if the field does not exist	 
+	 */
+	public ArrayList<MetaParameter> getMetaparameters(ArrayList<Integer> ids, String attribute_name) throws SPECCHIOWebClientException;
+	
 	
 	/**
 	 * Get values for spectrum ids and EAV attribute
@@ -627,8 +638,8 @@ public interface SPECCHIOClient {
 	 * Get the space objects for a set of spectrum identifiers.
 	 * 
 	 * @param ids								the spectrum identifiers
-	 * @param split_spaces_by_sensor
-	 * @param split_spaces_by_sensor_and_unit
+	 * @param split_spaces_by_sensor			boolean
+	 * @param split_spaces_by_sensor_and_unit	boolean
 	 * @param order_by							the field to order by
 	 */
 	public Space[] getSpaces(ArrayList<Integer> ids, boolean split_spaces_by_sensor, boolean split_spaces_by_sensor_and_unit, String order_by) throws SPECCHIOClientException;
@@ -965,13 +976,20 @@ public interface SPECCHIOClient {
 	/**
 	 * Test for the existence of a spectral file in the database.
 	 * 
-	 * @param campaign		the campaign to which the file belongs
-	 * @param hierarchy_id	the node under which the file belongs
-	 * @param filename		the file name
+	 * @param spec_file		spectral file object to check
 	 * 
 	 * @return true if the file already exists in the database, false otherwise
 	 */
 	public boolean spectralFileExists(SpectralFile spec_file) throws SPECCHIOClientException;
+	
+	/**
+	 * Test for the existence of a spectral files in the database.
+	 * 
+	 * @param spec_files	container with arraylist of spectral files to check
+	 * 
+	 * @return array of boolean values indicating existence
+	 */
+	public boolean[] spectralFilesExist(SpectralFileInsertResult spec_files) throws SPECCHIOClientException;	
 	
 	
 	/**
@@ -1015,6 +1033,16 @@ public interface SPECCHIOClient {
 	 * @return the identifier of the inserted metadata
 	 */
 	public int updateEavMetadata(MetaParameter mp, ArrayList<Integer> spectrum_ids, MetaParameter mp_old) throws SPECCHIOClientException;
+	
+	/**
+	 * Update EAV metadata annotation.
+	 * 
+	 * @param mp			the meta-parameter to update
+	 * @param spectrum_ids	the identifiers for which to update the parameter
+	 * 
+	 * @return the identifier of the inserted metadata
+	 */
+	public int updateEavMetadataAnnotation(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException;	
 	
 	
 	/**

@@ -37,6 +37,7 @@ import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
+import ch.specchio.types.SpectralFiles;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
@@ -805,6 +806,20 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	}
 	
 	
+	/**
+	 * Get metaparameters for spectrum ids and EAV attribute
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute		attribute name
+	 * 
+	 * @return list of metaparameters, or null if the field does not exist	 
+	 */
+	public ArrayList<MetaParameter> getMetaparameters(ArrayList<Integer> ids, String attribute_name) throws SPECCHIOWebClientException{
+		
+		return realClient.getMetaparameters(ids, attribute_name);
+		
+	}
+	
 	
 	/**
 	 * Get values for spectrum ids and EAV attribute
@@ -1477,9 +1492,7 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	/**
 	 * Test for the existence of a spectral file in the database.
 	 * 
-	 * @param campaign		the campaign to which the file belongs
-	 * @param hierarchy_id	the node under which the file belongs
-	 * @param filename		the file name
+	 * @param spec_file		spectral file object to check
 	 * 
 	 * @return true if the file already exists in the database, false otherwise
 	 */
@@ -1488,6 +1501,20 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.spectralFileExists(spec_file);
 		
 	}
+	
+	/**
+	 * Test for the existence of a spectral files in the database.
+	 * 
+	 * @param spec_files	container with arraylist of spectral files to check
+	 * 
+	 * @return array of boolean values indicating existence
+	 */
+	public boolean[] spectralFilesExist(SpectralFileInsertResult spec_files) throws SPECCHIOClientException {
+		
+		return realClient.spectralFilesExist(spec_files);
+		
+	}
+	
 	
 	
 	/**
@@ -1547,6 +1574,21 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.updateEavMetadata(mp, spectrum_ids, mp_old);
 		
 	}
+	
+	/**
+	 * Update EAV metadata annotation.
+	 * 
+	 * @param mp			the meta-parameter to update
+	 * @param spectrum_ids	the identifiers for which to update the parameter
+	 * 
+	 * @return the identifier of the inserted metadata
+	 */
+	public int updateEavMetadataAnnotation(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException{
+		
+		return realClient.updateEavMetadataAnnotation(mp, spectrum_ids);
+		
+	}
+	
 	
 	
 	/**
