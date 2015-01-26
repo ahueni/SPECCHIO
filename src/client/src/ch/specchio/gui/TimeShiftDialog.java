@@ -31,6 +31,7 @@ import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Spectrum;
+import ch.specchio.types.attribute;
 import ch.specchio.types.spectral_node_object;
 
 
@@ -393,13 +394,13 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 	
 				if (updatedIds.size() > 0) {
 					
+					attribute attr = specchioClient.getAttributesNameHash().get("Time Shift");
+					
 					// create a metaparameter noting that the time was shifted
 					MetaParameter mpShift = MetaParameter.newInstance(
-							"Processing",
-							"",
+							attr,
 							"Capture time was shifted by " + shift + " hours East using the SPECCHIO timeshift function."
 						);
-					mpShift.setAttributeName("Time Shift");	
 					
 					// add the metaparameter to the database
 					pr.set_operation("Updating database");
