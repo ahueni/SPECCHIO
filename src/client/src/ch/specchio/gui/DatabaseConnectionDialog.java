@@ -5,6 +5,8 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -39,7 +41,7 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 	   
 
 	
-	public DatabaseConnectionDialog() throws SPECCHIOClientException
+	public DatabaseConnectionDialog() throws SPECCHIOClientException, FileNotFoundException, IOException
 	{		
 		super("Connect to database");
 		
@@ -69,7 +71,7 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 			constraints.gridx = 1;
 			conn_combo = new JComboBox();	
 			// insert connections
-			ListIterator<SPECCHIOServerDescriptor> li = cf.getAllServerDescriptors().listIterator();
+			ListIterator<SPECCHIOServerDescriptor> li = descriptor_list.listIterator();
 			while(li.hasNext())
 			{
 				conn_combo.addItem(li.next());			
@@ -132,8 +134,8 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 
 	    	// launch a thread to perform the connection
     		SPECCHIOServerDescriptor server_d = descriptor_panel.getServerDescriptor();
-	    	DatabaseConnectionThread thread = new DatabaseConnectionThread(server_d);
-	    	thread.start();
+    		connect(server_d);
+
 	    }
 	    
 		if (e.getSource() == conn_combo)
@@ -156,6 +158,12 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 			pack();
 			
 		}
+	}
+	
+	public void connect(SPECCHIOServerDescriptor server_d)
+	{
+    	DatabaseConnectionThread thread = new DatabaseConnectionThread(server_d);
+    	thread.start();		
 	}
 	
 	
