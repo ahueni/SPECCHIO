@@ -69,6 +69,9 @@ public class APOGEE_FileLoader extends SpectralFileLoader {
 		line = line.replace("\"", ""); // remove the double quotes at the start
 		line = line.substring(1, line.length()-1);
 		
+		// clean-up: any space after a colon is removed
+		line = line.replaceAll(": *", ":");
+		
 		String[] tokens = line.split("  ");	
 		
 		// first token holds the information about the measurement type
