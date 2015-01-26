@@ -15,6 +15,7 @@ import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.jaxb.XmlIntegerAdapter;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
+import ch.specchio.types.SpectralFiles;
 
 
 /**
@@ -66,7 +67,7 @@ public class SpectralFileService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
 	@Path("exist")
-	public XmlInteger[] exist(SpectralFileInsertResult spec_files) throws SPECCHIOFactoryException {
+	public XmlInteger[] exist(SpectralFiles spec_files) throws SPECCHIOFactoryException {
 		
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
