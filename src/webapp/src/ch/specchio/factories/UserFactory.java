@@ -572,6 +572,29 @@ public class UserFactory extends SPECCHIOFactory {
 				institute.setInstituteId(rs.getInt(1));
 			}
 			
+			
+//			
+//			/* FIX for non-dynamic realm authentification follows: if this is not the specchio schema, we */
+//			/* need to insert into the specchio schema as well. Ideally, we would use OAuth1ClientSupport */
+//			/* This allows the use of multiple database instances on the same server                      */
+//			if(!getDatabaseName().equals("specchio"))
+//			{
+//				query = "insert into specchio.institute(name, department, street, street_no, po_code, city, country_id, www) values(" +
+//						SQL.conc_values(
+//								institute.getInstituteName(),
+//								institute.getDepartment(),
+//								institute.getStreet(),
+//								institute.getStreetNumber(),
+//								institute.getPostOfficeCode(),
+//								institute.getCity(),
+//								(institute.getCountry() != null)? Integer.toString(institute.getCountry().getId()) : null,
+//								institute.getWWWAddress()
+//						) + ")";
+//				stmt.executeUpdate(query);
+//				
+//			}	
+			
+			
 			// clean up
 			stmt.close();
 			
@@ -674,12 +697,12 @@ public class UserFactory extends SPECCHIOFactory {
 			/* This allows the use of multiple database instances on the same server                      */
 			if(!getDatabaseName().equals("specchio"))
 			{
-				// update user table
+				// update user table but without the institute to avoid inconsistencies
 				query = "insert into specchio.specchio_user(user,first_name,last_name,institute_id,email,www,admin,password,external_id) values(" +
 						SQL.quote_string(user.getUsername()) + "," +
 						SQL.quote_string(user.getFirstName()) + "," +
 						SQL.quote_string(user.getLastName()) + "," +
-						instIdString + "," +
+						"null" + "," +
 						SQL.quote_string(user.getEmailAddress()) + "," +
 						SQL.quote_string(user.getWwwAddress()) + "," +
 						(user.isInRole(UserRoles.ADMIN)? "1" : "0") + "," +
