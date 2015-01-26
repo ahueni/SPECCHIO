@@ -6,17 +6,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.ListIterator;
-import java.util.Set;
-import java.util.TimeZone;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.types.Campaign;
@@ -277,9 +274,9 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 
 			// PP dual channel files contain target and irradiance DNs
 			// thus here we must split them into two new hierarchies
-			getSubHierarchyId(subhierarchies, hierarchy_id, "Raw");
-			getSubHierarchyId(subhierarchies, subhierarchies.get("Raw"), "channel a");
-			getSubHierarchyId(subhierarchies, subhierarchies.get("Raw"), "channel b");					
+			getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
+			getSubHierarchyId(subhierarchies, subhierarchies.get("DN"), "channel a");
+			getSubHierarchyId(subhierarchies, subhierarchies.get("DN"), "channel b");					
 			
 		}
 
@@ -937,7 +934,8 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				int file_format_id = getIdForFileFormat(spec_file.getFileFormatName());
 				
 				// check if this is an unknown file format in this database
-				if(file_format_id == -1)
+				// handling of calls from e.g. Matlab where these values may not be set ...
+				if(file_format_id == -1 && 	spec_file.getFileFormatName() != null)
 				{
 					// add new file format to DB
 					SpectralFileFactory sff = new SpectralFileFactory(getSourceName()); // connects as admin
@@ -1004,6 +1002,8 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 						+ ", "
 						+ sampling_environment_id_and_op.id + ")";
 				
+				//System.out.println(query);
+				
 				Statement stmt = getStatementBuilder().createStatement();
 				stmt.executeUpdate(query);
 				
@@ -1022,6 +1022,8 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				InputStream refl = spec_file.getInputStream(spec_no);
 				statement.setBinaryStream(1, refl, spec_file.getNumberOfChannels(0) * 4);
 				statement.executeUpdate();
+				
+				statement.close();
 		
 				try {
 					refl.close();
@@ -1038,24 +1040,31 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				// capture and insert times
 //				TimeZone tz = TimeZone.getTimeZone("UTC");
 //				Calendar cal = Calendar.getInstance(tz);	
-				Date capture_date = spec_file.getCaptureDate(spec_no);
+				DateTime capture_date = spec_file.getCaptureDate(spec_no);
 //				cal.setTime(capture_date);
 				if (capture_date != null) {
 					MetaDate mpd = (MetaDate)MetaParameter.newInstance(getAttributes().get_attribute_info("Acquisition Time", "General"));
+					
+//					DateTimeFormatter formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
+//					formatter.withZoneUTC();
+//					DateTime dt = formatter.parseDateTime("01/22/2006  12:51:12");
+					
 					mpd.setValue(capture_date);
 					md.addEntry(mpd);
 				}
 				
 				// UTC insert time
-				TimeZone tz = TimeZone.getTimeZone("UTC");
-				Calendar cal = Calendar.getInstance(tz);	
+//				TimeZone tz = TimeZone.getTimeZone("UTC");
+//				Calendar cal = Calendar.getInstance(tz);	
 				
 //				SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd HHmm");
 //				formatter.setTimeZone(tz);		
-//				String out=formatter.format(cal.getTime());			
+//				String out=formatter.format(cal.getTime());	
+				
+				DateTime now = new DateTime(DateTimeZone.UTC);
 				
 				MetaDate mpd = (MetaDate)MetaParameter.newInstance(getAttributes().get_attribute_info("Loading Time", "General"));	
-				mpd.setValue(cal.getTime());
+				mpd.setValue(now);
 				md.addEntry(mpd);				
 				
 				// add instrument number as EAV if instrument is not defined in DB but not empty
@@ -1156,7 +1165,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		int file_format_id = -1;
 		String query;
 		ResultSet rs;
-		SQL_StatementBuilder SQL = new SQL_StatementBuilder(getConnection());
+		SQL_StatementBuilder SQL = new SQL_StatementBuilder(getConnection());		
 		
 		query = "insert into file_format (name, file_extension) values (" + SQL.quote_string(spec_file.getFileFormatName()) + ", " + SQL.quote_string(spec_file.getExt()) + ")";
 		
@@ -1172,7 +1181,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				file_format_id = rs.getInt(1);
 			}
 			rs.close();					
-			
+			stmt.close();
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -1277,6 +1286,53 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Test for the existence of a given spectral files in the database.
+	 * 
+	 * @param descriptor	list of spectral files
+	 * 
+	 * @return list of existence per file encoded as 0/1, order of the files in the input list is equal to boolean indicator order
+	 */
+	public ArrayList<Integer> spectraExist(ArrayList<SpectralFile> spectral_file_list, int hierarchy_id) throws SPECCHIOFactoryException {
+		
+		ArrayList<Integer> exists_array = new ArrayList<Integer>();
+		
+		for (int i=0;i<spectral_file_list.size();i++)
+		{
+			exists_array.add(1); // all files exist by default
+		}
+		
+		// get sub hierarchy ids for these spectral file
+		Hashtable<String, Integer> sub_ids = this.getSubHierarchyIds(spectral_file_list.get(0), hierarchy_id);
+		
+		
+		if(sub_ids.size() > 0)
+		{		
+			// check if the spectra exist in all the sub hierarchies
+			Enumeration<Integer> li = sub_ids.elements();
+			
+			
+			
+			while(li.hasMoreElements())
+			{
+				ArrayList<Integer> exists_array_tmp = spectraExist_(spectral_file_list, li.nextElement());
+				
+				for (int i=0;i<spectral_file_list.size();i++)
+				{
+					exists_array.set(i, exists_array.get(i) & exists_array_tmp.get(i));
+				}
+
+			}			
+		}
+		else
+		{
+			exists_array = spectraExist_(spectral_file_list, hierarchy_id);			
+		}
+		
+		return exists_array;
+	}	
+	
+	
+	/**
 	 * Test for the existence of a filename within a sub-hierarchy.
 	 * 
 	 * @oaram filename		the filename
@@ -1319,6 +1375,123 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		                          
 		
 	}	
+	
+	
+	/**
+	 * Test for the existence of a filename within a sub-hierarchy.
+	 * 
+	 * @oaram filename		the filename
+	 * @param hierarchy_id	the identifier of the hierarchy to check
+	 * 
+	 * @return true if a spectrum with the specified filename exists within the identified hierarchy
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	private ArrayList<Integer> spectraExist_(ArrayList<SpectralFile> spectral_file_list, int hierarchy_id) throws SPECCHIOFactoryException {
+		
+		ArrayList<Integer> exist_array = new ArrayList<Integer>();
+		
+		ArrayList<String> filenames = new ArrayList<String>();
+		
+		ListIterator<SpectralFile> sf_li = spectral_file_list.listIterator();
+		
+		String filenames_for_insert ="";
+		
+		boolean first = true;
+		
+		while(sf_li.hasNext()) {
+			SpectralFile spec_file = sf_li.next();		
+			
+			filenames.add(spec_file.getSpectrumFilename(0));
+			
+			if (!first)
+				filenames_for_insert = filenames_for_insert + ", ";
+			
+			filenames_for_insert = filenames_for_insert + "('" + spec_file.getSpectrumFilename(0) + "')";
+			
+			first = false; 
+		}
+		
+		
+		try {
+			// build a query that will return "1" if the file exists
+			
+			
+			
+			// build temp table
+
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			id_and_op_struct p_id_and_op = new id_and_op_struct(hierarchy_id);
+			
+			String quoted_filenames = SQL.quote_list(filenames);
+			
+			String ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " +
+					SQL.prefix(getTempDatabaseName(), "spectra_existence_check") +
+					"(spectrum_id INT, filename varchar(200) not null)";
+			stmt.executeUpdate(ddl_string);		
+			
+			ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " +
+					SQL.prefix(getTempDatabaseName(), "spectra_existence_in_db") +
+					"(spectrum_id INT, filename varchar(200) not null)";
+			stmt.executeUpdate(ddl_string);					
+			
+			// clear temporary tables (in case they already existed)
+			String delete_string = "delete from " + SQL.prefix(getTempDatabaseName(), "spectra_existence_check");
+			stmt.executeUpdate(delete_string);
+			
+			delete_string = "delete from " + SQL.prefix(getTempDatabaseName(), "spectra_existence_in_db");
+			stmt.executeUpdate(delete_string);			
+			
+			
+			
+			String insert_string = "insert into " + SQL.prefix(getTempDatabaseName(), "spectra_existence_check (filename) values ") + filenames_for_insert;			
+			
+			stmt.executeUpdate(insert_string);
+			
+			insert_string = "insert into " + SQL.prefix(getTempDatabaseName(), "spectra_existence_in_db") + "(spectrum_id, filename) (select spectrum.spectrum_id, eav.string_val from spectrum, spectrum_x_eav, eav, hierarchy_level_x_spectrum "  +
+					" where spectrum.spectrum_id=spectrum_x_eav.spectrum_id" +
+					" and spectrum_x_eav.eav_id=eav.eav_id" +
+					" and eav.attribute_id=" + getAttributes().get_attribute_id("File Name") +
+					" and eav.string_val in " + quoted_filenames + 
+					" and hierarchy_level_x_spectrum.spectrum_id=spectrum.spectrum_id" +
+					" and hierarchy_level_x_spectrum.hierarchy_level_id " + p_id_and_op.op + " " + p_id_and_op.id + ")";
+			
+			
+			stmt.executeUpdate(insert_string);
+			
+			String update_string = "update " + SQL.prefix(getTempDatabaseName(), "spectra_existence_check sec") + " join "+ SQL.prefix(getTempDatabaseName(), "spectra_existence_in_db seb") +
+					" on sec.filename = seb.filename set sec.spectrum_id = seb.spectrum_id"; 
+			
+			stmt.executeUpdate(update_string);
+			
+			String query = "select spectrum_id from "+ SQL.prefix(getTempDatabaseName(), "spectra_existence_check sec");
+
+			// execute the statement
+			ResultSet rs = stmt.executeQuery(query);
+
+			while (rs.next()) {
+				int id = rs.getInt(1);
+				
+				if(id > 0)
+					exist_array.add(1);
+				else
+					exist_array.add(0);
+					
+				
+			}
+			rs.close();
+			stmt.close();
+			
+			return exist_array;
+			
+		} catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+		                          
+		
+	}		
 	
 
 }
