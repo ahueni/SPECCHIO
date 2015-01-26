@@ -796,6 +796,8 @@ public class SpaceFactory extends SPECCHIOFactory {
 				SQL_StatementBuilder SQL = getStatementBuilder();
 				Statement stmt = SQL.createStatement();
 				
+				String quicker_order_by = "";
+				
 				// build query
 				String table;
 				String id_column;
@@ -809,10 +811,13 @@ public class SpaceFactory extends SPECCHIOFactory {
 					// load spectral data
 					table = "spectrum";
 					id_column = "spectrum_id";
-					order_by = space.getOrderBy();
+					//order_by = space.getOrderBy();
+					String conc_ids = SQL.conc_ids(space.getSpectrumIds());
+					order_by = null;
+					quicker_order_by = "order by FIELD (spectrum_id, "+ conc_ids +")";
 				}
 				String columns[] = new String[] { "measurement" };
-				String query = buildSpaceQuery(table, id_column, columns, space.getSpectrumIds(), order_by); 
+				String query = buildSpaceQuery(table, id_column, columns, space.getSpectrumIds(), order_by) + quicker_order_by; 
 				
 				ResultSet rs = stmt.executeQuery(query);
 				while (rs.next()) 
@@ -847,7 +852,7 @@ public class SpaceFactory extends SPECCHIOFactory {
 					try {
 						binstream.close();
 					} catch (IOException e) {
-						// don't know what woudl cause this
+						// don't know what would cause this
 						e.printStackTrace();
 					}
 					
