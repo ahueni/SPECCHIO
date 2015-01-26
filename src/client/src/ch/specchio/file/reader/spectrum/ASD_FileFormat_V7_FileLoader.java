@@ -11,6 +11,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -106,7 +109,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		 smd = new Metadata();
 		
 		asd_v7_file = new SpectralFile();
-		asd_v7_file.setCaptureDates(new Date[1]); // needed if read_hdr is called
+		asd_v7_file.setCaptureDates(new DateTime[1]); // needed if read_hdr is called
 													// directly!
 		asd_v7_file.setNumberOfSpectra(2); // one for DN and one for the
 											// converted DN values to Radiance
@@ -329,7 +332,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		}
 
 		// date
-		Date capture_date = read_asd_time(in);
+		DateTime capture_date = read_asd_time(in);
 		hdr.setCaptureDate(0, capture_date);
 		hdr.setCaptureDate(1, capture_date);
 		// skip till dc_corr flag
@@ -391,7 +394,10 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		Date wr_time = cal.getTime();
 
 		// skip till data format of spectrum
-		skip(in, 8);
+		//skip(in, 8);
+		
+		float starting_wvl = this.read_float(in);
+		float wvl_step = this.read_float(in);
 
 		data_format = in.readByte();
 		if (data_format < 0 || data_format > 3)
@@ -472,6 +478,20 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		
 		// skip to end of header
 		skip(in, 40);
+		
+		
+		
+		// fill wavelength vector to avoid issues with unknown type numbers when looking for suitable sensors
+		Float[] wvls = new Float[hdr.getNumberOfChannels(0)];
+		
+		for (int i=0;i<hdr.getNumberOfChannels().get(0);i++)
+		{
+			wvls[i] = starting_wvl + i;
+		}
+		
+		
+		// fill wvls for channels a and b
+		hdr.addWvls(wvls);		
 
 	}
 
@@ -1063,11 +1083,11 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		return f;
 	}
 
-	Date read_asd_time(DataInputStream in) throws IOException {
+	DateTime read_asd_time(DataInputStream in) throws IOException {
 		
-		// TimeZone tz = TimeZone.getDefault();
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		Calendar cal = Calendar.getInstance(tz);
+//		// TimeZone tz = TimeZone.getDefault();
+//		TimeZone tz = TimeZone.getTimeZone("UTC");
+//		Calendar cal = Calendar.getInstance(tz);
 
 		Integer sec = read_short(in);
 		Integer min = read_short(in);
@@ -1081,14 +1101,19 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		skip(in, 6);
 
 		// month starts at 0: this conforms with the java calendar class!
-		cal.set(year, month, mday, hour, min, sec);
-
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
-		formatter.setTimeZone(tz);
+//		cal.set(year, month, mday, hour, min, sec);
+//
+//		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
+//		formatter.setTimeZone(tz);
+//		
+//		String out=formatter.format(cal.getTime());
+//
+//		return cal.getTime();
 		
-		String out=formatter.format(cal.getTime());
-
-		return cal.getTime();
+		DateTime dt = new DateTime(year, month+1, mday, hour, min, sec, DateTimeZone.UTC); // joda months start at 1
+		
+		return dt; 
+		
 	}
 
 	spatial_pos read_gps_data(DataInputStream in) throws IOException {
