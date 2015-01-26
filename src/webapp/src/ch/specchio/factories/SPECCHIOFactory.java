@@ -331,6 +331,8 @@ public class SPECCHIOFactory {
 				while (rs.next()) {
 					this.databaseName = rs.getString(1);
 				}
+				rs.close();
+				stmt.close();
 			}
 			catch (SQLException ex) {
 				// database error
