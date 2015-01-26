@@ -8,8 +8,11 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.LinkedList;
+
+import ch.specchio.gui.SPECCHIOApplication;
 
 public class SPECCHIOClientFactory {
 	
@@ -17,10 +20,14 @@ public class SPECCHIOClientFactory {
 	private static SPECCHIOClientFactory instance = null;
 	
 	/** the configuration file name */
-	private static final File config_file = new File("db_config.txt");
+	private static final String config_file = "db_config.txt";
 	
 	/** the list of known servers */
 	private List<SPECCHIOServerDescriptor> apps;
+	
+	private boolean reload_db_config = false;
+
+	private long config_file_last_modified;
 	
 	/**
 	 * Constructor.
@@ -41,7 +48,7 @@ public class SPECCHIOClientFactory {
 		}
 		
 		// set up SSL trust store
-		System.setProperty("javax.net.ssl.trustStore", "specchio.keystore");
+		System.setProperty("javax.net.ssl.trustStore", getApplicationConfFilename("specchio.keystore"));
 		System.setProperty("javax.net.ssl.trustStorePassword", "specchio");
 		
 	}
@@ -55,9 +62,9 @@ public class SPECCHIOClientFactory {
 	 * @throws IOException	file error
 	 */
 	public void addAccountConfiguration(SPECCHIOServerDescriptor d) throws IOException {
-		
+			
 		// open the configuration file
-		FileWriter w = new FileWriter(config_file, true);
+		FileWriter w = new FileWriter(getApplicationConfFilename(config_file), true);
 		
 		// start a new line
 		w.write("\n");
@@ -89,6 +96,54 @@ public class SPECCHIOClientFactory {
 	
 	}
 	
+	public static String getDBConfigFilename()
+	{
+		return getApplicationConfFilename(config_file);
+	}
+	
+	public void reloadDBConfigFile()
+	{
+		reload_db_config = true;
+	}
+	
+	
+	public static String getApplicationConfFilename(String name)
+	{
+		File conf_file = null;
+		// check if the file is found in the current directory
+		
+		conf_file = new File(name);
+		
+		if(conf_file.isFile())
+		{
+			//System.out.println(name + " found in current dir.");
+			return conf_file.getPath();
+		}
+		else
+		{
+			// 
+			try {
+				File app_dir = new File(SPECCHIOApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+				
+				conf_file = new File(app_dir.getParent() + File.separator + name);
+				
+				//System.out.println(name + " not found in current dir but here: " + conf_file);
+				
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+		return conf_file.getPath();
+	}
+	
+//	public void readDBConfigFile() throws FileNotFoundException, IOException, SPECCHIOClientException
+//	{
+//		instance.read_config_file();
+//	}
+	
 	
 	/**
 	 * Return the single instance of the SPECCHIO web client factory.
@@ -112,8 +167,22 @@ public class SPECCHIOClientFactory {
 	 * Return the list of known web application servers.
 	 *
 	 * @return the list of known web application servers
+	 * @throws SPECCHIOClientException 
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	public List<SPECCHIOServerDescriptor> getAllServerDescriptors() {
+	public List<SPECCHIOServerDescriptor> getAllServerDescriptors() throws FileNotFoundException, IOException, SPECCHIOClientException {
+		
+		File temp = new File(SPECCHIOClientFactory.getDBConfigFilename());		
+		
+		if (config_file_last_modified != temp.lastModified())
+			reload_db_config = true;
+		
+		if (reload_db_config)
+		{
+			instance.read_config_file();
+			reload_db_config = false;
+		}
 		
 		return apps;
 		
@@ -129,8 +198,11 @@ public class SPECCHIOClientFactory {
 		   
 			FileInputStream file_input = null;
 			DataInputStream data_in = null;
+						
+			File temp = new File(SPECCHIOClientFactory.getDBConfigFilename());
+			this.config_file_last_modified = temp.lastModified();
 			
-			file_input = new FileInputStream (config_file);
+			file_input = new FileInputStream (getApplicationConfFilename(config_file));
 				
 			data_in = new DataInputStream(file_input);			
 				
