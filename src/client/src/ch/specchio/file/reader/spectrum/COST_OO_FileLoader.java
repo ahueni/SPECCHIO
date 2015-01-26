@@ -8,8 +8,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.TimeZone;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
@@ -132,8 +133,8 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 				{
 					
 					// time
-					TimeZone tz = TimeZone.getTimeZone("UTC");
-					Calendar cal = Calendar.getInstance(tz);					
+//					TimeZone tz = TimeZone.getTimeZone("UTC");
+//					Calendar cal = Calendar.getInstance(tz);					
 //					float dayOfYear_float = Float.valueOf(tokens[2]);
 //					int dayOfYear = (int) dayOfYear_float;
 //					TimeZone tz = TimeZone.getTimeZone("UTC");
@@ -148,16 +149,18 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 					Integer min = Integer.valueOf(time_tokens[1]);
 					Integer hour = Integer.valueOf(time_tokens[0]);
 					Integer mday = Integer.valueOf(date.substring(7, 8));
-					Integer month = Integer.valueOf(date.substring(5, 6)) - 1; // months start at 0 in Java
+					Integer month = Integer.valueOf(date.substring(5, 6)); 
 					Integer year = Integer.valueOf(date.substring(0, 4));					
 
-					cal.set(year, month, mday, hour, min, sec);
+//					cal.set(year, month, mday, hour, min, sec);
 					
 //					SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
 //					formatter.setTimeZone(tz);			
-//					String out_=formatter.format(cal.getTime());					
+//					String out_=formatter.format(cal.getTime());	
 					
-					spec_file.setCaptureDate(0, cal.getTime());
+					DateTime dt = new DateTime(year, month, mday, hour, min, sec, DateTimeZone.UTC);
+					
+					spec_file.setCaptureDate(0, dt);
 					spec_file.setCaptureDate(1, spec_file.getCaptureDate(0));
 					spec_file.setCaptureDate(2, spec_file.getCaptureDate(0));     
 					
@@ -238,6 +241,8 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 			
 			}
 			
+			d.close();
+			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -253,6 +258,7 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 			SpectralFile f)  throws IOException {
 		
 
+		@SuppressWarnings("unused")
 		String line;
 		
 		// use buffered stream to read lines
