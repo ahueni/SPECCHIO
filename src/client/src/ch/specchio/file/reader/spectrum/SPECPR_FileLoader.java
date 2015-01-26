@@ -9,6 +9,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -561,12 +564,12 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 
 	}
 
-	public static Date get_capture_date(int jdn, int time) {
-		Date date = new Date();
-
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		// TimeZone tz = TimeZone.getDefault();
-		Calendar cal = Calendar.getInstance(tz);
+	public static DateTime get_capture_date(int jdn, int time) {
+//		Date date = new Date();
+//
+//		TimeZone tz = TimeZone.getTimeZone("UTC");
+//		// TimeZone tz = TimeZone.getDefault();
+//		Calendar cal = Calendar.getInstance(tz);
 
 		float sec_of_day = time / 24000; // stored time value is scaled by 24000
 		float hour_w = sec_of_day / 3600;
@@ -588,8 +591,8 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 		date_table = julianToDate(jd);
 
 		// Months start at 0 in calendar class
-		cal.set(date_table[0], date_table[1] - 1, date_table[2], hour_int,
-				min_int, sec);
+//		cal.set(date_table[0], date_table[1] - 1, date_table[2], hour_int,
+//				min_int, sec);
 
 		// SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
 		// formatter.setTimeZone(tz);
@@ -597,8 +600,11 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 		// String out = formatter.format(cal.getTime());
 		//
 		// int x = -1;
+		
+		DateTime dt = new DateTime(date_table[0], date_table[1], date_table[2], hour_int, min_int, sec, DateTimeZone.UTC);
+		
 
-		return cal.getTime();
+		return dt;
 	}
 
 	public static String get_siderial_time(int time) {

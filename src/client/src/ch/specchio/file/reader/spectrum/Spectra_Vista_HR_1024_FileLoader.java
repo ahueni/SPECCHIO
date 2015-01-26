@@ -12,6 +12,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
 
@@ -276,7 +279,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		
 	
 	
-	Date get_date_and_time_from_HR_string(String str)
+	DateTime get_date_and_time_from_HR_string(String str)
 	{
 		
 		str = str.replaceFirst(" ", "");
@@ -299,24 +302,25 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		
 		int year = Integer.valueOf(date[2]) + 2000;
 		
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		Calendar cal = Calendar.getInstance(tz);
-		cal.set((year), Integer.valueOf(date[0]) - 1, // month is zero based!
-				Integer.valueOf(date[1]), hrs, 
-				Integer.valueOf(time[1]), Integer.valueOf(time[2]));
-
-		
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-		formatter.setTimeZone(tz);
+//		TimeZone tz = TimeZone.getTimeZone("UTC");
+//		Calendar cal = Calendar.getInstance(tz);
+//		cal.set((year), Integer.valueOf(date[0]) - 1, // month is zero based!
+//				Integer.valueOf(date[1]), hrs, 
+//				Integer.valueOf(time[1]), Integer.valueOf(time[2]));
+//
+//		
+//		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+//		formatter.setTimeZone(tz);
 		
 		//String out=formatter.format(cal.getTime());
 
 
 // int hh = cal.get(Calendar.HOUR_OF_DAY);
 
+		DateTime dt = new DateTime(year, Integer.valueOf(date[0]), Integer.valueOf(date[1]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+
 		
-		
-		return cal.getTime();
+		return dt;
 		
 	}
 	
@@ -377,7 +381,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			ArrayList<String> local_spectra_names = new ArrayList<String>(spec_file.getSpectraNames());
 			ArrayList<String> local_spectra_filenames = spec_file.getSpectraNames();
 //			Integer[] local_spectra_numbers = spec_file.spectra_numbers;
-			Date[] local_capture_dates = spec_file.getCaptureDates();
+			DateTime[] local_capture_dates = spec_file.getCaptureDates();
 			ArrayList<Integer> local_measurement_units = new ArrayList<Integer>(spec_file.getMeasurementUnits());
 			//spatial_pos[] local_pos = spec_file.pos;	
 			

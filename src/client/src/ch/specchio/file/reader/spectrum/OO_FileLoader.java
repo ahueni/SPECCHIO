@@ -12,6 +12,9 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import java.text.DateFormatSymbols;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import ch.specchio.types.SpectralFile;
 
 public class OO_FileLoader extends SpectralFileLoader {
@@ -139,17 +142,20 @@ public class OO_FileLoader extends SpectralFileLoader {
 			String[] time = time_data[3].split(":");
 			
 
-			TimeZone tz = TimeZone.getTimeZone("UTC");
-			Calendar cal = Calendar.getInstance(tz);
-			cal.set(year, month, 
-					Integer.valueOf(time_data[2]), Integer.valueOf(time[0]), 
-					Integer.valueOf(time[1]), Integer.valueOf(time[2]));
-
+//			TimeZone tz = TimeZone.getTimeZone("UTC");
+//			Calendar cal = Calendar.getInstance(tz);
+//			cal.set(year, month, 
+//					Integer.valueOf(time_data[2]), Integer.valueOf(time[0]), 
+//					Integer.valueOf(time[1]), Integer.valueOf(time[2]));
+//
+//			
+//			SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+//			formatter.setTimeZone(tz);
 			
-			SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-			formatter.setTimeZone(tz);
+			DateTime dt = new DateTime(year, month+1, Integer.valueOf(time_data[2]), Integer.valueOf(time[0]), Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC);
 			
-			hdr.setCaptureDate(cal.getTime());
+			
+			hdr.setCaptureDate(dt);
 			hdr.setCaptureDate(0, hdr.getCaptureDate());
 
 

@@ -14,6 +14,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
@@ -30,7 +34,7 @@ public class Spectral_Evolution_FileLoader extends SpectralFileLoader {
 	SpectralFile spec_file;
 	private String[] dates;
 	private String[] times;	
-	private Date[] tmp_capture_dates;
+	private DateTime[] tmp_capture_dates;
 	private double longitude;
 	private double latitude;
 	private double altitude;
@@ -210,7 +214,7 @@ public class Spectral_Evolution_FileLoader extends SpectralFileLoader {
 			// split into single times 
 			times = tokens[1].split(",");	
 			
-			tmp_capture_dates = new Date[times.length];
+			tmp_capture_dates = new DateTime[times.length];
 			
 			for (int i=0;i<times.length;i++)
 			{
@@ -278,7 +282,7 @@ public class Spectral_Evolution_FileLoader extends SpectralFileLoader {
 	}
 	
 	
-	Date get_date_and_time(int index)
+	DateTime get_date_and_time(int index)
 	{
 		
 		String time_str = this.dates[index] + " " + this.times[index];		
@@ -286,48 +290,53 @@ public class Spectral_Evolution_FileLoader extends SpectralFileLoader {
 		String hour_format = "";
 
 
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		DateFormat sdf;
+//		TimeZone tz = TimeZone.getTimeZone("UTC");
+//		DateFormat sdf;
 		
 		if(time_str.contains("PM") || time_str.contains("AM"))
 		{
-			hour_format =" hh:mm:ss a";
+			hour_format =" hh:mm:ss.SS a";
 		}
 		else
 		{
-			hour_format =" hh:mm:ss";
+			hour_format =" hh:mm:ss.SS";
 		}
 		
+		DateTimeFormatter formatter = DateTimeFormat.forPattern("MM/dd/yyyy" +  hour_format).withZoneUTC();
 		
-		sdf = new SimpleDateFormat("MM/dd/yy" +  hour_format);
+		DateTime dt = formatter.parseDateTime(time_str);
 		
+//		sdf = new SimpleDateFormat("MM/dd/yy" +  hour_format);
+//		
+//		
+//		sdf.setTimeZone(tz);
+//	    Date date = null;
+//		try {
+//			date = sdf.parse(time_str);
+//			
+//		} catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			
+//			// fallback scenario: use creation time stamp of input file: only possible with Java Release 7!!!!!!
+//			//BasicFileAttributes attr = Files.readAttributes(this.input_file, BasicFileAttributes.class);
+//
+//			
+//		}
+//		
+//		
+//		Calendar cal = Calendar.getInstance(tz);
+//		cal.setTime(date);
+//		
+//		
+//		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd HH");
+//		formatter.setTimeZone(tz);
+//		
+//		String out=formatter.format(cal.getTime());		
 		
-		sdf.setTimeZone(tz);
-	    Date date = null;
-		try {
-			date = sdf.parse(time_str);
-			
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			
-			// fallback scenario: use creation time stamp of input file: only possible with Java Release 7!!!!!!
-			//BasicFileAttributes attr = Files.readAttributes(this.input_file, BasicFileAttributes.class);
-
-			
-		}
+//		return cal.getTime();
 		
-		
-		Calendar cal = Calendar.getInstance(tz);
-		cal.setTime(date);
-		
-		
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd HH");
-		formatter.setTimeZone(tz);
-		
-		String out=formatter.format(cal.getTime());		
-		
-		return cal.getTime();
+		return dt;
 		
 	}	
 		
