@@ -789,7 +789,8 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			while (rs.next()) {
 				cal_id = rs.getInt(1);
 			}
-			rs.close();			
+			rs.close();	
+			stmt.close();
 			
 		}
 		catch (SQLException ex) {
