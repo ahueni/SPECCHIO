@@ -11,6 +11,10 @@ public class SpectralFileInsertResult {
 	private ArrayList<Integer> spectrum_ids;
 	private ArrayList<SpecchioMessage> errors;
 	
+//	private ArrayList<SpectralFile> spectral_file_list;
+//	private String campaign_type = "specchio";
+//	private int campaign_id;		
+	
 	/** default constructor */
 	public SpectralFileInsertResult()
 	{
@@ -67,6 +71,23 @@ public class SpectralFileInsertResult {
 		
 		return nonred_errors;
 	}
+	
+//	@XmlElement(name="spectral_file_list")
+//	public ArrayList<SpectralFile> getSpectral_file_list() {
+//		return spectral_file_list;
+//	}
+//	public void setSpectral_file_list(ArrayList<SpectralFile> spectral_file_list) {
+//		this.spectral_file_list = spectral_file_list;
+//	}
+//	
+//	@XmlElement(name="campaign_type")
+//	public String getCampaignType() { return this.campaign_type; }
+//	public void setCampaignType(String campaign_type) { this.campaign_type = campaign_type; }
+//
+//	@XmlElement(name="campaign_id")
+//	public int getCampaignId() { return this.campaign_id; }
+//	public void setCampaignId(int campaign_id) { this.campaign_id = campaign_id; }
+	
 	
 
 }
