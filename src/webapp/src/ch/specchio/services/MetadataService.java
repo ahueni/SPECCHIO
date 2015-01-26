@@ -571,6 +571,37 @@ public class MetadataService extends SPECCHIOService {
 		return new XmlInteger(eavId);
 		
 	}
+	
+	
+	/**
+	 * Update EAV metadata annotation.
+	 *  
+	 * @param update_d	the update descriptor
+	 * 
+	 * @return the identifier of the inserted metadata
+	 * 
+	 * @throws SPECCHIOFactoryException could not perform the update
+	 */
+	@POST
+	@Path("update_annotation")
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	public XmlInteger update_annotation(MetadataUpdateDescriptor update_d) throws SPECCHIOFactoryException {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		
+		int eavId = 0;
+		if (update_d.hasOldMetaParameter()) {
+			//eavId = factory.updateMetadataWithNewId(update_d.getMetaParameter(), update_d.getIds());
+		} else {
+			eavId = factory.updateMetadataAnnotation(update_d.getMetaParameter(), update_d.getIds());
+		}
+		
+		factory.dispose();
+		
+		return new XmlInteger(eavId);
+		
+	}	
 			
 
 }
