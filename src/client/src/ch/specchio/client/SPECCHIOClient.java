@@ -989,7 +989,7 @@ public interface SPECCHIOClient {
 	 * 
 	 * @return array of boolean values indicating existence
 	 */
-	public boolean[] spectralFilesExist(SpectralFileInsertResult spec_files) throws SPECCHIOClientException;	
+	public boolean[] spectralFilesExist(SpectralFiles spec_files) throws SPECCHIOClientException;	
 	
 	
 	/**

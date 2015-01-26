@@ -54,6 +54,7 @@ import ch.specchio.types.Sensor;
 import ch.specchio.types.SpectraMetadataUpdateDescriptor;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
+import ch.specchio.types.SpectralFiles;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
@@ -1702,7 +1703,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @return array of boolean values indicating existence
 	 */
-	public boolean[] spectralFilesExist(SpectralFileInsertResult spec_files) throws SPECCHIOClientException {
+	public boolean[] spectralFilesExist(SpectralFiles spec_files) throws SPECCHIOClientException {
 		
 		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
 		
