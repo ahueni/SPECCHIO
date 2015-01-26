@@ -24,15 +24,17 @@ import ch.specchio.types.AVMatchingList;
 import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.MetaDatatype;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.Sensor;
-import ch.specchio.types.SpectralFile;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.SpectrumDataLink;
 import ch.specchio.types.SpectrumFactorTable;
+
+import org.joda.time.DateTime;
 
 
 /**
@@ -779,7 +781,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				
 				// environ conds
 				s.setCloudCover(new MetaDatatype<String>("Cloud cover [octas]"));
-				s.setAmbientTemperature(new MetaDatatype<String>("Ambient temp. [ºC]"));
+				s.setAmbientTemperature(new MetaDatatype<String>("Ambient temp. [ï¿½C]"));
 				s.setAirPressure(new MetaDatatype<String>("Air pressure"));
 				s.setRelativeHumidity(new MetaDatatype<String>("Rel. humidity"));
 				s.setWindDirection(new MetaDatatype<String>("Wind direction"));
@@ -1058,9 +1060,9 @@ public class SpectrumFactory extends SPECCHIOFactory {
 
 			// get target acquisition time for easier query formulation below
 			ArrayList<Integer> time_ids = this.getEavServices().get_eav_ids(target_id, "Acquisition Time");
-			MetaParameter target_time = this.getEavServices().load_metaparameter(time_ids.get(0));
+			MetaDate target_time = (MetaDate) this.getEavServices().load_metaparameter(time_ids.get(0));
 			
-			String target_time_str = target_time.valueAsString();
+			String target_time_str = MetaDate.formatDate((DateTime)target_time.getValue()); // ensure we are getting the time stamp correctly formatted as inserted into the database
 
 			// get corresponding reference spectrum id
 			int reference_id = 0;
@@ -1095,6 +1097,8 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				stmt.executeUpdate(query); // execute update
 				num = 1;
 			}
+			
+			stmt.close();
 			
 		}
 		catch (SQLException ex) {
@@ -1173,6 +1177,65 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		}
 					
 	}
+	
+	/**
+	 * Remove a spectrum from the database.
+	 * 
+	 * @param spectrum_ids	list of the identifier of the spectra to be removed
+	 * @param is_admin		is the requesting user an administator?
+	 * 
+	 * @throws SPECCHIOFactoryException	the spectrum could not be removed
+	 */
+	public void removeSpectra(ArrayList<Integer> spectrum_ids, boolean is_admin) throws SPECCHIOFactoryException {
+		
+		try {
+			
+			Statement stmt = getStatementBuilder().createStatement();
+			String table_name;
+			String cmd;
+			
+			String ids = getStatementBuilder().conc_ids(spectrum_ids);
+			
+			// remove datalinks
+			table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
+			cmd = "delete from "+table_name+" where " +
+			"spectrum_id in (" + ids + ") OR linked_spectrum_id in (" + ids + ")";	
+			stmt.executeUpdate(cmd); 
+			
+			// EAV
+			// remove entries from eav x table
+			table_name = (is_admin)? "spectrum_x_eav" : "spectrum_x_eav_view";
+			cmd = "delete from "+table_name+" where " +
+			"spectrum_id in (" + ids + ")";	
+			stmt.executeUpdate(cmd); 	
+			
+			String spectrum_x_eav_table_or_view = table_name;
+	
+			// remove zombie eav
+			table_name = (is_admin)? "eav" : "eav_view";
+			
+			cmd = "delete from "+table_name+" where eav_id not in (select eav_id from " +spectrum_x_eav_table_or_view+");";
+			stmt.executeUpdate(cmd);					
+			
+			// remove entries from hierarchy_level_x_spectrum
+			table_name = (is_admin)? "hierarchy_level_x_spectrum" : "hierarchy_level_x_spectrum_view";
+			cmd = "delete from "+table_name+" where " +
+			"spectrum_id in (" + ids + ")";		
+			stmt.executeUpdate(cmd); 				
+					
+			// remove spectrum itself
+			table_name = (is_admin)? "spectrum" : "spectrum_view";
+			cmd = "delete from "+table_name+" where spectrum_id in (" + ids + ")";	
+			stmt.executeUpdate(cmd);
+			
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+					
+	}	
 	
 	
 	/**
