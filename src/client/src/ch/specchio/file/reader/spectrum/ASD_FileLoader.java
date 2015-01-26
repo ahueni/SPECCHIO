@@ -13,6 +13,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -101,7 +104,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		// read dc_time: Time of last dc, seconds since 1/1/1970
 		// -> getting the delta time appears not possible, due to this timestamp being in UTC and the recording time being in local time!!!!!
 		
-		this.read_long(in);	// long dc_time = 
+		long dc_time = this.read_long(in);	// long dc_time = 
 //		TimeZone tz = TimeZone.getTimeZone("UTC");
 //		Calendar cal = Calendar.getInstance(tz);
 //		cal.setTimeInMillis(dc_time*1000);
@@ -215,11 +218,11 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		return f;
 	}
 	
-	Date read_asd_time(DataInputStream in) throws IOException
+	DateTime read_asd_time(DataInputStream in) throws IOException
 	{
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		//TimeZone tz = TimeZone.getDefault();
-		Calendar cal = Calendar.getInstance(tz);
+//		TimeZone tz = TimeZone.getTimeZone("UTC");
+//		//TimeZone tz = TimeZone.getDefault();
+//		Calendar cal = Calendar.getInstance(tz);
 		
 		Integer sec = read_short(in);
 		Integer min = read_short(in);
@@ -232,15 +235,15 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		skip(in, 6);
 		
 		// month starts at 0: this conforms with the java calendar class!
-		cal.set(year, month, mday, hour, min, sec);
-		
-
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
-		formatter.setTimeZone(tz);
+//		cal.set(year, month, mday, hour, min, sec);
+//		
+//
+//		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
+//		formatter.setTimeZone(tz);
 		
 		//String out=formatter.format(cal.getTime());		
 						
-		return cal.getTime();
+		return new DateTime(year, month+1, mday, hour, min, sec, DateTimeZone.UTC); // joda months start at 1
 	}
 	
 	spatial_pos read_gps_data(DataInputStream in) throws IOException
