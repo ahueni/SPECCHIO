@@ -1,10 +1,13 @@
 package ch.specchio.factories;
 
-public class SPECCHIOFactoryException extends Exception {
+import javax.ws.rs.WebApplicationException;
+
+public class SPECCHIOFactoryException extends WebApplicationException {
 
 	/** serialisation version ID */
 	private static final long serialVersionUID = 1L;
 	
+	private String message = "";
 	
 	/**
 	 * Constructor for re-throwing an exception.
@@ -24,7 +27,8 @@ public class SPECCHIOFactoryException extends Exception {
 	 */
 	public SPECCHIOFactoryException(String message) {
 		
-		super(message);
+		super();
+		this.message = message;
 		
 	}
 
