@@ -337,16 +337,14 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 			try {
 				
 				// work out the query string
-				SQL_StatementBuilder sql = getStatementBuilder();
+				//SQL_StatementBuilder sql = getStatementBuilder();
 				String query = null;
 				if (node instanceof campaign_node) {
 					query = "select spectrum_id from spectrum where " +
-							"campaign_id = " + node.getId() +
-							sql.build_order_by_string(sql.quote_string(node.getOrderBy()));
+							"campaign_id = " + node.getId();
 				} else if (node instanceof hierarchy_node) {
 					query = "select hxs.spectrum_id from hierarchy_level_x_spectrum hxs, spectrum s where " +
-							"hxs.hierarchy_level_id = " + node.getId() + " and hxs.spectrum_id = s.spectrum_id" +
-							sql.build_order_by_string(sql.quote_string(node.getOrderBy()));
+							"hxs.hierarchy_level_id = " + node.getId() + " and hxs.spectrum_id = s.spectrum_id";
 				}
 				
 				// build a list of ids from the database
@@ -357,6 +355,7 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 						ids.add(new Integer(rs.getInt(1)));			
 					}
 					rs.close();
+					stmt.close();
 				}
 				
 			}
