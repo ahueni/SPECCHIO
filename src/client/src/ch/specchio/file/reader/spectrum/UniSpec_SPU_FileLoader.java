@@ -7,14 +7,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.ListIterator;
-import java.util.TimeZone;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -269,40 +268,67 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 					
 					// "Time:       6/12/2010 12:05:58 PM" (for spu files)
 					// "Time:       05/07/2000  14:32:38" (for SPU files)
-					TimeZone tz = TimeZone.getTimeZone("UTC");
-					DateFormat sdf;
+					// "Time:       01/22/2006  12:51:12  99.251"	Decidedly odd ... this is the one with 3 tokens
 					
-					if(time_str.contains("PM") || time_str.contains("AM"))
+					
+					// clean up tokens to have just one space between date and time
+					String[] tokens = time_str.split("\\s+");
+					
+					if (tokens.length == 3 && !(time_str.contains("PM") || time_str.contains("AM")))
 					{
-						sdf = new SimpleDateFormat("MM/dd/yy hh:mm:ss a");
+						// looks like we got one of the odd three token items without AM/PM
+						time_str = tokens[0] + " " + tokens[1];
 					}
 					else
 					{
-						sdf = new SimpleDateFormat("MM/dd/yy hh:mm:ss");
+						time_str = tokens[0];
+						for(int i=1;i<tokens.length;i++)
+						{
+							time_str = time_str + " " + this.remove_leading_spaces( tokens[i]);
+						}
 					}
 					
 					
+//					TimeZone tz = TimeZone.getTimeZone("UTC");
+					DateTimeFormatter formatter;
 					
-					sdf.setTimeZone(tz);
-				    Date date;
-					try {
-						date = sdf.parse(time_str);
-						
-						//System.out.println("Date and Time: " + date);
-						
-						f.setCaptureDate(0, date);		
-						f.setCaptureDate(1, date); // time for both measurements is taken as the same				
-						
-						
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						
-						// fallback scenario: use creation time stamp of input file: only possible with Java Release 7!!!!!!
-						//BasicFileAttributes attr = Files.readAttributes(this.input_file, BasicFileAttributes.class);
-
-						
+					if(time_str.contains("PM") || time_str.contains("AM"))
+					{
+						formatter = DateTimeFormat.forPattern("MM/dd/yyyy hh:mm:ss a").withZoneUTC();
 					}
+					else
+					{
+						formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss").withZoneUTC();
+					}
+					
+					DateTime dt = formatter.parseDateTime(time_str);
+					
+					DateTimeFormatter fmt = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+					String date_str = fmt.print(dt);
+					 
+					 
+//					sdf.setTimeZone(tz);
+//				    Date date;
+//					try {
+						//date = sdf.parse(time_str);
+//						sdf.parse(time_str);
+//						date = dt.toDate();
+//						
+//						System.out.println("Date and Time: " + date);
+//						
+						f.setCaptureDate(0, dt);		
+						f.setCaptureDate(1, dt); // time for both measurements is taken as the same				
+						
+						
+//					} catch (ParseException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//						
+//						// fallback scenario: use creation time stamp of input file: only possible with Java Release 7!!!!!!
+//						//BasicFileAttributes attr = Files.readAttributes(this.input_file, BasicFileAttributes.class);
+//
+//						
+//					}
 
 					
 					
@@ -437,35 +463,100 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 				// see: http://stackoverflow.com/questions/225337/how-do-i-split-a-string-with-any-whitespace-chars-as-delimiters
 				String[] tokens = line.split("\\s+");	
 
-				a.add(Float.valueOf(tokens[2]));
-				
-				//tokens[1] = this.remove_trailing_spaces(tokens[1]);
-				
-				//tokens[1] = remove_trailing_tabs(tokens[1]); // clean up for the integer conversion (apparently, the Float conversion is more tolerant)				
-				
 				try {
-					Integer.valueOf(tokens[1]);
-				} catch (NumberFormatException e) {
-					// tried to parse a floating point value, therefore, this spectrum was spectrally interpolated
-					
-					// avoid the detection of special cases where unbinned values show up as "0."
+					try {
+						a.add(Float.valueOf(tokens[2]));
+					} catch (NumberFormatException e) {
 
-						// catching cases of just a decimal point instead of a float
-						if(e.getMessage().equals("For input string: \".\""))
-						{
-							tokens[1] = "0.0";
-						}						
+						if(tokens[2].equals("."))
+							a.add(0.0f);
 						
-						if(Float.valueOf(tokens[1]) > 0)
+					}
+					
+					//tokens[1] = this.remove_trailing_spaces(tokens[1]);
+					
+					//tokens[1] = remove_trailing_tabs(tokens[1]); // clean up for the integer conversion (apparently, the Float conversion is more tolerant)				
+					
+					try {
+						Integer.valueOf(tokens[1]);
+					} catch (NumberFormatException e) {
+						// tried to parse a floating point value, therefore, this spectrum was spectrally interpolated
+						
+						// avoid the detection of special cases where unbinned values show up as "0."
+	
+							// catching cases of just a decimal point instead of a float
+							if(e.getMessage().equals("For input string: \".\""))
+							{
+								tokens[1] = "0.0";
+							}						
+							
+							if(Float.valueOf(tokens[1]) > 0)
+							{
+								spectral_interpolation = true;
+							}
+	
+						
+					} 
+					
+						
+					
+					b.add(Float.valueOf(tokens[1]));
+					
+				
+				
+				} catch (ArrayIndexOutOfBoundsException e) {
+
+						// case of incomplete lines (less than 3 values), e.g. 324.53   100 
+						// either channel A or B is missing a value, apparently the value should be zero
+						// Educated guess based previous spectral band
+
+						float existing_value = Float.valueOf(tokens[1]);
+						float diffA;
+						float diffB;
+						
+						if (!a.isEmpty())
 						{
-							spectral_interpolation = true;
+							diffA = Math.abs(a.get(a.size()-1) - existing_value);
+							diffB = Math.abs(b.get(a.size()-1) - existing_value);
+						}
+						else
+						{
+							// first band has already a problem
+							// best would be to read the next line and figure out the likely bad channel ...
+							
+							// we assume that B needs filling
+							diffA = 0.0f;
+							diffB = 1.0f;
+							
 						}
 
-					
-				}						
-					
-				
-				b.add(Float.valueOf(tokens[1]));
+						String failed_channel;
+
+						if (diffA < diffB)
+						{
+							// A channel value exists, B needs filling with zero
+							a.add(Float.valueOf(tokens[1]));
+							b.add(0.0f);
+							failed_channel = "B";
+						}
+						else
+						{
+							// B channel value exists, A needs filling with zero
+							a.add(0.0f);
+							b.add(Float.valueOf(tokens[1]));	
+							failed_channel = "A";
+						}
+						
+						ArrayList<SpecchioMessage> file_errors = f.getFileErrors();
+						if(file_errors == null)
+						{
+							file_errors = new ArrayList<SpecchioMessage>();						
+						}
+						file_errors.add(new SpecchioMessage("Missing value in channel " + failed_channel + " filled with zero", SpecchioMessage.WARNING));
+						f.setFileErrors(file_errors);
+						
+
+				}
 				
 				wvl.add(Float.valueOf(tokens[0]));
 				
@@ -494,7 +585,12 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 		if (a.size() != b.size())
 		{
 			f.setFileErrorCode(SpectralFile.UNRECOVERABLE_ERROR);
-			ArrayList<SpecchioMessage> file_errors = new ArrayList<SpecchioMessage>();
+			ArrayList<SpecchioMessage> file_errors = f.getFileErrors();
+			if(file_errors == null)
+			{
+				file_errors = new ArrayList<SpecchioMessage>();						
+			}
+
 			file_errors.add(new SpecchioMessage("Target and reference vectors are of unequal length.", SpecchioMessage.ERROR));
 			f.setFileErrors(file_errors);
 		}
