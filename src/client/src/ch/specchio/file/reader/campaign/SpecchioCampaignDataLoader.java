@@ -57,18 +57,18 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			specchio_client.refreshMetadataCategory("calibration");
 			
 			// tell the listener that we're finished
-			listener.campaignDataLoaded(successful_file_counter, this.file_errors);
+			listener.campaignDataLoaded(successful_file_counter, spectrum_counter, this.file_errors);
 
 		}
 		catch (SPECCHIOClientException ex) {
-			listener.campaignDataLoadError(ex.getMessage());
+			listener.campaignDataLoadError(ex.getMessage() + "\n" + ex.getDetails());
 		}
 		catch (IOException ex) {
 			listener.campaignDataLoadError(ex.getMessage());
 		}
 		
 		// tell the listener that we're finished
-		listener.campaignDataLoaded(successful_file_counter, this.file_errors);
+		//listener.campaignDataLoaded(successful_file_counter, this.file_errors);
 
 	}
 
@@ -166,13 +166,14 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 			if (sfl != null) {
 				
-				// use the modified date list to iterate over the files
+				ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();			
+				
+				// iterate over the files
 				ListIterator<File> file_li = files.listIterator();
 				
 				while(file_li.hasNext()) {
 					File file = file_li.next();
 					
-					SpectralFileInsertResult insert_result = new SpectralFileInsertResult();
 					
 					try {
 
@@ -186,35 +187,10 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 							if(spec_file.getFileErrorCode() != SpectralFile.UNRECOVERABLE_ERROR)
 							{
 								spec_file.setGarbageIndicator(is_garbage);
-								insert_result = insert_spectral_file(spec_file, parent_id);
+								
+								// add to file list
+								spectral_file_list.add(spec_file);
 
-								spectrum_counter += insert_result.getSpectrumIds().size();
-								
-								if(insert_result.getSpectrumIds().size() > 0) successful_file_counter++;
-								
-							}
-							
-							insert_result.addErrors(spec_file.getFileErrors()); // compile into one list of errors							
-//							if(insert_result.getErrors().size() == 0) successful_file_counter++;
-							
-							// check on file errors
-							if(insert_result.getErrors().size() > 0)
-							{
-								// concatenate all errors into one message
-								StringBuffer buf = new StringBuffer("Issues found in " + spec_file.getFilename() + ":");
-
-								for (SpecchioMessage error : insert_result.get_nonredudant_errors()) {
-										
-									buf.append("\n\t");
-			
-									buf.append(error.toString());
-								}
-								
-								buf.append("\n");
-								
-								// add the message to the list of all errors
-								this.file_errors.add(buf.toString());
-								
 							}
 
 						}
@@ -230,6 +206,85 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						listener.campaignDataLoadError(file + ": " + ex.getMessage());
 					}
 				}
+				
+				// check existence of all spectral files
+				SpectralFileInsertResult sfs = new SpectralFileInsertResult(); // actually should use the class SpectralFiles here, but that one does not work?!?!?!?!
+				
+				ArrayList<SpectralFile> spectral_light_file_list = new ArrayList<SpectralFile>();
+				
+				// create lightweight objects
+				ListIterator<SpectralFile> sf_li = spectral_file_list.listIterator();
+				
+				while(sf_li.hasNext()) {
+					spec_file = sf_li.next();		
+					SpectralFile light_clone = new SpectralFile(spec_file);
+					light_clone.setHierarchyId(parent_id);
+					light_clone.setCampaignId(campaign.getId());
+					light_clone.setCampaignType(campaign.getType());	
+					
+					spectral_light_file_list.add(light_clone);
+				}
+				
+				sfs.setSpectral_file_list(spectral_light_file_list);
+				sfs.setCampaignId(campaign.getId());
+				sfs.setCampaignType(campaign.getType());	
+				
+				boolean[] exists_array = specchio_client.spectralFilesExist(sfs);
+				
+				
+				// insert spectral files
+				
+				sf_li = spectral_file_list.listIterator();
+				
+				int index = 0;
+				
+				while(sf_li.hasNext()) {
+					spec_file = sf_li.next();		
+					
+					if (exists_array[index] == false)
+					{
+
+						SpectralFileInsertResult insert_result = new SpectralFileInsertResult();
+
+						insert_result = insert_spectral_file(spec_file, parent_id);
+
+						spectrum_counter += insert_result.getSpectrumIds().size();
+
+						if(insert_result.getSpectrumIds().size() > 0) successful_file_counter++;
+
+						insert_result.addErrors(spec_file.getFileErrors()); // compile into one list of errors							
+						//				if(insert_result.getErrors().size() == 0) successful_file_counter++;
+
+						// check on file errors
+						if(insert_result.getErrors().size() > 0)
+						{
+							// concatenate all errors into one message
+							StringBuffer buf = new StringBuffer("Issues found in " + spec_file.getFilename() + ":");
+
+							for (SpecchioMessage error : insert_result.get_nonredudant_errors()) {
+
+								buf.append("\n\t");
+
+								buf.append(error.toString());
+							}
+
+							buf.append("\n");
+
+							// add the message to the list of all errors
+							this.file_errors.add(buf.toString());
+
+						}	
+
+						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
+
+						
+					
+					}
+					
+					index = index + 1;
+				
+				}
+				
 			} else {
 				listener.campaignDataLoadError(
 						"Unknown file types in directory " + dir.toString() + ". \n" +
@@ -249,15 +304,15 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		// first check whether or not the file has already been loaded
 		// to do this, create a clone of the spectral file, remove it's measurement to reduce size and send it 
 		// to the web service
-		SpectralFile light_clone = new SpectralFile(spec_file);
-		light_clone.setHierarchyId(hierarchy_id);
-		light_clone.setCampaignId(campaign.getId());
-		light_clone.setCampaignType(campaign.getType());
-		
-		boolean exists = specchio_client.spectralFileExists(light_clone);
-		
-		// if it doesn't exist, upload it
-		if (!exists) {
+//		SpectralFile light_clone = new SpectralFile(spec_file);
+//		light_clone.setHierarchyId(hierarchy_id);
+//		light_clone.setCampaignId(campaign.getId());
+//		light_clone.setCampaignType(campaign.getType());
+//		
+//		boolean exists = specchio_client.spectralFileExists(light_clone);
+//		
+//		// if it doesn't exist, upload it
+//		if (!exists) {
 			spec_file.setCampaignType(campaign.getType());
 			spec_file.setCampaignId(campaign.getId());
 			spec_file.setHierarchyId(hierarchy_id);
@@ -267,7 +322,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 //			for (int i = 0; i < results.size(); i++) {
 //				ids[i] = results.get(i);
 //			}
-		} 
+//		} 
 		
 		return results;
 		
