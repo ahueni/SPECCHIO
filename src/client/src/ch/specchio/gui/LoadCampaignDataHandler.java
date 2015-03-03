@@ -30,8 +30,16 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	 * @param message	the error message
 	 */
 	public void campaignDataLoadError(String message) {
+		
+		JTextArea msg = new JTextArea("Error while loading files: " + message);
+		msg.setLineWrap(true);
+		msg.setWrapStyleWord(true);
+		Dimension dim = new Dimension(250,150);
 
-		JOptionPane.showMessageDialog(null, "Error while loading files: " + message);
+		JScrollPane scrollPane = new JScrollPane(msg);		
+		scrollPane.setPreferredSize(dim);
+
+		JOptionPane.showMessageDialog(null, scrollPane);
 		
 	}
 	
