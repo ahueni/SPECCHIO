@@ -1,6 +1,7 @@
 package ch.specchio.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -10,6 +11,8 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -64,9 +67,19 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 				removeTreeNode(sdb_node);
 			}
 			catch (SPECCHIOClientException ex) {
+				
+				JTextArea msg = new JTextArea(ex.getMessage() + "\n" + ex.getDetails());
+				msg.setLineWrap(true);
+				msg.setWrapStyleWord(true);
+				Dimension dim = new Dimension(250,150);
+
+				JScrollPane scrollPane = new JScrollPane(msg);		
+				scrollPane.setPreferredSize(dim);
+				
+				
 				JOptionPane.showMessageDialog(
 		    			DataRemoverDialog.this,
-		    			ex.getMessage(),
+		    			scrollPane,
 		    			"Error",
 		    			JOptionPane.ERROR_MESSAGE
 		    		);
