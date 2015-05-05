@@ -1133,7 +1133,7 @@ public class EAVDBServices extends Thread {
 	 */
 	 public MetaParameter load_metaparameter(int eav_id) throws SQLException {
 		 
-		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, unit.short_name, unit.unit_id, attr.attribute_id, from eav eav, attribute attr, unit unit, category cat where " +
+		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
 		"eav.eav_id = " + Integer.toString(eav_id) + " and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
 
 		Statement stmt = SQL.createStatement();
@@ -1156,7 +1156,7 @@ public class EAVDBServices extends Thread {
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
 			
-			String attribute_name = rs.getString(ind++);
+			//String attribute_name = rs.getString(ind++);
 			String unit_name = rs.getString(ind++);
 			int unit_id = rs.getInt(ind++);
 			int attribute_id = rs.getInt(ind++);
@@ -1218,7 +1218,7 @@ public class EAVDBServices extends Thread {
 			}
 			
 			mp.setEavId(eav_id);
-			mp.setAttributeName(attribute_name);
+			mp.setAttributeName(attr.getName());
 			mp.setUnitName(unit_name);
 			mp.setAttributeId(attribute_id);
 			mp.setUnitId(unit_id);
