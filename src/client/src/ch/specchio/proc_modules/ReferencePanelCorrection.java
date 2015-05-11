@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.SpectrumFactorTable;
@@ -61,7 +62,8 @@ public class ReferencePanelCorrection extends SpectralProcessingModule {
 		
 		if(dim1 != dim2)
 		{
-			JOptionPane.showMessageDialog(owner,"Cannot create output space because the input spaces have differing number of bands. \nPlease use a waveband filter to cut superfluous bands.");
+			JOptionPane.showMessageDialog(owner,"Cannot create output space because the input spaces have differing number of bands. \nPlease use a waveband filter to cut superfluous bands.", "Error",
+	    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 			valid_configuration = false;
 		}
 		else

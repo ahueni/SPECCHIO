@@ -64,7 +64,8 @@ public class RadianceToReflectance extends SpectralProcessingModule
 				SPECCHIOApplication app = SPECCHIOApplication.getInstance();
 				JOptionPane.showMessageDialog(app.get_frame(),"Spectral space dimensions of spectralon and target do not match!\n" +
 						"Make sure that target space dimensionality is not changed by preceeding modules.\n" +
-						"Radiance to Reflectance transformation will not be carried out.");
+						"Radiance to Reflectance transformation will not be carried out.", "Error",
+		    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 		
 				reference_space = null;
 			}
@@ -73,45 +74,51 @@ public class RadianceToReflectance extends SpectralProcessingModule
 		// loop over all vectors
 		for(int i = 0; i < vectors.size(); i++)
 		{
-			double[] vector = vectors.get(i);
-			double[] out_vector = new double[get_main_output_space().getSpace().getDimensionality()]; // new vector dimension is equal to output space dimension
-			
-			// convert each vector
-			if(reference_space != null)
+			// only calculate for targets
+			if(!reference_space.getSpectrumIds().contains(spectrum_ids.get(i)))
 			{
-				// get the spectralon vector for the current target spectrum id (via hash table)
-				int spectrum_id = spectrum_ids.get(i);
-				if(spectrum_reference_hash.containsKey(spectrum_id))
-				{
-					int index = spectrum_reference_hash.get(spectrum_id);
-					
-					
-					double[] spectralon_vector = reference_space.getVector(index);
-					
-					for(int band = 0; band < out_vector.length;band++)
-					{
-						if(this.is_spectralon)
-						{
-							out_vector[band] = vector[band]/spectralon_vector[band];
-						}
-						else
-						{
-							out_vector[band] = vector[band]/(spectralon_vector[band]/PI);
-						}
-					}
+			
 				
-				}
-		
-			}
-			else
-			{
-				// simple copy if spectralon space could not be filled
-				System.arraycopy(vector, 0, out_vector, 0, out_vector.length);
-			}
-		
+				double[] vector = vectors.get(i);
+				double[] out_vector = new double[get_main_output_space().getSpace().getDimensionality()]; // new vector dimension is equal to output space dimension
+				
+				// convert each vector
+				if(reference_space != null)
+				{
+					// get the spectralon vector for the current target spectrum id (via hash table)
+					int spectrum_id = spectrum_ids.get(i);
+					if(spectrum_reference_hash.containsKey(spectrum_id))
+					{
+						int index = spectrum_reference_hash.get(spectrum_id);
+						
+						
+						double[] spectralon_vector = reference_space.getVector(index);
+						
+						for(int band = 0; band < out_vector.length;band++)
+						{
+							if(this.is_spectralon)
+							{
+								out_vector[band] = vector[band]/spectralon_vector[band];
+							}
+							else
+							{
+								out_vector[band] = vector[band]/(spectralon_vector[band]/PI);
+							}
+						}
+					
+					}
 			
-			// add output vector to output space
-			get_main_output_space().getSpace().addVector(out_vector);
+				}
+				else
+				{
+					// simple copy if spectralon space could not be filled
+					System.arraycopy(vector, 0, out_vector, 0, out_vector.length);
+				}
+			
+				
+				// add output vector to output space
+				get_main_output_space().getSpace().addVector(out_vector);
+			}
 			
 			// update progress bar
 			set_progress((i+1)*100.0/vectors.size());
@@ -160,7 +167,8 @@ public class RadianceToReflectance extends SpectralProcessingModule
 		{
 			JOptionPane.showMessageDialog(owner,
 					"Reference spectra are not contained in one space: check if they are of the same measurement unit!\n" +
-					"Radiance to Reflectance transformation will not be carried out."
+					"Radiance to Reflectance transformation will not be carried out.", "Error",
+	    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 				);	
 		}
 		

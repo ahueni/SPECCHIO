@@ -139,7 +139,7 @@ public class ProcessingPlane implements ActionListener, ModuleCallback
 		    			SPECCHIOApplication.getInstance().get_frame(),
 		    			ex.getMessage(),
 		    			"Error",
-		    			JOptionPane.ERROR_MESSAGE
+		    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 		    		);
 		    }
 			
