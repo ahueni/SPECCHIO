@@ -363,7 +363,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 						(Frame)getOwner(),
 						message,
 						"User created",
-						JOptionPane.INFORMATION_MESSAGE
+						JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon
 					);
 				
 				// dismiss the dialogue
@@ -380,7 +380,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 						(Frame)getOwner(),
 						ex.getMessage(),
 						"Invalid configuration",
-						JOptionPane.ERROR_MESSAGE
+						JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 					);
 			}
 			catch (SPECCHIOClientException ex) {
@@ -437,7 +437,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 						(Frame)getOwner(),
 						ex.getMessage(),
 						"Invalid configuration",
-						JOptionPane.ERROR_MESSAGE
+						JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 					);
 			}
 			catch (SPECCHIOClientException ex) {

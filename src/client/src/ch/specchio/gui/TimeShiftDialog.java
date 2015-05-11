@@ -193,7 +193,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			}
 			catch (NumberFormatException ex) {
 				// the time zone field does not contain a number
-				JOptionPane.showMessageDialog(this, "Please enter a valid number of hours east of GMT.", "Invalid number of hours", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Please enter a valid number of hours east of GMT.", "Invalid number of hours", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 			}
 			endOperation();
 			
@@ -415,7 +415,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 				} else {
 					message = "No acquisition times found. No data was updated.";
 				}
-				JOptionPane.showMessageDialog(TimeShiftDialog.this, message);
+				JOptionPane.showMessageDialog(TimeShiftDialog.this, message, "Info", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
 				
 			}
 			catch (SPECCHIOClientException ex) {
