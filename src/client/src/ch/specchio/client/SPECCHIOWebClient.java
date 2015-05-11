@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.ListIterator;
 
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.core.Cookie;
@@ -340,13 +341,13 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	/**
 	 * Delete a target-reference link from the database.
 	 * 
-	 * @param target_id		the target identifier
+	 * @param eav_id		the eav_id identifier
 	 * 
 	 * @return the number of links deleted
 	 */
-	public int deleteTargetReferenceLinks(int target_id) throws SPECCHIOWebClientException {
+	public int deleteTargetReferenceLinks(int eav_id) throws SPECCHIOWebClientException {
 		
-		return getInteger("spectrum", "deleteTargetReferenceLinks", Integer.toString(target_id));
+		return getInteger("spectrum", "deleteTargetReferenceLinks", Integer.toString(eav_id));
 				
 	}
 
@@ -1516,6 +1517,23 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return insert_result;
 	}
 	
+	/**
+	 * Insert a target-reference link to closest reference on acquisition timeline
+	 * 
+	 * @param target_id		the identifier of the target node
+	 * @param reference_ids	the identifiers of the reference nodes
+	 * 
+	 * @return the number of links sucessfully created
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public int insertClosestTargetReferenceLink(int target_id, ArrayList<Integer> reference_ids) throws SPECCHIOClientException {
+		
+		return postForInteger("spectrum", "insertClosestTargetReferenceLink", new SpectrumIdsDescriptor(target_id, reference_ids));
+		
+	}
+
+	
 	
 	/**
 	 * Insert a target-reference link.
@@ -1662,6 +1680,60 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		}
 		
 	}
+	
+	/**
+	 * Remove the data corresponding to a node of the spectral data browser.
+	 * 
+	 * @param sns	list of nodes to be removed
+	 */
+	public void removeSpectralNodes(ArrayList<spectral_node_object> sns) throws SPECCHIOWebClientException {
+		
+		// build lists per node type
+		ArrayList<Integer> campaign_ids = new ArrayList<Integer>();
+		ArrayList<Integer> hierarchy_ids = new ArrayList<Integer>();
+		ArrayList<Integer> spectrum_ids = new ArrayList<Integer>();
+		
+		ListIterator<spectral_node_object> li = sns.listIterator();
+		
+		while (li.hasNext())
+		{
+			spectral_node_object sn = li.next();
+			
+			if(sn instanceof campaign_node)
+			{
+				campaign_ids.add(sn.getId());
+			}	
+			if(sn instanceof hierarchy_node)
+			{
+				hierarchy_ids.add(sn.getId());
+			}
+			if(sn instanceof spectrum_node)
+			{
+				spectrum_ids.add(sn.getId());	
+			}			
+			
+		}
+		
+		// use SpectrumIdsDescriptor as container to send ids ....
+		if (campaign_ids.size()>0)
+		{
+			SpectrumIdsDescriptor d = new SpectrumIdsDescriptor(campaign_ids);
+			postForInteger("campaign", "removeCampaigns", d);
+		}
+		
+		if (hierarchy_ids.size()>0)
+		{
+			SpectrumIdsDescriptor d = new SpectrumIdsDescriptor(hierarchy_ids);
+			postForInteger("campaign", "removeHierarchies", d);
+		}
+		
+		if (spectrum_ids.size()>0)
+		{
+			SpectrumIdsDescriptor d = new SpectrumIdsDescriptor(spectrum_ids);
+			postForInteger("spectrum", "removeSpectra", d);
+		}		
+		
+	}	
 	
 	
 	/**

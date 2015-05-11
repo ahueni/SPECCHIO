@@ -153,11 +153,11 @@ public interface SPECCHIOClient {
 	/**
 	 * Delete target-reference links from the database.
 	 * 
-	 * @param target_id		the target identifier
+	 * @param eav_id		the eav_id identifier
 	 * 
 	 * @return the number of links deleted
 	 */
-	public int deleteTargetReferenceLinks(int target_id) throws SPECCHIOClientException;
+	public int deleteTargetReferenceLinks(int eav_id) throws SPECCHIOClientException;
 
 
 	/**
@@ -871,7 +871,21 @@ public interface SPECCHIOClient {
 	
 	
 	/**
-	 * Insert a target-reference link.
+	 * Insert a target-reference link to closest reference on acquisition timeline
+	 * 
+	 * @param target_id		the identifier of the target node
+	 * @param reference_ids	the identifiers of the reference nodes
+	 * 
+	 * @return the number of links sucessfully created
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public int insertClosestTargetReferenceLink(int target_id, ArrayList<Integer> reference_ids) throws SPECCHIOClientException;
+
+	
+	
+	/**
+	 * Insert a target-reference links.
 	 * 
 	 * @param target_id		the identifier of the target node
 	 * @param reference_ids	the identifiers of the reference nodes
@@ -951,6 +965,13 @@ public interface SPECCHIOClient {
 	 * @param sn	the node to be removed
 	 */
 	public void removeSpectralNode(spectral_node_object sn) throws SPECCHIOClientException;
+	
+	/**
+	 * Remove the data corresponding to a node of the spectral data browser.
+	 * 
+	 * @param sns	list of nodes to be removed
+	 */
+	public void removeSpectralNodes(ArrayList<spectral_node_object> sns) throws SPECCHIOWebClientException;
 	
 	
 	/**

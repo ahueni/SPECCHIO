@@ -284,13 +284,13 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	/**
 	 * Delete target-reference links from the database.
 	 * 
-	 * @param target_id		the target identifier
+	 * @param eav_id		the eav_id identifier
 	 * 
 	 * @return the number of links deleted
 	 */
-	public int deleteTargetReferenceLinks(int target_id) throws SPECCHIOClientException {
+	public int deleteTargetReferenceLinks(int eav_id) throws SPECCHIOClientException {
 		
-		return realClient.deleteTargetReferenceLinks(target_id);
+		return realClient.deleteTargetReferenceLinks(eav_id);
 		
 	}
 
@@ -1339,6 +1339,25 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	
 	
 	/**
+	 * Insert a target-reference link to closest reference on acquisition timeline
+	 * 
+	 * @param target_id		the identifier of the target node
+	 * @param reference_ids	the identifiers of the reference nodes
+	 * 
+	 * @return the number of links sucessfully created
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public int insertClosestTargetReferenceLink(int target_id, ArrayList<Integer> reference_ids) throws SPECCHIOClientException {
+		
+		return realClient.insertClosestTargetReferenceLink(target_id, reference_ids);
+		
+	}
+
+	
+	
+	
+	/**
 	 * Insert a target-reference link.
 	 * 
 	 * @param target_id		the identifier of the target node
@@ -1458,6 +1477,17 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		realClient.removeSpectralNode(sn);
 		
 	}
+	
+	/**
+	 * Remove the data corresponding to a node of the spectral data browser.
+	 * 
+	 * @param sns	list of nodes to be removed
+	 */
+	public void removeSpectralNodes(ArrayList<spectral_node_object> sns) throws SPECCHIOWebClientException {
+		
+		realClient.removeSpectralNodes(sns);
+		
+	}	
 	
 	
 	/**
