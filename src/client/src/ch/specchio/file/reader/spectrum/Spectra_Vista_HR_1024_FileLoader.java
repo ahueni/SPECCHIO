@@ -6,27 +6,29 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.spaces.MeasurementUnit;
+import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
 
 public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 	
 	SpectralFile spec_file;
+	Metadata md_tgt, md_ref;
 
 	public Spectra_Vista_HR_1024_FileLoader()  {
 		super("SVC HR 1024");
 	}
 
-	public SpectralFile load(File file) throws IOException
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException
 	{
 		spec_file = new SpectralFile();
 		spec_file.setNumberOfSpectra(3); // always a target and a reference radiance plus a reflectance
@@ -44,12 +46,15 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		spec_file.addSpectrumFilename(spec_file.getFilename()); // reference name
 		spec_file.addSpectrumFilename(spec_file.getFilename()); // reflectance name
 
-		
-		spec_file.addMeasurementUnits(0, 2);
-		spec_file.addMeasurementUnits(1, 2);
-		spec_file.addMeasurementUnits(2, 1);
+		// default settings
+		spec_file.addMeasurementUnits(0, MeasurementUnit.DN); // DN
+		spec_file.addMeasurementUnits(1, MeasurementUnit.DN); // DN
+		spec_file.addMeasurementUnits(2, MeasurementUnit.Reflectance); // Reflectance
 		
 //		spec_file.capture_dates = new Date[spec_file.no_of_spectra()]; 
+		
+		md_tgt = new Metadata();
+		md_ref = new Metadata();
 		
 		file_input = new FileInputStream (file);			
 				
@@ -57,14 +62,16 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		
 		read_HR1024_file(data_in, spec_file);
 		
-		
+		spec_file.addEavMetadata(md_tgt);
+		spec_file.addEavMetadata(md_ref);
+
 		
 		data_in.close ();
 		
 		return spec_file;
 	}
 	
-	public void read_HR1024_file(DataInputStream in, SpectralFile f) throws IOException
+	public void read_HR1024_file(DataInputStream in, SpectralFile f) throws IOException, MetaParameterFormatException
 	{
 		String line;
 		boolean hdr_ended = false;
@@ -93,11 +100,16 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		
 	}
 	
-	public boolean analyse_HR1024_file(String[] tokens, BufferedReader in, SpectralFile hdr)
+	public boolean analyse_HR1024_file(String[] tokens, BufferedReader in, SpectralFile hdr) throws MetaParameterFormatException
 	{
+		
+			
+
 		String t1 = tokens[0];
 		boolean hdr_ended = false;
 		
+		try {
+			
 		if(t1.equals("/*** Spectra Vista HR-1024 ***/"))
 		{
 			hdr.setCompany("SVC");
@@ -114,6 +126,25 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			String[] instr_data = tokens[1].split(":");			
 			hdr.setInstrumentTypeNumber(1024);
 			hdr.setInstrumentNumber(instr_data[1]);			
+		}
+		
+		if(t1.equals("units"))
+		{
+			String[] sub_tokens = tokens[1].split(", ");
+			
+			for(int i=0;i<2;i++)
+			{			
+				if(sub_tokens[i].contains("Radiance"))
+				{
+					hdr.setMeasurementUnits(i, MeasurementUnit.Radiance);
+				}
+				if(sub_tokens[i].contains("Counts"))
+				{
+					hdr.setMeasurementUnits(i, MeasurementUnit.DN);
+				}
+				
+			}			
+			
 		}
 		
 //		time= 7/18/10 9:47:09 AM, 7/18/10 9:47:31 AM
@@ -156,44 +187,65 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			// assumption: lenses do not change between reference and target
 			
 			String[] sub_tokens = tokens[1].split(", ");
+
+			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Optics Name"));
+			mp.setValue(sub_tokens[0].substring(1), "String"); // cut first whitespace
+			md_tgt.addEntry(mp); 	
 			
-			String str = sub_tokens[0].replaceFirst(" LENS", "");
+			 mp = MetaParameter.newInstance(attributes_name_hash.get("Optics Name"));
+			 mp.setValue(sub_tokens[1], "String");
+			 md_ref.addEntry(mp); 
+
 			
-			str = str.replace(" ", "");
-			
-			hdr.setForeopticDegrees(Integer.valueOf(str));	
+//			String str = sub_tokens[0].replaceFirst(" LENS", "");
+//			
+//			str = str.replace(" ", "");
+//			
+//			hdr.setForeopticDegrees(Integer.valueOf(str));	
 						
 		}		
 		
 		if(t1.equals("longitude") && tokens[1].length() > 3)
-		{		
-			add_spatial_positions_if_needed(hdr);
-			
+		{					
 			double longitudes[] = read_gps_data(tokens[1]);
 			
-			
-			
-			hdr.getPos(0).longitude = longitudes[0]; // reference
-			hdr.getPos(1).longitude = longitudes[1]; // tgt radiance
-			hdr.getPos(2).longitude = longitudes[1]; // tgt reflectance
+			if(longitudes != null)
+			{				
+				add_spatial_positions_if_needed(hdr);
+				
+				hdr.getPos(0).longitude = longitudes[0]; // reference
+				hdr.getPos(1).longitude = longitudes[1]; // tgt radiance
+				hdr.getPos(2).longitude = longitudes[1]; // tgt reflectance
+			}
 			
 		}
 		
 		if(t1.equals("latitude") && tokens[1].length() > 3)
-		{		
-			add_spatial_positions_if_needed(hdr);
-			
+		{					
 			double latitudes[] = read_gps_data(tokens[1]);
 			
-			hdr.getPos(0).latitude = latitudes[0]; // reference
-			hdr.getPos(1).latitude = latitudes[1]; // tgt radiance
-			hdr.getPos(2).latitude = latitudes[1]; // tgt reflectance
-			
+			if(latitudes != null)
+			{
+				add_spatial_positions_if_needed(hdr);
+
+				hdr.getPos(0).latitude = latitudes[0]; // reference
+				hdr.getPos(1).latitude = latitudes[1]; // tgt radiance
+				hdr.getPos(2).latitude = latitudes[1]; // tgt reflectance
+			}
 		}			
 		
 		if(t1.equals("data"))
 		{
 			hdr_ended = true;
+		}
+		
+		} catch(java.lang.NumberFormatException e)
+		{
+			System.out.println(e);
+		}
+		catch(java.lang.NullPointerException e)
+		{
+			System.out.println(e);
 		}
 		
 		
@@ -225,19 +277,27 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		
 		String[] coords = str.split(",");
 		
-		file_coord[0] = Double.valueOf(coords[0]);
-		file_coord[1] = Double.valueOf(coords[2]);
-		
-		coord[0] = spec_file.DDDmm2DDDdecimals(file_coord[0]);
-		coord[1] = spec_file.DDDmm2DDDdecimals(file_coord[1]);
-		
-		if (coords[0].equals("S") || coords[0].equals("E"))
+		if (coords.length !=2)
 		{
-			coord[0] = coord[0]*(-1);
-			coord[1] = coord[1]*(-1);
+			return null;
 		}
-		
-		return(coord);
+		else
+		{
+			
+			file_coord[0] = Double.valueOf(coords[0]);
+			file_coord[1] = Double.valueOf(coords[2]);
+			
+			coord[0] = spec_file.DDDmm2DDDdecimals(file_coord[0]);
+			coord[1] = spec_file.DDDmm2DDDdecimals(file_coord[1]);
+			
+			if (coords[0].equals("S") || coords[0].equals("E"))
+			{
+				coord[0] = coord[0]*(-1);
+				coord[1] = coord[1]*(-1);
+			}
+			
+			return(coord);
+		}
 	}
 	
 	
@@ -300,7 +360,12 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			if (hrs >= 1 && hrs < 12) hrs = hrs - 12;			
 		}		
 		
-		int year = Integer.valueOf(date[2]) + 2000;
+		int year = Integer.valueOf(date[2]);
+		
+		if (date[2].length() == 2)
+		{
+			year = year + 2000;
+		}
 		
 //		TimeZone tz = TimeZone.getTimeZone("UTC");
 //		Calendar cal = Calendar.getInstance(tz);
@@ -316,8 +381,20 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 
 
 // int hh = cal.get(Calendar.HOUR_OF_DAY);
+		
+		DateTime dt;
 
-		DateTime dt = new DateTime(year, Integer.valueOf(date[0]), Integer.valueOf(date[1]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+		// no idea if this is American or European date formatting ...
+		
+		if(Integer.valueOf(date[1]) > 12) // this cannot be a month!
+		{
+			dt = new DateTime(year, Integer.valueOf(date[0]), Integer.valueOf(date[1]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+		}
+		else
+		{
+			dt = new DateTime(year, Integer.valueOf(date[1]), Integer.valueOf(date[0]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+		}
+		
 
 		
 		return dt;
@@ -348,7 +425,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			//line = line.replaceAll("-", " -");
 			
 			// tokenise the line
-			String[] tokens = line.split(" "); // values are separated by a space
+			String[] tokens = line.split("\\s+"); // values are separated by one or more spaces
 			
 			// first token is wavelength
 			wvls.add(Float.valueOf(tokens[0]));
