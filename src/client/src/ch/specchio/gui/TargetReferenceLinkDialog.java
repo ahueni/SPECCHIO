@@ -211,7 +211,7 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				this,
 				"Datalinks for " + Integer.toString(numCreated) + " out of " + targetIds.size() + " spectra successfully created.",
 				"Links created",
-				JOptionPane.INFORMATION_MESSAGE
+				JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon
 			);
 		
 	}
@@ -220,11 +220,8 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 	/**
 	 * Handler for completion of a link deletion operation.
 	 * 
-	 * @param targetIds		the identifiers of the target spectra
-	 * @param referenceIds	the identifiers of the reference spectra
-	 * @param numDeleted	the number of links deleted
 	 */
-	private void linksDeleted(List<Integer> targetIds, List<Integer> referenceIds, int numDeleted) {
+	private void linksDeleted() {
 		
 		// refresh target and reference lists
 		try {
@@ -249,7 +246,16 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		
 		ArrayList<Integer> ids = targetPanel.getSelectedIds();
 		existingLinkPanel.setTargetIds(ids);
-		newLinkPanel.setTargetIds(ids);
+		
+		ArrayList<SpectrumDataLink> links = new ArrayList<SpectrumDataLink>();
+		for(Integer id : ids)
+		{
+			SpectrumDataLink link = new SpectrumDataLink();
+			link.setReferencingId(id);
+			links.add(link);
+		}
+		
+		newLinkPanel.setTargetIds(links);
 		
 	}
 	
@@ -263,7 +269,16 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		
 		ArrayList<Integer> ids = referencePanel.getSelectedIds();
 		existingLinkPanel.setReferenceIds(ids);
-		newLinkPanel.setReferenceIds(ids);
+		
+		ArrayList<SpectrumDataLink> links = new ArrayList<SpectrumDataLink>();
+		for(Integer id : ids)
+		{
+			SpectrumDataLink link = new SpectrumDataLink();
+			link.setReferencingId(id);
+			links.add(link);
+		}
+		
+		newLinkPanel.setReferenceIds(links);
 		
 	}
 	
@@ -565,11 +580,13 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			
 			// add the list of linked references
 			referenceList = new TargetReferenceList(REFERENCES);
+			referenceList.show_linked_spectrum = true;
 			referenceList.addListSelectionListener(this);
 			add(referenceList, BorderLayout.WEST);
 			
 			// add the list of linked targets
 			targetList = new TargetReferenceList(TARGETS);
+			targetList.show_linked_spectrum = true;
 			targetList.addListSelectionListener(this);
 			add(targetList, BorderLayout.EAST);
 			
@@ -605,16 +622,16 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				
 				try {
 					// delete the links shown in the "linked references" list
-					List<Integer> referenceIds = referenceList.getSelectedIds();
-					if (referenceIds.size() > 0) {
-						TargetReferenceLinkDeletionThread thread = new TargetReferenceLinkDeletionThread(getSelectedTargetIds(), referenceList.getSelectedIds());
+					ArrayList<SpectrumDataLink> referenceLinks = referenceList.getSelectedIds();
+					if (referenceLinks.size() > 0) {
+						TargetReferenceLinkDeletionThread thread = new TargetReferenceLinkDeletionThread(referenceLinks);
 						thread.start();
 					}
 					
 					// delete the links shown in the "linked targets" list
-					List<Integer> targetIds = targetList.getSelectedIds();
-					if (targetIds.size() > 0) {
-						TargetReferenceLinkDeletionThread thread = new TargetReferenceLinkDeletionThread(targetList.getSelectedIds(), getSelectedReferenceIds());
+					ArrayList<SpectrumDataLink> targetLinks = targetList.getSelectedIds();
+					if (targetLinks.size() > 0) {
+						TargetReferenceLinkDeletionThread thread = new TargetReferenceLinkDeletionThread(targetLinks);
 						thread.start();
 					}
 				}
@@ -640,13 +657,27 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			
 			// refresh the list of linked targets
 			SpectrumDataLink[] links = specchioClient.getTargetReferenceLinks(null, ids);
-			ArrayList<Integer> targetIds = new ArrayList<Integer>(links.length);
+//			ArrayList<Integer> targetIds = new ArrayList<Integer>(links.length);
+//			ArrayList<Integer> eavIds = new ArrayList<Integer>(links.length);
+//			for (SpectrumDataLink link : links) {
+//				// only show links to targets
+//				if (!targetIds.contains(link.getReferencedId()) && link.getLinkType().equals("Target Data Link")) {
+//					targetIds.add(link.getReferencedId());
+//					eavIds.add(link.getEAVId());
+//				}
+//			}
+//			targetList.setIds(targetIds, eavIds);
+			
+			ArrayList<SpectrumDataLink> links_ = new ArrayList<SpectrumDataLink>();
+			
 			for (SpectrumDataLink link : links) {
-				if (!targetIds.contains(link.getReferencingId())) {
-					targetIds.add(link.getReferencingId());
-				}
+				if(link.getLinkType().equals("Target Data Link"))
+						links_.add(link);
 			}
-			targetList.setIds(targetIds);
+			
+			
+			targetList.setIds(links_);
+			
 			
 		}
 		
@@ -662,13 +693,24 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			
 			// refresh the list of linked references
 			SpectrumDataLink[] links = specchioClient.getTargetReferenceLinks(ids, null);
-			ArrayList<Integer> referenceIds = new ArrayList<Integer>(links.length);
+//			ArrayList<Integer> referenceIds = new ArrayList<Integer>(links.length);
+//			ArrayList<Integer> eavIds = new ArrayList<Integer>(links.length);
+//			for (SpectrumDataLink link : links) {
+//				if (!referenceIds.contains(link.getReferencedId()) && link.getLinkType().equals("Reference Data Link")) {
+//					referenceIds.add(link.getReferencedId());
+//					eavIds.add(link.getEAVId());
+//				}
+//			}
+			
+			ArrayList<SpectrumDataLink> links_ = new ArrayList<SpectrumDataLink>();
+			
 			for (SpectrumDataLink link : links) {
-				if (!referenceIds.contains(link.getReferencedId())) {
-					referenceIds.add(link.getReferencedId());
-				}
+				if(link.getLinkType().equals("Reference Data Link"))
+						links_.add(link);
 			}
-			referenceList.setIds(referenceIds);
+			
+			
+			referenceList.setIds(links_);
 			
 		}
 		
@@ -778,10 +820,10 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 * 
 		 * @throws SPECCHIOClientException	error contacting server
 		 */
-		public void setReferenceIds(ArrayList<Integer> ids) throws SPECCHIOClientException {
+		public void setReferenceIds(ArrayList<SpectrumDataLink> links) throws SPECCHIOClientException {
 			
 			// update the list contents
-			referenceList.setIds(ids);
+			referenceList.setIds(links);
 			
 			// enable the "link" button if there are spectra in both lists
 			linkButton.setEnabled(targetList.getLength() > 0 && referenceList.getLength() > 0);
@@ -796,10 +838,10 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 * 
 		 * @throws SPECCHIOClientException	error contacting server
 		 */
-		public void setTargetIds(ArrayList<Integer> ids) throws SPECCHIOClientException {
+		public void setTargetIds(ArrayList<SpectrumDataLink> links) throws SPECCHIOClientException {
 			
 			// update the list contents
-			targetList.setIds(ids);
+			targetList.setIds(links);
 			
 			// enable the "link" button if there are spectra in both lists
 			linkButton.setEnabled(targetList.getLength() > 0 && referenceList.getLength() > 0);
@@ -827,6 +869,10 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		/** listeners */
 		private List<ListSelectionListener> listeners;
 		
+		private boolean show_linked_spectrum;
+		
+		private String title;
+		
 		/**
 		 * Constructor.
 		 * 
@@ -835,6 +881,8 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		public TargetReferenceList(String title) {
 			
 			super();
+			
+			this.title = title;
 			
 			// initialise member variables
 			listeners = new ArrayList<ListSelectionListener>();
@@ -896,19 +944,19 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		
 		
 		/**
-		 * Get the list of spectrum identifiers that have been selected in the list.
+		 * Get the list of spectrum datalinks that have been selected in the list.
 		 * 
 		 * @return a new list of selected identifiers
 		 */
-		public ArrayList<Integer> getSelectedIds() {
+		public ArrayList<SpectrumDataLink> getSelectedIds() {
 			
 			int[] selection = list.getSelectedIndices();
-			ArrayList<Integer> ids = new ArrayList<Integer>(selection.length);
+			ArrayList<SpectrumDataLink> links = new ArrayList<SpectrumDataLink>(selection.length);
 			for (int i = 0; i < selection.length; i++) {
-				ids.add(getEntryAt(selection[i]).getId());
+				links.add(getEntryAt(selection[i]).getLink());
 			}
 			
-			return ids;
+			return links;
 			
 		}
 		
@@ -922,7 +970,8 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			
 			ArrayList<Integer> ids = new ArrayList<Integer>(model.getSize());
 			for (int i = 0; i < model.getSize(); i++) {
-				ids.add(getEntryAt(i).getId());
+				TargetReferenceListEntry e = getEntryAt(i);
+				ids.add(e.getId());
 			}
 			
 			return ids;
@@ -949,17 +998,30 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 * 
 		 * @throws SPECCHIOClientException	error contacting server
 		 */
-		public void setIds(ArrayList<Integer> ids) throws SPECCHIOClientException {
+		public void setIds(ArrayList<SpectrumDataLink> links) throws SPECCHIOClientException {
 			
 			// clear the list
 			model.clear();
+			
+			// compile list of spectrum_ids
+			ArrayList<Integer> ids = new ArrayList<Integer>();
+			for (SpectrumDataLink link : links) {
+				if(show_linked_spectrum)
+					ids.add(link.getReferencedId());
+				else
+					ids.add(link.getReferencingId());
+			}
 			
 			// get the filenames from the server
 			ArrayList<Object> filenames = specchioClient.getMetaparameterValues(ids, "File Name");
 			
 			// fill the list with information from the server
-			for (int i = 0; i < ids.size(); i++) {
-				model.addElement(new TargetReferenceListEntry(ids.get(i), filenames.get(i).toString()));
+			int i=0;
+			for (SpectrumDataLink link : links) {
+				TargetReferenceListEntry e = new TargetReferenceListEntry(link, filenames.get(i).toString());
+				e.showLink(show_linked_spectrum);
+				model.addElement(e);
+				i++;
 			}
 			
 		}
@@ -986,11 +1048,16 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 		 */
 		private class TargetReferenceListEntry {
 			
-			/** spectrum identifer */
-			private Integer spectrum_id;
+			
+			/** link data */
+			private SpectrumDataLink link;			
 			
 			/** the string to appear in the list */
 			private String string;
+			
+			private String filename;
+			
+			protected boolean show_linked_spectrum;
 			
 			/**
 			 * Constructor.
@@ -1000,14 +1067,27 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			 * 
 			 * @throws SPECCHIOClientException	error contacting the server
 			 */
-			public TargetReferenceListEntry(Integer id, String filename) throws SPECCHIOClientException {
+			public TargetReferenceListEntry(SpectrumDataLink link, String filename) throws SPECCHIOClientException {
 				
-				// save the spectrum identifier for later
-				spectrum_id = id;
-				
+				this.link = link;
+				this.filename = filename;
+				prepareString();
+			}
+			
+			
+			public void showLink(boolean flag)
+			{
+				show_linked_spectrum = flag;
+				prepareString();
+			}
+			
+			private void prepareString()
+			{
 				// build a string representing this spectrum
-				string = filename + " (ID: " + Integer.toString(id) + ")";
-				
+				if(show_linked_spectrum)
+					string = filename + " (ID: " + Integer.toString(link.getReferencedId()) + ")";
+				else
+					string = filename + " (ID: " + Integer.toString(link.getReferencingId()) + ")";				
 			}
 			
 			
@@ -1017,10 +1097,34 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			 * @param the identifier
 			 */
 			public Integer getId() {
-				
-				return spectrum_id;
-				
+				if(show_linked_spectrum)
+					return link.getReferencedId();
+				else
+					return link.getReferencingId();
+									
 			}
+			
+			/**
+			 * Get the eav identifier associated with this entry.
+			 * 
+			 * @param the identifier
+			 */
+			public Integer getEAVId() {
+				
+				return link.getEAVId();
+				
+			}		
+			
+			/**
+			 * Get the link
+			 * 
+			 * @param the identifier
+			 */
+			public SpectrumDataLink getLink() {
+				
+				return link;
+				
+			}						
 			
 			
 			/**
@@ -1121,23 +1225,22 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 	 */
 	private class TargetReferenceLinkDeletionThread extends Thread {
 		
-		/** target spectrum identifiers */
-		private ArrayList<Integer> targetIds;
-		
-		/** reference spectrum identifiers */
-		private ArrayList<Integer> referenceIds;
-		
+//		/** target spectrum identifiers */
+//		private ArrayList<Integer> targetIds;
+//		
+//		/** reference spectrum identifiers */
+//		private ArrayList<Integer> referenceIds;
+		ArrayList<SpectrumDataLink> links;
 		
 		/**
 		 * Constructor.
 		 * 
-		 * @param targetIdsIn		the target spectrum identifiers
-		 * @param referenceIdsIn	the reference spectrum identifiers
+		 * @param links		links to remove
 		 */
-		public TargetReferenceLinkDeletionThread(ArrayList<Integer> targetIdsIn, ArrayList<Integer> referenceIdsIn) {
-			
-			targetIds = targetIdsIn;
-			referenceIds = referenceIdsIn;
+		public TargetReferenceLinkDeletionThread(ArrayList<SpectrumDataLink> links) {
+			this.links = links;
+//			targetIds = targetIdsIn;
+//			referenceIds = referenceIdsIn;
 			
 		}
 		
@@ -1155,25 +1258,26 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				pr.setVisible(true);
 				
 				// get the list of links matching the selection
-				SpectrumDataLink links[] = specchioClient.getTargetReferenceLinks(targetIds, referenceIds);
+				//SpectrumDataLink links[] = specchioClient.getTargetReferenceLinks(targetIds, referenceIds);
 				
 				// loop through every link in the selection
 				int num = 0;
 				int cnt = 0;
-				for (SpectrumDataLink link : links) {
+				for (SpectrumDataLink link : this.links) {
 					
 					// delete the link
-					num += specchioClient.deleteTargetReferenceLinks(link.getReferencingId());
+					num += specchioClient.deleteTargetReferenceLinks(link.getEAVId());
 					
 					// update progress
 					cnt++;
-					pr.set_progress(cnt * 100.0 / targetIds.size());
+					pr.set_progress(cnt * 100.0 / this.links.size());
 				}
 				
+				specchioClient.clearMetaparameterRedundancyList();
 				
-				// notify the dialogue that links have been created
+				// notify the dialogue that links have been deleted
 				pr.set_operation("Refreshing lists.");
-				TargetReferenceLinkDialog.this.linksDeleted(targetIds, referenceIds, num);
+				TargetReferenceLinkDialog.this.linksDeleted();
 				
 				pr.setVisible(false);
 				
