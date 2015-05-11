@@ -26,6 +26,7 @@ import ch.specchio.types.Instrument;
 import ch.specchio.types.MetaDatatype;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
@@ -259,26 +260,32 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	/**
 	 * Delete target-reference links.
 	 * 
-	 * @param target_id	the target identifier
+	 * @param eav_id		the eav_id identifier
 	 * 
 	 * @return the number of links deleted
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public int deleteTargetReferenceLinks(int target_id) throws SPECCHIOFactoryException {
+	public int deleteTargetReferenceLinks(int eav_id) throws SPECCHIOFactoryException {
 		
 		int n = 0;
 		
-		try {
-			Statement stmt = getStatementBuilder().createStatement();
-			String query = "delete from spectrum_datalink_view where spectrum_id=" + Integer.toString(target_id);
-			n = stmt.executeUpdate(query);
-			stmt.close();
-		}
-		catch (SQLException ex) {
-			// database error
-			throw new SPECCHIOFactoryException(ex);
-		}
+//		try {
+//			Statement stmt = getStatementBuilder().createStatement();
+//			String query = "delete from spectrum_datalink_view where spectrum_id=" + Integer.toString(target_id);
+//			n = stmt.executeUpdate(query);
+//			stmt.close();
+//		}
+//		catch (SQLException ex) {
+//			// database error
+//			throw new SPECCHIOFactoryException(ex);
+//		}
+		
+		MetaParameter mp = MetaParameter.newInstance();
+		mp.setEavId(eav_id);
+		this.MF.removeMetadata(mp );
+		
+		n++;
 		
 		return n;
 		
@@ -974,35 +981,56 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		
 		try {
 			// work out the correct table name
-			String tablename = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
+//			String tablename = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
 			
 			// create SQL-building objects
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
 			
 			// build a query that will return all matching datalinks
-			StringBuffer query = new StringBuffer();
-			query.append("select spectrum_id, linked_spectrum_id, name");
-			query.append(" from " + tablename + ", datalink_type ");
-			query.append(" where " + SQL.prefix(tablename, "datalink_type_id") + "=" + SQL.prefix("datalink_type", "datalink_type_id"));
-			if (target_ids != null && target_ids.size() > 0) {
-				query.append(" and spectrum_id in " + SQL.quote_list(target_ids));
+			String query = new String();
+//			query.append("select spectrum_id, linked_spectrum_id, name");
+//			query.append(" from " + tablename + ", datalink_type ");
+//			query.append(" where " + SQL.prefix(tablename, "datalink_type_id") + "=" + SQL.prefix("datalink_type", "datalink_type_id"));
+//			if (target_ids != null && target_ids.size() > 0) {
+//				query.append(" and spectrum_id in " + SQL.quote_list(target_ids));
+//			}
+//			if (reference_ids != null && reference_ids.size() > 0) {
+//				query.append(" and linked_spectrum_id in " + SQL.quote_list(reference_ids));
+//			}
+			
+			ArrayList<Integer> all_ids = null;
+			if(target_ids != null)
+			{
+				all_ids = target_ids;
+				if(reference_ids != null) all_ids.addAll(reference_ids);
 			}
-			if (reference_ids != null && reference_ids.size() > 0) {
-				query.append(" and linked_spectrum_id in " + SQL.quote_list(reference_ids));
+			else
+			{
+				all_ids = reference_ids;
 			}
+			
+			query = "select eav.spectrum_id, sxe.spectrum_id, attribute_id, eav.eav_id from eav eav, spectrum_x_eav sxe where sxe.spectrum_id in " + SQL.quote_list(all_ids) + " and sxe.eav_id = eav.eav_id and eav.attribute_id in (" + this.MF.getAttributes().get_attribute_id("Target Data Link") +
+					"," + this.MF.getAttributes().get_attribute_id("Reference Data Link") + ")";
+			
+			
 			
 			// build a list of matching datalinks
 			ArrayList<SpectrumDataLink> datalinks = new ArrayList<SpectrumDataLink>();
-			ResultSet rs = stmt.executeQuery(query.toString());
-			while (rs.next()) {
-				int referencing_spectrum_id = rs.getInt(1);
-				int referenced_spectrum_id = rs.getInt(2);
-				String dl_type = rs.getString(3);
-				datalinks.add(new SpectrumDataLink(referencing_spectrum_id, referenced_spectrum_id, dl_type));
+			
+			if(all_ids.size()>0)
+			{			
+				ResultSet rs = stmt.executeQuery(query.toString());
+				while (rs.next()) {				
+					int referenced_spectrum_id = rs.getInt(1);
+					int referencing_spectrum_id = rs.getInt(2);
+					int attr_id = rs.getInt(3);
+					int eav_id = rs.getInt(4);
+					datalinks.add(new SpectrumDataLink(eav_id, referencing_spectrum_id, referenced_spectrum_id, MF.getAttributes().get_attribute_info(attr_id).name));
+				}
+				rs.close();
+				stmt.close();
 			}
-			rs.close();
-			stmt.close();
 			
 			// convert the list into an array
 			return datalinks.toArray(new SpectrumDataLink[datalinks.size()]);
@@ -1020,15 +1048,16 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	/**
 	 * Insert links from a target to a set of references.
 	 * 
-	 * @param target_id		the identifier of the target node
-	 * @param reference_ids	the identifiers of the reference nodes
+	 * @param target_id						the identifier of the target node
+	 * @param reference_ids	the 			identifiers of the reference nodes
+	 * @param link_to_closest_on_timeline	Link to closest reference spectrum based on the acquisition times
 	 * 
 	 * @return the number of links created
 	 * 
 	 * @throws IllegalArgumentException	this target cannot be linked to any of the proposed references
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public int insertTargetReferenceLinks(Integer target_id, ArrayList<Integer> reference_ids) throws IllegalArgumentException, SPECCHIOFactoryException {
+	public int insertTargetReferenceLinks(Integer target_id, ArrayList<Integer> reference_ids, boolean link_to_closest_on_timeline) throws IllegalArgumentException, SPECCHIOFactoryException {
 		
 		int num = 0;
 		
@@ -1057,6 +1086,8 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				throw new IllegalArgumentException("The proposed target " + target_id + " is in use as a reference.");
 			}
 			
+			
+			ArrayList<Integer> reference_ids_ = new ArrayList<Integer>();
 
 			// get target acquisition time for easier query formulation below
 			ArrayList<Integer> time_ids = this.getEavServices().get_eav_ids(target_id, "Acquisition Time");
@@ -1065,37 +1096,71 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			String target_time_str = MetaDate.formatDate((DateTime)target_time.getValue()); // ensure we are getting the time stamp correctly formatted as inserted into the database
 
 			// get corresponding reference spectrum id
-			int reference_id = 0;
-			int ASD_coding = 0;
-			query = "select refs.spectrum_id, ASD_coding from spectrum refs " + 
-					"left outer join spectrum t on t.measurement_unit_id = refs.measurement_unit_id, spectrum_x_eav sxe, eav, measurement_unit mu " +
-					"where refs.spectrum_id in (" + SQL.conc_ids(reference_ids) + ")" + " and t.spectrum_id = " + target_id +
-					" and refs.spectrum_id = sxe.spectrum_id and eav.eav_id = sxe.eav_id and eav.attribute_id = (select attribute_id from attribute where name = 'Acquisition Time') and mu.measurement_unit_id = t.measurement_unit_id order by abs(timeDIFF(eav.datetime_val, '" + target_time_str + "')) limit 1";
-			ResultSet rs = stmt.executeQuery(query);
-			if (rs.next()) {
-				reference_id = rs.getInt(1);	
-				ASD_coding = rs.getInt(2);
-			}			
-			rs.close();	
+			if (link_to_closest_on_timeline)
+			{
+				int reference_id = 0;
+				//int ASD_coding = 0;
+				query = "select refs.spectrum_id, ASD_coding from spectrum refs " + 
+						"left outer join spectrum t on t.measurement_unit_id = refs.measurement_unit_id, spectrum_x_eav sxe, eav, measurement_unit mu " +
+						"where refs.spectrum_id in (" + SQL.conc_ids(reference_ids) + ")" + " and t.spectrum_id = " + target_id +
+						" and refs.spectrum_id = sxe.spectrum_id and eav.eav_id = sxe.eav_id and eav.attribute_id = (select attribute_id from attribute where name = 'Acquisition Time') and mu.measurement_unit_id = t.measurement_unit_id order by abs(timeDIFF(eav.datetime_val, '" + target_time_str + "')) limit 1";
+				ResultSet rs = stmt.executeQuery(query);
+				if (rs.next()) {
+					reference_id = rs.getInt(1);	
+					//ASD_coding = rs.getInt(2);
+					reference_ids_.add(reference_id);
+				}			
+				rs.close();	
+				
+			}
+			else
+			{
+				reference_ids_.addAll(reference_ids);
+			}
 			
 			// work out data link name
-			String datalink_name = "";
-			if(ASD_coding == 2) {
-				datalink_name = "Spectralon data";
-			}
-			if(ASD_coding == 4) {
-				datalink_name = "Cosine receptor data";
-			}		
+//			String datalink_name = "";
+//			if(ASD_coding == 2) {
+//				datalink_name = "Spectralon data";
+//			}
+//			if(ASD_coding == 4) {
+//				datalink_name = "Cosine receptor data";
+//			}		
 			
 			// only create datalink if we found a reference and a link type
-			if(reference_id != 0 && datalink_name.length() > 0)
+			//if(reference_id != 0 && datalink_name.length() > 0)
+			if(reference_ids_.size() > 0)
 			{
 				// create a new spectrum datalink entry 
-				query = "insert into spectrum_datalink_view (spectrum_id, linked_spectrum_id, datalink_type_id) " +
-						"values (" + SQL.conc_ids(target_id, reference_id)  + ", " +
-						"(select datalink_type_id from datalink_type where name = '" + datalink_name + "'))";
-				stmt.executeUpdate(query); // execute update
+//				query = "insert into spectrum_datalink_view (spectrum_id, linked_spectrum_id, datalink_type_id) " +
+//						"values (" + SQL.conc_ids(target_id, reference_id)  + ", " +
+//						"(select datalink_type_id from datalink_type where name = '" + datalink_name + "'))";
+//				stmt.executeUpdate(query); // execute update
 				num = 1;
+				
+				for(Integer reference_id : reference_ids_)
+				{
+					
+					// insert eav for target and reference
+					// link target to reference
+					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Target Data Link", "Data Links"));
+					mp.setValue(target_id);
+					
+					Integer[] spectrum_id_array = new Integer[1];
+					spectrum_id_array[0]=reference_id;
+					
+					MF.updateMetadata(mp, spectrum_id_array);
+					
+					// link reference to target
+					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Reference Data Link", "Data Links"));
+					mp.setValue(reference_id);
+					
+					spectrum_id_array[0]=target_id;
+					
+					MF.updateMetadata(mp, spectrum_id_array);
+					
+					num++;
+				}
 			}
 			
 			stmt.close();
@@ -1104,6 +1169,9 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		catch (SQLException ex) {
 			// database error
 			throw new SPECCHIOFactoryException(ex);
+		} catch (MetaParameterFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 		return num;
@@ -1194,41 +1262,67 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			String table_name;
 			String cmd;
 			
-			String ids = getStatementBuilder().conc_ids(spectrum_ids);
-			
-			// remove datalinks
-			table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
-			cmd = "delete from "+table_name+" where " +
-			"spectrum_id in (" + ids + ") OR linked_spectrum_id in (" + ids + ")";	
-			stmt.executeUpdate(cmd); 
-			
-			// EAV
-			// remove entries from eav x table
-			table_name = (is_admin)? "spectrum_x_eav" : "spectrum_x_eav_view";
-			cmd = "delete from "+table_name+" where " +
-			"spectrum_id in (" + ids + ")";	
-			stmt.executeUpdate(cmd); 	
-			
-			String spectrum_x_eav_table_or_view = table_name;
-	
-			// remove zombie eav
-			table_name = (is_admin)? "eav" : "eav_view";
-			
-			cmd = "delete from "+table_name+" where eav_id not in (select eav_id from " +spectrum_x_eav_table_or_view+");";
-			stmt.executeUpdate(cmd);					
-			
-			// remove entries from hierarchy_level_x_spectrum
-			table_name = (is_admin)? "hierarchy_level_x_spectrum" : "hierarchy_level_x_spectrum_view";
-			cmd = "delete from "+table_name+" where " +
-			"spectrum_id in (" + ids + ")";		
-			stmt.executeUpdate(cmd); 				
-					
-			// remove spectrum itself
-			table_name = (is_admin)? "spectrum" : "spectrum_view";
-			cmd = "delete from "+table_name+" where spectrum_id in (" + ids + ")";	
-			stmt.executeUpdate(cmd);
-			
-			stmt.close();
+			if(spectrum_ids.size() > 0)
+			{
+
+				String ids = getStatementBuilder().conc_ids(spectrum_ids);
+
+				// remove datalinks
+//				table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
+//				cmd = "delete from "+table_name+" where " +
+//						"spectrum_id in (" + ids + ") OR linked_spectrum_id in (" + ids + ")";	
+//				stmt.executeUpdate(cmd); 
+				
+				// get eav_ids of the datalinks
+				String query = "select eav_id from eav where spectrum_id in (" + ids + ")";
+				ArrayList<Integer> eav_ids = new ArrayList<Integer>();
+				
+				ResultSet rs = stmt.executeQuery(query);
+				if (rs.next()) {
+					eav_ids.add(rs.getInt(1));	
+				}			
+				rs.close();	
+				
+				
+				table_name = (is_admin)? "spectrum_x_eav" : "spectrum_x_eav_view";
+				cmd = "delete from "+table_name+" where " +
+						"eav_id in (" + getStatementBuilder().conc_ids(eav_ids) + ")";	
+				stmt.executeUpdate(cmd); 		
+				
+				table_name = (is_admin)? "eav" : "eav_view";
+				cmd = "delete from "+table_name+" where " +
+						"eav_id in (" + getStatementBuilder().conc_ids(eav_ids) + ")";	
+				stmt.executeUpdate(cmd); 
+				
+
+				// EAV
+				// remove entries from eav x table
+				table_name = (is_admin)? "spectrum_x_eav" : "spectrum_x_eav_view";
+				cmd = "delete from "+table_name+" where " +
+						"spectrum_id in (" + ids + ")";	
+				stmt.executeUpdate(cmd); 	
+
+				String spectrum_x_eav_table_or_view = table_name;
+
+				// remove zombie eav
+				table_name = (is_admin)? "eav" : "eav_view";
+
+				cmd = "delete from "+table_name+" where eav_id not in (select eav_id from " +spectrum_x_eav_table_or_view+");";
+				stmt.executeUpdate(cmd);					
+
+				// remove entries from hierarchy_level_x_spectrum
+				table_name = (is_admin)? "hierarchy_level_x_spectrum" : "hierarchy_level_x_spectrum_view";
+				cmd = "delete from "+table_name+" where " +
+						"spectrum_id in (" + ids + ")";		
+				stmt.executeUpdate(cmd); 				
+
+				// remove spectrum itself
+				table_name = (is_admin)? "spectrum" : "spectrum_view";
+				cmd = "delete from "+table_name+" where spectrum_id in (" + ids + ")";	
+				stmt.executeUpdate(cmd);
+
+				stmt.close();
+			}
 		}
 		catch (SQLException ex) {
 			// bad SQL
