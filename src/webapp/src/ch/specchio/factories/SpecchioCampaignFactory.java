@@ -113,6 +113,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * @throws SPECCHIOFactoryException	no such campaign
 	 * @throws IOException				could not write to the output stream
 	 */
+	@Override
 	public void exportCampaign(int campaign_id, OutputStream os) throws SPECCHIOFactoryException, IOException {
 		
 		CampaignExport cex = new CampaignExport(getStatementBuilder(), getDatabaseName(), campaign_id);
@@ -250,6 +251,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the database could not accessed
 	 */
+	@Override
 	public int getHierarchyNodeId(int campaign_id, String name, int parent_id) throws SPECCHIOFactoryException {
 		
 		try {
@@ -295,6 +297,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * @throws IOException				the stream could not be read
 	 * @throws SPECCHIOFactoryException	database error
 	 */
+	@Override
 	public void importCampaign(int userId, InputStream is) throws IOException, SPECCHIOFactoryException {
 		
 		try {
@@ -424,6 +427,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the node could not be inserted
 	 */
+	@Override
 	public int insertHierarchyNode(int campaign_id, String name, int parent_id) throws SPECCHIOFactoryException {
 		
 		try {
@@ -466,6 +470,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the campaign could not be removed
 	 */
+	@Override
 	public void removeCampaign(int campaign_id, boolean is_admin) throws SPECCHIOFactoryException
 	{
 		
@@ -475,12 +480,11 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			String campaign_cond = "campaign_id = " + Integer.toString(campaign_id);
 			
 			// remove all hierarchies
-			String query = "select hierarchy_level_id, name from hierarchy_level where " + campaign_cond;
+			String query = "select hierarchy_level_id from hierarchy_level where " + campaign_cond;
 			ResultSet rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				int hierarchy_id = rs.getInt(1);		
-				String name = rs.getString(2);
-				removeHierarchyNode(hierarchy_id, name, is_admin);
+				removeHierarchyNode(hierarchy_id, is_admin);
 			}
 			rs.close();
 			
@@ -519,17 +523,78 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 		
 	}
 	
+	/**
+	 * Remove a campaign from the database.
+	 * 
+	 * @param ids		the identifiers of the campaigns to be removed
+	 * @param is_admin	is the requesting user an administrator?
+	 * 
+	 * @throws SPECCHIOFactoryException	the campaign could not be removed
+	 */
+	@Override
+	public void removeCampaigns(ArrayList<Integer> ids, boolean is_admin) throws SPECCHIOFactoryException
+	{
+		
+		try {
+			
+			Statement stmt = getStatementBuilder().createStatement();
+			String campaign_cond = "campaign_id in (" + getStatementBuilder().conc_ids(ids) + ")";
+			
+			// remove all hierarchies
+			String query = "select hierarchy_level_id from hierarchy_level where " + campaign_cond;
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				int hierarchy_id = rs.getInt(1);		
+				removeHierarchyNode(hierarchy_id, is_admin);
+			}
+			rs.close();
+			
+			// remove campaign paths
+			query = "delete from campaign_path_view where " + campaign_cond;
+			stmt.executeUpdate(query);
+		
+			// get the approprate view name
+			String table_name = (is_admin)? "campaign" : "campaign_view";
+			
+			// save a reference to the research group associated with this campaign
+			int research_group_id = 0;
+			query = "select research_group_id from " + table_name + " where " + campaign_cond;
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				research_group_id = rs.getInt(1);
+			}
+		
+			// remove campaign itself
+			String cmd = "delete from " + table_name + " where " + campaign_cond;
+			stmt.executeUpdate(cmd);
+			
+			// remove the research group
+			if (research_group_id != 0) {
+				removeResearchGroup(research_group_id);
+			}
+			
+			stmt.close();
+			
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		
+		}
+		
+	}	
+	
 	
 	/**
-	 * Remove a whole sub-heirarchy from the database.
+	 * Remove a whole sub-hierarchy from the database.
 	 * 
 	 * @param hierarchy_id	the identifier of the node at the root of the sub-hierarchy
-	 * @param name			the name of the node
 	 * @param is_admin		is the requesting user an administrator?
 	 * 
 	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be remove
 	 */
-	public void removeHierarchyNode(int hierarchy_id, String name, boolean is_admin) throws SPECCHIOFactoryException {
+	@Override
+	public void removeHierarchyNode(int hierarchy_id, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
 			
@@ -551,12 +616,11 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			sf.removeSpectra(spectrum_ids, is_admin);
 			
 			// remove all sub-hierarchies
-			query = "select hierarchy_level_id, name from hierarchy_level where parent_level_id = " + Integer.toString(hierarchy_id);
+			query = "select hierarchy_level_id from hierarchy_level where parent_level_id = " + Integer.toString(hierarchy_id);
 			rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				int hierarchy_level_id = rs.getInt(1);		
-				String sub_name = rs.getString(2);
-				removeHierarchyNode(hierarchy_level_id, name+"/"+sub_name, is_admin);
+				removeHierarchyNode(hierarchy_level_id, is_admin);
 			}	
 			rs.close();		
 			
@@ -576,6 +640,60 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 		
 	}
 	
+	/**
+	 * Remove a whole sub-hierarchies from the database.
+	 * 
+	 * @param ids			the identifiers of the nodes at the root of the sub-hierarchies
+	 * @param is_admin		is the requesting user an administrator?
+	 * 
+	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be remove
+	 */
+	@Override
+	public void removeHierarchyNodes(ArrayList<Integer> ids, boolean is_admin) throws SPECCHIOFactoryException {
+		
+		try {
+			
+			Statement stmt = getStatementBuilder().createStatement();
+			String table_name;
+			String cmd;
+			
+			ArrayList<Integer> spectrum_ids = new ArrayList<Integer>();
+			
+			// remove all spectrum nodes under this hierarchy
+			SpectrumFactory sf = new SpectrumFactory(this);
+			String query = "select spectrum_id from spectrum where hierarchy_level_id in (" + getStatementBuilder().conc_ids(ids) + ")";
+			ResultSet rs = stmt.executeQuery(query);	
+			while (rs.next()) {	
+				spectrum_ids.add(rs.getInt(1));
+			}
+			rs.close();
+			
+			sf.removeSpectra(spectrum_ids, is_admin);
+			
+			// remove all sub-hierarchies
+			query = "select hierarchy_level_id from hierarchy_level where parent_level_id in (" + getStatementBuilder().conc_ids(ids) + ")";
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				int hierarchy_level_id = rs.getInt(1);		
+				removeHierarchyNode(hierarchy_level_id, is_admin);
+			}	
+			rs.close();		
+			
+			table_name = (is_admin)? "hierarchy_level" : "hierarchy_level_view";
+	
+			// remove hierarchy itself
+			cmd = "delete from "+table_name+" where hierarchy_level_id in (" + getStatementBuilder().conc_ids(ids) + ")";
+			stmt.executeUpdate(cmd); 
+			
+			stmt.close();
+			
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+	}
 	
 	/**
 	 * Remove a research group.
@@ -627,6 +745,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
+	@Override
 	public void updateCampaign(Campaign campaign) throws SPECCHIOFactoryException {
 		
 		try {
