@@ -51,11 +51,20 @@ public class MDE_Form {
 	public void addEavParameterIntoExistingContainer(MetaParameter mp, ConflictInfo info)
 	{
 		boolean found = false;
+		MD_EAV_Field field;
 		ListIterator<MD_CategoryContainer> li  = containers.listIterator();
 		while (li.hasNext() && !found) {
 			MD_CategoryContainer cc = li.next();
 			if (cc.getCategoryName().equals(mp.getCategoryName())) {
-				MD_EAV_Field field = new MD_EAV_Field(mp, info);
+				
+				if(mp.getAttributeName().equals("Reference Data Link") || mp.getAttributeName().equals("Target Data Link") || mp.getAttributeName().equals("Provenance£ Data Link") )
+				{
+					field = new MD_EAV_Link_Field(mp, info);
+				}					
+				else
+				{				
+					field = new MD_EAV_Field(mp, info);
+				}
 				cc.addField(field);
 				found = true;
 			}
