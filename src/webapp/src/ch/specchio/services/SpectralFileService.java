@@ -88,8 +88,12 @@ public class SpectralFileService extends SPECCHIOService {
 //			exist_list.add(exists ? 1 : 0);
 //		
 //		}
-		exist_list = factory.spectraExist(spec_files.getSpectral_file_list(), spec_files.getSpectral_file_list().get(0).getHierarchyId());
+		ArrayList<Boolean> exist_list_ = factory.spectraExist(spec_files.getSpectral_file_list(), spec_files.getSpectral_file_list().get(0).getHierarchyId());
 		
+		for(int i=0;i<exist_list_.size();i++)
+		{
+			exist_list.add((exist_list_.get(i) == true) ? 1 : 0);
+		}
 		
 		factory.dispose();		
  		
