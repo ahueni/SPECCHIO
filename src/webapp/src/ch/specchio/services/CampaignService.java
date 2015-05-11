@@ -15,6 +15,7 @@ import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpectralFileFactory;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.types.Campaign;
+import ch.specchio.types.SpectrumIdsDescriptor;
 
 /**
  * Campaign services.
@@ -276,7 +277,7 @@ public class CampaignService extends SPECCHIOService {
 	 * Remove a campaign from the database.
 	 * 
 	 * @param campaign_type	the type of the campaign to be removed
-	 * @param campaign_id	the identifier of the campaing to be removed
+	 * @param campaign_id	the identifier of the campaign to be removed
 	 * 
 	 * @return 1
 	 * 
@@ -298,13 +299,43 @@ public class CampaignService extends SPECCHIOService {
 		
 	}
 	
+	/**
+	 * Remove campaigns from the database.
+	 * 
+	 * @param campaign_id	the identifier of the campaign to be removed
+	 * 
+	 * @return 1
+	 * 
+	 * @throws SPECCHIOFactoryException	the campaign could not be removed
+	 */
+	@POST
+	@Path("removeCampaigns")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger removeCampaigns(SpectrumIdsDescriptor d) throws SPECCHIOFactoryException {
+	
+//	@GET
+//	@Produces(MediaType.APPLICATION_XML)
+//	@Path("removeCampaigns/{campaign_id: [0-9]+}")
+//	public XmlInteger removeCampaigns(
+//			@PathParam("campaign_type") String campaign_type,
+//			@PathParam("campaign_id") int campaign_id
+//		) throws SPECCHIOFactoryException {
+		
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio");
+		factory.removeCampaigns(d.getSpectrumIds1(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
+		factory.dispose();
+		
+		return new XmlInteger(1);
+		
+	}	
+	
 	
 	/**
 	 * Remove a sub-hierarchy from the database.
 	 * 
 	 * @param campaign_type		the type of the campaign from which the sub-hierarchy will be removed
 	 * @param hierarchy_id		the identifier of the node at the root of the sub-hierarchy to be removed
-	 * @param hierarchy_name	the name of the hierarchy to be removed
 	 * 
 	 * @return 1
 	 * 
@@ -312,20 +343,54 @@ public class CampaignService extends SPECCHIOService {
 	 */
 	@GET
 	@Produces(MediaType.APPLICATION_XML)
-	@Path("removeHierarchy/{campaign_type}/{hierarchy_id: [0-9]+}/{hierarchy_name}")
+	@Path("removeHierarchy/{campaign_type}/{hierarchy_id: [0-9]+}")
 	public XmlInteger removeHierarchy(
 			@PathParam("campaign_type") String campaign_type,
-			@PathParam("hierarchy_id") int hierarchy_id,
-			@PathParam("hierarchy_name") String hierarchy_name
+			@PathParam("hierarchy_id") int hierarchy_id
 		) throws SPECCHIOFactoryException {
 		
 		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
-		factory.removeHierarchyNode(hierarchy_id, hierarchy_name, getSecurityContext().isUserInRole(UserRoles.ADMIN));
+		factory.removeHierarchyNode(hierarchy_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
 		return new XmlInteger(1);
 		
 	}
+	
+	/**
+	 * Remove a sub-hierarchy from the database.
+	 * 
+	 * @param hierarchy_ids		the identifier sof the nodes at the root of the sub-hierarchies to be removed
+	 * 
+	 * @return 1
+	 * 
+	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be removed
+	 */
+	@POST
+	@Path("removeHierarchies")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+//	public XmlInteger removeCampaigns(SpectrumIdsDescriptor d) throws SPECCHIOFactoryException {	
+//	@GET
+//	@Produces(MediaType.APPLICATION_XML)
+//	@Path("removeHierarchies/{campaign_type}/{hierarchy_id: [0-9]+}")
+	public XmlInteger removeHierarchies(SpectrumIdsDescriptor d) throws SPECCHIOFactoryException {
+		
+//		@GET
+//		@Produces(MediaType.APPLICATION_XML)
+//		@Path("removeCampaigns/{campaign_id: [0-9]+}")
+//		public XmlInteger removeCampaigns(
+//				@PathParam("campaign_type") String campaign_type,
+//				@PathParam("campaign_id") int campaign_id
+//			) throws SPECCHIOFactoryException {
+			
+			CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio");
+			factory.removeHierarchyNodes(d.getSpectrumIds1(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
+			factory.dispose();
+		
+		return new XmlInteger(1);
+		
+	}	
 	
 	
 	/**
