@@ -262,7 +262,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 			    		SPECCHIOApplication.getInstance().get_frame(),
 			    		ex.getMessage(),
 			    		"Error",
-			    		JOptionPane.ERROR_MESSAGE
+			    		JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			    	);
 			    }
 				catch (SPECCHIOClientException ex) {
@@ -270,7 +270,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 			    			SPECCHIOApplication.getInstance().get_frame(),
 			    			ex.getMessage(),
 			    			"Error",
-			    			JOptionPane.ERROR_MESSAGE
+			    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			    		);
 			    }
 				catch (MetaParameterFormatException ex) {
@@ -278,7 +278,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 			    			SPECCHIOApplication.getInstance().get_frame(),
 			    			ex.getMessage(),
 			    			"Error",
-			    			JOptionPane.ERROR_MESSAGE
+			    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			    		);
 			    }
 				
@@ -302,7 +302,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 		    			SPECCHIOApplication.getInstance().get_frame(),
 		    			ex.getMessage(),
 		    			"Error",
-		    			JOptionPane.ERROR_MESSAGE
+		    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 		    		);
 		    }
 	
@@ -320,7 +320,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 			    			SPECCHIOApplication.getInstance().get_frame(),
 			    			ex.getMessage(),
 			    			"Error",
-			    			JOptionPane.ERROR_MESSAGE
+			    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			    		);
 			    }
 			}

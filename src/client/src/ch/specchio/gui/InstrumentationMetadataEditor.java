@@ -363,7 +363,7 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 				else
 				{
 					// some spectra are still using this instrument; deletion is not allowed
-					JOptionPane.showMessageDialog(this, "This instrument is still used by spectra in the database. It cannot be deleted.", "Still in use", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(this, "This instrument is still used by spectra in the database. It cannot be deleted.", "Still in use", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				}
 				
 			}
@@ -436,7 +436,7 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 				else
 				{
 					// some spectra are still using this reference; deletion is not allowed
-					JOptionPane.showMessageDialog(this, "This reference is still used by spectra in the database. It cannot be deleted.", "Still in use", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(this, "This reference is still used by spectra in the database. It cannot be deleted.", "Still in use", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				}
 			}
 			catch (SPECCHIOClientException ex) {

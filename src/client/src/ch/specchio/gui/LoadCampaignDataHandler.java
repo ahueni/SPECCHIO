@@ -39,7 +39,7 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 		JScrollPane scrollPane = new JScrollPane(msg);		
 		scrollPane.setPreferredSize(dim);
 
-		JOptionPane.showMessageDialog(null, scrollPane);
+		JOptionPane.showMessageDialog(null, scrollPane, "Error", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 		
 	}
 	
@@ -64,10 +64,12 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	
 	/**
 	 * Handler for completion of loading.
-	 * 
+	 * @param parsedFileCount		the total number of files parsed so far
+	 * @param fileCount		the new value of the file counter
+	 * @param spectrumCount	the new value of the spectrum counter 
 	 * @param file_errors	a list of files that contained errors
 	 */
-	public void campaignDataLoaded(int num_files, int num_spectra, List<String> file_errors) {
+	public void campaignDataLoaded(int parsedFileCount, int num_files, int num_spectra, List<String> file_errors) {
 
 		OperationsPane op = OperationsPane.getInstance();
 		p_rep.set_operation("Done!");
@@ -77,7 +79,7 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 		op.remove_report(p_spectra_insert_rep);
 
 		SPECCHIOApplication app = SPECCHIOApplication.getInstance();
-		JOptionPane.showMessageDialog(app.get_frame(), num_files + " files processed, " + num_spectra + " spectra inserted.");
+		JOptionPane.showMessageDialog(app.get_frame(), parsedFileCount + " files parsed, " + num_files + " files processed, " + num_spectra + " spectra inserted.", "File Loading Stats", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
 		
 		if (file_errors.size()>0)
 		{
@@ -116,6 +118,7 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	/**
 	 * Handler for file count updates.
 	 * 
+	 * @param parsedFileCount		the total number of files parsed so far
 	 * @param fileCount		the new value of the file counter
 	 * @param spectrumCount	the new value of the spectrum counter
 	 */

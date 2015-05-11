@@ -181,11 +181,11 @@ public class LoadCampaignDataDialog extends JDialog implements ActionListener {
 				
 			} else if (campaign == null) {
 				
-				JOptionPane.showMessageDialog(this, "You must select a campaign.", "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "You must select a campaign.", "Error", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				
 			} else if (file == null) {
 				
-				JOptionPane.showMessageDialog(this, "You must select an input path.", "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "You must select an input path.", "Error", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				
 			}
 			

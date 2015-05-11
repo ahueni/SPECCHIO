@@ -153,7 +153,7 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 			}
 			catch (SPECCHIOUserInterfaceException ex) {
 				// missing input data
-				JOptionPane.showMessageDialog(this, ex.getMessage(), "Invalid collection information", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, ex.getMessage(), "Invalid collection information", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				collection_d = null;
 			}
 			

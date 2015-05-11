@@ -290,7 +290,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 						this,
 						"The gaps must be specified as a list of integers separated by commas.",
 						"Error",
-						JOptionPane.ERROR_MESSAGE
+						JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 					);
 			}
 		
@@ -429,7 +429,7 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 							this,
 							"Gonio angle calculation is only meaninfgful 66 or less spectra. No calculation will be performed on this selection.",
 							"Too many spectra",
-							JOptionPane.INFORMATION_MESSAGE
+							JOptionPane.WARNING_MESSAGE, SPECCHIOApplication.specchio_icon
 						);
 				}
 				
@@ -739,7 +739,8 @@ public class GonioAngleCalcDialog extends JDialog implements ActionListener, Tre
 			
 			// show a success message
 			if (cnt > 0) {
-				JOptionPane.showMessageDialog(GonioAngleCalcDialog.this, "Sensor angles of " + Integer.toString(cnt) + " spectra updated.");
+				JOptionPane.showMessageDialog(GonioAngleCalcDialog.this, "Sensor angles of " + Integer.toString(cnt) + " spectra updated.", "Update Info",
+						JOptionPane.WARNING_MESSAGE, SPECCHIOApplication.specchio_icon);
 			}
 			
 		}

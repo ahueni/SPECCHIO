@@ -153,14 +153,15 @@ public class NewCampaignDialog extends JFrame implements ActionListener
 				}
 				
 				// report success
-				JOptionPane.showMessageDialog(app_frame, "New campaign '" + study_name.getText() + "' created successfully.");
+				JOptionPane.showMessageDialog(app_frame, "New campaign '" + study_name.getText() + "' created successfully.", "Info",
+		    			JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
 			}
 			catch (SPECCHIOClientException ex) {
 				JOptionPane.showMessageDialog(
 		    			SPECCHIOApplication.getInstance().get_frame(),
 		    			ex.getMessage(),
 		    			"Error",
-		    			JOptionPane.ERROR_MESSAGE
+		    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 		    		);
 		    }
 			

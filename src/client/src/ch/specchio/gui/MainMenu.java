@@ -298,7 +298,7 @@ class MainMenu implements ActionListener, ItemListener {
     				 SPECCHIOApplication.getInstance().get_frame(),
     				 ex.getMessage(),
     				 "Error",
-    				 JOptionPane.ERROR_MESSAGE
+    				 JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	 }
          
@@ -314,7 +314,7 @@ class MainMenu implements ActionListener, ItemListener {
     				 SPECCHIOApplication.getInstance().get_frame(),
     				 ex.getMessage(),
     				 "Error",
-    				 JOptionPane.ERROR_MESSAGE
+    				 JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	 }
       }
@@ -330,7 +330,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Could not download data from the server",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -347,21 +347,21 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Invalid configuration",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  } catch (FileNotFoundException e1) {
     		  JOptionPane.showMessageDialog(
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  e1.getMessage(),
     				  "Could not read db_config.txt file",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
 		} catch (IOException e1) {
   		  JOptionPane.showMessageDialog(
 				  SPECCHIOApplication.getInstance().get_frame(),
 				  e1.getMessage(),
 				  "Could not read db_config.txt file",
-				  JOptionPane.ERROR_MESSAGE
+				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			);
 		}
       }
@@ -382,7 +382,7 @@ class MainMenu implements ActionListener, ItemListener {
         			  SPECCHIOApplication.getInstance().get_frame(),
         			  ex.getMessage(),
         			  "Error",
-        			  JOptionPane.ERROR_MESSAGE
+        			  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
         		);
           }
       }
@@ -404,7 +404,7 @@ class MainMenu implements ActionListener, ItemListener {
         			  SPECCHIOApplication.getInstance().get_frame(),
         			  ex.getMessage(),
         			  "Error",
-        			  JOptionPane.ERROR_MESSAGE
+        			  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
         		);
 		}		
 
@@ -423,7 +423,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -438,7 +438,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -454,7 +454,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -470,7 +470,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -486,7 +486,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -502,7 +502,7 @@ class MainMenu implements ActionListener, ItemListener {
 				  SPECCHIOApplication.getInstance().get_frame(),
 				  ex.getMessage(),
 				  "Error",
-				  JOptionPane.ERROR_MESSAGE
+				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			);
     	  }
       }
@@ -519,7 +519,7 @@ class MainMenu implements ActionListener, ItemListener {
 				  SPECCHIOApplication.getInstance().get_frame(),
 				  ex.getMessage(),
 				  "Error",
-				  JOptionPane.ERROR_MESSAGE
+				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			);
 		}
          
@@ -536,7 +536,7 @@ class MainMenu implements ActionListener, ItemListener {
 					  SPECCHIOApplication.getInstance().get_frame(),
 					  ex.getMessage(),
 					  "Error",
-					  JOptionPane.ERROR_MESSAGE
+					  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 				);
 			}
          
@@ -554,7 +554,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -570,7 +570,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -770,7 +770,7 @@ class MainMenu implements ActionListener, ItemListener {
     				  SPECCHIOApplication.getInstance().get_frame(),
     				  ex.getMessage(),
     				  "Error",
-    				  JOptionPane.ERROR_MESSAGE
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
     	  }
       }
@@ -786,7 +786,7 @@ class MainMenu implements ActionListener, ItemListener {
      				  SPECCHIOApplication.getInstance().get_frame(),
      				  ex.getMessage(),
      				  "Error",
-     				  JOptionPane.ERROR_MESSAGE
+     				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
      			);
      	  }
        }
@@ -802,7 +802,7 @@ class MainMenu implements ActionListener, ItemListener {
      				  SPECCHIOApplication.getInstance().get_frame(),
      				  ex.getMessage(),
      				  "Error",
-     				  JOptionPane.ERROR_MESSAGE
+     				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
      			);
      	  }
        }

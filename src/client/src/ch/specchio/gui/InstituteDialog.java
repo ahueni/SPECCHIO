@@ -228,7 +228,7 @@ public class InstituteDialog extends JDialog implements ActionListener {
 						this,
 						"You must specify a department and institute",
 						"Invalid institute",
-						JOptionPane.ERROR_MESSAGE
+						JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 					);
 				return;
 			}

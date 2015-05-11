@@ -78,7 +78,7 @@ public abstract class InstrumentationMetadataEditorGroup extends JPanel implemen
 		    			editor,
 		    			ex.getMessage(),
 		    			"Error",
-		    			JOptionPane.ERROR_MESSAGE
+		    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 		    		);
 		    }
 			catch (SPECCHIOUserInterfaceException ex) {
@@ -86,7 +86,7 @@ public abstract class InstrumentationMetadataEditorGroup extends JPanel implemen
 		    			editor,
 		    			ex.getMessage(),
 		    			"Error",
-		    			JOptionPane.ERROR_MESSAGE
+		    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 		    		);
 		    }
 		}
