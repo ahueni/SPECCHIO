@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedList;
@@ -49,11 +50,13 @@ import ch.specchio.metadata.MDE_Form;
 import ch.specchio.metadata.MD_CategoryContainer;
 import ch.specchio.metadata.MD_ChangeListener;
 import ch.specchio.metadata.MD_EAV_Field;
+import ch.specchio.metadata.MD_EAV_Link_Field;
 import ch.specchio.metadata.MD_Field;
 import ch.specchio.metadata.MD_Spectrum_Field;
 import ch.specchio.types.Capabilities;
 import ch.specchio.types.CategoryTable;
 import ch.specchio.types.MetaDate;
+import ch.specchio.types.MetaLink;
 import ch.specchio.types.MetaDocument;
 import ch.specchio.types.MetaFile;
 import ch.specchio.types.MetaImage;
@@ -476,7 +479,7 @@ public class SpectrumMetadataPanel extends JPanel {
 						String message =
 								"Your file (" + file.length() + " bytes) exceeds " +
 								"the maximum size permitted by the server (" + maxObjectSize + " bytes).";
-						JOptionPane.showMessageDialog(owner, message, "File too big", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(owner, message, "File too big", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 						return null;
 					}
 					
@@ -489,7 +492,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				}
 				catch (IOException ex) {
 					// read error
-					JOptionPane.showMessageDialog(owner, ex.getMessage(), "Could not read file", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(owner, ex.getMessage(), "Could not read file", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 					return null;
 				}
 				catch (SPECCHIOClientException ex) {
@@ -670,6 +673,8 @@ public class SpectrumMetadataPanel extends JPanel {
 				return newFieldComponent((MD_Spectrum_Field)field);
 			} else if (field instanceof MD_EAV_Field) {
 				return newEavComponent((MD_EAV_Field)field);
+			} else if (field instanceof MD_EAV_Link_Field) {
+				return newEavComponent((MD_EAV_Link_Field)field);
 			} else {
 				// this should never happen
 				return null;
@@ -693,10 +698,14 @@ public class SpectrumMetadataPanel extends JPanel {
 			MetaParameter mp = field.getMetaParameter();
 			if (mp instanceof MetaTaxonomy) {
 				return new SpectrumTaxonomyEavMetadataComponent(container, field);
+			} else if (mp instanceof MetaLink) {
+				return new SpectrumLinkEavMetadataComponent(container, field);				
 			} else if (mp instanceof MetaDate) {
 				return new SpectrumDateEavMetadataComponent(container, field);
 			} else if (mp instanceof MetaImage) {
 				return new SpectrumImageEavMetadataComponent(container, field);
+			} else if (mp instanceof MetaDocument) {
+				return new SpectrumFileEavMetadataComponent(container, field);
 			} else if (mp instanceof MetaDocument) {
 				return new SpectrumFileEavMetadataComponent(container, field);
 			} else {
@@ -1625,13 +1634,20 @@ public class SpectrumMetadataPanel extends JPanel {
 				catch (NumberFormatException ex) {
 					// nothing to do because newValue is already null
 				}
+			} else if (oldValue instanceof Long) {
+				try {
+					newValue = Long.parseLong(input);
+				}
+				catch (NumberFormatException ex) {
+					// nothing to do because newValue is already null
+				}
 			} else if (oldValue instanceof Double) {
 				try {
 					newValue = Double.parseDouble(input);
 				}
 				catch (NumberFormatException ex) {
 					// nothing to do because newValue is already null
-				}
+				}				
 			} else {
 				// should be a string
 				newValue = input;
@@ -1848,5 +1864,175 @@ public class SpectrumMetadataPanel extends JPanel {
 		}
 		
 	}
+	
+	
+	/**
+	 * Component for manipulating spectrum links.
+	 */
+	private class SpectrumLinkEavMetadataComponent extends SpectrumSimpleEavMetadataComponent implements ActionListener {
+		
+		/** serialisation version identifier */
+		private static final long serialVersionUID = 1L;
+		
+		/** the "select" button */
+		private JButton selectButton;
+		private JButton showLinkedSpectrumButton;
+		
+		/** the text field for non-editable display */
+		private JTextField text;
+		
+		/** action command for the "select" button */
+		private static final String SELECT = "Select";
+		
+		/** action command for the "select" button */
+		private static final String SHOW = "Show";
+		
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param container	the category container panel to which this component belongs
+		 * @param field	the metadata field represented by this component
+		 * 
+		 * @throws SPECCHIOClientException	could not contact the server
+		 */
+		public SpectrumLinkEavMetadataComponent(SpectrumMetadataCategoryContainer container, MD_EAV_Field field) throws SPECCHIOClientException {
+			
+			super(container, field);
+
+
+//			if(!fieldHasMultipleValues()) {
+//
+//				
+//			
+//			}
+//			else
+//			{
+//				displayString = "-- multiple taxa --";
+//				selectButton = new JButton(displayString);
+//				selectButton.setEnabled(false);
+//			}
+			
+			selectButton = new JButton("Open Spectral Databrowser");
+			showLinkedSpectrumButton = new JButton("Show linked spectrum");
+												
+			// create a button for selecting the spectrum to link
+//			selectButton.setActionCommand(SELECT);
+//			selectButton.addActionListener(this);
+//			add(selectButton);
+			
+			showLinkedSpectrumButton.setActionCommand(SHOW);
+			showLinkedSpectrumButton.addActionListener(this);
+			add(showLinkedSpectrumButton);			
+			
+			// create a text field but don't display it yet
+			text = new JTextField("", 30);
+			text.setEditable(false);
+			
+			
+		}
+		
+		
+		/**
+		 * Button handler.
+		 * 
+		 * @param	the event
+		 */
+		public void actionPerformed(ActionEvent event) {
+			
+			if (SELECT.equals(event.getActionCommand())) {
+			
+//				try {
+//					
+//					// get the meta-paramater to be edited
+//					MetaTaxonomy mp = (MetaTaxonomy)getMetaParameter();
+//								
+//					// show the taxonomy selection dialog
+//					TaxonomySelectionDialog d = new TaxonomySelectionDialog(owner, specchioClient, mp);
+//					d.setLocation(selectButton.getLocationOnScreen());
+//					d.setVisible(true);
+//
+//					int tax_id = d.getSelectedTaxonomyId();
+//					if (tax_id > 0) {
+//						Long taxonomy_id = (long) tax_id;
+//					
+//						// update value of taxonomy button
+//						TaxonomyNodeObject taxonomy;
+//						taxonomy = specchioClient.getTaxonomyNode(tax_id);
+//						selectButton.setText(taxonomy.getName());
+//						
+//						// notify listeners of the change
+//						fireMetadataFieldChanged(getField(), taxonomy_id);
+//					}
+//					
+//				} catch (SPECCHIOClientException ex) {
+//					ErrorDialog error = new ErrorDialog(owner, "Could not retrieve taxonomy", ex.getUserMessage(), ex);
+//					error.setVisible(true);
+//				}
+				
+			} 
+			else if  (SHOW.equals(event.getActionCommand())) 
+			{
+				
+				// get the meta info to be shown
+				MetaLink mp = (MetaLink)getMetaParameter();
+							
+				ArrayList<Integer> ids = new ArrayList<Integer>();
+				long id =  (Long) mp.getValue();
+				ids.add((int) id);
+				
+				QueryBuilder d = new QueryBuilder();
+				d.set_ids_matching_query(ids);
+				
+				ActionEvent e = new ActionEvent("Call from SpectrumLinkEavMetadataComponent", 0, "show_report");
+				d.actionPerformed(e);
+				
+			}
+			else {
+				
+				// pass pop-up menu actions to the super class
+				super.actionPerformed(event);
+				
+			}
+		}
+		
+		
+		/**
+		 * Make the field editable or not.
+		 * 
+		 * @param editable true to make the field editable, false otherwise
+		 */
+		public void setEditable(boolean editable) {
+			
+			if (editable) {
+				// display the combo box
+				//remove(text);
+				//add(selectButton);
+			} else {
+				// display the label
+				//remove(selectButton);
+				//add(text);
+			}
+			
+			// force re-draw
+			revalidate();
+			repaint();
+			
+		}
+		
+		
+		/**
+		 * Enable or disable the field.
+		 *
+		 * @param enabled	true or false
+		 */
+		public void setEnabled(boolean enabled) {
+			
+			super.setEnabled(enabled);
+			selectButton.setEnabled(enabled && !fieldHasMultipleValues());
+			
+		}
+		
+	}	
 
 }
