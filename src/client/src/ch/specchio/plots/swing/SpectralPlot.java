@@ -252,7 +252,7 @@ public abstract class SpectralPlot extends JPanel
 
 		set_wvl_indicator(wavelength); // make sure the wavelength indicator is updated ...
 		
-//		cv.updateDraw();
+		//plot.resetAxes();
 	}
 	
 	
