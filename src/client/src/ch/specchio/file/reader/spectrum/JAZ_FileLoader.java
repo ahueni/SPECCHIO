@@ -19,16 +19,23 @@ import org.joda.time.DateTimeZone;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
+import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 
 public class JAZ_FileLoader extends SpectralFileLoader {
 	
 	SpectralFile spec_file;
-	private Metadata smd;
+	protected Metadata smd;
+	String start_of_spectral_data;
 
 	public JAZ_FileLoader() {
-		super("JAZ WTF");
+		super("JAZ");
+		start_of_spectral_data = ">>>>>Begin Processed Spectral Data<<<<<";
 	}
+	
+	public JAZ_FileLoader(String file_format_name) {
+		super(file_format_name);
+	}	
 
 	public SpectralFile load(File file) throws IOException
 	{
@@ -72,8 +79,25 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 			String[] tokens = line.split(": ");
 			
 			// analyse the tokens
-			hdr_ended = analyse_JAZ_file(tokens, d, f);						
-		}		
+			hdr_ended = analyse_JAZ_file(tokens, d, f);		
+			
+		}	
+		
+		if (!hdr_ended)
+		{
+			// something went wrong, maybe the line ">>>>>Begin Processed Spectral Data<<<<<" was not present ...
+			f.setFileErrorCode(SpectralFile.UNRECOVERABLE_ERROR);
+			ArrayList<SpecchioMessage> file_errors = f.getFileErrors();
+			if(file_errors == null)
+			{
+				file_errors = new ArrayList<SpecchioMessage>();						
+			}
+
+			file_errors.add(new SpecchioMessage("Could not find beginning of spectral data: " + start_of_spectral_data + " is missing in file.", SpecchioMessage.ERROR));
+			f.setFileErrors(file_errors);
+			
+		}
+		
 		
 		// read the measurements
 		f.setMeasurements(read_data(data_in, d));
@@ -233,7 +257,7 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 //			
 //		}			
 		
-		if(t1.equals(">>>>>Begin Processed Spectral Data<<<<<"))
+		if(t1.equals(start_of_spectral_data))
 		{
 			hdr_ended = true;
 		}
