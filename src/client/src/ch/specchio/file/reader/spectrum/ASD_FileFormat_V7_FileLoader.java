@@ -1002,7 +1002,20 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		float[] gain_v = new float[3];
 		int vnir_top = 1000 - 350 + 1;
-		int swir_1_top = vnir_top + 800;
+		int swir_1_top;
+		
+		// conversion depends on the number of channels
+		if(this.asd_v7_file.getNumberOfChannels(0) > 751) // likely threshold is 751 channels for the handheld
+		{
+			vnir_top = 1000 - 350 + 1;
+			swir_1_top = vnir_top + 800;
+		}
+		else
+		{
+			vnir_top = this.asd_v7_file.getNumberOfChannels(0);
+			swir_1_top = vnir_top + 0;
+		}
+		
 		Float[][] cal_rad = new Float[1][channels];
 		Float[][] s = new Float[1][channels];
 		Float[][] l = new Float[1][channels];
