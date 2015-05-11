@@ -184,12 +184,22 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			// HR 1024 files contain target and reference radiances plus
 			// reflectances
 			// thus here we must split them into two new hierarchies:
-			// reflectance and radiance with radiance having two subfolders
+			// reflectance and radiance/DN with radiance/DN having two subfolders
+			String unit = null;
+			if(spec_file.getMeasurementUnits(0) == MeasurementUnit.Radiance)
+			{
+				unit = "Radiance";
+			}
+			else
+			{
+				unit = "DN";
+			}
+			
 
-			getSubHierarchyId(subhierarchies, hierarchy_id, "Radiance");
+			getSubHierarchyId(subhierarchies, hierarchy_id, unit);
 			getSubHierarchyId(subhierarchies, hierarchy_id, "Reflectance");
-			getSubHierarchyId(subhierarchies, subhierarchies.get("Radiance"), "Targets");
-			getSubHierarchyId(subhierarchies, subhierarchies.get("Radiance"), "References");
+			getSubHierarchyId(subhierarchies, subhierarchies.get(unit), "Targets");
+			getSubHierarchyId(subhierarchies, subhierarchies.get(unit), "References");
 		}
 
 		if (spec_file.getCompany().equals("COST_OO_CSV")) {
@@ -279,6 +289,13 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			getSubHierarchyId(subhierarchies, subhierarchies.get("DN"), "channel b");					
 			
 		}
+		
+		if (spec_file.getCompany().equals("Solar Systems") && spec_file.getFileFormatName().equals("MicrotopsCSV")) 
+		{				
+			getSubHierarchyId(subhierarchies, hierarchy_id, "Spectrum");
+			getSubHierarchyId(subhierarchies, hierarchy_id, "Spectrum StdDev");
+			getSubHierarchyId(subhierarchies, hierarchy_id, "AOT");	
+		}		
 
 		if (spec_file.getCompany().equals("GER") || (spec_file.getCompany().equals("PP Systems") && spec_file.getCapturingSoftwareName() == null) && !spec_file.getFileFormatName().equals("UniSpec_SPU")) {
 			// GER files contain target and reference radiances
@@ -340,6 +357,26 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		}
 		
 		return subhierarchies;
+	}
+	
+	private hierarchy_existence_data getExistanceData(SpectralFile spec_file, int hierarchy_id) {
+	
+		hierarchy_existence_data exists_struct = new hierarchy_existence_data();
+		
+		exists_struct.hierarchy_id = hierarchy_id;
+
+		if(spec_file.getNumberOfSpectra() > 1)
+		{
+			ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();
+			spectral_file_list.add(spec_file);
+			exists_struct = spectraExist_(spectral_file_list , hierarchy_id);
+		}
+		else
+		{
+			exists_struct.exist_array.add(false); // single file entries get always inserted, otherwise the client would not have sent it.
+		}
+		
+		return exists_struct;
 	}
 	
 
@@ -413,34 +450,86 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * @param dl	the data link
 	 * 
 	 * @throws SPECCHIOFactoryException	could not access the database
+	 * @throws  
 	 */
 	public void insertLink(SpectrumDataLink dl) throws SPECCHIOFactoryException {
 		
-		try {
-			
-			// create an SQL statement
-			Statement stmt = getConnection().createStatement();
-			
-			// build the update string
-			String query = "insert into spectrum_datalink_view (spectrum_id, linked_spectrum_id, datalink_type_id) "
-					+ "values ("
-					+ Integer.toString(dl.getReferencingId())
-					+ ", "
-					+ Integer.toString(dl.getReferencedId())
-					+ ", "
-					+ "(select datalink_type_id from datalink_type where name = '"
-					+ dl.getLinkType() + "'))";
+		
+		// insert eav for target and reference
+		// link target to reference
+		try {		
+			MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Target Data Link", "Data Links"));
 
-			stmt.executeUpdate(query);
-			
-		}
-		catch (SQLException ex) {
-			// bad SQL
-			throw new SPECCHIOFactoryException(ex);
+			mp.setValue(dl.getReferencingId());
+
+
+			Integer[] spectrum_id_array = new Integer[1];
+			spectrum_id_array[0]=dl.getReferencedId();
+
+			MetadataFactory MF = new MetadataFactory(this);
+
+			MF.updateMetadata(mp, spectrum_id_array);
+
+			// link reference to target
+			mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Reference Data Link", "Data Links"));
+			mp.setValue(dl.getReferencedId());
+
+			spectrum_id_array[0]=dl.getReferencingId();
+
+			MF.updateMetadata(mp, spectrum_id_array);		
+
+		} catch (MetaParameterFormatException e) {
+			// TODO Auto-generated catch block
+			throw new SPECCHIOFactoryException(e);
+		}		
+
+	}
+	
+	
+	/**
+	 * Insert a link between spectra establishing the provenance
+	 * 
+	 * @param dl	the data link
+	 * 
+	 * @throws SPECCHIOFactoryException	could not access the database
+	 * @throws  
+	 */
+	public void insertProvenance(SpectrumDataLink dl) throws SPECCHIOFactoryException {
+		
+
+		// link child to parent
+		try {		
+			MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Provenance Data Link", "Data Links"));
+
+			mp.setValue(dl.getReferencedId());
+
+
+			Integer[] spectrum_id_array = new Integer[1];
+			spectrum_id_array[0]=dl.getReferencingId();
+
+			MetadataFactory MF = new MetadataFactory(this);
+
+			MF.updateMetadata(mp, spectrum_id_array);
+
+
+		} catch (MetaParameterFormatException e) {
+			// TODO Auto-generated catch block
+			throw new SPECCHIOFactoryException(e);
+		}		
+
+	}
+	
+
+	
+	private void addNonNullSpectrumIds(SpectralFileInsertResult insert_results, SpectralFileInsertResult result) {
+		
+		if(result.getSpectrumIds().get(0) > 0)
+		{
+			insert_results.add(result);
 		}
 		
 	}
-
+	
 	
 	/**
 	 * Insert a spectral file into the database. This method handles the cases where
@@ -467,28 +556,29 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			special_hierarchy_files = true;
 			SpectralFileInsertResult tgt_spectrum_result, ref_spectrum_result, reflectance_spectrum_result;
 
-			// HR 1024 files contain target and reference radiances plus
+			// HR 1024 files contain target and reference radiances or DNs plus
 			// reflectances
 			// thus here we must split them into two new hierarchies:
-			// reflectance and radiance with radiance having two subfolders
+			// reflectance and radiance/DN with radiance/DN having two subfolders
 
 			// insert target spectrum
-			tgt_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 1, subhierarchies.get("Targets"));
-			insert_result.add(tgt_spectrum_result);
+			tgt_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 1, spectrumExists_(spec_file, subhierarchies.get("Targets")));
+			addNonNullSpectrumIds(insert_result,tgt_spectrum_result);
 
 			// insert reference spectrum
-			ref_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 0, subhierarchies.get("References"));
-			insert_result.add(ref_spectrum_result);
+			ref_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("References")));
+			addNonNullSpectrumIds(insert_result,ref_spectrum_result);
 
 			// insert reflectance spectrum
-			reflectance_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 2, subhierarchies.get("Reflectance"));
-			insert_result.add(reflectance_spectrum_result);
+			reflectance_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 2, spectrumExists_(spec_file, subhierarchies.get("Reflectance")));
+			addNonNullSpectrumIds(insert_result,reflectance_spectrum_result);
 			
 			// if spectra were inserted we need to add a datalink that links the
 			// target to the reference spectrum
 			if (ref_spectrum_result.getSpectrumIds().get(0) != 0) {
-				insertLink(new SpectrumDataLink(tgt_spectrum_result.getSpectrumIds().get(0), ref_spectrum_result.getSpectrumIds().get(0), "Spectralon data"));
-				insertLink(new SpectrumDataLink(reflectance_spectrum_result.getSpectrumIds().get(0), tgt_spectrum_result.getSpectrumIds().get(0), "Radiance data"));
+				insertLink(new SpectrumDataLink(tgt_spectrum_result.getSpectrumIds().get(0), ref_spectrum_result.getSpectrumIds().get(0), null));
+				insertProvenance(new SpectrumDataLink(reflectance_spectrum_result.getSpectrumIds().get(0), tgt_spectrum_result.getSpectrumIds().get(0), null));
+				insertProvenance(new SpectrumDataLink(reflectance_spectrum_result.getSpectrumIds().get(0), ref_spectrum_result.getSpectrumIds().get(0), null));
 			}
 
 		}
@@ -503,22 +593,23 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			// reflectance and radiance with radiance having two subfolders
 
 			// insert target spectrum
-			tgt_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 1, subhierarchies.get("Targets"));
-			insert_result.add(tgt_spectrum_result);
+			tgt_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 1, spectrumExists_(spec_file, subhierarchies.get("Targets")));
+			addNonNullSpectrumIds(insert_result,tgt_spectrum_result);
 
 			// insert reference spectrum
-			ref_result = insertSpectrumAndHierarchyLink(spec_file, 0, subhierarchies.get("References"));
-			insert_result.add(ref_result);
+			ref_result = insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("References")));
+			addNonNullSpectrumIds(insert_result,ref_result);
 
 			// insert reflectance spectrum
-			reflectance_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 2, subhierarchies.get("Reflectance"));
-			insert_result.add(reflectance_spectrum_result);
+			reflectance_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 2, spectrumExists_(spec_file, subhierarchies.get("Reflectance")));
+			addNonNullSpectrumIds(insert_result,reflectance_spectrum_result);
 			
 			// if spectra were inserted we need to add a datalink that links the
 			// target to the reference spectrum
 			if (ref_result.getSpectrumIds().get(0) != 0) {
 				insertLink(new SpectrumDataLink(tgt_spectrum_result.getSpectrumIds().get(0), ref_result.getSpectrumIds().get(0), "Spectralon data"));
-				insertLink(new SpectrumDataLink(reflectance_spectrum_result.getSpectrumIds().get(0), tgt_spectrum_result.getSpectrumIds().get(0), "Radiance data"));
+				insertProvenance(new SpectrumDataLink(reflectance_spectrum_result.getSpectrumIds().get(0), tgt_spectrum_result.getSpectrumIds().get(0), "Radiance data"));
+				insertProvenance(new SpectrumDataLink(reflectance_spectrum_result.getSpectrumIds().get(0), ref_result.getSpectrumIds().get(0), "Radiance data"));
 			}
 
 		}
@@ -607,9 +698,9 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					}
 					
 					
-					SpectralFileInsertResult res = insertSpectrumAndHierarchyLink(spec_file, i, hierarchy_id);
+					SpectralFileInsertResult res = insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, hierarchy_id));
 					
-					insert_result.add(res);
+					addNonNullSpectrumIds(insert_result,res);
 					
 					if(spec_file.getMeasurandDesignator(i) == SpectralFile.REFERENCE)
 					{
@@ -627,7 +718,8 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					
 					if(spec_file.getMeasurementUnits(i) == MeasurementUnit.Reflectance && contains_targets_and_references)
 					{
-						insertLink(new SpectrumDataLink(res.getSpectrumIds().get(0), tgt_spectrum_result.getSpectrumIds().get(0), "Radiance data"));
+						insertProvenance(new SpectrumDataLink(res.getSpectrumIds().get(0), tgt_spectrum_result.getSpectrumIds().get(0), "Radiance data"));
+						insertProvenance(new SpectrumDataLink(res.getSpectrumIds().get(0), ref_result.getSpectrumIds().get(0), "Radiance data"));
 					}
 						
 			
@@ -647,11 +739,43 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			special_hierarchy_files = true;
 			
 			// insert a spectrum
-			insert_result.add(insertSpectrumAndHierarchyLink(spec_file, 1, subhierarchies.get("channel a")));
+			addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 1, spectrumExists_(spec_file, subhierarchies.get("channel a"))));
 			// insert b spectrum
-			insert_result.add(insertSpectrumAndHierarchyLink(spec_file, 0, subhierarchies.get("channel b")));
+			addNonNullSpectrumIds(insert_result, insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("channel b"))));
 						
 		}
+		
+		
+		if (spec_file.getCompany().equals("Solar Systems") && spec_file.getFileFormatName().equals("MicrotopsCSV")) 
+		{		
+			special_hierarchy_files = true;
+			
+//			long startTime = System.currentTimeMillis();
+			
+			// get existance data for full file (must faster than doing the check for each entry in the loop below)
+			hierarchy_existence_data Spectrum_exists = spectrumExists_(spec_file, subhierarchies.get("Spectrum"));
+			hierarchy_existence_data SpectrumSTD_exists = spectrumExists_(spec_file, subhierarchies.get("Spectrum StdDev"));
+			hierarchy_existence_data AOT_exists = spectrumExists_(spec_file, subhierarchies.get("AOT"));
+			
+			// insert spectrum, stddev and aot
+			int i=0;
+			while(i<spec_file.getNumberOfSpectra())
+			{
+				
+				
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i++, Spectrum_exists));
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i++, SpectrumSTD_exists));
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i++, AOT_exists));			
+			}	
+			
+//			long stopTime = System.currentTimeMillis();
+//		    long elapsedTime = stopTime - startTime;
+//			System.out.println("insert microtops [ms] " + elapsedTime);		
+//			
+//			int x = 1;
+			
+		}
+		
 
 		if (spec_file.getCompany().equals("GER") || (spec_file.getCompany().equals("PP Systems") && spec_file.getCapturingSoftwareName() == null)  && !spec_file.getFileFormatName().equals("UniSpec_SPU")) {
 			special_hierarchy_files = true;
@@ -664,12 +788,12 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			int reference_sub_hierarchy_id = subhierarchies.get("References");
 
 			// insert target spectrum
-			referencing_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 0, target_sub_hierarchy_id);
-			insert_result.add(referencing_spectrum_result);
+			referencing_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, target_sub_hierarchy_id));
+			addNonNullSpectrumIds(insert_result,referencing_spectrum_result);
 
 			// insert reference spectrum
-			referenced_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 1, reference_sub_hierarchy_id);
-			insert_result.add(referenced_spectrum_result);
+			referenced_spectrum_result = insertSpectrumAndHierarchyLink(spec_file, 1, spectrumExists_(spec_file, reference_sub_hierarchy_id));
+			addNonNullSpectrumIds(insert_result, referenced_spectrum_result);
 
 			// if spectra were inserted we need to add a datalink that links the
 			// target to the reference spectrum
@@ -689,12 +813,12 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			// plus diffuse
 			for (int i = 0; i < spec_file.getNumberOfSpectra(); i += 2) {
 				// insert total spectrum
-				SpectralFileInsertResult tmp = insertSpectrumAndHierarchyLink(spec_file, i, total_sub_hierarchy_id);
-				insert_result.add(tmp);
+				SpectralFileInsertResult tmp = insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, total_sub_hierarchy_id));
+				addNonNullSpectrumIds(insert_result,tmp);
 
 				// insert diffuse spectrum
-				tmp = insertSpectrumAndHierarchyLink(spec_file, i + 1, diffuse_sub_hierarchy_id);
-				insert_result.add(tmp);
+				tmp = insertSpectrumAndHierarchyLink(spec_file, i + 1, spectrumExists_(spec_file, diffuse_sub_hierarchy_id));
+				addNonNullSpectrumIds(insert_result,tmp);
 			}
 
 		}
@@ -724,12 +848,12 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 
 				for (int i = 0; i < spec_file.getNumberOfSpectra(); i++) {
 					if (spec_file.getSpectralGroupingSize() > 1) {
-						insert_result.add(insertSpectrumAndHierarchyLink(spec_file, i++, FGI_I_id));
-						insert_result.add(insertSpectrumAndHierarchyLink(spec_file, i++, FGI_Q_id));
-						insert_result.add(insertSpectrumAndHierarchyLink(spec_file, i, FGI_U_id));
+						addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i++, spectrumExists_(spec_file, FGI_I_id)));
+						addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i++, spectrumExists_(spec_file, FGI_Q_id)));
+						addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, FGI_U_id)));
 
 					} else {
-						insert_result.add(insertSpectrumAndHierarchyLink(spec_file, i, FGI_sub_id));
+						addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, FGI_sub_id)));
 					}
 				}
 
@@ -741,11 +865,11 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				for (int i = 0; i < spec_file.getNumberOfSpectra(); i++) {
 
 					if (spec_file.getFgiHdrfBrfFlag(i).equals("BRF")) {
-						insert_result.add(insertSpectrumAndHierarchyLink(spec_file, i, FGI_BRF_sub_id));
+						addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, FGI_BRF_sub_id)));
 					}
 
 					if (spec_file.getFgiHdrfBrfFlag(i).equals("HDRF")) {
-						insert_result.add(insertSpectrumAndHierarchyLink(spec_file, i, FGI_HDRF_sub_id));
+						addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, FGI_HDRF_sub_id)));
 					}
 
 				}
@@ -757,25 +881,38 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		if (spec_file.getAsdV7() == true) {
 			special_hierarchy_files = true;
 			// insert dn spectrum
-			insert_result.add(insertSpectrumAndHierarchyLink(spec_file, 0, subhierarchies.get("DN")));
+			addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("DN"))));
 
 			// insert radiance spectrum
 			if (spec_file.getAsdV7RadianceFlag() == true) {
-				insert_result.add(insertSpectrumAndHierarchyLink(spec_file, 1, subhierarchies.get("Radiance")));
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 1, spectrumExists_(spec_file, subhierarchies.get("Radiance"))));
 			}
 
 			// insert reflectance spectrum
 			if (spec_file.getAsdV7ReflectanceFlag() == true) {
-				insert_result.add(insertSpectrumAndHierarchyLink(spec_file, 1, subhierarchies.get("Reflectance")));
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 1, spectrumExists_(spec_file, subhierarchies.get("Reflectance"))));
 			}
 			
 
 		}
 
 		if (!special_hierarchy_files) {
+			
+			hierarchy_existence_data exists_struct = new hierarchy_existence_data();
+			
+			if(spec_file.getNumberOfSpectra() > 1)
+			{
+				exists_struct = spectrumExists_(spec_file , hierarchy_id);
+			}
+			else
+			{
+				exists_struct.exist_array.add(false); // single file entries get always inserted, otherwise the client would not have sent it.
+				exists_struct.hierarchy_id = hierarchy_id;
+			}
 
 			for (int i = 0; i < spec_file.getNumberOfSpectra(); i++) {
-				insert_result.add(insertSpectrum(spec_file, i, hierarchy_id, special_hierarchy_files));
+				if(exists_struct.exist_array.get(i) == false)
+					addNonNullSpectrumIds(insert_result,insertSpectrum(spec_file, i, exists_struct));
 			}
 
 			// insert links to the hierarchies
@@ -791,14 +928,13 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * 
 	 * @param spec_file		the spectral file from which the spectrum will be drawn
 	 * @param spec_no		the index of the spectrum in the file
-	 * @param hierarchy_id	the identifier of the node under which the spectrum will be placed
-	 * @param auto_sub_h	boolean indicating if this spectral file required the creation of sub-hierarchies
+	 * @param hierarchy_existence_data info on existence of the spectra of this file within the hierarchy
 	 * 
 	 * @return the identifier of the new spectrum
 	 * 
 	 * @throws SPECCHIOFactoryException	could not insert the spectrum
 	 */
-	public SpectralFileInsertResult insertSpectrum(SpectralFile spec_file, int spec_no, int hierarchy_id, boolean auto_sub_hierarchies) throws SPECCHIOFactoryException {
+	public SpectralFileInsertResult insertSpectrum(SpectralFile spec_file, int spec_no, hierarchy_existence_data exists_struct) throws SPECCHIOFactoryException {
 		
 		SpectralFileInsertResult insert_result = new SpectralFileInsertResult();
 		
@@ -807,12 +943,12 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		// therefore, for each hierarchy the check must be carried out again.
 		// this second check is reduced to only spectral files where subhierarchies exist
 		
-		boolean exists = false;
-		if(auto_sub_hierarchies) exists = this.spectrumExists(spec_file.getFilename(), hierarchy_id);
+//		boolean exists = false;
+//		if(auto_sub_hierarchies) exists = this.spectrumExists(spec_file.getFilename(), hierarchy_id);
 		
 		
 		
-		if(!exists)
+		if(exists_struct.exist_array.get(spec_no) == false)
 		{
 			try {
 				
@@ -826,7 +962,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				SQL_StatementBuilder SQL = new SQL_StatementBuilder(getConnection());
 		
 				campaign_id_and_op = SQL.is_null_key_get_val_and_op(campaign.getId());
-				hierarchy_id_and_op = SQL.is_null_key_get_val_and_op(hierarchy_id);
+				hierarchy_id_and_op = SQL.is_null_key_get_val_and_op(exists_struct.hierarchy_id);
 				
 				Metadata md = spec_file.getEavMetadata(spec_no);
 		
@@ -1198,21 +1334,21 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * 
 	 * @param spec_file		the spectral file to be inserted
 	 * @param spec_no		the index of the spectrum to be inserted
-	 * @param hierarchy_id	the identifier of the hierarchy node into which to insert
+	 * @param hierachy_and_exists_struct	contains the identifier of the hierarchy node into which to insert and booleans indicating if this spectrum already exists or not (used to ensure that all calls first do a spectrum exists check, preferably as a multiple file call to save time)	
 	 * 
 	 * @return insert result descriptor of the new spectrum
 	 * 
 	 * @throws SPECCHIOFactoryException	could not access the database
 	 */
 	private SpectralFileInsertResult insertSpectrumAndHierarchyLink(SpectralFile spec_file,
-			int spec_no, int hierarchy_id)
+			int spec_no, hierarchy_existence_data exists_struct)
 			throws SPECCHIOFactoryException {
 
-		SpectralFileInsertResult insert_result = insertSpectrum(spec_file, spec_no, hierarchy_id, true); // always a spectrum that prompted auto-subhierarchy creation
+		SpectralFileInsertResult insert_result = insertSpectrum(spec_file, spec_no, exists_struct); 
 
 		if (insert_result.getSpectrumIds().get(0) > 0) // always only one spectrum id is returned in the list
 		{
-			insertHierarchySpectrumReferences(hierarchy_id, insert_result.getSpectrumIds().get(0),
+			insertHierarchySpectrumReferences(exists_struct.hierarchy_id, insert_result.getSpectrumIds().get(0),
 					0);			
 		}
 
@@ -1234,14 +1370,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * @throws SPECCHIOFactoryException	could not access the database
 	 */
 	private SpectralFileInsertResult insertSpectrumAndHierarchyLink(SpectralFile spec_file,
-			int spec_no, int hierarchy_id, int recursion_break_at_hierarchy_id)
+			int spec_no, hierarchy_existence_data exists_struct, int recursion_break_at_hierarchy_id)
 			throws SPECCHIOFactoryException {
 
-		SpectralFileInsertResult insert_result = insertSpectrum(spec_file, spec_no, hierarchy_id, true); // always a spectrum that prompted auto-subhierarchy creation
+		SpectralFileInsertResult insert_result = insertSpectrum(spec_file, spec_no, exists_struct); // always a spectrum that prompted auto-subhierarchy creation
 
 		if (insert_result.getSpectrumIds().get(0) > 0) // always only one spectrum id is returned in the list
 		{
-			insertHierarchySpectrumReferences(hierarchy_id, insert_result.getSpectrumIds().get(0),
+			insertHierarchySpectrumReferences(exists_struct.hierarchy_id, insert_result.getSpectrumIds().get(0),
 					recursion_break_at_hierarchy_id);			
 		}
 
@@ -1286,49 +1422,89 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	
 	
 	/**
-	 * Test for the existence of a given spectral files in the database.
+	 * Test for the existence of given spectral files in the database.
 	 * 
 	 * @param descriptor	list of spectral files
 	 * 
 	 * @return list of existence per file encoded as 0/1, order of the files in the input list is equal to boolean indicator order
 	 */
-	public ArrayList<Integer> spectraExist(ArrayList<SpectralFile> spectral_file_list, int hierarchy_id) throws SPECCHIOFactoryException {
+	public ArrayList<Boolean> spectraExist(ArrayList<SpectralFile> spectral_file_list, int hierarchy_id) throws SPECCHIOFactoryException {
 		
-		ArrayList<Integer> exists_array = new ArrayList<Integer>();
+		ArrayList<hierarchy_existence_data> exists_struct_array = new ArrayList<hierarchy_existence_data>();
+		hierarchy_existence_data exists_struct = new hierarchy_existence_data();
+		hierarchy_existence_data final_exists_struct = new hierarchy_existence_data();
 		
-		for (int i=0;i<spectral_file_list.size();i++)
+//		for (int i=0;i<spectral_file_list.size();i++)
+//		{
+//			exists_struct.combo_exist_array.add(1); // all files exist by default
+//		}
+		
+		int no_of_handled_files = 0;
+		
+		while(no_of_handled_files < spectral_file_list.size())
 		{
-			exists_array.add(1); // all files exist by default
-		}
-		
-		// get sub hierarchy ids for these spectral file
-		Hashtable<String, Integer> sub_ids = this.getSubHierarchyIds(spectral_file_list.get(0), hierarchy_id);
-		
-		
-		if(sub_ids.size() > 0)
-		{		
-			// check if the spectra exist in all the sub hierarchies
-			Enumeration<Integer> li = sub_ids.elements();
-			
-			
-			
-			while(li.hasMoreElements())
-			{
-				ArrayList<Integer> exists_array_tmp = spectraExist_(spectral_file_list, li.nextElement());
 				
-				for (int i=0;i<spectral_file_list.size();i++)
+			// get sub hierarchy ids of current spectral file
+			Hashtable<String, Integer> sub_ids = this.getSubHierarchyIds(spectral_file_list.get(no_of_handled_files), hierarchy_id);
+			
+			ArrayList<SpectralFile> same_file_type_list = new ArrayList<SpectralFile>();
+			same_file_type_list.add(spectral_file_list.get(no_of_handled_files)); // first spectrum of a filetype is always part of the list
+			
+			// build file list for same file type, also need to check on the ASD V7 flag because the two ASD formats currently share the same file format name
+			no_of_handled_files++;
+			while(no_of_handled_files < spectral_file_list.size() && same_file_type_list.get(0).getFileFormatName().equals(spectral_file_list.get(no_of_handled_files).getFileFormatName()) && same_file_type_list.get(0).getAsdV7() == spectral_file_list.get(no_of_handled_files).getAsdV7())
+			{
+				same_file_type_list.add(spectral_file_list.get(no_of_handled_files));
+				no_of_handled_files++;
+			}
+			
+			
+			
+			if(sub_ids.size() > 0)
+			{		
+				// check if the spectra exist in all the sub hierarchies
+				Enumeration<Integer> li = sub_ids.elements();
+				
+				exists_struct = new hierarchy_existence_data();
+				
+				for (int i=0;i<same_file_type_list.size();i++)
 				{
-					exists_array.set(i, exists_array.get(i) & exists_array_tmp.get(i));
-				}
+					exists_struct.combo_exist_array.add(true); // all files exist by default
+				}				
+				
+				
+				while(li.hasMoreElements())
+				{
+					hierarchy_existence_data exists_struct_tmp = spectraExist_(same_file_type_list, li.nextElement());
+					
+					for (int i=0;i<same_file_type_list.size();i++)
+					{
+						exists_struct.combo_exist_array.set(i, exists_struct.combo_exist_array.get(i) & exists_struct_tmp.combo_exist_array.get(i)); // AND operation on existence in subhierarchies
+						//exists_combo = exists_combo & exists_struct_tmp.combo_exist_array.get(i); // AND operation on existence in subhierarchies
+					}
+	
+				}	
 
-			}			
-		}
-		else
-		{
-			exists_array = spectraExist_(spectral_file_list, hierarchy_id);			
+
+			}
+			else
+			{
+				exists_struct = spectraExist_(same_file_type_list, hierarchy_id);			
+			}
+			
+			exists_struct_array.add(exists_struct);
+			
 		}
 		
-		return exists_array;
+		// compile final boolean array
+		for(int i=0;i<exists_struct_array.size();i++)
+		{
+			final_exists_struct.combo_exist_array.addAll(exists_struct_array.get(i).combo_exist_array);
+		}
+		
+		
+		
+		return final_exists_struct.combo_exist_array;
 	}	
 	
 	
@@ -1376,6 +1552,27 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		
 	}	
 	
+	/**
+	 * Test for the existence of a filename within a sub-hierarchy.
+	 * 
+	 * @oaram filename		the filename
+	 * @param hierarchy_id	the identifier of the hierarchy to check
+	 * 
+	 * @return hierarchy_existence_data
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	private hierarchy_existence_data spectrumExists_(SpectralFile spec_file, int hierarchy_id) throws SPECCHIOFactoryException {
+		
+		ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();
+		spectral_file_list.add(spec_file);
+		hierarchy_existence_data exists_struct = spectraExist_(spectral_file_list , hierarchy_id);
+		
+		return exists_struct;
+		
+	}
+	
+	
 	
 	/**
 	 * Test for the existence of a filename within a sub-hierarchy.
@@ -1383,33 +1580,43 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * @oaram filename		the filename
 	 * @param hierarchy_id	the identifier of the hierarchy to check
 	 * 
-	 * @return true if a spectrum with the specified filename exists within the identified hierarchy
+	 * @return hierarchy_existence_data
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	private ArrayList<Integer> spectraExist_(ArrayList<SpectralFile> spectral_file_list, int hierarchy_id) throws SPECCHIOFactoryException {
+	private hierarchy_existence_data spectraExist_(ArrayList<SpectralFile> spectral_file_list, int hierarchy_id) throws SPECCHIOFactoryException {
 		
-		ArrayList<Integer> exist_array = new ArrayList<Integer>();
+//		ArrayList<Integer> exist_array = new ArrayList<Integer>();
+//		ArrayList<Integer> combo_exist_array = new ArrayList<Integer>(); // final output with combined existence info for all entries within the spectral files
+		
+		hierarchy_existence_data ed = new hierarchy_existence_data();
+		ed.hierarchy_id = hierarchy_id;
 		
 		ArrayList<String> filenames = new ArrayList<String>();
+		ArrayList<Integer> filenames_per_spectral_file = new ArrayList<Integer>();
 		
 		ListIterator<SpectralFile> sf_li = spectral_file_list.listIterator();
 		
-		String filenames_for_insert ="";
+//		String filenames_for_insert ="";
 		
 		boolean first = true;
 		
 		while(sf_li.hasNext()) {
 			SpectralFile spec_file = sf_li.next();		
 			
-			filenames.add(spec_file.getSpectrumFilename(0));
+			// deal with spectral files that have multiple spectral file names, like XLS where filenames need to be autogenerated
+			//String all_spectral_file_filenames = this.getEavServices().SQL.conc_values(spec_file.getSpectraFilenames());
 			
-			if (!first)
-				filenames_for_insert = filenames_for_insert + ", ";
+			filenames.addAll(spec_file.getSpectraFilenames());
 			
-			filenames_for_insert = filenames_for_insert + "('" + spec_file.getSpectrumFilename(0) + "')";
+			filenames_per_spectral_file.add(spec_file.getSpectraFilenames().size());
 			
-			first = false; 
+//			if (!first)
+//				filenames_for_insert = filenames_for_insert + ", ";
+//			
+//			filenames_for_insert = filenames_for_insert +  this.getEavServices().SQL.conc_values(spec_file.getSpectraFilenames());
+//			
+//			first = false; 
 		}
 		
 		
@@ -1424,7 +1631,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			Statement stmt = SQL.createStatement();
 			id_and_op_struct p_id_and_op = new id_and_op_struct(hierarchy_id);
 			
-			String quoted_filenames = SQL.quote_list(filenames);
+			String quoted_filenames = SQL.conc_values_for_multiple_insert(filenames);
 			
 			String ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " +
 					SQL.prefix(getTempDatabaseName(), "spectra_existence_check") +
@@ -1445,7 +1652,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			
 			
 			
-			String insert_string = "insert into " + SQL.prefix(getTempDatabaseName(), "spectra_existence_check (filename) values ") + filenames_for_insert;			
+			String insert_string = "insert into " + SQL.prefix(getTempDatabaseName(), "spectra_existence_check (filename) values ") + quoted_filenames;			
 			
 			stmt.executeUpdate(insert_string);
 			
@@ -1453,7 +1660,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					" where spectrum.spectrum_id=spectrum_x_eav.spectrum_id" +
 					" and spectrum_x_eav.eav_id=eav.eav_id" +
 					" and eav.attribute_id=" + getAttributes().get_attribute_id("File Name") +
-					" and eav.string_val in " + quoted_filenames + 
+					" and eav.string_val in (" + quoted_filenames + ") " +
 					" and hierarchy_level_x_spectrum.spectrum_id=spectrum.spectrum_id" +
 					" and hierarchy_level_x_spectrum.hierarchy_level_id " + p_id_and_op.op + " " + p_id_and_op.id + ")";
 			
@@ -1474,16 +1681,41 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				int id = rs.getInt(1);
 				
 				if(id > 0)
-					exist_array.add(1);
+					ed.exist_array.add(true);
 				else
-					exist_array.add(0);
+					ed.exist_array.add(false);
 					
 				
 			}
 			rs.close();
 			stmt.close();
 			
-			return exist_array;
+			// compile the multiple entries per spectral file into one combined indicator per spectral file			
+			
+			ListIterator<Integer> li = filenames_per_spectral_file.listIterator();
+			int index = 0;
+			
+			
+			while(li.hasNext())
+			{
+				int no_of_entries = li.next();
+				Boolean combined_exist = ed.exist_array.get(index); // initial value of first entry of the current spectral file
+				if(no_of_entries > 1)
+				{
+					for(int i=0;i<no_of_entries-1;i++) // first entry is already handled, therefore reduce the loop size by one
+					{
+						index++;
+						combined_exist = combined_exist & ed.exist_array.get(index);
+					}
+				}
+				else
+				{
+					index++;
+				}
+				ed.combo_exist_array.add(combined_exist);				
+			}
+			
+			return ed;
 			
 		} catch (SQLException ex) {
 			// bad SQL
@@ -1492,6 +1724,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		                          
 		
 	}		
+	
+	// array list contain true if a spectrum with the specified filename exists within the identified hierarchy
+	class hierarchy_existence_data {	
+		
+		ArrayList<Boolean> exist_array = new ArrayList<Boolean>();
+		ArrayList<Boolean> combo_exist_array = new ArrayList<Boolean>(); // final output with combined existence info for all entries within the spectral files
+		int hierarchy_id; // the hierarchy for which the check was carried out
+	}
 	
 
 }
