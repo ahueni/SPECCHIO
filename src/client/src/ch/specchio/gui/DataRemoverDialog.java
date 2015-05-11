@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -14,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
@@ -23,6 +25,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.types.database_node;
+import ch.specchio.types.spectral_node_object;
 
 
 public class DataRemoverDialog extends JFrame implements ActionListener, TreeSelectionListener{
@@ -38,17 +41,54 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 	
 	SPECCHIOClient specchio_client;
 	
+
+	class RemoveTreeNodes extends SwingWorker<Integer, String>
+	{
+		ArrayList<SpectralDataBrowser.SpectralDataBrowserNode> sdb_nodes;
+		
+		public RemoveTreeNodes(ArrayList<SpectralDataBrowser.SpectralDataBrowserNode> sdb_nodes)
+		{
+			this.sdb_nodes = sdb_nodes;
+		}
+
+		@Override
+		protected Integer doInBackground() throws Exception {
+			
+			DefaultTreeModel model = (DefaultTreeModel)sdb.tree.getModel();
+			
+			// remove them backwards, but that does not solve the problem of exceptions like "java.lang.ArrayIndexOutOfBoundsException: 58 >= 58" ...
+			for(int i=sdb_nodes.size()-1;i>=0;i--)
+			{
+				model.removeNodeFromParent(sdb_nodes.get(i));
+			}		
+			return null;
+		}
+		
+		
+	}
+			
 	
 	class removing_thread extends Thread
 	{
+		
+
+		
 
 		ProgressReportDialog pr = new ProgressReportDialog(DataRemoverDialog.this, "Removing data ...", false, 20);
 		
-		SpectralDataBrowser.SpectralDataBrowserNode sdb_node;
+		ArrayList<spectral_node_object> nodes = new ArrayList<spectral_node_object>();
 		
-		public removing_thread(SpectralDataBrowser.SpectralDataBrowserNode sdb_node)
+		ArrayList<SpectralDataBrowser.SpectralDataBrowserNode> sdb_nodes = new ArrayList<SpectralDataBrowser.SpectralDataBrowserNode>();
+		
+		public removing_thread()
 		{
-			this.sdb_node = sdb_node;
+
+		}
+		
+		public void addNode(SpectralDataBrowser.SpectralDataBrowserNode sdb_node)
+		{
+			sdb_nodes.add(sdb_node);
+			nodes.add(sdb_node.getNode());
 		}
 		
 		synchronized public void run()
@@ -59,12 +99,13 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 			try {
 				// ask the server to remove the node from the database
 				pr.set_operation("Deleting data. Please wait.");
-				specchio_client.removeSpectralNode(sdb_node.getNode());
+								
+				specchio_client.removeSpectralNodes(nodes);
 				pr.set_operation("Cleaning up...");
 				specchio_client.clearMetaparameterRedundancyList();
 				
 				// remove the node from the local tree control
-				removeTreeNode(sdb_node);
+				removeTreeNodes(sdb_nodes);
 			}
 			catch (SPECCHIOClientException ex) {
 				
@@ -81,7 +122,7 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 		    			DataRemoverDialog.this,
 		    			scrollPane,
 		    			"Error",
-		    			JOptionPane.ERROR_MESSAGE
+		    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 		    		);
 		    }
 			
@@ -162,21 +203,21 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 			// paths can be null when collapsing tree event happened
 			if(paths != null) 
 			{
+				removing_thread st = new removing_thread();
 				for(int i = 0; i < paths.length; i++)
 				{
 					SpectralDataBrowser.SpectralDataBrowserNode sdb_node =
 							(SpectralDataBrowser.SpectralDataBrowserNode)paths[i].getLastPathComponent();
 					
 					if (sdb_node.getNode() instanceof database_node) {
-						JOptionPane.showMessageDialog(this, "The root node cannot be removed.", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(this, "The root node cannot be removed.", "Error", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 					} else {
-						removing_thread st = new removing_thread(sdb_node);
-						st.start();
+						
+						st.addNode(sdb_node);
 					}
 				}
+				st.start();
 			}
-
-
 				
 		}
 		
@@ -189,11 +230,12 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 	}
 	
 	
-	private void removeTreeNode(SpectralDataBrowser.SpectralDataBrowserNode sdb_node)
+	private void removeTreeNodes(ArrayList<SpectralDataBrowser.SpectralDataBrowserNode> sdb_nodes)
 	{
-		// remove the concerned tree item
-		DefaultTreeModel model = (DefaultTreeModel)sdb.tree.getModel();
-		model.removeNodeFromParent(sdb_node);
+
+		RemoveTreeNodes rtn = new RemoveTreeNodes(sdb_nodes);
+		rtn.execute();
+		
 	}
 	
 
