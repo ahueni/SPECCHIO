@@ -505,7 +505,7 @@ public class CampaignMetadataPanel extends JPanel implements KeyListener, ListDa
 					} else {
 						
 						// the user is trying to remove him- or herself; this will get very confusing so don't allow it
-						JOptionPane.showMessageDialog(owner, "You cannot remove yourself from the research group.", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(owner, "You cannot remove yourself from the research group.", "Error", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 						
 					}
 				}

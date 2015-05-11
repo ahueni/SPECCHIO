@@ -135,7 +135,7 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 				
 			} else {
 				
-				JOptionPane.showMessageDialog(this, "You must select a user to own this campaign", "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "You must select a user to own this campaign", "Error", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				
 			}
 			

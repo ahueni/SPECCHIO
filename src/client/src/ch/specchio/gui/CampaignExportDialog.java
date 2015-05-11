@@ -159,7 +159,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 	    			SPECCHIOApplication.getInstance().get_frame(),
 	    			ex.getMessage(),
 	    			"Error",
-	    			JOptionPane.ERROR_MESSAGE
+	    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 	    		);
 	    	}
 
@@ -246,7 +246,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 						SPECCHIOApplication.getInstance().get_frame(),
 						ex.getMessage(),
 						"Write error",
-						JOptionPane.ERROR_MESSAGE
+						JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 					);
 			}
 			catch (SPECCHIOClientException ex) {

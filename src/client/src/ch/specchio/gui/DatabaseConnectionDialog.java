@@ -92,7 +92,7 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 					"Your configuration file does not contain any accounts.\n" +
 					"You can still log-in now, but your log-in details will not be saved.\n" +
 					"If you need to create a new account, you can use the \"Create user account\" option.";
-			JOptionPane.showMessageDialog(this, message, "No accounts configured", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(this, message, "No accounts configured", JOptionPane.WARNING_MESSAGE, SPECCHIOApplication.specchio_icon);
 			descriptor_panel = getServerDescriptorPanel(null);
 		}
 		
