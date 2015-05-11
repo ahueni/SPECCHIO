@@ -180,7 +180,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 				}
 				catch (IOException ex) {
 					// write error; probably never happens
-					JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not copy to the clipboard", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not copy to the clipboard", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				}
 				
 			}
@@ -192,7 +192,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 				}
 				catch (IOException ex) {
 					// write error; probably never happens
-					JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not copy to the clipboard", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not copy to the clipboard", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 				}
 				
 			}
@@ -493,6 +493,11 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		return ids_matching_query;
 	}
 	
+	public void set_ids_matching_query(ArrayList<Integer> ids)
+	{
+		ids_matching_query = ids;
+	}
+	
 	public ArrayList<Integer> get_ids_matching_query_not_sorted()
 	{	
 		if (unsorted_spectrum_ids == null) // this is true for id selections not carried out in the spectral data browser
@@ -754,14 +759,14 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 					   				  this,
 					   				  "Published " + ids_matching_query.size() + " spectra with collection identifier " + collectionId + ".",
 					   				  "Publication successful",
-					   				  JOptionPane.INFORMATION_MESSAGE
+					   				  JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon
 					   				);
 				   		  } else {
 				   			  JOptionPane.showMessageDialog(
 				   					  this,
 				   					  "The server could not publish the collection, but did not specify a reason.",
 				   					  "Publication failed",
-				   					  JOptionPane.ERROR_MESSAGE
+				   					  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 				   					);
 				   		  }
 				   	  }
@@ -774,7 +779,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    					  this,
 	    					  message,
 	    					  "Publication not allowed",
-	    					  JOptionPane.ERROR_MESSAGE
+	    					  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 	    					 );
 	    			  
 	    		  }
@@ -797,7 +802,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      {
 	    	  try {
 	    		  
-	    		  MatlabAdaptedArrayList<Object> out = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Acquisition Time");
+	    		  MatlabAdaptedArrayList<Object> out = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Site ID");
 	    		  
 	    		  int x = 1;
 				// ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
