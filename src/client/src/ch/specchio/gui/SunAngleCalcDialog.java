@@ -20,6 +20,8 @@ import javax.swing.JTextField;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
+import org.joda.time.DateTime;
+
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.types.CelestialAngle;
@@ -258,7 +260,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						CelestialAngle angle = calculateSunAngle(
 								(Double)latitude.getValue(),
 								(Double)longitude.getValue(),
-								(Date)acquisitionTime.getValue()
+								((DateTime)acquisitionTime.getValue()).toDate()
 							);
 						
 						// build the list of identifiers to be updated
@@ -319,7 +321,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 			} else {
 				message.append("No longitude, latitude or acquisition time data found. No sun angles could be computed.");
 			}
-			JOptionPane.showMessageDialog(SunAngleCalcDialog.this, message, "Calculation complete", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(SunAngleCalcDialog.this, message, "Calculation complete", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
 			
 			pr.setVisible(false);
 		}
