@@ -27,6 +27,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.SpaceTypes;
 import ch.specchio.gui.GridbagLayouter;
+import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.Space;
@@ -380,7 +381,8 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 		}
 		else
 		{
-			JOptionPane.showMessageDialog(owner,"Cannot create output space because the input spectra have no wavelength reference. \nPlease set a sensor with the correct wvls in the metadata editor.");
+			JOptionPane.showMessageDialog(owner,"Cannot create output space because the input spectra have no wavelength reference. \nPlease set a sensor with the correct wvls in the metadata editor.", "Error",
+	    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 		}
 		
 		return output_spaces;
@@ -455,7 +457,7 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 			    			owner,
 			    			ex.getMessage(),
 			    			"Server error",
-			    			JOptionPane.ERROR_MESSAGE
+			    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			    		);
 			    }
 				catch (ModuleException ex) {
@@ -463,7 +465,7 @@ public abstract class Module extends ProcessingChainComponent  implements Module
 			    			owner,
 			    			ex.getMessage(),
 			    			"Module error",
-			    			JOptionPane.ERROR_MESSAGE
+			    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
 			    		);
 			    }
 			}

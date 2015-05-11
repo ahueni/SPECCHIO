@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.SpaceTypes;
+import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.MeasurementUnitFactory;
 import ch.specchio.spaces.Space;
@@ -73,7 +74,8 @@ public class PanelCorrFactorsSelection extends SpectralProcessingModule {
 		// only considering one space!
 		if(cal_spaces.length == 0) // return null if there was no calibration information
 		{
-			JOptionPane.showMessageDialog(null, "No calibration data found. \nCheck that a reference panel is set for the input spectra and \ncalibration data exists for the reference panel.");
+			JOptionPane.showMessageDialog(null, "No calibration data found. \nCheck that a reference panel is set for the input spectra and \ncalibration data exists for the reference panel.", "Error",
+	    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 			set_operation("No data found!");
 			return null;			
 		}
@@ -107,7 +109,8 @@ public class PanelCorrFactorsSelection extends SpectralProcessingModule {
 		}
 		else
 		{
-			JOptionPane.showMessageDialog(owner,"Cannot create output space because the input spectra have no wavelength reference. \nPlease set a sensor with the correct wvls in the metadata editor.");
+			JOptionPane.showMessageDialog(owner,"Cannot create output space because the input spectra have no wavelength reference. \nPlease set a sensor with the correct wvls in the metadata editor.", "Error",
+	    			JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
 		}
 		
 		return output_spaces;
