@@ -20,11 +20,12 @@ public interface CampaignDataLoaderListener {
 	/**
 	 * Called when the loader has processed all of its input data.
 	 * 
+	 * @param parsedFileCount		the total number of files parsed so far
 	 * @param num_files		the number of files successfully processed
 	 * @param num_spectra		the number of spectra successfully inserted
 	 * @param file_errors	a list of files that contained errors
 	 */
-	public void campaignDataLoaded(int num_files, int num_spectra, List<String> file_errors);
+	public void campaignDataLoaded(int parsedFileCount, int num_files, int num_spectra, List<String> file_errors);
 	
 	
 	/**

@@ -22,7 +22,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
 	ArrayList<String> file_errors = new ArrayList<String>();
 	private int successful_file_counter;
-
+	private int parsed_file_counter;
 
 	public SpecchioCampaignDataLoader(CampaignDataLoaderListener listener, SPECCHIOClient specchio_client) {
 		super(listener);
@@ -58,7 +58,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			specchio_client.refreshMetadataCategory("calibration");
 			
 			// tell the listener that we're finished
-			listener.campaignDataLoaded(successful_file_counter, spectrum_counter, this.file_errors);
+			listener.campaignDataLoaded(parsed_file_counter, successful_file_counter, spectrum_counter, this.file_errors);
 
 		}
 		catch (SPECCHIOClientException ex) {
@@ -82,14 +82,14 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		ArrayList<File> files, directories;
 		SpectralFile spec_file;
 		boolean is_garbage = parent_garbage_flag;
-		
+
 		// Garbage detection: all data that are under a folder called 'Garbage' will get an EAV garbage flag
 		// this allows users to load also suboptimal (i.e. garbage) data into the database, but easily exclude them from any selection
 		if(dir.getName().equals("Garbage"))
 		{
 			is_garbage = true; // marks this directory as the one recognised as garbage
 		}
-		
+
 		// get the names of all files in dirs in the current dir
 		String[] whole_content = dir.list();
 		if (whole_content == null) {
@@ -104,7 +104,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				System.out.println("Filtered .<file>");
 			}
 		}
-			
+
 		ArrayList<String> content = new ArrayList<String>();
 
 		// build content without unwanted files
@@ -124,9 +124,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		while(li.hasNext()) {
 			// here we construct the absolute pathname for each object in
 			// the directory
-				
+
 			File f = new File(dir.toString() + File.separator + li.next());
-			
+
 			if (f.isDirectory())
 			{
 				directories.add(f);
@@ -143,7 +143,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		while(dir_li.hasNext()) 
 		{
 			File curr_dir = dir_li.next();
-			
+
 			// use the names of the first hierarchy (the one below
 			// the root) to show in progress report
 			if (parent_id == root_hierarchy_id) {
@@ -159,23 +159,32 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		// load each file using the spectral
 		// file loader
 		if (files.size() > 0) {	
-			
-			
+
+
 
 			// get the spectral file loader needed for this directory
-			sfl = get_spectral_file_loader(files);
+			// sfl = get_spectral_file_loader(files);
 
-			if (sfl != null) {
+
+
+			ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();			
+
+			// iterate over the files
+			ListIterator<File> file_li = files.listIterator();
+
+			while(file_li.hasNext()) {
+				File file = file_li.next();
+
+				ArrayList<File> this_file = new ArrayList<File>(); // overkill ... change to single object later ...
+
+				this_file.add(file);
 				
-				ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();			
 				
-				// iterate over the files
-				ListIterator<File> file_li = files.listIterator();
-				
-				while(file_li.hasNext()) {
-					File file = file_li.next();
-					
-					
+
+				sfl = get_spectral_file_loader(this_file);
+
+				if (sfl != null) {
+
 					try {
 
 						// the loader can return null, e.g. if ENVI files are
@@ -188,16 +197,38 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 							if(spec_file.getFileErrorCode() != SpectralFile.UNRECOVERABLE_ERROR)
 							{
 								spec_file.setGarbageIndicator(is_garbage);
-								
+
 								// add to file list
 								spectral_file_list.add(spec_file);
 
 							}
+							else
+							{
+								// serious error
+								// add the message to the list of all errors
+								// concatenate all errors into one message
+								StringBuffer buf = new StringBuffer("Issues found in " + spec_file.getFilename() + ":");
+
+								for (SpecchioMessage error : spec_file.getFileErrors()) {
+
+									buf.append("\n\t");
+
+									buf.append(error.toString());
+								}
+
+								buf.append("\n");
+
+								// add the message to the list of all errors
+								this.file_errors.add(buf.toString());								
+								
+							}
+							file_counter++;
 
 						}
-								
-						file_counter++;
-							
+
+
+						parsed_file_counter++;
+
 						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
 					}
 					catch (IOException ex) {
@@ -207,41 +238,45 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						listener.campaignDataLoadError(file + ": " + ex.getMessage());
 					}
 				}
-				
+			}
+			
+			if (spectral_file_list.size() > 0)
+			{
+
 				// check existence of all spectral files
-				SpectralFiles sfs = new SpectralFiles(); // actually should use the class SpectralFiles here, but that one does not work?!?!?!?!
-				
+				SpectralFiles sfs = new SpectralFiles();
+
 				ArrayList<SpectralFile> spectral_light_file_list = new ArrayList<SpectralFile>();
-				
+
 				// create lightweight objects
 				ListIterator<SpectralFile> sf_li = spectral_file_list.listIterator();
-				
+
 				while(sf_li.hasNext()) {
 					spec_file = sf_li.next();		
 					SpectralFile light_clone = new SpectralFile(spec_file);
 					light_clone.setHierarchyId(parent_id);
 					light_clone.setCampaignId(campaign.getId());
 					light_clone.setCampaignType(campaign.getType());	
-					
+
 					spectral_light_file_list.add(light_clone);
 				}
-				
+
 				sfs.setSpectral_file_list(spectral_light_file_list);
 				sfs.setCampaignId(campaign.getId());
 				sfs.setCampaignType(campaign.getType());	
-				
+
 				boolean[] exists_array = specchio_client.spectralFilesExist(sfs);
-				
-				
+
+
 				// insert spectral files
-				
+
 				sf_li = spectral_file_list.listIterator();
-				
+
 				int index = 0;
-				
+
 				while(sf_li.hasNext()) {
 					spec_file = sf_li.next();		
-					
+
 					if (exists_array[index] == false)
 					{
 
@@ -278,23 +313,25 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
 
-						
-					
+
+
 					}
-					
+
 					index = index + 1;
-				
+
 				}
-				
-			} else {
-				listener.campaignDataLoadError(
-						"Unknown file types in directory " + dir.toString() + ". \n" +
-						"Data will not be loaded.\n" +
-						"Please check the file types and refer to the user guide for a list of supported files."
-					);
 			}
-		}
-		
+
+		} 
+//		else {
+//			listener.campaignDataLoadError(
+//					"Unknown file types in directory " + dir.toString() + ". \n" +
+//							"Data will not be loaded.\n" +
+//							"Please check the file types and refer to the user guide for a list of supported files."
+//					);
+//		}
+
+
 	}
 	
 	
@@ -415,25 +452,48 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
 				file_input = new FileInputStream(files.get(0));
 				data_in = new DataInputStream(file_input);
-				String line;
+				String line, line2, line3, line4;
 	
 				// use buffered stream to read lines
 				BufferedReader d = new BufferedReader(
 						new InputStreamReader(data_in));
 				line = d.readLine();
+				line2 = d.readLine();
+				line3 = d.readLine();
+				line4 = d.readLine();
+				
 	
 				// cx for JAZ (Ocean Optics files)
 				if (exts.contains("txt") && "SpectraSuite Data File".equals(line)) {
 					loader = new JAZ_FileLoader();
 				}
 	
-				// cx for OO (Ocean Optics files)
+				// cx for SpectraSuite OO (Ocean Optics files)
 				else if (exts.contains("csv")
 						&& ("SpectraSuite Data File".equals(line) ||
 								"SpectraSuite Data File\t".equals(line))) {
 					loader = new OO_FileLoader();
 	
 				}
+				
+				
+				// cx for Microtops TXT file
+				else if ((exts.contains("csv") || exts.contains("TXT"))
+						&& line.substring(0, 4).equals("REC#")
+						&& line2.equals("FIELDS:")
+						) {
+					loader = new Microtops_FileLoader();
+	
+				}
+								
+				
+				// cx for Ocean View TXT (Ocean Optics files produced by Ocean View Software)
+				else if (exts.contains("txt")
+						&& (line.contains("Data from")) 
+						&& (line.contains("Node"))) {
+					loader = new OceanView_FileLoader();
+	
+				}				
 	
 				// cx for COST OO CSV file format
 				else if (exts.contains("csv")
@@ -443,6 +503,8 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 					loader = new COST_OO_FileLoader();
 	
 				}
+				
+				
 	
 				// cx for TXT (ENVI format) files
 				else if (exts.contains("txt") || exts.contains("TXT")) {
@@ -518,6 +580,8 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (MetaParameterFormatException e) {
+			e.printStackTrace();
+		} catch (org.joda.time.IllegalFieldValueException e) {
 			e.printStackTrace();
 		}
 		
