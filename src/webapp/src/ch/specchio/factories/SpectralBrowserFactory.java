@@ -6,7 +6,6 @@ import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 
-import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.types.campaign_node;
 import ch.specchio.types.database_node;
 import ch.specchio.types.hierarchy_node;
