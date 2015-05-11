@@ -9,6 +9,7 @@ import javax.annotation.security.*;
 
 import ch.specchio.constants.UserRoles;
 import ch.specchio.factories.MetadataFactory;
+import ch.specchio.factories.SPECCHIOFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.jaxb.XmlIntegerAdapter;
@@ -427,7 +428,7 @@ public class MetadataService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public MeasurementUnit get_measurement_unit_from_coding(@PathParam("coding") int coding) throws SPECCHIOFactoryException {
 		
-		MeasurementUnit mu = MetadataFactory.getDataCache().get_measurement_unit(coding);
+		MeasurementUnit mu = SPECCHIOFactory.getDataCache().get_measurement_unit(coding);
 		
 		return mu;
 	}	
