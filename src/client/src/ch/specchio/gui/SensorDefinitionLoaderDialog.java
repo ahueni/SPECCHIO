@@ -118,7 +118,8 @@ public class SensorDefinitionLoaderDialog extends JFrame implements ActionListen
 				specchio_client.loadSensor(fis);
 				 
 				// message box to announce completion
-				JOptionPane.showMessageDialog(null,"Sensor file successfully processed.");
+				JOptionPane.showMessageDialog(null,"Sensor file successfully processed.", "Info",
+		   				  JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
 			}
 			catch (IOException ex) {
 		  		ErrorDialog error = new ErrorDialog(

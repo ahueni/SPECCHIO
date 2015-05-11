@@ -15,8 +15,9 @@ public class SPECCHIOApplication {
 	private static JFrame frame;
 	private static SPECCHIOApplication instance = null;
 	private SPECCHIOClient client = null;
-	public static String version = "SPECCHIO V3.1.4";
-	public static Float min_db_version = 3.1F;
+	public static String version = "SPECCHIO V3.2.0";
+	public static Float min_db_version = 3.2F;
+	public static ImageIcon specchio_icon;
 	
 	/* progress report in the operations pane */
 	static ProgressReportTextPanel p_rep = null;
@@ -48,9 +49,9 @@ public class SPECCHIOApplication {
 
 		JPanel pane = new JPanel(new BorderLayout());
 		OperationsPane op = OperationsPane.getInstance();
-		ImageIcon i =new ImageIcon(SPECCHIOClientFactory.getApplicationConfFilename("SPECCHIO_Icon_Mid_Res_small.jpg"));
+		specchio_icon =new ImageIcon(SPECCHIOClientFactory.getApplicationConfFilename("SPECCHIO_Icon_Mid_Res_small.jpg"));
 		  
-		JLabel test = new JLabel("Spectral Database System", i, JLabel.CENTER);
+		JLabel test = new JLabel("Spectral Database System", specchio_icon, JLabel.CENTER);
 		test.setVerticalTextPosition(JLabel.BOTTOM);
 		test.setHorizontalTextPosition(JLabel.CENTER);
 		test.setOpaque(true);
