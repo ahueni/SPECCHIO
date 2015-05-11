@@ -69,19 +69,19 @@ public class SpectrumService extends SPECCHIOService {
 	/**
 	 * Delete target-reference links.
 	 * 
-	 * @param target_id	the target identifier
+	 * @param eav_id		the eav_id identifier
 	 * 
 	 * @return the number of links deleted
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
 	@GET
-	@Path("deleteTargetReferenceLinks/{target_id: [0-9]+}")
+	@Path("deleteTargetReferenceLinks/{eav_id: [0-9]+}")
 	@Produces(MediaType.APPLICATION_XML)
-	public XmlInteger deleteTargetReferenceLinks(@PathParam("target_id") int target_id)throws SPECCHIOFactoryException {
+	public XmlInteger deleteTargetReferenceLinks(@PathParam("eav_id") int eav_id)throws SPECCHIOFactoryException {
 		
 		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
-		int n = factory.deleteTargetReferenceLinks(target_id);
+		int n = factory.deleteTargetReferenceLinks(eav_id);
 		factory.dispose();
 		
 		return new XmlInteger(n);
@@ -365,16 +365,16 @@ public class SpectrumService extends SPECCHIOService {
 	 * @throws SPECCHIOFactoryException	database error
 	 */
 	@POST
-	@Path("insertTargetReferenceLinks")
+	@Path("insertClosestTargetReferenceLink")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public XmlInteger insertTargetReferenceLinks(SpectrumIdsDescriptor id_d) throws SPECCHIOFactoryException {
+	public XmlInteger insertClosestTargetReferenceLink(SpectrumIdsDescriptor id_d) throws SPECCHIOFactoryException {
 		
 		int num = 0;
 		if (id_d.getSpectrumIds1().size() > 0) {
 			SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 			try {
-				num = factory.insertTargetReferenceLinks(id_d.getSpectrumId(1, 0), id_d.getSpectrumIds2());
+				num = factory.insertTargetReferenceLinks(id_d.getSpectrumId(1, 0), id_d.getSpectrumIds2(), true);
 			}
 			catch (IllegalArgumentException ex) {
 				throw new BadRequestException(ex);
@@ -387,7 +387,38 @@ public class SpectrumService extends SPECCHIOService {
 		return new XmlInteger(num);
 	}
 		
-	
+	/**
+	 * Insert links from a target to a set of references.
+	 * 
+	 * @param id_d	a spectrum identifier descriptor with the target in the first list and the references in the second list
+	 * 
+	 * @return the number of links successfully created
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@POST
+	@Path("insertTargetReferenceLinks")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger insertTargetReferenceLinks(SpectrumIdsDescriptor id_d) throws SPECCHIOFactoryException {
+		
+		int num = 0;
+		if (id_d.getSpectrumIds1().size() > 0) {
+			SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			try {
+				num = factory.insertTargetReferenceLinks(id_d.getSpectrumId(1, 0), id_d.getSpectrumIds2(), false);
+			}
+			catch (IllegalArgumentException ex) {
+				throw new BadRequestException(ex);
+			}
+			finally {
+				factory.dispose();
+			}
+		}
+		
+		return new XmlInteger(num);
+	}
+			
 	
 	/**
 	 * Load a Space object from the database.
@@ -434,6 +465,37 @@ public class SpectrumService extends SPECCHIOService {
 		return new XmlInteger(1);
 		
 	}
+	
+	/**
+	 * Remove a sub-hierarchy from the database.
+	 * 
+	 * @param d		structure holding the identifiers of the spectra to be removed
+	 * 
+	 * @return 1
+	 * 
+	 * @throws SPECCHIOFactoryException	the spectra could not be removed
+	 */
+	@POST
+	@Path("removeSpectra")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger removeSpectra(SpectrumIdsDescriptor d) throws SPECCHIOFactoryException {
+		
+//		@GET
+//		@Produces(MediaType.APPLICATION_XML)
+//		@Path("removeCampaigns/{campaign_id: [0-9]+}")
+//		public XmlInteger removeCampaigns(
+//				@PathParam("campaign_type") String campaign_type,
+//				@PathParam("campaign_id") int campaign_id
+//			) throws SPECCHIOFactoryException {
+			
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			factory.removeSpectra(d.getSpectrumIds1(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
+			factory.dispose();
+		
+		return new XmlInteger(1);
+		
+	}		
 	
 	
 	/**
