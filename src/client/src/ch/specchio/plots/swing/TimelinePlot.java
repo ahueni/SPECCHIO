@@ -30,6 +30,7 @@ import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.Crosshair;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.general.SeriesException;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
@@ -147,12 +148,28 @@ public class TimelinePlot extends JPanel implements ListSelectionListener, Chart
 				true,               // generate tooltips?
 				false               // generate URLs?
 				);		
+		
+		XYLineAndShapeRenderer renderer1 = new XYLineAndShapeRenderer(true, false);
+		
+		renderer1.setSeriesPaint(0, Color.red);
+//		renderer1.setSeriesStroke(0, new BasicStroke(4.0f,
+//                BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
+//		Shape arg1 = new Shape();
+//
+//		renderer1.setSeriesShape(0, arg1);
+//		
+		//renderer1.setShapesVisible(true);
+		renderer1.setSeriesShapesVisible(3, true);
+		renderer1.setSeriesShapesVisible(0, true);
+		
+		
+		//renderer1.setS
 
         final XYPlot plot = chart.getXYPlot();
         plot.setBackgroundPaint(Color.WHITE);
         plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
         plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
-	
+        plot.setRenderer(renderer1);
 		
         panel = new ChartPanel(chart);
 		panel.setFillZoomRectangle(true);
