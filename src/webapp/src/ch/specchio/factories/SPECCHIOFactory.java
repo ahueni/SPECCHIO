@@ -232,6 +232,7 @@ public class SPECCHIOFactory {
 	/**
 	 * Garbage collection.
 	 */
+	@Override
 	public void finalize() {
 		
 		this.dispose();
