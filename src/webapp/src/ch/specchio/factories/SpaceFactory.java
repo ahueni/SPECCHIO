@@ -605,72 +605,128 @@ public class SpaceFactory extends SPECCHIOFactory {
 		
 		ReferenceSpaceStruct rss = new ReferenceSpaceStruct();
 		
+		SQL_StatementBuilder SQL = getStatementBuilder();
+//		String query;
+		ResultSet rs;
+		
+//
+//			// check if we are linking to spectralon (radiance) or irradiance (cosine receptor) data
+//			query = "select counet(*)" +
+//					" from spectrum_datalink where spectrum_id in (" + SQL.conc_ids(input_ids) + ") " +
+//					"and datalink_type_id = (select datalink_type_id from datalink_type where name = ?)";
+//			PreparedStatement pstmt = SQL.prepareStatement(query);
+//
+//			int spectralon_no_of_rows = 0;	
+//			pstmt.setString(1, "Spectralon data");
+//			rs = pstmt.executeQuery();
+//			while (rs.next()) {
+//				spectralon_no_of_rows = rs.getInt(1);
+//			}
+//
+//			int cosine_no_of_rows = 0;
+//			pstmt.setString(1, "Cosine receptor data");
+//			rs = pstmt.executeQuery();
+//			while (rs.next()) {
+//				cosine_no_of_rows = rs.getInt(1);
+//			}
+//			
+//			rss.is_spectralon = spectralon_no_of_rows > 0 && cosine_no_of_rows == 0;
+//			
+//			pstmt.close();
+//			
+//			// build the reference table
+//			ArrayList<Integer> spectralon_spectra_ids = new ArrayList<Integer>();
+//			Statement stmt = SQL.createStatement();
+//			String datalink = (rss.is_spectralon)? "Spectralon data"  : "Cosine receptor data";
+//			query = "select linked_spectrum_id, spectrum_id" +
+//					" from spectrum_datalink where spectrum_id in (" + SQL.conc_ids(input_ids) + ") " +
+//					"and datalink_type_id = (select datalink_type_id from datalink_type where name = '" + datalink + "')";
+//			rs = stmt.executeQuery(query);
+//			while (rs.next()) 
+//			{
+//				Integer linked_id = rs.getInt(1);
+//				Integer spectrum_id = rs.getInt(2);
+//
+//				// build hash table
+//				rss.spectrum_reference_table.put(spectrum_id, linked_id);
+//				rss.spectrum_ids.add(spectrum_id);
+//				spectralon_spectra_ids.add(linked_id);	
+//				
+//			}
+//			rs.close();
+//			stmt.close();
+		
+		ArrayList<Integer> ref_ids = new ArrayList<Integer>();
+		
+		// get eavs of all reference links
+		MetadataFactory MF = new MetadataFactory(this);
+		
+		
+		String query = "select sxe.spectrum_id, eav.spectrum_id from eav eav, spectrum_x_eav sxe where eav.attribute_id = " + getAttributes().get_attribute_id("Reference Data Link") +
+				" and sxe.spectrum_id in " + "(" + SQL.conc_ids(input_ids) + ") and eav.eav_id = sxe.eav_id";
+		
+		Statement stmt;
 		try {
-			
-			SQL_StatementBuilder SQL = getStatementBuilder();
-			String query;
-			ResultSet rs;
-			
+			stmt = SQL.createStatement();
 
-			// check if we are linking to spectralon (radiance) or irradiance (cosine receptor) data
-			query = "select count(*)" +
-					" from spectrum_datalink where spectrum_id in (" + SQL.conc_ids(input_ids) + ") " +
-					"and datalink_type_id = (select datalink_type_id from datalink_type where name = ?)";
-			PreparedStatement pstmt = SQL.prepareStatement(query);
-
-			int spectralon_no_of_rows = 0;	
-			pstmt.setString(1, "Spectralon data");
-			rs = pstmt.executeQuery();
-			while (rs.next()) {
-				spectralon_no_of_rows = rs.getInt(1);
-			}
-
-			int cosine_no_of_rows = 0;
-			pstmt.setString(1, "Cosine receptor data");
-			rs = pstmt.executeQuery();
-			while (rs.next()) {
-				cosine_no_of_rows = rs.getInt(1);
-			}
-			
-			rss.is_spectralon = spectralon_no_of_rows > 0 && cosine_no_of_rows == 0;
-			
-			pstmt.close();
-			
-			// build the reference table
-			ArrayList<Integer> spectralon_spectra_ids = new ArrayList<Integer>();
-			Statement stmt = SQL.createStatement();
-			String datalink = (rss.is_spectralon)? "Spectralon data"  : "Cosine receptor data";
-			query = "select linked_spectrum_id, spectrum_id" +
-					" from spectrum_datalink where spectrum_id in (" + SQL.conc_ids(input_ids) + ") " +
-					"and datalink_type_id = (select datalink_type_id from datalink_type where name = '" + datalink + "')";
 			rs = stmt.executeQuery(query);
 			while (rs.next()) 
 			{
-				Integer linked_id = rs.getInt(1);
-				Integer spectrum_id = rs.getInt(2);
-
+				Integer spectrum_id = rs.getInt(1);
+				Integer linked_id = rs.getInt(2);
+	
 				// build hash table
 				rss.spectrum_reference_table.put(spectrum_id, linked_id);
 				rss.spectrum_ids.add(spectrum_id);
-				spectralon_spectra_ids.add(linked_id);	
+				ref_ids.add(linked_id);	
 				
 			}
-			rs.close();
-			stmt.close();
+			rs.close();		
+			
+			Integer measurement_unit_id = 0;
+			
+			// check if this is cosine or equivalent to target geometry
+			query = "select measurement_unit_id from spectrum where spectrum_id in " + "(" + SQL.conc_ids(input_ids.get(0)) + ") ";			
+			rs = stmt.executeQuery(query);
+			while (rs.next()) 
+			{
+				measurement_unit_id = rs.getInt(1);
 
+			}
+			rs.close();
+			stmt.close();	
+			
+			if (measurement_unit_id == MeasurementUnit.Irradiance)
+			{
+				rss.is_spectralon = false;
+			}
+			else
+			{
+				rss.is_spectralon = true;
+			}
+			
+//			
+//			ArrayList<MetaParameter> mps = MF.getMetaParameterValues(input_ids, getAttributes().get_attribute_id("Reference Data Link"), false);
+//			
+//			for(MetaParameter mp : mps)
+//			{
+//				ref_ids.add((Integer) mp.getValue());				
+//			}
+//			
+	
 			rss.reference_space = null;
-			if (spectralon_spectra_ids.size() > 0) {
-				ArrayList<Space> spaces = getSpaces(spectralon_spectra_ids);
+			if (ref_ids.size() > 0) {
+				ArrayList<Space> spaces = getSpaces(ref_ids);
 				if (spaces.size() == 1) {
 					rss.reference_space = (SpectralSpace)spaces.get(0);
 					loadSpace(rss.reference_space);
 				}
 			}
-		}
-		catch (SQLException ex) {
-			// database error
-			throw new SPECCHIOFactoryException(ex);
-		}
+		
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		
 		return rss;
 		
