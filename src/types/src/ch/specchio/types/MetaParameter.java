@@ -10,7 +10,7 @@ import ch.specchio.jaxb.XmlMetaParameterValueAdapter;
  * This class represents a metadata parameter.
  */
 @XmlRootElement(name="meta_parameter")
-@XmlSeeAlso({MetaDate.class,MetaDocument.class,MetaFile.class,MetaImage.class,MetaMatrix.class,MetaSimple.class,MetaTaxonomy.class})
+@XmlSeeAlso({MetaDate.class,MetaDocument.class,MetaFile.class,MetaImage.class,MetaMatrix.class,MetaSimple.class,MetaTaxonomy.class,MetaLink.class})
 public abstract class MetaParameter {
 
 	private String default_storage_field = null;
@@ -225,6 +225,9 @@ public abstract class MetaParameter {
 		
 		if (attr.getDefaultStorageField().equals("datetime_val") && MetaDate.supportsValue(meta_value)) {
 			mp = new MetaDate(attr, meta_value);
+		}
+		else if (attr.getDefaultStorageField().equals("spectrum_id") && MetaLink.supportsValue(meta_value)) {
+			mp = new MetaLink(attr, meta_value);
 		} else if (MetaImage.supportsValue(meta_value)) {
 			mp = new MetaImage(attr, meta_value);
 		} else if (MetaDocument.supportsValue(meta_value)) {

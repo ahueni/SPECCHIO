@@ -55,7 +55,7 @@ public class MetaSimple extends MetaParameter {
 	public void setEmptyValue() {
 		
 		try {
-			if (getDefaultStorageField().equals(attribute.INT_VAL)) setValue(new Integer(0));
+			if (getDefaultStorageField().equals(attribute.INT_VAL) || getDefaultStorageField().equals(attribute.SPECTRUM_VAL)) setValue(new Integer(0));
 			else if (getDefaultStorageField().equals(attribute.DOUBLE_VAL)) setValue(new Double(0));
 			else if (getDefaultStorageField().equals(attribute.STRING_VAL)) setValue(new String());
 			else setValue(null);
@@ -113,7 +113,21 @@ public class MetaSimple extends MetaParameter {
 			} else {
 				throw new MetaParameterFormatException("Cannot assign object of type " + value.getClass() + " to a floating point parameter.");
 			}
+		} else if (attribute.SPECTRUM_VAL.equals(getDefaultStorageField())) {
 			
+			if (value instanceof Number) {
+				super.setValue(((Number)value).intValue());
+			} else if (value instanceof String) {
+				try {
+					super.setValue(Integer.parseInt((String)value));
+				}
+				catch (NumberFormatException ex) {
+					throw new MetaParameterFormatException(ex);
+				}
+			} else {
+				throw new MetaParameterFormatException("Cannot assign object of type " + value.getClass() + " to an integer point parameter.");
+			}
+				
 		} else if (attribute.STRING_VAL.equals(getDefaultStorageField())) {
 			
 			if (value instanceof String) {
