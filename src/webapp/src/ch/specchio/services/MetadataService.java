@@ -173,7 +173,7 @@ public class MetadataService extends SPECCHIOService {
 		}
 		
 		
-		List<MetaParameter> mp_list =  factory.getMetaParameterValues(ms_d.getIds(), ms_d.getAttribute_id(), false);
+		List<MetaParameter> mp_list =  factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), false);
 		factory.dispose();
 
 		return new XmlInteger(mp_list.size());
@@ -228,7 +228,7 @@ public class MetadataService extends SPECCHIOService {
 			ms_d.setAttribute_id(factory.getAttributes().get_attribute_id(ms_d.getAttributeName()));			
 		}		
 		
-		List<MetaParameter> mp_list = factory.getMetaParameterValues(ms_d.getIds(), ms_d.getAttribute_id(), false);
+		List<MetaParameter> mp_list = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), false);
 		factory.dispose();
 		
 		return mp_list.toArray(new MetaParameter[mp_list.size()]);
