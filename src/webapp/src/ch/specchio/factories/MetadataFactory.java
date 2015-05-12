@@ -7,10 +7,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import com.google.common.base.Stopwatch;
-
 import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.spaces.Space;
@@ -426,7 +422,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	
 	
 	/**
-	 * Get the values of a given meta-parameter for a list of spectrum identifiers.
+	 * Get the meta-parameters of a given attribute for a list of spectrum identifiers.
 	 * 
 	 * @param id		the spectrum identifiers for which to retrieve metadata
 	 * @param attrName	the attribute name
@@ -436,9 +432,17 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 *
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public ArrayList<MetaParameter> getMetaParameterValues(ArrayList<Integer> ids, Integer attrId, boolean distinct) throws SPECCHIOFactoryException {
+	public ArrayList<MetaParameter> getMetaParameters(ArrayList<Integer> ids, Integer attrId, boolean distinct) throws SPECCHIOFactoryException {
 		
-		ArrayList<MetaParameter> mp_list = new ArrayList<MetaParameter>();
+		ArrayList<MetaParameter> mp_list = new ArrayList<MetaParameter>(ids.size());
+		
+		// add empty metaparameters where no values were found
+		for(int i=0 ; i < ids.size() ; i++)
+		{
+			mp_list.add(MetaParameter.newInstance());
+		}
+
+				
 		
 		try {
 			// create SQL-building objects
@@ -493,29 +497,43 @@ public class MetadataFactory extends SPECCHIOFactory {
 //						"where eav.attribute_id = "  + Integer.toString(attrId) + " and eav.eav_id = efc.eav_id order by efc.id";
 				
 				
-				String query = "select " + ((distinct)? "distinct " : "") + SQL.prefix("eav", attr.getDefaultStorageField()) + ", eav.eav_id " +
-						"from eav, " + primary_x_eav_tablename + " where " + primary_id_name + " in (" + conc_ids + ") and " +
-						primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = "  + Integer.toString(attrId) + " order by FIELD (" + primary_id_name + ", "+ conc_ids +")";
+				String query = "select " + ((distinct)? "distinct " : "") + SQL.prefix("eav", attr.getDefaultStorageField()) + ", eav.eav_id, " + SQL.prefix(primary_x_eav_tablename, primary_id_name) +
+						" from " + primary_x_eav_tablename + ", eav eav  where " + SQL.prefix(primary_x_eav_tablename, primary_id_name) + " in (" + conc_ids + ") and " +
+						primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = "  + Integer.toString(attrId) + " order by FIELD (" + SQL.prefix(primary_x_eav_tablename, primary_id_name) + ", "+ conc_ids +")";
+
+				
 				
 				ResultSet rs = stmt.executeQuery(query);
+
 				while (rs.next()) 
 				{
 					Object o = rs.getObject(1);
 					Integer id = rs.getInt(2);
+					Integer spectrum_id = rs.getInt(3);
+					
+					// get position of this spectrum in the list
+					int ind = ids.indexOf(spectrum_id);
+					
+					
 					if (o != null) {
 						try {
 							MetaParameter mp = MetaParameter.newInstance(attr);
 							mp.setEavId(id);
 							mp.setValue(o);
-							mp_list.add(mp);
+							mp_list.set(ind, mp);
 						}
 						catch (MetaParameterFormatException ex) {
 							// should never happen but we'll log an error just in case
 							System.err.println("Metaparameter format exception when converting " + attr.getDefaultStorageField() + " attribute.");
 						}
 					}
+
 				}
-				rs.close();						
+				rs.close();		
+				
+				
+
+				
 				
 //				stopTime = System.currentTimeMillis();
 //				elapsedTime = stopTime - startTime;
@@ -559,7 +577,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 		// retrieve the policy objects and convert to strings
 		ArrayList<String> policies = new ArrayList<String>();
 		if(spectra_with_policies.size() > 0) {
-			for (Object value : getMetaParameterValues(spectra_with_policies, data_policy_attr_id, true)) {
+			for (Object value : getMetaParameters(spectra_with_policies, data_policy_attr_id, true)) {
 				policies.add(((MetaParameter) value).getValue().toString());
 			}
 		}
