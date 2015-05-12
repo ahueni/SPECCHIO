@@ -3,6 +3,7 @@ package ch.specchio.factories;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 import ch.specchio.types.Campaign;
 
@@ -167,24 +168,43 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	/**
 	 * Remove a campaign from the database.
 	 * 
-	 * @param id		the identifier of the campaing to be removed
-	 * @param is_admin	is the requesting user an administator?
+	 * @param id		the identifier of the campaign to be removed
+	 * @param is_admin	is the requesting user an administrator?
 	 * 
 	 * @throws SPECCHIOFactoryException	the campaign could not be removed
 	 */
 	public abstract void removeCampaign(int campaign_id, boolean is_admin) throws SPECCHIOFactoryException;
 	
+	/**
+	 * Remove a campaign from the database.
+	 * 
+	 * @param ids		the identifiers of the campaigns to be removed
+	 * @param is_admin	is the requesting user an administrator?
+	 * 
+	 * @throws SPECCHIOFactoryException	the campaign could not be removed
+	 */
+	public abstract void removeCampaigns(ArrayList<Integer> ids, boolean is_admin) throws SPECCHIOFactoryException;
+	
 	
 	/**
-	 * Remove a whole sub-heirarchy from the database.
+	 * Remove a whole sub-hierarchy from the database.
 	 * 
 	 * @param hierarchy_id	the identifier of the node at the root of the sub-hierarchy
-	 * @param name			the name of the node
-	 * @param is_admin		is the requesting user an administator?
+	 * @param is_admin		is the requesting user an administrator?
 	 * 
 	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be remove
 	 */
-	public abstract void removeHierarchyNode(int hierarchy_id, String name, boolean is_admin) throws SPECCHIOFactoryException;
+	public abstract void removeHierarchyNode(int hierarchy_id, boolean is_admin) throws SPECCHIOFactoryException;
+	
+	/**
+	 * Remove a whole sub-hierarchies from the database.
+	 * 
+	 * @param ids			the identifiers of the nodes at the root of the sub-hierarchies
+	 * @param is_admin		is the requesting user an administrator?
+	 * 
+	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be remove
+	 */
+	public abstract void removeHierarchyNodes(ArrayList<Integer> ids, boolean is_admin) throws SPECCHIOFactoryException;	
 	
 	
 	/**
