@@ -632,7 +632,7 @@ public class EAVDBServices extends Thread {
 		
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		
-		String query = "select " + primary_x_eav_tablename + ".eav_id from " + this.primary_x_eav_tablename + " " + primary_x_eav_tablename + ", eav eav where " + this.primary_id_name + "= " + frame_id + " and eav.eav_id = " + primary_x_eav_tablename + ".eav_id"; 
+		String query = "select " + primary_x_eav_tablename + ".eav_id from " + this.primary_x_eav_tablename + " " + primary_x_eav_tablename + ", eav eav where " + SQL.prefix(primary_x_eav_tablename, this.primary_id_name) + "= " + frame_id + " and eav.eav_id = " + primary_x_eav_tablename + ".eav_id"; 
 		
 		if(exclusive_attribute_ids.size() > 0)
 			query = query + " and attribute_id not in (" + SQL.conc_ids(exclusive_attribute_ids) + ")";
@@ -1133,14 +1133,14 @@ public class EAVDBServices extends Thread {
 	 */
 	 public MetaParameter load_metaparameter(int eav_id) throws SQLException {
 		 
-		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
+		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, eav.spectrum_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
 		"eav.eav_id = " + Integer.toString(eav_id) + " and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
 
 		Statement stmt = SQL.createStatement();
 		ResultSet rs = stmt.executeQuery(query);
 			
 		Object int_val, double_val, string_val;
-		Long taxonomy_id;
+		Long taxonomy_id, spectrum_id;
 		Object datetime_val;
 		Blob binary_val;
 		
@@ -1153,8 +1153,10 @@ public class EAVDBServices extends Thread {
 			binary_val = rs.getBlob(ind++);
 			datetime_val =  rs.getString(ind++);
 			taxonomy_id = rs.getLong(ind++);
+			spectrum_id = rs.getLong(ind++);
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
+			if(spectrum_id == 0) spectrum_id = null;
 			
 			//String attribute_name = rs.getString(ind++);
 			String unit_name = rs.getString(ind++);
@@ -1194,18 +1196,18 @@ public class EAVDBServices extends Thread {
 				}
 				else if (datetime_val != null)
 				{
-//					Date d = new Date();
-//					d.setTime(((Timestamp) datetime_val).getTime());
 					DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT + ".S").withZoneUTC();
-
-					DateTime d = formatter.parseDateTime((String) datetime_val); 
-					
+					DateTime d = formatter.parseDateTime((String) datetime_val); 					
 					mp = MetaParameter.newInstance(attr, d);
 				}
 				else if (taxonomy_id != null)
 				{
 					mp = MetaParameter.newInstance(attr, taxonomy_id);
-				}			
+				}		
+				else if (spectrum_id != null)
+				{
+					mp = MetaParameter.newInstance(attr, spectrum_id);
+				}							
 				else
 				{
 					mp = MetaParameter.newInstance(attr, null);
@@ -1235,7 +1237,7 @@ public class EAVDBServices extends Thread {
 	public void metadata_bulk_loader(Metadata md, ArrayList<Integer> metaparameter_ids) throws SQLException
 	{
 
-		String query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, eav.binary_val, eav.datetime_val, eav.taxonomy_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
+		String query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, eav.binary_val, eav.datetime_val, eav.taxonomy_id, eav.spectrum_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
 		"eav.eav_id in (" + SQL.conc_ids(metaparameter_ids) + ") and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
 		
 
@@ -1243,7 +1245,7 @@ public class EAVDBServices extends Thread {
 		ResultSet rs = stmt.executeQuery(query);
 		
 		Object int_val, double_val, string_val, datetime_val;
-		Long taxonomy_id;
+		Long taxonomy_id, spectrum_id;
 		Blob binary_val;
 		
 		while (rs.next()) {	
@@ -1258,8 +1260,10 @@ public class EAVDBServices extends Thread {
 			binary_val = rs.getBlob(ind++);
 			datetime_val = rs.getString(ind++);
 			taxonomy_id = rs.getLong(ind++);
+			spectrum_id = rs.getLong(ind++);
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
+			if(spectrum_id == 0) spectrum_id = null;
 			
 			//String attribute_name = rs.getString(ind++);
 			String unit_name = rs.getString(ind++);
@@ -1288,21 +1292,14 @@ public class EAVDBServices extends Thread {
 				{
 					mp = MetaParameter.newInstance(attr, taxonomy_id);
 				}	
+				else if (spectrum_id != null)
+				{
+					mp = MetaParameter.newInstance(attr, spectrum_id);
+				}						
 				else if (datetime_val != null)
 				{
-//					TimeZone tz = TimeZone.getTimeZone("UTC");
-//					Calendar cal = Calendar.getInstance(tz);
-//					cal.setTime((Timestamp) datetime_val)).
-//					Date d = new Date();
-//					d.setTime(((Timestamp) datetime_val).getTime());
-					
 					DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT + ".S").withZoneUTC();
-
 					DateTime d = formatter.parseDateTime((String) datetime_val); 
-					
-					
-//					cal.setTime(d);
-					
 					mp = MetaParameter.newInstance(attr, d);
 				}
 				else if (binary_val != null)
@@ -1337,6 +1334,7 @@ public class EAVDBServices extends Thread {
 				else
 				{
 					mp = MetaParameter.newInstance(attr, null);
+					System.out.println("EAV Null value read from DB!");
 				}
 			}
 			catch (MetaParameterFormatException e) {
