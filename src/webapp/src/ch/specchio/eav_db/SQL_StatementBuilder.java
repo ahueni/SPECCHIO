@@ -145,6 +145,25 @@ public class SQL_StatementBuilder {
 	   return res;	    
    }
    
+   synchronized public String conc_values_for_multiple_insert(ArrayList<String> vals)
+   {
+	   
+	   String res;
+	   if(vals.size() == 0)
+	   {
+		   res = "";
+	   }
+	   else
+	   {
+		   res = "(" + quote_string(vals.get(0)) + ")";
+	   }
+	   
+	   
+	   for(int i=1; i < vals.size(); i++)
+		   res = res + ", ("+quote_string(vals.get(i)) + ")";
+	   return res;	    
+   }   
+   
    
    public synchronized String conc_ids(ArrayList<Integer> ids)
    {
