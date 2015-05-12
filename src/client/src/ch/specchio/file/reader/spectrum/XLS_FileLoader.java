@@ -2,8 +2,7 @@ package ch.specchio.file.reader.spectrum;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.TimeZone;
+
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
