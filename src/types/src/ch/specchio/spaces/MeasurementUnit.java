@@ -12,6 +12,7 @@ public class MeasurementUnit {
 	
 	public final static int Reflectance = 1;
 	public final static int Radiance = 2;
+	public final static int Irradiance = 4;
 	public final static int Absorbance = 8;
 	public final static int Transmittance = 6;
 	public final static int DN = 0;
