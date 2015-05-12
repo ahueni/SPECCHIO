@@ -23,6 +23,7 @@ abstract class FieldValue
 	Boolean is_key_field = false;
 	
 	abstract void read_value(ResultSet rs, String name)  throws SQLException;
+	@Override
 	public String toString()
 	{
 		if(isNull())
@@ -57,17 +58,20 @@ class IntFieldValue extends FieldValue
 {
 	//Integer value;
 	
+	@Override
 	void read_value(ResultSet rs, String name)  throws SQLException
 	{
 		value = rs.getInt(name);
 		cx_for_null_value(rs, name);
 	}
 	
+	@Override
 	public String toString()
 	{
 		return insertable_string();
 	}
 	
+	@Override
 	public boolean isNull()
 	{
 		if(value == null)
@@ -76,6 +80,7 @@ class IntFieldValue extends FieldValue
 			return false;
 	}
 
+	@Override
 	public void fromString(String str) 
 	{
 		if(str.equals(""))
@@ -84,6 +89,7 @@ class IntFieldValue extends FieldValue
 			value = Integer.valueOf(str);
 	}
 	
+	@Override
 	public String insertable_string()
 	{
 		if(isNull())
@@ -99,11 +105,13 @@ class StringFieldValue extends FieldValue
 {
 	//String value;
 	
+	@Override
 	void read_value(ResultSet rs, String name)  throws SQLException
 	{
 		value = rs.getString(name);
 	}
 
+	@Override
 	public boolean isNull()
 	{
 		if(value == null)
@@ -112,6 +120,7 @@ class StringFieldValue extends FieldValue
 			return false;
 	}
 
+	@Override
 	public void fromString(String str) {
 		if(str == "")
 			value = null;
@@ -120,6 +129,7 @@ class StringFieldValue extends FieldValue
 	}
 
 
+	@Override
 	public String insertable_string() {
 		if(isNull())
 			return "null";
@@ -142,6 +152,7 @@ class BlobFieldValue extends FieldValue
 {
 	byte[] value;
 
+	@Override
 	void read_value(ResultSet rs, String name) throws SQLException 
 	{
 		Blob b = rs.getBlob(name);
@@ -158,6 +169,7 @@ class BlobFieldValue extends FieldValue
 	}
 
 
+	@Override
 	public String toString() {
 		
 		String out = "0x";
@@ -223,6 +235,7 @@ class BlobFieldValue extends FieldValue
 		return out;
 	}
 	
+	@Override
 	public boolean isNull()
 	{
 		if(value == null)
@@ -232,6 +245,7 @@ class BlobFieldValue extends FieldValue
 	}
 
 
+	@Override
 	public void fromString(String str) 
 	{
 		int i = 0;
@@ -298,12 +312,14 @@ class TinyIntFieldValue extends FieldValue
 {
 	//Boolean value;
 	
+	@Override
 	void read_value(ResultSet rs, String name) throws SQLException 
 	{
 		value = rs.getBoolean(name);
 		cx_for_null_value(rs, name);
 	}
 	
+	@Override
 	public boolean isNull()
 	{
 		if(value == null)
@@ -313,6 +329,7 @@ class TinyIntFieldValue extends FieldValue
 	}
 
 
+	@Override
 	public void fromString(String str) {
 		if(str.equals(""))
 			value = null;
@@ -320,6 +337,7 @@ class TinyIntFieldValue extends FieldValue
 			value = Boolean.valueOf(str);		
 	}
 	
+	@Override
 	public String insertable_string() {
 		if(isNull())
 			return "null";
@@ -335,6 +353,7 @@ class FloatFieldValue extends FieldValue
 {
 	//Float value;
 	
+	@Override
 	void read_value(ResultSet rs, String name) throws SQLException 
 	{
 		value = rs.getFloat(name);
@@ -342,6 +361,7 @@ class FloatFieldValue extends FieldValue
 	}
 
 	
+	@Override
 	public boolean isNull()
 	{
 		if(value == null)
@@ -351,6 +371,7 @@ class FloatFieldValue extends FieldValue
 	}
 
 
+	@Override
 	public void fromString(String str) {
 		if(str.equals(""))
 			value = null;
@@ -364,12 +385,14 @@ class DoubleFieldValue extends FieldValue
 {
 	//Double value;
 	
+	@Override
 	void read_value(ResultSet rs, String name) throws SQLException 
 	{
 		value = rs.getDouble(name);	
 		cx_for_null_value(rs, name);
 	}
 	
+	@Override
 	public boolean isNull()
 	{
 		if(value == null)
@@ -378,6 +401,7 @@ class DoubleFieldValue extends FieldValue
 			return false;
 	}
 
+	@Override
 	public void fromString(String str) {
 		if(str.equals(""))
 			value = null;
@@ -389,12 +413,14 @@ class DoubleFieldValue extends FieldValue
 class DecimalFieldValue extends FieldValue
 {
 	
+	@Override
 	void read_value(ResultSet rs, String name) throws SQLException 
 	{
 		value = rs.getString(name);	// getting floats leads to problems of rounding when converting to string 
 		cx_for_null_value(rs, name);
 	}
 	
+	@Override
 	public boolean isNull()
 	{
 		if(value == null)
@@ -403,6 +429,7 @@ class DecimalFieldValue extends FieldValue
 			return false;
 	}
 
+	@Override
 	public void fromString(String str) {
 		if(str.equals(""))
 			value = null;
@@ -507,6 +534,7 @@ class FieldValueFactory
 interface DbField
 {
 	String get_name();
+	@Override
 	public String toString();
 }
 
@@ -559,6 +587,7 @@ class TableField implements DbField
 //		return cond;
 //	}
 	
+	@Override
 	public String toString()
 	{
 		if(value.isNull())
@@ -571,6 +600,7 @@ class TableField implements DbField
 		}
 	}	
 
+	@Override
 	public String get_name() {
 		return name;
 	}
