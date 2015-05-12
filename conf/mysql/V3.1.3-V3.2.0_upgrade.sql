@@ -48,3 +48,10 @@ INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `defaul
 INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Reference Data Link', 'Points to a reference spectrum taken by the same instrument.', (select category_id from `specchio`.`category` where name = 'Data Links'), 'spectrum_id');
 INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Provenance Data Link', 'Points to a spectrum used in calculating the current spectrum.', (select category_id from `specchio`.`category` where name = 'Data Links'), 'spectrum_id');
 
+
+-- db version
+INSERT INTO `specchio`.`schema_info` (`version`, `date`) VALUES ('3.2', '2015-05-12');
+
+
+
+
