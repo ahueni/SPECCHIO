@@ -196,6 +196,9 @@ public abstract class SpectralPlot extends JPanel
 		ArrayList<double[]> vectors = space.getVectors();		
     	ArrayList<Integer> ids = space.getSpectrumIds();
     	double[] vector;
+    	
+//    	System.out.println(space.getNumberOfDataPoints());
+//    	System.out.println(ids.size());
 
     	for(currentDataset= 0; currentDataset < space.getNumberOfDataPoints();currentDataset++)
     	{
@@ -203,7 +206,9 @@ public abstract class SpectralPlot extends JPanel
     		
     		for ( int i = 0; i < vector.length; i++ ) {
     			plot.addPoint(currentDataset,space.get_wvl_of_band(i), vector[i], true);
-    		}    		
+    		}   
+    		System.out.println(vector);
+    		System.out.println(space.get_wvl_of_band(0));
     	}
     	
     	wvl_indicator_dataset_no = currentDataset;
@@ -361,6 +366,8 @@ public abstract class SpectralPlot extends JPanel
 	{
 		if(show_wvl_indicator)
 		{
+			//System.out.println("show_wvl_indicator");
+			
 			wavelength = wvl;
 			double[] x = new double[1]; 
 			double[] y = new double[1]; 
