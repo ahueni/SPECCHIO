@@ -99,19 +99,22 @@ public class RadianceToReflectance extends SpectralProcessingModule
 							out_vector[band] = vector[band]/(spectralon_vector[band]/PI);
 						}
 					}
+					
+					
+					// add output vector to output space
+					get_main_output_space().getSpace().addVector(out_vector);
+					
 				
 				}
 		
 			}
-			else
-			{
-				// simple copy if spectralon space could not be filled
-				System.arraycopy(vector, 0, out_vector, 0, out_vector.length);
-			}
+//			else
+//			{
+//				// simple copy if spectralon space could not be filled
+//				System.arraycopy(vector, 0, out_vector, 0, out_vector.length);
+//			}
 		
 			
-			// add output vector to output space
-			get_main_output_space().getSpace().addVector(out_vector);
 			
 			// update progress bar
 			set_progress((i+1)*100.0/vectors.size());
