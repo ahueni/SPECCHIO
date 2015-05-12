@@ -31,13 +31,13 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 			MetaParameterFormatException {
 
 		
-		SpectralFile f = new SpectralFile();
+		spec_file = new SpectralFile();
 		
-		f.setPath(file.getAbsolutePath());	
-		f.setFilename(file.getName());		
+		spec_file.setPath(file.getAbsolutePath());	
+		spec_file.setFilename(file.getName());		
 		
-		f.setCompany("Solar Systems");
-		f.setFileFormatName(this.file_format_name);
+		spec_file.setCompany("Solar Systems");
+		spec_file.setFileFormatName(this.file_format_name);
 		
 		
 		Float[] wvls = new Float[5];
@@ -78,7 +78,7 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 		
 		String[] fields = line.split(",");
 		
-		f.setInstrumentNumber(fields[0]);
+		spec_file.setInstrumentNumber(fields[0]);
 		
 		while(!line.equals("END."))
 		{			
@@ -110,7 +110,7 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 				p.latitude = Double.valueOf(fields[3]);
 				p.longitude = Double.valueOf(fields[4]);
 				p.altitude = Double.valueOf(fields[5]);
-				f.addPos(p);
+				spec_file.addPos(p);
 
 				// pressure
 				MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Air Pressure"));
@@ -147,9 +147,9 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 				spectrum[4] = Float.valueOf(fields[16]);
 
 				spectra.add(spectrum);
-				f.addMeasurementUnits(0); // DN
-				f.addNumberOfChannels(5);
-				f.addWvls(wvls);
+				spec_file.addMeasurementUnits(0); // DN
+				spec_file.addNumberOfChannels(5);
+				spec_file.addWvls(wvls);
 
 				// stddev of spectrum
 				spectrum = new Float[5];
@@ -161,9 +161,9 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 				spectrum[4] = Float.valueOf(fields[21]);
 
 				spectra_std.add(spectrum);
-				f.addMeasurementUnits(0); // DN
-				f.addNumberOfChannels(5);
-				f.addWvls(wvls);
+				spec_file.addMeasurementUnits(0); // DN
+				spec_file.addNumberOfChannels(5);
+				spec_file.addWvls(wvls);
 
 				// AOT			
 
@@ -176,28 +176,28 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 				spectrum[4] = Float.valueOf(fields[30]);
 
 				aot.add(spectrum);
-				f.addMeasurementUnits(0); // DN
-				f.addNumberOfChannels(5);
-				f.addWvls(wvls);
+				spec_file.addMeasurementUnits(0); // DN
+				spec_file.addNumberOfChannels(5);
+				spec_file.addWvls(wvls);
 
 				// WATER
 				mp = MetaParameter.newInstance(attributes_name_hash.get("Atmospheric Water Content"));
 				mp.setValue(Double.valueOf(fields[31]));
 				smd.addEntry(mp); 	
 
-				f.addEavMetadata(smd);
+				spec_file.addEavMetadata(smd);
 			}
 			else
 			{
-				f.setFileErrorCode(SpectralFile.RECOVERABLE_ERROR);
-				ArrayList<SpecchioMessage> file_errors = f.getFileErrors();
+				spec_file.setFileErrorCode(SpectralFile.RECOVERABLE_ERROR);
+				ArrayList<SpecchioMessage> file_errors = spec_file.getFileErrors();
 				if(file_errors == null)
 				{
 					file_errors = new ArrayList<SpecchioMessage>();						
 				}
 
 				file_errors.add(new SpecchioMessage("Skipped line containing NaN", SpecchioMessage.ERROR));
-				f.setFileErrors(file_errors);
+				spec_file.setFileErrors(file_errors);
 				
 				
 			}
@@ -208,11 +208,11 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 		
 		data_in.close ();
 
-		f.setNumberOfSpectra(spectra.size()*3); // spectrum, stdev and aot for each measurement
+		spec_file.setNumberOfSpectra(spectra.size()*3); // spectrum, stdev and aot for each measurement
 		
 		// compile measurements into array
 		
-		Float[][] out_spectrum = new Float[f.getNumberOfSpectra()][f.getNumberOfChannels(0)];
+		Float[][] out_spectrum = new Float[spec_file.getNumberOfSpectra()][spec_file.getNumberOfChannels(0)];
 		
 		ListIterator<Float[]> a_li = spectra.listIterator();
 		ListIterator<Float[]> b_li = spectra_std.listIterator();
@@ -230,25 +230,25 @@ public class Microtops_FileLoader  extends SpectralFileLoader {
 		while(t_li.hasNext())
 		{
 			DateTime t = t_li.next();
-			f.setCaptureDate(i++, t); // spectrum
-			f.setCaptureDate(i++, t); // std
-			f.setCaptureDate(i++, t); // aot
+			spec_file.setCaptureDate(i++, t); // spectrum
+			spec_file.setCaptureDate(i++, t); // std
+			spec_file.setCaptureDate(i++, t); // aot
 		}			
 		
 		// add for each spectrum, std and aot
 		for(i=1;i<=spectra.size();i++)
 		{
-			f.addSpectrumFilename(f.getFilename() + "_" + i);
-			f.addSpectrumFilename(f.getFilename() + "_" + i);
-			f.addSpectrumFilename(f.getFilename() + "_" + i);		
+			spec_file.addSpectrumFilename(spec_file.getFilename() + "_" + i);
+			spec_file.addSpectrumFilename(spec_file.getFilename() + "_" + i);
+			spec_file.addSpectrumFilename(spec_file.getFilename() + "_" + i);		
 		}
 		
 		
 		
 		
-		f.setMeasurements(out_spectrum);
+		spec_file.setMeasurements(out_spectrum);
 		
-		return f;
+		return spec_file;
 		
 	}	
 	

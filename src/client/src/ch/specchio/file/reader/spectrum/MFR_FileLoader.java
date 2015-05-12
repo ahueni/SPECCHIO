@@ -6,10 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.ListIterator;
 import java.util.TimeZone;
 
@@ -33,26 +31,26 @@ public class MFR_FileLoader extends SpectralFileLoader {
 
 	public SpectralFile load(File file) throws IOException
 	{
-		SpectralFile sf = new SpectralFile();
+		spec_file = new SpectralFile();
 		
-		sf.setPath(file.getAbsolutePath());		
-		sf.setFilename(file.getName());
-		sf.setFileFormatName(this.file_format_name);
+		spec_file.setPath(file.getAbsolutePath());		
+		spec_file.setFilename(file.getName());
+		spec_file.setFileFormatName(this.file_format_name);
 		
-		sf.setInstrumentTypeNumber(7); // MFR 7
+		spec_file.setInstrumentTypeNumber(7); // MFR 7
 		
 		
 		file_input = new FileInputStream (file);			
 				
 		data_in = new DataInputStream(file_input);
 		
-		read_MFR_file(data_in, sf);
+		read_MFR_file(data_in, spec_file);
 		
 
 		
 		data_in.close ();
 		
-		return sf;
+		return spec_file;
 	}
 	
 	public void read_MFR_file(DataInputStream in, SpectralFile f) throws IOException

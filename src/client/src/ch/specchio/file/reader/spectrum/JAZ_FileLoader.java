@@ -24,7 +24,7 @@ import ch.specchio.types.SpectralFile;
 
 public class JAZ_FileLoader extends SpectralFileLoader {
 	
-	SpectralFile spec_file;
+	
 	protected Metadata smd;
 	String start_of_spectral_data;
 

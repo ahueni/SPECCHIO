@@ -27,7 +27,8 @@ public abstract class SpectralFileLoader {
 	public int file_format_id;
 	public String file_format_name;
 	private SPECCHIOClient specchio_client;
-	Hashtable<String, attribute> attributes_name_hash;
+	Hashtable<String, attribute> attributes_name_hash;	
+	protected SpectralFile spec_file;
 	
 	public SpectralFileLoader(String file_format_name)
 	{
