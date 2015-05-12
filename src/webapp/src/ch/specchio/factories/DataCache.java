@@ -8,13 +8,13 @@ import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import ch.specchio.constants.SensorElementType;
 import ch.specchio.constants.SensorType;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.spaces.MeasurementUnit;
@@ -430,7 +430,7 @@ public class DataCache {
 		Instrument i;
 
 		ListIterator<Instrument> li = instruments.listIterator();
-		boolean wvls_match = true;
+		//boolean wvls_match = true;
 		boolean serial_no_match = false;
 		
 		// get wvls information
@@ -439,8 +439,9 @@ public class DataCache {
 		if(spec_file.getWvls().size() > 0)
 		{
 			wvls = spec_file.getWvls(spec_no);
-			d_wvls = new double[spec_file.getWvls(spec_no).length];
-			for (int j=0;j<d_wvls.length;j++) d_wvls[j] = wvls[j];
+			//d_wvls = new double[spec_file.getWvls(spec_no).length];
+			//for (int j=0;j<d_wvls.length;j++) d_wvls[j] = wvls[j];
+			d_wvls = getAsDoubleVector(wvls);
 		}
 		else
 		{
@@ -457,29 +458,33 @@ public class DataCache {
 		{
 			i = li.next();
 			
-			float wvl_err = 0.01f; // wvl error in nm allowed when looking for instruments: used to deal with rounding errors when data is read from DB again ...
-
-
-			// quick check: first and last band		
-			boolean no_of_bands_match = d_wvls.length == i.getNoOfBands();
-			boolean band_1_match = Math.abs(d_wvls[0] - i.getCentreWavelengths()[0]) < wvl_err;
-			boolean band_2_match = Math.abs(d_wvls[d_wvls.length-1] - i.getCentreWavelengths()[i.getNoOfBands()-1]) < wvl_err;
+			//System.out.println(i.getInstrumentName());
 			
-			boolean possible_match = no_of_bands_match & band_1_match & band_2_match;
-
-			if(possible_match) // do a full check
-			{
-				// check of the centre wavelengths match
-				int band = 0;
-				for(Double wvl : d_wvls)
-				{
-					wvls_match = wvls_match & (Math.abs(wvl - i.getCentreWavelengths()[band++])  < wvl_err);
-
-					if (wvls_match == false) break;
-				}				
-			}
+//			float wvl_err = 0.01f; // wvl error in nm allowed when looking for instruments: used to deal with rounding errors when data is read from DB again ...
+//
+//
+//			// quick check: first and last band		
+//			boolean no_of_bands_match = d_wvls.length == i.getNoOfBands();
+//			boolean band_1_match = Math.abs(d_wvls[0] - i.getCentreWavelengths()[0]) < wvl_err;
+//			boolean band_2_match = Math.abs(d_wvls[d_wvls.length-1] - i.getCentreWavelengths()[i.getNoOfBands()-1]) < wvl_err;
+//			
+//			boolean possible_match = no_of_bands_match & band_1_match & band_2_match;
+//
+//			if(possible_match) // do a full check
+//			{
+//				// check of the centre wavelengths match
+//				int band = 0;
+//				for(Double wvl : d_wvls)
+//				{
+//					wvls_match = wvls_match & (Math.abs(wvl - i.getCentreWavelengths()[band++])  < wvl_err);
+//
+//					if (wvls_match == false) break;
+//				}				
+//			}
 			
-			if(possible_match && spec_file.getInstrumentNumber() != null &&
+			wvl_matching_struct wvlm = full_wvls_matching(i.getCentreWavelengths(), d_wvls);
+			
+			if(wvlm.possible_match && spec_file.getInstrumentNumber() != null &&
 					!spec_file.getInstrumentNumber().equals("")) // check the serial number
 			{
 				if(spec_file.getInstrumentNumber().equals(i.getInstrumentNumber())) 
@@ -492,9 +497,9 @@ public class DataCache {
 				}
 			}
 
-			if(possible_match && wvls_match && serial_no_match) instrument = i;
+			if(wvlm.possible_match && wvlm.wvls_match && serial_no_match) instrument = i;
 			
-			if(possible_match && wvls_match && !serial_no_match)
+			if(wvlm.possible_match && wvlm.wvls_match && !serial_no_match)
 			{
 				instrument = i;
 				// maybe issue a warning for the user that a matching instrument was found only based on wvls matching
@@ -514,6 +519,47 @@ public class DataCache {
 		
 		return instrument;
 	}
+	
+	
+	class wvl_matching_struct
+	{
+		boolean wvls_match;
+		boolean possible_match;
+	}
+	
+	private wvl_matching_struct full_wvls_matching(double[] reference, double[] test)
+	{
+		float wvl_err = 0.01f; // wvl error in nm allowed when looking for instruments: used to deal with rounding errors when data is read from DB again ...
+
+		boolean wvls_match = true;
+		
+		// quick check: first and last band		
+		boolean no_of_bands_match = test.length == reference.length;
+		boolean band_1_match = Math.abs(test[0] - reference[0]) < wvl_err;
+		boolean band_2_match = Math.abs(test[test.length-1] - reference[reference.length-1]) < wvl_err;
+		
+		boolean possible_match = no_of_bands_match & band_1_match & band_2_match;
+
+		if(possible_match) // do a full check
+		{
+			// check of the centre wavelengths match
+			int band = 0;
+			for(Double wvl : test)
+			{
+				wvls_match = wvls_match & (Math.abs(wvl - reference[band++])  < wvl_err);
+
+				if (wvls_match == false) break;
+			}				
+		}
+		
+		wvl_matching_struct wvlm = new wvl_matching_struct();
+		
+		wvlm.wvls_match = wvls_match;
+		wvlm.possible_match = possible_match;
+		
+		return wvlm;
+	}
+	
 	
 	
 	private double[] getAsDoubleVector(Float[] wvls)
@@ -925,11 +971,22 @@ public class DataCache {
 		while(li.hasNext() && sensor == null)
 		{
 			s = li.next();
-			int no_of_sensor_bands = s.getNumberOfChannels().value;
-			if(no_of_sensor_bands == wvls.length)
-			{					
-				if(simple_wvls_match(s, wvls)) sensor = s;		
+			
+			System.out.println(s.getName());
+			
+			wvl_matching_struct wvlm = full_wvls_matching(s.getAverageWavelengths(), getAsDoubleVector(wvls));
+			
+			if(wvlm.possible_match && wvlm.wvls_match)
+			{
+				sensor = s;		
+				break;
 			}
+			
+//			int no_of_sensor_bands = s.getNumberOfChannels().value;
+//			if(no_of_sensor_bands == wvls.length)
+//			{					
+//				if(simple_wvls_match(s, wvls)) sensor = s;		
+//			}
 		}
 
 		return sensor;		
@@ -941,14 +998,18 @@ public class DataCache {
 		Sensor sensor = null;
 		Sensor s;
 		
-		// search through sensor list
-		ListIterator<Sensor> li = sensors.listIterator();
-
-		while(li.hasNext() && sensor == null)
+		if(instrument_type_number > -1) // -1 is the default value when undefined
 		{
-			s = li.next();
-			if(s.getManufacturerShortName().get_value().equals(company) && s.getSensorTypeNumber() == instrument_type_number)
-				sensor = s;			
+			
+			// search through sensor list
+			ListIterator<Sensor> li = sensors.listIterator();
+	
+			while(li.hasNext() && sensor == null)
+			{
+				s = li.next();
+				if(s.getManufacturerShortName().get_value().equals(company) && s.getSensorTypeNumber() == instrument_type_number)
+					sensor = s;			
+			}
 		}
 
 		return sensor;		
@@ -1015,7 +1076,12 @@ public class DataCache {
 				}
 
 				s = get_sensor(spec_file.getCompany(), spec_file.getInstrumentTypeNumber());
-				return s.getSensorId();
+				if (s != null)
+					return s.getSensorId();
+				else
+				{
+					s = get_sensor(spec_file.getWvls(spec_no)); // fallback option
+				}
 			}
 			else
 			{
@@ -1211,10 +1277,10 @@ public class DataCache {
 		}
 		else
 		{
-			if(element_type_sum == SensorType.NB)
-				sensor.setSensorType(SensorType.NB);
+			if(element_type_sum == SensorElementType.NB)
+				sensor.setSensorType(SensorElementType.NB);
 			else
-				sensor.setSensorType(SensorType.BB);	
+				sensor.setSensorType(SensorElementType.BB);	
 		}
 		
 		stmt.close();
