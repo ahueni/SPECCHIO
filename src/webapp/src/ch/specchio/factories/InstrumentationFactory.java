@@ -841,7 +841,7 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			// update the instrument table
 			String query = "insert into instrument (name, sensor_id, institute_id, serial_number) " +
 					"values ('" + instr.getInstrumentName().get_value() + "', " + instr.getSensorId() + "," 
-					+ getStatementBuilder().is_null_key_get_val_and_op(instr.getInstrumentId()).id + "," + instr.getInstrumentNumber().get_value() + ")";
+					+ getStatementBuilder().is_null_key_get_val_and_op(instr.getInstrumentId()).id + ",'" + instr.getInstrumentNumber().get_value() + "')";
 			stmt.executeUpdate(query);
 			
 			// get the identifier of the new instrument
