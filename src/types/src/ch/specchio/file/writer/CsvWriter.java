@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.joda.time.DateTime;
+
 import ch.specchio.constants.FileTypes;
 import ch.specchio.constants.HeaderBody;
 import ch.specchio.constants.TimeFormats;
@@ -252,11 +254,12 @@ class CsvHdrWriter extends CsvWriter {
 					if (mp instanceof MetaDate) {
 						
 						// output date according to the time format setting
-						Date date = (Date)mp.getValue();
+						DateTime date = (DateTime) mp.getValue();
 						if (getTimeFormat() == TimeFormats.Seconds) {
-							writeField(Long.toString(date.getTime()));
+							writeField(Long.toString(date.getMillis()));
 						} else {
-							writeField(df.format(date));
+							//writeField(df.format(date));
+							writeField(mp.valueAsString());
 						}
 					} else {
 						
