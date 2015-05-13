@@ -207,8 +207,8 @@ public abstract class SpectralPlot extends JPanel
     		for ( int i = 0; i < vector.length; i++ ) {
     			plot.addPoint(currentDataset,space.get_wvl_of_band(i), vector[i], true);
     		}   
-    		System.out.println(vector);
-    		System.out.println(space.get_wvl_of_band(0));
+    		//System.out.println(vector);
+    		//System.out.println(space.get_wvl_of_band(0));
     	}
     	
     	wvl_indicator_dataset_no = currentDataset;
