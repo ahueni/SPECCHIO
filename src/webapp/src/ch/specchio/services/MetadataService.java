@@ -176,7 +176,15 @@ public class MetadataService extends SPECCHIOService {
 		List<MetaParameter> mp_list =  factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), false);
 		factory.dispose();
 
-		return new XmlInteger(mp_list.size());
+		// only count non-null entries
+		int cnt = 0;
+		for(MetaParameter mp : mp_list)
+		{
+			if(mp.getEavId() != 0)
+				cnt++;
+		}
+
+		return new XmlInteger(cnt);
 		
 	}
 	
