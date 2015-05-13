@@ -417,7 +417,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			else if (exts.contains("xls"))
 				loader = new XLS_FileLoader();		
 			
-			// cx for Spectral Evoluation files
+			// cx for Spectral Evolution files
 			else if (exts.contains("sed"))
 				loader = new Spectral_Evolution_FileLoader();		
 			
@@ -429,7 +429,11 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			
 			// cx for UNISPEC SPU files
 			else if (exts.contains("spu") || exts.contains("SPU"))
-				loader = new UniSpec_SPU_FileLoader();					
+				loader = new UniSpec_SPU_FileLoader();			
+			
+			// cx for Bruker FTIR dpt files
+			else if (exts.contains("dpt"))
+				loader = new BrukerDPT_FileLoader();						
 
 			// cx for MFR out files
 			else if (exts.contains("OUT"))
