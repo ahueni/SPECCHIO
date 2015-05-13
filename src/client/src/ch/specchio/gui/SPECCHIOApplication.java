@@ -15,7 +15,7 @@ public class SPECCHIOApplication {
 	private static JFrame frame;
 	private static SPECCHIOApplication instance = null;
 	private SPECCHIOClient client = null;
-	public static String version = "SPECCHIO V3.2.0";
+	public static String version = "SPECCHIO V3.2.0 Beta";
 	public static Float min_db_version = 3.2F;
 	public static ImageIcon specchio_icon;
 	
