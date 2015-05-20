@@ -459,7 +459,9 @@ public class SpectrumService extends SPECCHIOService {
 	public XmlInteger remove(@PathParam("spectrum_id") int spectrum_id) throws SPECCHIOFactoryException {
 		
 		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
-		factory.removeSpectrum(spectrum_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
+		ArrayList<Integer> spectrum_ids = new ArrayList<Integer>();
+		spectrum_ids.add(spectrum_id);
+		factory.removeSpectra(spectrum_ids, getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
 		return new XmlInteger(1);
