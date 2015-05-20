@@ -774,64 +774,64 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				}		
 				
 				// landcover
-				s.setLandcover(new MetaDatatype<String>("Landcover"));
-				if(s.getLandcoverId() != 0)
-				{
-					query = SQB.get_landcover_query(id);				
-					rs = stmt.executeQuery(query);
-					
-					while (rs.next()) {
-						s.getLandcover().value = rs.getString(1);
-					}
-					rs.close();						
-				}		
+//				s.setLandcover(new MetaDatatype<String>("Landcover"));
+//				if(s.getLandcoverId() != 0)
+//				{
+//					query = SQB.get_landcover_query(id);				
+//					rs = stmt.executeQuery(query);
+//					
+//					while (rs.next()) {
+//						s.getLandcover().value = rs.getString(1);
+//					}
+//					rs.close();						
+//				}		
 				
 				// environ conds
-				s.setCloudCover(new MetaDatatype<String>("Cloud cover [octas]"));
-				s.setAmbientTemperature(new MetaDatatype<String>("Ambient temp. [�C]"));
-				s.setAirPressure(new MetaDatatype<String>("Air pressure"));
-				s.setRelativeHumidity(new MetaDatatype<String>("Rel. humidity"));
-				s.setWindDirection(new MetaDatatype<String>("Wind direction"));
-				s.setWindSpeed(new MetaDatatype<String>("Wind speed"));
-				if(s.getEnvironmentalConditionId() != 0)
-				{
-					query = SQB.get_env_cond_query(spectrum_id);				
-					rs = stmt.executeQuery(query);
-					row_cnt = 1;
-					while (rs.next()) {				
-						s.getAmbientTemperature().value = rs.getString(row_cnt++);
-						s.getAirPressure().value = rs.getString(row_cnt++);
-						s.getRelativeHumidity().value = rs.getString(row_cnt++);
-						s.getCloudCover().value = rs.getString(row_cnt++);
-						s.getWindDirection().value = rs.getString(row_cnt++);
-						s.getWindSpeed().value = rs.getString(row_cnt++);
-					}
-					rs.close();						
-				}		
+//				s.setCloudCover(new MetaDatatype<String>("Cloud cover [octas]"));
+//				s.setAmbientTemperature(new MetaDatatype<String>("Ambient temp. [�C]"));
+//				s.setAirPressure(new MetaDatatype<String>("Air pressure"));
+//				s.setRelativeHumidity(new MetaDatatype<String>("Rel. humidity"));
+//				s.setWindDirection(new MetaDatatype<String>("Wind direction"));
+//				s.setWindSpeed(new MetaDatatype<String>("Wind speed"));
+//				if(s.getEnvironmentalConditionId() != 0)
+//				{
+//					query = SQB.get_env_cond_query(spectrum_id);				
+//					rs = stmt.executeQuery(query);
+//					row_cnt = 1;
+//					while (rs.next()) {				
+//						s.getAmbientTemperature().value = rs.getString(row_cnt++);
+//						s.getAirPressure().value = rs.getString(row_cnt++);
+//						s.getRelativeHumidity().value = rs.getString(row_cnt++);
+//						s.getCloudCover().value = rs.getString(row_cnt++);
+//						s.getWindDirection().value = rs.getString(row_cnt++);
+//						s.getWindSpeed().value = rs.getString(row_cnt++);
+//					}
+//					rs.close();						
+//				}		
 				
 				
 				// geometry
-				s.setSensorZenith(new MetaDatatype<String>("Sensor zenith"));
-				s.setSensorAzimuth(new MetaDatatype<String>("Sensor azimuth"));
-				s.setIlluminationZenith(new MetaDatatype<String>("Illumination zenith"));
-				s.setIlluminationAzimuth(new MetaDatatype<String>("Illumination azimuth"));
-				s.setSensorDistance(new MetaDatatype<String>("Sensor distance"));
-				s.setIlluminationDistance(new MetaDatatype<String>("Illumination distance"));		
-				if(s.getSamplingGeometryId() != 0)
-				{
-					query = SQB.get_geometry_query(id);				
-					rs = stmt.executeQuery(query);
-					row_cnt = 1;
-					while (rs.next()) {
-						s.getSensorZenith().value = rs.getString(row_cnt++);
-						s.getSensorAzimuth().value = rs.getString(row_cnt++);
-						s.getIlluminationZenith().value = rs.getString(row_cnt++);
-						s.getIlluminationAzimuth().value = rs.getString(row_cnt++);
-						s.getSensorDistance().value = rs.getString(row_cnt++);
-						s.getIlluminationDistance().value = rs.getString(row_cnt++);
-					}
-					rs.close();						
-				}		
+//				s.setSensorZenith(new MetaDatatype<String>("Sensor zenith"));
+//				s.setSensorAzimuth(new MetaDatatype<String>("Sensor azimuth"));
+//				s.setIlluminationZenith(new MetaDatatype<String>("Illumination zenith"));
+//				s.setIlluminationAzimuth(new MetaDatatype<String>("Illumination azimuth"));
+//				s.setSensorDistance(new MetaDatatype<String>("Sensor distance"));
+//				s.setIlluminationDistance(new MetaDatatype<String>("Illumination distance"));		
+//				if(s.getSamplingGeometryId() != 0)
+//				{
+//					query = SQB.get_geometry_query(id);				
+//					rs = stmt.executeQuery(query);
+//					row_cnt = 1;
+//					while (rs.next()) {
+//						s.getSensorZenith().value = rs.getString(row_cnt++);
+//						s.getSensorAzimuth().value = rs.getString(row_cnt++);
+//						s.getIlluminationZenith().value = rs.getString(row_cnt++);
+//						s.getIlluminationAzimuth().value = rs.getString(row_cnt++);
+//						s.getSensorDistance().value = rs.getString(row_cnt++);
+//						s.getIlluminationDistance().value = rs.getString(row_cnt++);
+//					}
+//					rs.close();						
+//				}		
 				
 				// measurement_unit
 				s.setMeasurementUnit(new MetaDatatype<String>("Measurement unit"));		
@@ -847,57 +847,57 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				}		
 				
 				// measurement_type
-				s.setMeasurementType(new MetaDatatype<String>("Beam geometry"));		
-				if(s.getMeasurementTypeId() != 0)
-				{
-					query = SQB.get_measurement_type_query(id);				
-					rs = stmt.executeQuery(query);
-					row_cnt = 1;
-					while (rs.next()) {
-						s.getMeasurementType().value = rs.getString(row_cnt++);
-					}
-					rs.close();						
-				}				
-		
+//				s.setMeasurementType(new MetaDatatype<String>("Beam geometry"));		
+//				if(s.getMeasurementTypeId() != 0)
+//				{
+//					query = SQB.get_measurement_type_query(id);				
+//					rs = stmt.executeQuery(query);
+//					row_cnt = 1;
+//					while (rs.next()) {
+//						s.getMeasurementType().value = rs.getString(row_cnt++);
+//					}
+//					rs.close();						
+//				}				
+//		
 				// illumination_source
-				s.setIlluminationSource(new MetaDatatype<String>("Illumination source"));		
-				if(s.getIlluminationSourceId() != 0)
-				{
-					query = SQB.get_illumination_source_query(id);				
-					rs = stmt.executeQuery(query);
-					row_cnt = 1;
-					while (rs.next()) {
-						s.getIlluminationSource().value = rs.getString(row_cnt++);
-					}
-					rs.close();						
-				}				
+//				s.setIlluminationSource(new MetaDatatype<String>("Illumination source"));		
+//				if(s.getIlluminationSourceId() != 0)
+//				{
+//					query = SQB.get_illumination_source_query(id);				
+//					rs = stmt.executeQuery(query);
+//					row_cnt = 1;
+//					while (rs.next()) {
+//						s.getIlluminationSource().value = rs.getString(row_cnt++);
+//					}
+//					rs.close();						
+//				}				
 		
 				// sampling_environment
-				s.setSamplingEnvironment(new MetaDatatype<String>("Sampling environment"));		
-				if(s.getSamplingEnvironmentId() != 0)
-				{
-					query = SQB.get_sampling_environment_query(id);				
-					rs = stmt.executeQuery(query);
-					row_cnt = 1;
-					while (rs.next()) {
-						s.getSamplingEnvironment().value = rs.getString(row_cnt++);
-					}
-					rs.close();						
-				}
+//				s.setSamplingEnvironment(new MetaDatatype<String>("Sampling environment"));		
+//				if(s.getSamplingEnvironmentId() != 0)
+//				{
+//					query = SQB.get_sampling_environment_query(id);				
+//					rs = stmt.executeQuery(query);
+//					row_cnt = 1;
+//					while (rs.next()) {
+//						s.getSamplingEnvironment().value = rs.getString(row_cnt++);
+//					}
+//					rs.close();						
+//				}
 				
 				
 				// foreoptic
-				s.setForeoptic(new MetaDatatype<String>("FOV [degrees]"));		
-				if(s.getForeopticId() != 0)
-				{
-					query = SQB.get_foreoptic_query(id);				
-					rs = stmt.executeQuery(query);
-					row_cnt = 1;
-					while (rs.next()) {
-						s.getForeoptic().value = rs.getString(row_cnt++);
-					}
-					rs.close();						
-				}	
+//				s.setForeoptic(new MetaDatatype<String>("FOV [degrees]"));		
+//				if(s.getForeopticId() != 0)
+//				{
+//					query = SQB.get_foreoptic_query(id);				
+//					rs = stmt.executeQuery(query);
+//					row_cnt = 1;
+//					while (rs.next()) {
+//						s.getForeoptic().value = rs.getString(row_cnt++);
+//					}
+//					rs.close();						
+//				}	
 				
 				if(s.getInstrumentId() != 0)
 				{					
@@ -1189,62 +1189,62 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	}
 	
 	
-	/**
-	 * Remove a spectrum from the database.
-	 * 
-	 * @param spectrum_id	the identifier of the spectrum to be removed
-	 * @param is_admin		is the requesting user an administator?
-	 * 
-	 * @throws SPECCHIOFactoryException	the spectrum could not be removed
-	 */
-	public void removeSpectrum(int spectrum_id, boolean is_admin) throws SPECCHIOFactoryException {
-		
-		try {
-			
-			Statement stmt = getStatementBuilder().createStatement();
-			String table_name;
-			String cmd;
-			
-			// remove datalinks
-			table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
-			cmd = "delete from "+table_name+" where " +
-			"spectrum_id = " + Integer.toString(spectrum_id) + " OR linked_spectrum_id = " + Integer.toString(spectrum_id);	
-			stmt.executeUpdate(cmd); 
-			
-			// EAV
-			// remove entries from eav x table
-			table_name = (is_admin)? "spectrum_x_eav" : "spectrum_x_eav_view";
-			cmd = "delete from "+table_name+" where " +
-			"spectrum_id = " + Integer.toString(spectrum_id);		
-			stmt.executeUpdate(cmd); 	
-			
-			String spectrum_x_eav_table_or_view = table_name;
-	
-			// remove zombie eav
-			table_name = (is_admin)? "eav" : "eav_view";
-			
-			cmd = "delete from "+table_name+" where eav_id not in (select eav_id from " +spectrum_x_eav_table_or_view+");";
-			stmt.executeUpdate(cmd);					
-			
-			// remove entries from hierarchy_level_x_spectrum
-			table_name = (is_admin)? "hierarchy_level_x_spectrum" : "hierarchy_level_x_spectrum_view";
-			cmd = "delete from "+table_name+" where " +
-			"spectrum_id = " + Integer.toString(spectrum_id);		
-			stmt.executeUpdate(cmd); 				
-					
-			// remove spectrum itself
-			table_name = (is_admin)? "spectrum" : "spectrum_view";
-			cmd = "delete from "+table_name+" where spectrum_id = " + Integer.toString(spectrum_id);
-			stmt.executeUpdate(cmd);
-			
-			stmt.close();
-		}
-		catch (SQLException ex) {
-			// bad SQL
-			throw new SPECCHIOFactoryException(ex);
-		}
-					
-	}
+//	/**
+//	 * Remove a spectrum from the database.
+//	 * 
+//	 * @param spectrum_id	the identifier of the spectrum to be removed
+//	 * @param is_admin		is the requesting user an administator?
+//	 * 
+//	 * @throws SPECCHIOFactoryException	the spectrum could not be removed
+//	 */
+//	public void removeSpectrum(int spectrum_id, boolean is_admin) throws SPECCHIOFactoryException {
+//		
+//		try {
+//			
+//			Statement stmt = getStatementBuilder().createStatement();
+//			String table_name;
+//			String cmd;
+//			
+//			// remove datalinks
+//			table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
+//			cmd = "delete from "+table_name+" where " +
+//			"spectrum_id = " + Integer.toString(spectrum_id) + " OR linked_spectrum_id = " + Integer.toString(spectrum_id);	
+//			stmt.executeUpdate(cmd); 
+//			
+//			// EAV
+//			// remove entries from eav x table
+//			table_name = (is_admin)? "spectrum_x_eav" : "spectrum_x_eav_view";
+//			cmd = "delete from "+table_name+" where " +
+//			"spectrum_id = " + Integer.toString(spectrum_id);		
+//			stmt.executeUpdate(cmd); 	
+//			
+//			String spectrum_x_eav_table_or_view = table_name;
+//	
+//			// remove zombie eav
+//			table_name = (is_admin)? "eav" : "eav_view";
+//			
+//			cmd = "delete from "+table_name+" where eav_id not in (select eav_id from " +spectrum_x_eav_table_or_view+");";
+//			stmt.executeUpdate(cmd);					
+//			
+//			// remove entries from hierarchy_level_x_spectrum
+//			table_name = (is_admin)? "hierarchy_level_x_spectrum" : "hierarchy_level_x_spectrum_view";
+//			cmd = "delete from "+table_name+" where " +
+//			"spectrum_id = " + Integer.toString(spectrum_id);		
+//			stmt.executeUpdate(cmd); 				
+//					
+//			// remove spectrum itself
+//			table_name = (is_admin)? "spectrum" : "spectrum_view";
+//			cmd = "delete from "+table_name+" where spectrum_id = " + Integer.toString(spectrum_id);
+//			stmt.executeUpdate(cmd);
+//			
+//			stmt.close();
+//		}
+//		catch (SQLException ex) {
+//			// bad SQL
+//			throw new SPECCHIOFactoryException(ex);
+//		}
+//					
+//	}
 	
 	/**
 	 * Remove a spectrum from the database.
@@ -1274,11 +1274,11 @@ public class SpectrumFactory extends SPECCHIOFactory {
 //				stmt.executeUpdate(cmd); 
 				
 				// get eav_ids of the datalinks
-				String query = "select eav_id from eav where spectrum_id in (" + ids + ")";
+				String query = "select eav_id from eav where spectrum_id in (" + ids + ")"; // restricting by attribute id not needed as only data links have the spectrum_id field filled.
 				ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 				
 				ResultSet rs = stmt.executeQuery(query);
-				if (rs.next()) {
+				while (rs.next()) {
 					eav_ids.add(rs.getInt(1));	
 				}			
 				rs.close();	
