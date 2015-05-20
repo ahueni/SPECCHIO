@@ -88,7 +88,6 @@ public class Spectrum
 	int sampling_geometry_id;
 	public int measurement_unit_id;
 	public int measurement_type_id; 
-	int illumination_source_id;
 	int sampling_env_id;
 	public int instrument_id;
 	int quality_level_id;
@@ -226,11 +225,7 @@ public class Spectrum
 	@XmlElement(name="illumination_source")
 	public MetaDatatype<String> getIlluminationSource() { return this.illumination_source; }
 	public void setIlluminationSource(MetaDatatype<String> illumination_source) { this.illumination_source = illumination_source; }
-	
-	@XmlElement(name="illumination_source_id")
-	public int getIlluminationSourceId() { return this.illumination_source_id; }
-	public void setIlluminationSourceId(int illumination_source_id) { this.illumination_source_id = illumination_source_id; }
-	
+		
 	@XmlElement(name="illumination_zenith")
 	public MetaDatatype<String> getIlluminationZenith() { return this.illumination_zenith; }
 	public void setIlluminationZenith(MetaDatatype<String> illumination_zenith) { this.illumination_zenith = illumination_zenith; }
