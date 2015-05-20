@@ -1037,7 +1037,7 @@ CREATE TABLE `schema_info` (
 
 LOCK TABLES `schema_info` WRITE;
 /*!40000 ALTER TABLE `schema_info` DISABLE KEYS */;
-INSERT INTO `schema_info` VALUES (1,2,'2009-05-25'),(2,2.1,'2010-09-08'),(3,2.2,'2012-05-31',(3,3.13,'2015-01-26');
+INSERT INTO `schema_info` VALUES (1,2,'2009-05-25'),(2,2.1,'2010-09-08'),(3,2.2,'2012-05-31'),(4,3.13,'2015-01-26');
 /*!40000 ALTER TABLE `schema_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
