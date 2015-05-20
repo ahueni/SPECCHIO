@@ -4,6 +4,7 @@ CREATE DATABASE `specchio_temp`;
 -- access control
 ALTER TABLE `specchio`.`specchio_user` ADD COLUMN `password` VARCHAR(100);
 ALTER TABLE `specchio`.`specchio_user` ADD COLUMN `external_id` VARCHAR(255);
+ALTER TABLE `specchio`.`specchio_user` ADD COLUMN signup_date datetime DEFAULT CURRENT_TIMESTAMP;
 CREATE TABLE `specchio`.`specchio_group`(
 	`group_id` INT(10) NOT NULL PRIMARY KEY,
 	`group_name` CHAR(16)
@@ -16,7 +17,11 @@ CREATE TABLE `specchio`.`specchio_user_group` (
 	`group_name` CHAR(16)
 );
 INSERT INTO `specchio`.`specchio_user_group` VALUES('sdb_admin', 'admin');
+
+-- change the password of sdb_admin in the two following lines
 UPDATE `specchio`.`specchio_user` SET PASSWORD=MD5('xXY7!fe@') where `user`='sdb_admin';
+UPDATE mysql.user SET Password=PASSWORD('xXY7!fe@') WHERE User='sdb_admin';
+
 GRANT SUPER ON *.* TO 'sdb_admin'@'localhost';
 GRANT CREATE USER ON *.* TO 'sdb_admin'@'localhost';
 FLUSH PRIVILEGES;
@@ -56,7 +61,7 @@ PRIMARY KEY(`taxonomy_id`),
     REFERENCES `attribute` (`attribute_id`)
     ON DELETE RESTRICT
     ON UPDATE NO ACTION)
-ENGINE = InnoDB
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8;
 
 ALTER TABLE `specchio`.`eav` ADD COLUMN `taxonomy_id` INTEGER NULL DEFAULT NULL;
@@ -97,7 +102,7 @@ INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('cm2');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('g/cm2');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values(null, null, 'RAW');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('ms', 'Millisecond', 'ms');
-INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Degrees', 'Degree', 'Degrees');
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Degrees', 'Angular value in degrees', 'Degrees');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('String', 'String', 'String');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('pH', 'Figure expressing the acidity or alkalinity of a solution on a logarithmic scale on which 7 is neutral.', 'pH');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('cmol/kg');
@@ -106,7 +111,11 @@ INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('mg/kg');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('g/g');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Deci Siemens / Metre', null, 'dS/m');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Metres', null, 'm');
-INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Percent', null, '%');
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Degrees Celcius', 'Temperature unit in degrees Celcius', '�C');
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Hectopascal', 'Pressure unit in Hectopascal', 'hPa');
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Metres / second', 'Velocity', 'm/s');
+
+--INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Percent', null, '%'); -- apparently already exists in V2.2 schema ...
 
 
 
@@ -119,9 +128,9 @@ INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Perce
 ALTER TABLE `specchio`.`attribute` ADD COLUMN `cardinality` INT(10) DEFAULT 1;
 
 -- environmental conditions from `specchio`.`category` 
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) VALUES ('Ambient Temperature', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) VALUES ('Air Pressure', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) VALUES ('Wind Speed', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `default_unit_id`) VALUES ('Ambient Temperature', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val', (select unit_id from `specchio`.`unit` where short_name = '�C'));
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `default_unit_id`) VALUES ('Air Pressure', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val', (select unit_id from `specchio`.`unit` where short_name = 'hPa'));
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `default_unit_id`) VALUES ('Wind Speed', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val', (select unit_id from `specchio`.`unit` where short_name = 'm/s'));
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) VALUES ('Wind Direction', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) VALUES ('Relative Humidity', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val');
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) VALUES ('Cloud Cover', (select category_id from `specchio`.`category` where name = 'Environmental Conditions'), 'double_val');
@@ -275,7 +284,7 @@ INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field
 
 -- Optics
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('FOV', (select category_id from `specchio`.category where name = 'Optics'), 'int_val');
-INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Optics Name', (select category_id from `specchio`.category where name = 'Optics'), 'String_val');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`) values('Optics Name', (select category_id from `specchio`.category where name = 'Optics'), 'string_val');
 
 
 -- Processing
@@ -399,6 +408,126 @@ INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`
 INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'Beam Geometry'), 'Bihemispherical (CASE 9)', '9', '');
 
 
+
+-- corine landcover, maybe not a brilliant solution, but anyway, could be converted to something more meaningful later on ....
+
+
+INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('CORINE Landcover', '', (select category_id from `specchio`.`category` where name = 'Generic Target Properties'), 'taxonomy_id');
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Artificial Surfaces', '1', '');
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Agricultural Areas', '2', '');
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Forest and Semi-Natural Areas', '3', '');
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Wetlands', '4', '');
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Water Bodies', '5', '');
+
+CREATE TEMPORARY TABLE IF NOT EXISTS `specchio_temp`.`temp_tax_table` AS (SELECT * FROM `specchio`.`taxonomy`);
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Urban fabric', '11', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 1));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Industrial, commercial and transport units', '12', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 1));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Mine, dump and construction sites', '13', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 1));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Artificial, non-agricultural vegetated areas', '14', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 1));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Arable Land', '21', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 2));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Permanent Crops', '22', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 2));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Pasture', '23', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 2));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Heterogeneous agricultural areas', '24', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 2));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Forests', '31', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 3));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Scrub and/or herbaceous associations', '32', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 3));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Open spaces with little or no vegetation', '33', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 3));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Inland wetlands', '41', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 4));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Marine wetlands', '42', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 4));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Inland waters', '51', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 5));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Marine waters', '52', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 5));
+
+delete from `specchio_temp`.`temp_tax_table`;
+insert into `specchio_temp`.`temp_tax_table`  (SELECT * FROM `specchio`.`taxonomy`);
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Continuous urban fabric', '111', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 11));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Discontinuous urban fabric', '112', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 11));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Industrial or commercial units', '121', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 12));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Road and rail networks and associated land', '122', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 12));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Port areas', '123', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 12));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Airports', '124', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 12));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Mineral extraction sites', '131', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 13));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Dump sites', '132', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 13));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Construction sites', '133', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 13));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Green urban areas', '141', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 14));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Port and leisure facilities', '142', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 14));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Non-irrigated arable land', '211', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 21));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Permanently irrigated land', '212', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 21));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Rice fields', '213', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 21));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Vineyards', '221', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 22));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Fruit trees and berry plantations', '222', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 22));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Olive groves', '223', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 22));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Pastures', '231', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 23));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Annual crops associated with permanent crops', '241', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 24));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Complex cultivation patterns', '242', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 24));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Mainly agricultural land with significant areas of natural vegetation', '243', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 24));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Agro-forestry areas', '244', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 24));
+
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Deciduous forest', '311', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 31));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Coniferous forest', '312', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 31));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Mixed forest', '313', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 31));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Natural grassland', '321', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 32));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Moors and heathland', '322', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 32));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Sclerophyllous vegetation', '323', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 32));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Transitional woodland-scrub', '324', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 32));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Beaches, dunes, sands', '331', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 33));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Bare rocks', '332', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 33));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Sparsely vegetated areas', '333', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 33));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Burnt areas', '334', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 33));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Glaciers and perpetual snow', '335', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 33));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Inland marshes', '411', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 41));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Peat bogs', '412', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 41));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Salt marshes', '421', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 42));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Salines', '422', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 42));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Intertidal flats', '423', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 42));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Water courses', '511', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 51));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Water bodies', '512', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 51));
+
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Coastal lagoons', '521', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 52));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Estuaries', '522', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 52));
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`, `parent_id`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover'), 'Sea and ocean', '523', '', (select taxonomy_id from `specchio_temp`.`temp_tax_table` where attribute_id = (select `attribute_id` from `specchio`.`attribute` where name = 'CORINE Landcover') and code = 52));
+
+
+
+
+
 -- data portal
 INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Data Usage Policy', '', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'string_val');
 INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Digital Object Identifier', '', (select category_id from `specchio`.`category` where name = 'Data Portal'), 'string_val');
@@ -407,10 +536,7 @@ INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `defaul
 -- remove obsolete categories and attributes of V2.2
 -- Attention: data contained in the related metaparameters need copying using new attributes first!!!
 
-
--- IN WORK
--- *******
-
+-- renaming for unified naming of attributes
 -- Integration time
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Integration Time') where attribute_id = (select attribute_id from attribute where binary name = 'Integration time');
 -- Number of internal scans (probably not existing in the current online system)
@@ -432,6 +558,9 @@ update eav set attribute_id = (select attribute_id from attribute where binary n
 -- Dark Current Correction
 update eav set attribute_id = (select attribute_id from attribute where binary name = 'Dark Current Correction') where attribute_id = (select attribute_id from attribute where binary name = '');
 
+
+-- IN WORK
+-- *******
 
 
 -- > steps to be done in Java:
@@ -486,8 +615,6 @@ update eav set attribute_id = (select attribute_id from attribute where binary n
 -- >> insert from assoc_measurement
 
 
--- >> insert from 
-
 
 
 
@@ -508,64 +635,6 @@ DROP VIEW `specchio`.`spectrum_datalink_view`;
 DROP VIEW `specchio`.`spectrum_view`;
 DROP VIEW `specchio`.`eav_view`;
 DROP VIEW `specchio`.`spectrum_x_eav_view`;
-
--- remove deprecated tables and columns
-ALTER TABLE `specchio`.`spectrum` DROP COLUMN `internal_average_cnt`;
-ALTER TABLE `specchio`.`spectrum` DROP COLUMN `number`;
-ALTER TABLE `specchio`.`spectrum` DROP COLUMN `file_comment`;
-ALTER TABLE `specchio`.`spectrum` DROP COLUMN `date`;
-ALTER TABLE `specchio`.`spectrum` DROP COLUMN `loading_date`;
-ALTER TABLE `specchio`.`spectrum` DROP COLUMN `file_name`;
-ALTER TABLE `specchio`.`spectrum` DROP FOREIGN KEY `spectrum_ibfk_13`, DROP COLUMN `foreoptic_id`;
-ALTER TABLE `specchio`.`spectrum` DROP FOREIGN KEY `spectrum_ibfk_7`, DROP COLUMN `environmental_condition_id`;
-ALTER TABLE `specchio`.`spectrum` DROP FOREIGN KEY `spectrum_ibfk_16`, DROP COLUMN `position_id`;
-ALTER TABLE `specchio`.`spectrum` DROP FOREIGN KEY `spectrum_ibfk_8`, DROP COLUMN `sampling_geometry_id`;
-DROP VIEW `specchio`.`hierarchy_datalink_view`;
-DROP VIEW `specchio`.`position_view`;
-DROP VIEW `specchio`.`environmental_condition_view`;
-DROP VIEW `specchio`.`sampling_geometry_view`;
-DROP VIEW `specchio`.`spectrum_x_spectrum_name_view`;
-DROP VIEW `specchio`.`spectrum_name_view`;
-DROP VIEW `specchio`.`spectrum_x_target_type_view`;
-DROP VIEW `specchio`.`picture_view`;
-DROP VIEW `specchio`.`spectrum_x_picture_view`;
-DROP VIEW `specchio`.`spectrum_x_instr_setting_view`;
-DROP VIEW `specchio`.`instrument_setting_view`;
-DROP VIEW `specchio`.`assoc_measurement_view`;
-DROP VIEW `specchio`.`spectrum_x_assoc_measurement_view`;
-DROP TRIGGER `specchio`.`hierarchy_datalink_tr`;
-DROP TRIGGER `specchio`.`position_tr`;
-DROP TRIGGER `specchio`.`environmental_condition_tr`;
-DROP TRIGGER `specchio`.`sampling_geometry_tr`;
-DROP TRIGGER `specchio`.`spectrum_x_spectrum_name_tr`;
-DROP TRIGGER `specchio`.`spectrum_name_tr`;
-DROP TRIGGER `specchio`.`spectrum_x_target_type_tr`;
-DROP TRIGGER `specchio`.`picture_tr`;
-DROP TRIGGER `specchio`.`spectrum_x_picture_tr`;
-DROP TRIGGER `specchio`.`spectrum_x_instr_setting_tr`;
-DROP TRIGGER `specchio`.`instrument_setting_tr`;
-DROP TRIGGER `specchio`.`assoc_measurement_tr`;
-DROP TRIGGER `specchio`.`spectrum_x_assoc_measurement_tr`;
-DROP TABLE `specchio`.`spectrum_x_assoc_measurement`;
-DROP TABLE `specchio`.`spectrum_x_instr_setting`;
-DROP TABLE `specchio`.`spectrum_x_picture`;
-DROP TABLE `specchio`.`spectrum_x_spectrum_name`;
-DROP TABLE `specchio`.`spectrum_x_target_type`;
-DROP TABLE `specchio`.`assoc_measurement`;
-DROP TABLE `specchio`.`instrument_setting`;
-DROP TABLE `specchio`.`instr_setting_type`;
-DROP TABLE `specchio`.`picture`;
-DROP TABLE `specchio`.`spectrum_name`;
-DROP TABLE `specchio`.`spectrum_name_type`;
-DROP TABLE `specchio`.`hierarchy_datalink`;
-DROP TABLE `specchio`.`target_type`;
-DROP TABLE `specchio`.`environmental_condition`;
-DROP TABLE `specchio`.`cloud_cover`;
-DROP TABLE `specchio`.`sampling_geometry`;
-DROP TABLE `specchio`.`wind_direction`;
-DROP TABLE `specchio`.`wind_speed`;
-DROP TABLE `specchio`.`position`;
-DROP TABLE `specchio`.`foreoptic`;
 
 
 -- bigger blob
@@ -760,3 +829,21 @@ CREATE TRIGGER `specchio`.`spectrum_x_eav_tr`
 	FOR EACH ROW SET new.`campaign_id` = (
 		SELECT `campaign_id` FROM `specchio`.`spectrum` WHERE `spectrum`.`spectrum_id` = new.`spectrum_id`
 	);
+
+
+
+-- target homogeneity
+
+INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Target Homogeneity', '', (select category_id from `specchio`.`category` where name = 'Generic Target Properties'), 'taxonomy_id');
+
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'Target Homogeneity'), 'Homogenous', 'Homogenous', 'Dichotomous homogeneity attribute');
+INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'Target Homogeneity'), 'Heterogenous', 'Heterogenous', 'Dichotomous homogeneity attribute');
+
+
+-- db version
+INSERT INTO `specchio`.`schema_info` (`version`, `date`) VALUES ('3.0', CURDATE());
+
+
+
+
+
