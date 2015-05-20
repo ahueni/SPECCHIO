@@ -39,9 +39,9 @@ public class DataCache {
 	ArrayList<Instrument> instruments;
 	ArrayList<Sensor> sensors;
 	ArrayList<MeasurementUnit> measurement_units;
-	ArrayList<GoniometerStruct> goniometers;
-	ArrayList<SamplingEnvironmentStruct> sampling_environments;	
-	ArrayList<BeamGeometryStruct> beam_geometries;
+//	ArrayList<GoniometerStruct> goniometers;
+//	ArrayList<SamplingEnvironmentStruct> sampling_environments;	
+//	ArrayList<BeamGeometryStruct> beam_geometries;
 	ArrayList<ReferenceBrand> reference_brands;
 	
 	
@@ -60,9 +60,9 @@ public class DataCache {
 		load_measurement_units();
 		load_calibrations();
 		load_instruments();		
-		load_goniometers();
-		load_sampling_environments();
-		load_measurement_types();
+//		load_goniometers();
+//		load_sampling_environments();
+//		load_measurement_types();
 		load_reference_brands();
 	}
 	
@@ -1337,13 +1337,13 @@ public class DataCache {
 		
 	}
 
-	public String get_measurement_type_id_for_file(SpectralFile spec_file, int spec_no) {
-		
-		int measurement_type_id = get_measurement_type_id(Integer.toString(spec_file.getMeasurementType(spec_no)));
-		
-		return SQL.is_null_key_get_val_and_op(measurement_type_id).id;
-		
-	}
+//	public String get_measurement_type_id_for_file(SpectralFile spec_file, int spec_no) {
+//		
+//		int measurement_type_id = get_measurement_type_id(Integer.toString(spec_file.getMeasurementType(spec_no)));
+//		
+//		return SQL.is_null_key_get_val_and_op(measurement_type_id).id;
+//		
+//	}
 	
 	
 	
@@ -1386,169 +1386,169 @@ public class DataCache {
 	}
 
 	
-	public int get_goniometer_id(String name)
-	{
-		GoniometerStruct o = null;
-			// search through sensor list
-			ListIterator<GoniometerStruct> li = goniometers.listIterator();
-
-			while(li.hasNext())
-			{
-				o = li.next();
-				if(o.name.equals(name))
-					break;			
-			}
-			
-				
-		return o.goniometer_id;				
-		
-	}	
+//	public int get_goniometer_id(String name)
+//	{
+//		GoniometerStruct o = null;
+//			// search through sensor list
+//			ListIterator<GoniometerStruct> li = goniometers.listIterator();
+//
+//			while(li.hasNext())
+//			{
+//				o = li.next();
+//				if(o.name.equals(name))
+//					break;			
+//			}
+//			
+//				
+//		return o.goniometer_id;				
+//		
+//	}	
 	
 	
-	private void load_goniometers() {
-		
-		goniometers = new ArrayList<GoniometerStruct>();
-		
-		try {
-			
-			Statement stmt = SQL.createStatement();
-
-			// read information from database
-			String query = "select goniometer_id, name from goniometer";
-
-			
-						
-			ResultSet rs = stmt.executeQuery(query);
-			
-			while (rs.next()) {
-				int i = 1;
-				GoniometerStruct g = new GoniometerStruct();
-				g.goniometer_id = rs.getInt(i++);
-				g.name = rs.getString(i++);
-
-				this.goniometers.add(g);
-				
-			}
-			rs.close();		
-			stmt.close();
-						
-			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}			
-
-	}		
+//	private void load_goniometers() {
+//		
+//		goniometers = new ArrayList<GoniometerStruct>();
+//		
+//		try {
+//			
+//			Statement stmt = SQL.createStatement();
+//
+//			// read information from database
+//			String query = "select goniometer_id, name from goniometer";
+//
+//			
+//						
+//			ResultSet rs = stmt.executeQuery(query);
+//			
+//			while (rs.next()) {
+//				int i = 1;
+//				GoniometerStruct g = new GoniometerStruct();
+//				g.goniometer_id = rs.getInt(i++);
+//				g.name = rs.getString(i++);
+//
+//				this.goniometers.add(g);
+//				
+//			}
+//			rs.close();		
+//			stmt.close();
+//						
+//			
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}			
+//
+//	}		
 	
 	
-	public int get_sampling_environment_id(String name)
-	{
-		SamplingEnvironmentStruct o = null;
-			// search through sensor list
-			ListIterator<SamplingEnvironmentStruct> li = sampling_environments.listIterator();
-
-			while(li.hasNext())
-			{
-				o = li.next();
-				if(o.name.equals(name))
-					break;			
-			}
-			
-				
-		return o.sampling_environment_id;				
-		
-	}	
+//	public int get_sampling_environment_id(String name)
+//	{
+//		SamplingEnvironmentStruct o = null;
+//			// search through sensor list
+//			ListIterator<SamplingEnvironmentStruct> li = sampling_environments.listIterator();
+//
+//			while(li.hasNext())
+//			{
+//				o = li.next();
+//				if(o.name.equals(name))
+//					break;			
+//			}
+//			
+//				
+//		return o.sampling_environment_id;				
+//		
+//	}	
 	
 	
-	private void load_sampling_environments() {
-		
-		sampling_environments = new ArrayList<SamplingEnvironmentStruct>();
-		
-		try {
-			
-			Statement stmt = SQL.createStatement();
-
-			// read information from database
-			String query = "select sampling_environment_id, name from sampling_environment";
-
-			
-						
-			ResultSet rs = stmt.executeQuery(query);
-			
-			while (rs.next()) {
-				int i = 1;
-				SamplingEnvironmentStruct o = new SamplingEnvironmentStruct();
-				o.sampling_environment_id = rs.getInt(i++);
-				o.name = rs.getString(i++);
-
-				this.sampling_environments.add(o);
-				
-			}
-			rs.close();		
-
-			stmt.close();
-			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}			
-
-	}		
+//	private void load_sampling_environments() {
+//		
+//		sampling_environments = new ArrayList<SamplingEnvironmentStruct>();
+//		
+//		try {
+//			
+//			Statement stmt = SQL.createStatement();
+//
+//			// read information from database
+//			String query = "select sampling_environment_id, name from sampling_environment";
+//
+//			
+//						
+//			ResultSet rs = stmt.executeQuery(query);
+//			
+//			while (rs.next()) {
+//				int i = 1;
+//				SamplingEnvironmentStruct o = new SamplingEnvironmentStruct();
+//				o.sampling_environment_id = rs.getInt(i++);
+//				o.name = rs.getString(i++);
+//
+//				this.sampling_environments.add(o);
+//				
+//			}
+//			rs.close();		
+//
+//			stmt.close();
+//			
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}			
+//
+//	}		
 	
-	public int get_measurement_type_id(String beam_geometry)
-	{
-		if (beam_geometry.equals("0")) return 0;
-		
-		BeamGeometryStruct s = null;
-			// search through sensor list
-			ListIterator<BeamGeometryStruct> li = beam_geometries.listIterator();
-
-			while(li.hasNext())
-			{
-				s = li.next();
-				if(s.name.contains(beam_geometry))
-					break;			
-			}
-			
-				
-		return s.measurement_type_id;				
-		
-	}
+//	public int get_measurement_type_id(String beam_geometry)
+//	{
+//		if (beam_geometry.equals("0")) return 0;
+//		
+//		BeamGeometryStruct s = null;
+//			// search through sensor list
+//			ListIterator<BeamGeometryStruct> li = beam_geometries.listIterator();
+//
+//			while(li.hasNext())
+//			{
+//				s = li.next();
+//				if(s.name.contains(beam_geometry))
+//					break;			
+//			}
+//			
+//				
+//		return s.measurement_type_id;				
+//		
+//	}
 	
 	
 	
-	private void load_measurement_types() {
-		
-		beam_geometries = new ArrayList<BeamGeometryStruct>();
-
-		try {
-
-			Statement stmt = SQL.createStatement();
-
-			// read information from database
-			String query = "select measurement_type_id, name from measurement_type";
-
-			ResultSet rs;
-			rs = stmt.executeQuery(query);
-
-			while (rs.next()) {
-				BeamGeometryStruct o = new BeamGeometryStruct();
-
-				o.measurement_type_id = rs.getInt(1);
-				o.name = rs.getString(2);
-
-				beam_geometries.add(o);
-			}
-
-			rs.close();
-			stmt.close();
-
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}			
-
-	}
+//	private void load_measurement_types() {
+//		
+//		beam_geometries = new ArrayList<BeamGeometryStruct>();
+//
+//		try {
+//
+//			Statement stmt = SQL.createStatement();
+//
+//			// read information from database
+//			String query = "select measurement_type_id, name from measurement_type";
+//
+//			ResultSet rs;
+//			rs = stmt.executeQuery(query);
+//
+//			while (rs.next()) {
+//				BeamGeometryStruct o = new BeamGeometryStruct();
+//
+//				o.measurement_type_id = rs.getInt(1);
+//				o.name = rs.getString(2);
+//
+//				beam_geometries.add(o);
+//			}
+//
+//			rs.close();
+//			stmt.close();
+//
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}			
+//
+//	}
 	
 	
 	public ReferenceBrand get_reference_brand_by_name(String reference_brand_name)
