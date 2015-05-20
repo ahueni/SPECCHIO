@@ -406,8 +406,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		try {
 			// cx if there are header files and slb (sli) files
 			// in that case we got ENVI header and spectral libary files
-			if (exts.contains("hdr")
-					&& (exts.contains("slb") || exts.contains("sli")))
+//			if (exts.contains("hdr")
+//					&& (exts.contains("slb") || exts.contains("sli")))
+			if (exts.contains("hdr") || exts.contains("slb") || exts.contains("sli"))			
 				loader = new ENVI_SLB_FileLoader();
 
 			// cx for APOGEE files
