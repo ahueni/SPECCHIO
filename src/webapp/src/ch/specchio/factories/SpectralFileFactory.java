@@ -953,10 +953,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			try {
 				
 				Integer id = 0;
-				Integer illumination_source_id = 0;
-				Integer gonio_id = 0;
-				Integer sampling_environment_id = 0;
-				id_and_op_struct hierarchy_id_and_op, campaign_id_and_op, illumination_source_id_and_op, gonio_id_and_op, sampling_environment_id_and_op;
+				id_and_op_struct hierarchy_id_and_op, campaign_id_and_op;
 				String query;
 				ResultSet rs;
 				SQL_StatementBuilder SQL = new SQL_StatementBuilder(getConnection());
@@ -996,37 +993,80 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		
 				// illum
 				if (spec_file.getLightSource() != null) {
-		
-					query = "select illumination_source_id from illumination_source where name = '"
-							+ spec_file.getLightSource() + "'";
+					
+					int attr_id = getAttributes().get_attribute_id("Illumination Sources");
+					
+					// process all spectra
+					query = "select t.taxonomy_id from taxonomy t  where " + spec_file.getLightSource() +  " = t.name and t.attribute_id = " + attr_id;
+
 					Statement stmt = getStatementBuilder().createStatement();
 					rs = stmt.executeQuery(query);
-		
+
 					while (rs.next()) {
-						illumination_source_id = rs.getInt(1);
-					}
+
+						int taxonomy_id = rs.getInt(1);
+						
+						MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info(attr_id));
+						mp.setValue(taxonomy_id);
+						md.addEntry(mp);	
+					}	
 		
 					rs.close();
 					stmt.close();
 		
+//					query = "select illumination_source_id from illumination_source where name = '"
+//							+ spec_file.getLightSource() + "'";
+//					Statement stmt = getStatementBuilder().createStatement();
+//					rs = stmt.executeQuery(query);
+//		
+//					while (rs.next()) {
+//						illumination_source_id = rs.getInt(1);
+//					}
+//		
+//					rs.close();
+//					stmt.close();
+		
 				}
-				illumination_source_id_and_op = SQL
-						.is_null_key_get_val_and_op(illumination_source_id);
+//				illumination_source_id_and_op = SQL
+//						.is_null_key_get_val_and_op(illumination_source_id);
 		
 				// gonio
-				if (spec_file.getInstrumentName() != null) {
-		
-					gonio_id = getDataCache().get_goniometer_id(spec_file.getInstrumentName());
-		
-				}
-				gonio_id_and_op = SQL.is_null_key_get_val_and_op(gonio_id);
+//				if (spec_file.getInstrumentName() != null) {
+//		
+//					gonio_id = getDataCache().get_goniometer_id(spec_file.getInstrumentName());
+//		
+//				}
+//				gonio_id_and_op = SQL.is_null_key_get_val_and_op(gonio_id);
 		
 				// sampling environment
 				if (spec_file.getSamplingEnvironment() != null) {			
-					sampling_environment_id = getDataCache().get_sampling_environment_id(spec_file.getSamplingEnvironment());			
+//					sampling_environment_id = getDataCache().get_sampling_environment_id(spec_file.getSamplingEnvironment());	
+					
+					
+					int attr_id = getAttributes().get_attribute_id("Sampling Environment");
+					
+					// process all spectra
+					query = "select t.taxonomy_id from taxonomy t  where " + spec_file.getSamplingEnvironment() +  " = t.name and t.attribute_id = " + attr_id;
+
+					Statement stmt = getStatementBuilder().createStatement();
+					rs = stmt.executeQuery(query);
+
+					while (rs.next()) {
+
+						int taxonomy_id = rs.getInt(1);
+						
+						MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info(attr_id));
+						mp.setValue(taxonomy_id);
+						md.addEntry(mp);	
+					}	
+		
+					rs.close();
+					stmt.close();
+					
+					
 				}
-				sampling_environment_id_and_op = SQL
-						.is_null_key_get_val_and_op(sampling_environment_id);
+//				sampling_environment_id_and_op = SQL
+//						.is_null_key_get_val_and_op(sampling_environment_id);
 				
 				
 				// geometry via EAV: SPECCHIO V3.0
@@ -1114,7 +1154,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 						+ "("
 						+ " hierarchy_level_id, sensor_id, campaign_id, "
 						+ "file_format_id, instrument_id, calibration_id, "
-						+ "measurement_unit_id, measurement_type_id, illumination_source_id, goniometer_id, sampling_environment_id) "
+						+ "measurement_unit_id) "
 						+ "VALUES (" 
 						+ hierarchy_id_and_op.id
 						+ ", "
@@ -1129,14 +1169,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 						+ (calibration_id == 0 ? "null" : Integer.toString(calibration_id))
 						+ ", "
 						+ SQL.is_null_key_get_val_and_op(getDataCache().get_measurement_unit_id_for_file(spec_file, spec_no)).id
-						+ ", "
-						+ getDataCache().get_measurement_type_id_for_file(spec_file, spec_no)
-						+ ", "
-						+ illumination_source_id_and_op.id
-						+ ", "
-						+ gonio_id_and_op.id
-						+ ", "
-						+ sampling_environment_id_and_op.id + ")";
+						+")";
 				
 				//System.out.println(query);
 				
