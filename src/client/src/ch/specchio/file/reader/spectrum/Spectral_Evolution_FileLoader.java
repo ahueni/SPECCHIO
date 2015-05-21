@@ -295,7 +295,7 @@ public class Spectral_Evolution_FileLoader extends SpectralFileLoader {
 		
 		if(time_str.contains("PM") || time_str.contains("AM"))
 		{
-			hour_format =" hh:mm:ss.SS a";
+			hour_format =" hh:mm:ss a";
 		}
 		else
 		{
