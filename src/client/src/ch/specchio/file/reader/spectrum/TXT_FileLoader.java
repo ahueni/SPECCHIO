@@ -194,7 +194,7 @@ public class TXT_FileLoader extends SpectralFileLoader {
 				if(!value.equals("")){
 					wvl.add(Float.valueOf(value));
 				} else {
-					wvl.add(Float.valueOf(0));
+//					wvl.add(Float.valueOf(0));
 				}
 				
 				// read the values from the current line				
