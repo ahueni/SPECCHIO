@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 import ch.specchio.types.SpectralFile;
 
@@ -14,6 +15,8 @@ public class ENVI_SLB_FileLoader extends SpectralFileLoader {
 	
 	SpectralFile envi_file;
 	Character c = new Character(' ');
+	
+	ArrayList<Float> wvls = new ArrayList<Float>();
 	
 	public ENVI_SLB_FileLoader()
 	{
@@ -211,6 +214,16 @@ public class ENVI_SLB_FileLoader extends SpectralFileLoader {
 			read_spectra_names(in);
 		}
 		
+		if(t1.equals("wavelength") && tokens[1].equals("="))
+		{
+			// return to start of line and re-read
+			in.reset();			
+			read_wvls(in);
+			
+			hdr.addWvls(wvls.toArray(new Float[wvls.size()]));
+		}
+		
+		
 		
 	}
 	
@@ -234,6 +247,13 @@ public class ENVI_SLB_FileLoader extends SpectralFileLoader {
 		
 
 	}
+	
+	void read_wvls(BufferedReader in) throws IOException
+	{
+		opening_parenthesis(in);
+		wvls(in);
+
+	}	
 	
 	// reads till opening parenthesis is found
 	void opening_parenthesis(BufferedReader in) throws IOException
@@ -259,6 +279,8 @@ public class ENVI_SLB_FileLoader extends SpectralFileLoader {
 		
 	}
 	
+	
+	
 	void name(BufferedReader in) throws IOException
 	{
 		StringBuffer name = new StringBuffer("");
@@ -272,6 +294,35 @@ public class ENVI_SLB_FileLoader extends SpectralFileLoader {
 		envi_file.addSpectrumName(name.toString());
 		
 	}
+	
+	void wvls(BufferedReader in) throws IOException
+	{
+		spaces(in);
+		wvl(in);
+		
+		while(c.equals(','))
+		{
+			spaces(in);
+			linebreak(in);
+			wvl(in);
+		}
+		
+	}	
+	
+	void wvl(BufferedReader in) throws IOException
+	{
+		String wvl = new String();
+				
+		while(!(c.equals(',') || c.equals('}')))
+		{
+			wvl = wvl + c;
+			read_char(in);
+		}
+		
+		wvls.add(Float.valueOf(wvl));
+		
+		
+	}	
 	
 	void spaces(BufferedReader in) throws IOException
 	{
