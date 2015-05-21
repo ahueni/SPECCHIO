@@ -513,9 +513,9 @@ public class UserFactory extends SPECCHIOFactory {
 				"GRANT SELECT, INSERT, UPDATE(" + SQL.conc_cols(TableNames.SPECTRUM_VIEW_COLS) + ") ON " +
 				spectrumView + " TO " + userString
 			);
-			stmt.executeUpdate(
-				"GRANT SELECT (is_reference) ON " + spectrumView + " TO " + userString
-			);
+//			stmt.executeUpdate(
+//				"GRANT SELECT (is_reference) ON " + spectrumView + " TO " + userString
+//			);
 			
 			// grant privileges on the user tables
 			for (String table : TableNames.USER_TABLES) {
