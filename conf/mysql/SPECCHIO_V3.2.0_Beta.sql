@@ -1,3 +1,5 @@
+CREATE DATABASE  IF NOT EXISTS `specchio` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `specchio`;
 -- MySQL dump 10.13  Distrib 5.6.19, for osx10.7 (i386)
 --
 -- Host: 127.0.0.1    Database: specchio
@@ -937,7 +939,7 @@ CREATE TABLE `specchio_user` (
   `password` varchar(100) DEFAULT NULL,
   `external_id` varchar(255) DEFAULT NULL,
   `description` varchar(250) DEFAULT NULL,
-  `signup_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `signup_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   KEY `FK_specchio_user_1` (`institute_id`),
   CONSTRAINT `FK_specchio_user_1` FOREIGN KEY (`institute_id`) REFERENCES `institute` (`institute_id`)
@@ -1319,7 +1321,9 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-05-27 16:12:06
+-- Dump completed on 2015-05-27 16:23:43
+CREATE DATABASE  IF NOT EXISTS `specchio_temp` /*!40100 DEFAULT CHARACTER SET latin1 */;
+USE `specchio_temp`;
 -- MySQL dump 10.13  Distrib 5.6.19, for osx10.7 (i386)
 --
 -- Host: 127.0.0.1    Database: specchio_temp
@@ -1346,4 +1350,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-05-27 16:12:06
+-- Dump completed on 2015-05-27 16:23:43
