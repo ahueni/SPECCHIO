@@ -110,7 +110,7 @@ CREATE TABLE `campaign` (
   KEY `FK_campaign_research_group_id` (`research_group_id`),
   CONSTRAINT `FK_campaign_research_group_id` FOREIGN KEY (`research_group_id`) REFERENCES `research_group` (`research_group_id`),
   CONSTRAINT `FK_campaign_user_id` FOREIGN KEY (`user_id`) REFERENCES `specchio_user` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=FIXED;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 ROW_FORMAT=FIXED;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -121,6 +121,21 @@ LOCK TABLES `campaign` WRITE;
 /*!40000 ALTER TABLE `campaign` DISABLE KEYS */;
 /*!40000 ALTER TABLE `campaign` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'NO_AUTO_VALUE_ON_ZERO' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER  `specchio`.`campaign_tr` BEFORE INSERT ON `campaign` FOR EACH ROW set new.user_id = (select user_id from specchio_user where user = SUBSTRING_INDEX((select user()), '@', 1)) */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `campaign_path`
@@ -389,6 +404,25 @@ LOCK TABLES `hierarchy_level_x_spectrum` WRITE;
 /*!40000 ALTER TABLE `hierarchy_level_x_spectrum` DISABLE KEYS */;
 /*!40000 ALTER TABLE `hierarchy_level_x_spectrum` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `specchio`.`hierarchy_level_x_spectrum_tr`
+	BEFORE INSERT ON `specchio`.`hierarchy_level_x_spectrum`
+	FOR EACH ROW SET new.`campaign_id` = (
+		SELECT `campaign_id` FROM `specchio`.`spectrum` WHERE `spectrum`.`spectrum_id` = new.`spectrum_id`
+	) */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Temporary view structure for view `hierarchy_level_x_spectrum_view`
@@ -722,7 +756,7 @@ CREATE TABLE `research_group` (
   `research_group_id` int(10) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`research_group_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -943,7 +977,7 @@ CREATE TABLE `specchio_user` (
   PRIMARY KEY (`user_id`),
   KEY `FK_specchio_user_1` (`institute_id`),
   CONSTRAINT `FK_specchio_user_1` FOREIGN KEY (`institute_id`) REFERENCES `institute` (`institute_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1076,6 +1110,25 @@ LOCK TABLES `spectrum_x_eav` WRITE;
 /*!40000 ALTER TABLE `spectrum_x_eav` DISABLE KEYS */;
 /*!40000 ALTER TABLE `spectrum_x_eav` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `specchio`.`spectrum_x_eav_tr`
+	BEFORE INSERT ON `specchio`.`spectrum_x_eav`
+	FOR EACH ROW SET new.`campaign_id` = (
+		SELECT `campaign_id` FROM `specchio`.`spectrum` WHERE `spectrum`.`spectrum_id` = new.`spectrum_id`
+	) */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Temporary view structure for view `spectrum_x_eav_view`
@@ -1321,7 +1374,7 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-05-27 16:23:43
+-- Dump completed on 2015-05-27 18:42:50
 CREATE DATABASE  IF NOT EXISTS `specchio_temp` /*!40100 DEFAULT CHARACTER SET latin1 */;
 USE `specchio_temp`;
 -- MySQL dump 10.13  Distrib 5.6.19, for osx10.7 (i386)
@@ -1350,4 +1403,4 @@ USE `specchio_temp`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-05-27 16:23:43
+-- Dump completed on 2015-05-27 18:42:50
