@@ -267,8 +267,13 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 	
 	double[] read_gps_data(String str)
 	{
+		// Older SIG files
 		//  11121.2335,W, 11121.2324,W
 		//  5330.5955,N, 5330.5964,N
+		
+		// Newer SIG files
+//		longitude= 08536.6045W     , 08536.6034W     
+//		latitude= 1055.3959N      , 1055.3963N    		
 		
 		double[] file_coord = new double[2];	
 		double[] coord = new double[2];	
@@ -277,11 +282,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		
 		String[] coords = str.split(",");
 		
-		if (coords.length !=2)
-		{
-			return null;
-		}
-		else
+		if (coords.length == 4)
 		{
 			
 			file_coord[0] = Double.valueOf(coords[0]);
@@ -296,7 +297,33 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 				coord[1] = coord[1]*(-1);
 			}
 			
-			return(coord);
+			return(coord);			
+			
+		}
+		else if (coords.length == 2)
+		{
+			
+			file_coord[0] = Double.valueOf(coords[0].substring(0, coords[0].length()-1));
+			file_coord[1] = Double.valueOf(coords[1].substring(0, coords[1].length()-1));
+			
+			coord[0] = spec_file.DDDmm2DDDdecimals(file_coord[0]);
+			coord[1] = spec_file.DDDmm2DDDdecimals(file_coord[1]);
+			
+			String c1_ = coords[0].substring(coords[0].length()-1);
+			String c2_ = coords[1].substring(coords[0].length()-1);
+			
+			if (c1_.equals("S") || c2_.equals("E"))
+			{
+				coord[0] = coord[0]*(-1);
+				coord[1] = coord[1]*(-1);
+			}
+			
+			return(coord);			
+
+		}		
+		else
+		{
+			return null;
 		}
 	}
 	
@@ -357,7 +384,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		}
 		if (date_and_time[2].equals("PM"))
 		{
-			if (hrs >= 1 && hrs < 12) hrs = hrs - 12;			
+			if (hrs >= 1 && hrs < 12) hrs = hrs + 12;			
 		}		
 		
 		int year = Integer.valueOf(date[2]);
