@@ -478,7 +478,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			// only radiance of target
 			
 			
-			f = new Float[3][target.size()];			
+			f = new Float[1][target.size()];			
 			f[0] = target.toArray(f[0]);		
 			
 			// Why to we do this????
@@ -514,10 +514,13 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			
 		}
 		
+		for(int i=0;i<f.length;i++)
+		{
 		
-		spec_file.addWvls(new Float[target.size()]);
-		spec_file.setWvls(0, wvls.toArray(spec_file.getWvls(0)));
+			spec_file.addWvls(new Float[target.size()]);
+			spec_file.setWvls(i, wvls.toArray(spec_file.getWvls(0)));
 		
+		}
 
 		
 		
