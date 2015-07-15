@@ -90,6 +90,8 @@ public class SpectrumMetadataPanel extends JPanel {
 	/** is the panel editable? */
 	private boolean editable;
 	
+	private String previous_path = null;
+	
 	
 	/**
 	 * Constructor.
@@ -465,13 +467,17 @@ public class SpectrumMetadataPanel extends JPanel {
 		private Object loadMetaFileValue(MetaFile mp)  {
 			
 			// create a file chooser
-			JFileChooser fc = new JFileChooser();
+			JFileChooser fc;
+			
+			fc = new JFileChooser(previous_path);
 			int returnVal = fc.showOpenDialog(this);
 			
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				
 				try {
 					File file = fc.getSelectedFile();
+					
+					previous_path = file.getAbsolutePath();
 					
 					// check that the file will be accepted by the server
 					Long maxObjectSize = Long.parseLong(specchioClient.getCapability(Capabilities.MAX_OBJECT_SIZE));
