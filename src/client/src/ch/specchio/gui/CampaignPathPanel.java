@@ -237,8 +237,16 @@ public class CampaignPathPanel extends JPanel implements ActionListener, ListSel
 		
 		if (c != null) {
 			// list all paths from the campaign that exist on the local computer
+			String fileSep = System.getProperty("file.separator");
 			int i = 0;
 			for (String path : c.getKnownPaths()) {
+				
+				if(fileSep.equals("/") && path.startsWith("\\"))
+				{
+					// fudge this for Unix style paths; for some reasons in a mixed environment it happened that the forward slashes were converted to backward slashes! (OPTIMISE SWAMP summer school)
+					path = path.replace("\\", fileSep);				
+				}
+				
 				File file = new File(path);
 				if (!local || (file.exists() && file.isDirectory())) {
 					pathListModel.addElement(file);
