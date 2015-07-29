@@ -7,15 +7,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.spaces.MeasurementUnit;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
+import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
 
@@ -142,6 +146,11 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 				{
 					hdr.setMeasurementUnits(i, MeasurementUnit.DN);
 				}
+				if(sub_tokens[i].contains("Irradiance"))
+				{
+					hdr.setMeasurementUnits(i, MeasurementUnit.Irradiance);
+				}
+				
 				
 			}			
 			
@@ -368,60 +377,157 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 	
 	DateTime get_date_and_time_from_HR_string(String str)
 	{
+		// time= 05/03/2015 12:17:23 PM, 05/03/2015 12:24:55 PM
+		// time= 11-lug-15 13.08.32, 11-lug-15 13.08.47
+		
+		
+		// check what pattern might apply here
+		DateTimeFormatter formatter = null;
+		DateTime dt = null;
 		
 		str = str.replaceFirst(" ", "");
-		String[] date_and_time = str.split(" ");
 		
-
-		String[] date = date_and_time[0].split("/");
-		String[] time = date_and_time[1].split(":");
+		// trial and error approach
+		ArrayList<DateTimeFormatter> formatters = new ArrayList<DateTimeFormatter>();
+		formatters.add(DateTimeFormat.forPattern("dd/MM/yy hh:mm:ss a").withZoneUTC());
+		formatters.add(DateTimeFormat.forPattern("dd/MM/yy HH:mm:ss").withZoneUTC());
+		formatters.add(DateTimeFormat.forPattern("MM/dd/yy hh:mm:ss a").withZoneUTC());
+		formatters.add(DateTimeFormat.forPattern("MM/dd/yy HH:mm:ss").withZoneUTC());	
 		
-		int hrs = Integer.valueOf(time[0]);
-		// AM and PM check
-		if (date_and_time[2].equals("AM"))
-		{
-			if (hrs == 12) hrs = hrs - 12;			
-		}
-		if (date_and_time[2].equals("PM"))
-		{
-			if (hrs >= 1 && hrs < 12) hrs = hrs + 12;			
-		}		
+		formatters.add(DateTimeFormat.forPattern("dd/MM/yyyy hh:mm:ss a").withZoneUTC());
+		formatters.add(DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZoneUTC());
+		formatters.add(DateTimeFormat.forPattern("MM/dd/yyyy hh:mm:ss a").withZoneUTC());
+		formatters.add(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss").withZoneUTC());
 		
-		int year = Integer.valueOf(date[2]);
+		formatters.add(DateTimeFormat.forPattern( "dd-MMM-yy HH.mm.ss").withLocale( Locale.ITALY ).withZoneUTC());
 		
-		if (date[2].length() == 2)
-		{
-			year = year + 2000;
-		}
 		
-//		TimeZone tz = TimeZone.getTimeZone("UTC");
-//		Calendar cal = Calendar.getInstance(tz);
-//		cal.set((year), Integer.valueOf(date[0]) - 1, // month is zero based!
-//				Integer.valueOf(date[1]), hrs, 
-//				Integer.valueOf(time[1]), Integer.valueOf(time[2]));
-//
+//		if (str.contains("/") && str.contains(":") && (str.contains("PM") || str.contains("AM")))
+//		{
+//			formatter = DateTimeFormat.forPattern("dd/MM/yyyy hh:mm:ss a").withZoneUTC();
+//		}
 //		
-//		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-//		formatter.setTimeZone(tz);
+//		if (str.contains("/") && str.contains(":") && !(str.contains("PM") || str.contains("AM")))
+//		{
+//			formatter = DateTimeFormat.forPattern("dd/MM/yyyy hh:mm:ss").withZoneUTC();
+//		}
+//		
+//		if (str.contains("-") && str.contains(".") && !(str.contains("PM") || str.contains("AM")))
+//		{
+////			formatter = DateTimeFormat.forPattern("dd-MMM-yy HH.mm.ss").withZoneUTC();
+////			formatter.withLocale(Locale.ITALY);
+//			
+//			formatter = DateTimeFormat.forPattern( "dd-MMM-yy HH.mm.ss").withLocale( Locale.ITALY ).withZoneUTC();
+//
+////			LocalDate localDate = formatter.parseLocalDate( str );
+////			
+////			dt = formatter.parseDateTime(str);
+//			
+//			//str = str.replace("-", "/");
+//			
+////			DateTimeFormatter formatterInput = DateTimeFormat.forPattern( "dd-MMM-yy HH.mm.ss").withLocale( Locale.ITALY );
+////			LocalDate localDate = formatterInput.parseLocalDate( str );
+////			System.out.println( "localDate: " + localDate );			
+//			
+//		}
 		
-		//String out=formatter.format(cal.getTime());
-
-
-// int hh = cal.get(Calendar.HOUR_OF_DAY);
+		int format_index = 0;
+		String message = "";
 		
-		DateTime dt;
-
-		// no idea if this is American or European date formatting ...
+		formatter = formatters.get(format_index);
+		format_index++;
 		
-		if(Integer.valueOf(date[1]) > 12) // this cannot be a month!
-		{
-			dt = new DateTime(year, Integer.valueOf(date[0]), Integer.valueOf(date[1]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+		try{
+
+			while (dt==null)
+			{
+				try{
+					dt = formatter.parseDateTime(str);
+
+				} catch(java.lang.IllegalArgumentException e)				
+				{					
+					formatter = formatters.get(format_index);
+					message = e.getMessage();
+					format_index++;
+				}
+
+			}
 		}
-		else
+		catch(java.lang.IndexOutOfBoundsException e)
 		{
-			dt = new DateTime(year, Integer.valueOf(date[1]), Integer.valueOf(date[0]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+			spec_file.setFileErrorCode(SpectralFile.UNRECOVERABLE_ERROR);
+			ArrayList<SpecchioMessage> file_errors = spec_file.getFileErrors();
+			if(file_errors == null)
+			{
+				file_errors = new ArrayList<SpecchioMessage>();						
+			}
+
+			file_errors.add(new SpecchioMessage("Error when parsing date: " + message, SpecchioMessage.ERROR));
+			spec_file.setFileErrors(file_errors);		
+
 		}
+
+
 		
+		
+//		DateTimeFormatter fmt = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+//		String date_str = fmt.print(dt);
+//		System.out.println(date_str);
+
+		
+//		String[] date_and_time = str.split(" ");
+//		
+//
+//
+//		String[] date = date_and_time[0].split("/");
+//		String[] time = date_and_time[1].split(":");
+//		
+//		int hrs = Integer.valueOf(time[0]);
+//		// AM and PM check
+//		if (date_and_time[2].equals("AM"))
+//		{
+//			if (hrs == 12) hrs = hrs - 12;			
+//		}
+//		if (date_and_time[2].equals("PM"))
+//		{
+//			if (hrs >= 1 && hrs < 12) hrs = hrs + 12;			
+//		}		
+//		
+//		int year = Integer.valueOf(date[2]);
+//		
+//		if (date[2].length() == 2)
+//		{
+//			year = year + 2000;
+//		}
+//		
+////		TimeZone tz = TimeZone.getTimeZone("UTC");
+////		Calendar cal = Calendar.getInstance(tz);
+////		cal.set((year), Integer.valueOf(date[0]) - 1, // month is zero based!
+////				Integer.valueOf(date[1]), hrs, 
+////				Integer.valueOf(time[1]), Integer.valueOf(time[2]));
+////
+////		
+////		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+////		formatter.setTimeZone(tz);
+//		
+//		//String out=formatter.format(cal.getTime());
+//
+//
+//// int hh = cal.get(Calendar.HOUR_OF_DAY);
+//		
+////		DateTime dt;
+//
+//		// no idea if this is American or European date formatting ...
+//		
+//		if(Integer.valueOf(date[1]) > 12) // this cannot be a month!
+//		{
+//			dt = new DateTime(year, Integer.valueOf(date[0]), Integer.valueOf(date[1]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+//		}
+//		else
+//		{
+//			dt = new DateTime(year, Integer.valueOf(date[1]), Integer.valueOf(date[0]), hrs, Integer.valueOf(time[1]), Integer.valueOf(time[2]), DateTimeZone.UTC); // joda months start at 1
+//		}
+//		
 
 		
 		return dt;
@@ -445,11 +551,8 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 		while((line=d.readLine()) != null)
 		{
 			
-			// GER specific treatment: needed for the HR????
-			// There are some strange cases where radiance values can be negative (of the last channel)
-			// the minus signs are inserted into the second space that is separating the values
-			// In order to have the values still being separated by two spaces, a replace must be done:
-			//line = line.replaceAll("-", " -");
+			// replace commas with full stop (happens in the Italian language setting, blasted stuff ...)
+			line = line.replaceAll(",", ".");
 			
 			// tokenise the line
 			String[] tokens = line.split("\\s+"); // values are separated by one or more spaces
