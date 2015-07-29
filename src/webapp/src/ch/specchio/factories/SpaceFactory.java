@@ -184,6 +184,8 @@ public class SpaceFactory extends SPECCHIOFactory {
 		// start with an empty string
 		StringBuffer query = new StringBuffer();
 		
+		//System.out.println(ids);
+		
 		// select the appropriate columns from the table
 		query.append("select ");
 		for (int i = 0; i < columns.length; i++) {
