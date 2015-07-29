@@ -187,7 +187,7 @@ class ENVIHdrWriter extends ENVIWriter {
 			bw.write("}");
 			bw.newLine();
 			
-			// spectrum names will be added by subsequent calls tho this method
+			// spectrum names will be added by subsequent calls to this method
 			bw.write("spectra names = {");
 			
 		} else {
