@@ -117,7 +117,8 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		// set up the panel with a box layout
 		rootPanel = new JPanel();
 		rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
-		getContentPane().add(rootPanel);
+		JScrollPane scroll_pane = new JScrollPane(rootPanel);
+		getContentPane().add(scroll_pane);
 		
 		if (specchio_client == null) {
 			// add a panel for connecting to the server
@@ -592,6 +593,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			add(firstNameLabel, constraints);
 			constraints.gridx = 1;
 			firstNameField = new JTextField(30);
+			firstNameField.setMinimumSize(getPreferredSize());
 			add(firstNameField, constraints);
 			constraints.gridy++;
 			
@@ -601,6 +603,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			add(lastNameLabel, constraints);
 			constraints.gridx = 1;
 			lastNameField = new JTextField(30);
+			lastNameField.setMinimumSize(getPreferredSize());
 			add(lastNameField, constraints);
 			constraints.gridy++;
 			
@@ -624,6 +627,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			add(emailLabel, constraints);
 			constraints.gridx = 1;
 			emailField = new JTextField(30);
+			emailField.setMinimumSize(getPreferredSize());
 			add(emailField, constraints);
 			constraints.gridy++;
 			
@@ -633,6 +637,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			add(wwwLabel, constraints);
 			constraints.gridx = 1;
 			wwwField = new JTextField(30);
+			wwwField.setMinimumSize(getPreferredSize());
 			add(wwwField, constraints);
 			constraints.gridy++;
 			
@@ -644,6 +649,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			descriptionField = new JTextArea(5, 30);
 			descriptionField.setLineWrap(true);
 			descriptionField.setWrapStyleWord(true);
+			descriptionField.setMinimumSize(getPreferredSize());
 			add(new JScrollPane(descriptionField), constraints);
 			constraints.gridy++;
 			
