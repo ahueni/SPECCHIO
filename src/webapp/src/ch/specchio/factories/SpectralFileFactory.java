@@ -190,6 +190,10 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			{
 				unit = "Radiance";
 			}
+			else if(spec_file.getMeasurementUnits(0) == MeasurementUnit.Irradiance)
+			{
+				unit = "Irradiance";
+			}
 			else
 			{
 				unit = "DN";
@@ -1171,7 +1175,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 						+ SQL.is_null_key_get_val_and_op(getDataCache().get_measurement_unit_id_for_file(spec_file, spec_no)).id
 						+")";
 				
-				//System.out.println(query);
+				System.out.println(query);
 				
 				Statement stmt = getStatementBuilder().createStatement();
 				stmt.executeUpdate(query);
