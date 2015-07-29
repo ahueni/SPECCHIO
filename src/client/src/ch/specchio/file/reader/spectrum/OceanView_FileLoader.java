@@ -38,8 +38,8 @@ public class OceanView_FileLoader extends JAZ_FileLoader{
 			
 			instr_name = instr_name.substring(0, instr_name.length()-1); // cut the last character as this is the number given within a cluster of spectrometers
 			
-			
-			hdr.setInstrumentName(instr_name); // second last token: Data from MAYP1114952_13-22-06-700.txt Node
+			// this is actually not consistent either! E.g. L_20150711_D80_USB4C032391_031.txt Node
+			//hdr.setInstrumentName(instr_name); // second last token: Data from MAYP1114952_13-22-06-700.txt Node
 			
 			
 		}
@@ -47,7 +47,7 @@ public class OceanView_FileLoader extends JAZ_FileLoader{
 		if(t1.equals("Spectrometer"))
 		{		
 			// this info appears to be wrong when multiple instruments are attached!
-			//hdr.setInstrumentName(tokens[1]);
+			hdr.setInstrumentName(tokens[1]);
 		}
 		
 		if(t1.equals("Integration Time (usec)"))
