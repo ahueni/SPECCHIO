@@ -356,27 +356,24 @@ public class DataCache {
 		return instrument;
 	}
 	
-	public Instrument get_instrument_by_serial_id(String serial_id, int sensor_id) throws SQLException
+	public ArrayList<Instrument> get_instrument_by_serial_id(String serial_id, int sensor_id) throws SQLException
 	{
-		Instrument instrument = null;
+		ArrayList<Instrument> matching_instruments = new ArrayList<Instrument>();
 		Instrument s;
 		// search 
 		ListIterator<Instrument> li = instruments.listIterator();
 
-		
-			while(li.hasNext() && instrument == null)
-			{
-				s = li.next();
-				if(s.getInstrumentNumber().get_value() != null && s.getInstrumentNumber().get_value().equals(serial_id) && s.getSensorId() == sensor_id)
-					instrument = s;			
-			}
+		while(li.hasNext())
+		{
+			s = li.next();
+			if(s.getInstrumentNumber().get_value() != null && s.getInstrumentNumber().get_value().equals(serial_id) && s.getSensorId() == sensor_id)
+				matching_instruments.add(s);			
+		}
 
-				
-		return instrument;		
-		
-		
+		return matching_instruments;				
+
 	}	
-	
+
 	
 	
 	public Instrument get_instrument(String instrument_number, String company) 
@@ -405,9 +402,65 @@ public class DataCache {
 		
 		Integer sensor_id = get_sensor_id_for_file(spec_file, spec_no, "", msg);
 		
-		Instrument instr = get_instrument_by_serial_id(spec_file.getInstrumentNumber(), sensor_id);
-		 
+		Instrument instr = null;
 		
+		ArrayList<Instrument> instruments = get_instrument_by_serial_id(spec_file.getInstrumentNumber(), sensor_id);
+		
+		// the returned instruments may differ by their calibration. Next task is to find the one with the right calibration.
+		if(instruments.size() > 0 && spec_file.getWvls().size() > 0) // check that the input file has got wavelengths defined
+		{			
+			double[] d_wvls = getAsDoubleVector(spec_file.getWvls(spec_no));
+
+			ListIterator<Instrument> li = instruments.listIterator();
+
+			while(li.hasNext() && instr == null)
+			{
+				Instrument i = li.next();
+				wvl_matching_struct wvlm = full_wvls_matching(i.getCentreWavelengths(), d_wvls);
+				
+				if(wvlm.possible_match && wvlm.wvls_match)
+				{
+					instr = i;
+				}					
+			}
+			
+			// instrument exists but calibration does not yet exist
+			if (instr == null)
+			{
+
+				int cal_id = insert_calibration(spec_file, spec_no, instruments.get(0));
+				
+				// create new instrument instance with values copied from existing instrument but with new calibration
+				instr = new Instrument();
+
+				Sensor s = this.get_sensor(sensor_id);
+
+				instr.setInstrumentId(instruments.get(0).getInstrumentId());
+				instr.setInstrumentName(instruments.get(0).getInstrumentName());
+				instr.setSensorId(sensor_id);
+				instr.setInstrumentNumber(instruments.get(0).getInstrumentNumber());
+				instr.setSensor(s);
+				instr.setAverageWavelengths(d_wvls); // same as newly inserted calibration
+				instr.setCalibrationId(cal_id);
+
+
+				// update cache with new instrument
+				add_instrument(instr);
+
+				// add info to the spectral file
+				msg.setMessage("Added new calibration for instrument: " + instr.getInstrumentName().get_value());
+				msg.setType(SpecchioMessage.INFO);				
+				
+			}
+
+		}
+		 
+		if(instruments.size() > 0 && instr == null) // this is an instrument that uses the sensor blueprint (therefore has no calibrations), in this case, just pick the first in the list
+		{			
+			instr = instruments.get(0);
+		}
+		
+
 		if(instr == null && spec_file.getInstrumentNumber() != null) // this means that we must insert it as new instrument
 		{
 			instr = insertNewInstrument(spec_file, spec_no, msg);
@@ -653,30 +706,8 @@ public class DataCache {
 				// create new calibration with wavelength calibration factors: only for instruments where wvls are not resampled to blueprint (e.g. ASD is always blueprint)
 				if(spec_no < spec_file.getWvls().size())
 				{
-					// catch the case when data insert happens from a non-specchio file loader, like a Matlab process
-					if (spec_file.getFilename() == null) spec_file.setFilename("external process");
-					
-					SpectralFile wvl_cal = new SpectralFile(spec_file);
-					wvl_cal.setNumberOfSpectra(1);
-					wvl_cal.setMeasurements(new Float[spec_file.getWvls(spec_no).length][1]);
-					wvl_cal.setMeasurement(0, spec_file.getWvls(spec_no));
-					wvl_cal.setWvls(spec_file.getWvls());
-					wvl_cal.setNumberOfChannels(spec_file.getNumberOfChannels());
-					
-					// create a new units array as otherwise the original copied spectral file is modified!!!! 
-					ArrayList<Integer> units = new ArrayList<Integer>();
-					units.add(100); // wavelength code = 100
-					wvl_cal.setMeasurementUnits(units); 
-					
-					wvl_cal.setInstrumentTypeNumber(spec_file.getInstrumentTypeNumber()); // needed for some files to identify the sensor
-	
-					Calibration cal = new Calibration();
-					cal.setIncludesUncertainty(false);
-					cal.setSpectralFile(wvl_cal);
-					cal.setInstrumentId(instr.getInstrumentId());
-					cal.setComments("Wavelength Calibration auto-generated by SPECCHIO file loader process");
-					int cal_id = factory.insertInstrumentCalibration(cal);
-	
+					int cal_id = insert_calibration(spec_file, spec_no, instr);
+
 					instr.setCalibrationId(cal_id);
 				}
 
@@ -701,6 +732,47 @@ public class DataCache {
 		}
 
 		return instr;
+		
+	}
+	
+	
+	public int insert_calibration(SpectralFile spec_file, int spec_no, Instrument instr)
+	{
+		
+		// connect to DB as admin to insert a new instrument
+
+		InstrumentationFactory factory = new InstrumentationFactory(datasource_name);
+		
+		System.out.println(factory.getDatabaseUserName());
+		
+		// catch the case when data insert happens from a non-specchio file loader, like a Matlab process
+		if (spec_file.getFilename() == null) spec_file.setFilename("external process");
+		
+		SpectralFile wvl_cal = new SpectralFile(spec_file);
+		wvl_cal.setNumberOfSpectra(1);
+		wvl_cal.setMeasurements(new Float[spec_file.getWvls(spec_no).length][1]);
+		wvl_cal.setMeasurement(0, spec_file.getWvls(spec_no));
+		wvl_cal.setWvls(spec_file.getWvls());
+		wvl_cal.setNumberOfChannels(spec_file.getNumberOfChannels());
+		
+		// create a new units array as otherwise the original copied spectral file is modified!!!! 
+		ArrayList<Integer> units = new ArrayList<Integer>();
+		units.add(100); // wavelength code = 100
+		wvl_cal.setMeasurementUnits(units); 
+		
+		wvl_cal.setInstrumentTypeNumber(spec_file.getInstrumentTypeNumber()); // needed for some files to identify the sensor
+
+		Calibration cal = new Calibration();
+		cal.setIncludesUncertainty(false);
+		cal.setSpectralFile(wvl_cal);
+		cal.setInstrumentId(instr.getInstrumentId());
+		cal.setComments("Wavelength Calibration auto-generated by SPECCHIO file loader process");
+		int cal_id = factory.insertInstrumentCalibration(cal);
+		
+		
+		factory.dispose();
+		
+		return cal_id;
 		
 	}
 	
