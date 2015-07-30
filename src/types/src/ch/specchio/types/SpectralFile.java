@@ -163,10 +163,11 @@ public class SpectralFile {
 	}
 	
 	public SpectralFile(SpectralFile spec_file) {
-		// special constructor to create a lightweigth clone for checking the file existince
+		// special constructor to create a lightweigth clone for checking the file existance
 		this.setFileFormatName(spec_file.getFileFormatName());
 		this.setCompany(spec_file.getCompany());
 		this.setInstrumentNumber(spec_file.getInstrumentNumber());
+		this.setInstrumentTypeNumber(spec_file.getInstrumentTypeNumber());
 		this.setNumberOfSpectra(spec_file.getNumberOfSpectra());
 		this.setCapturingSoftwareName(spec_file.getCapturingSoftwareName());
 		this.FGI_hdrf_brf_combined = spec_file.isFgiHdrfBrfCombined();
