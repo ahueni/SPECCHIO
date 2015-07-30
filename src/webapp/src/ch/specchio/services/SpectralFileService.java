@@ -78,23 +78,18 @@ public class SpectralFileService extends SPECCHIOService {
 		
 		ArrayList<Integer> exist_list = new ArrayList<Integer>();
 				
-//		ListIterator<SpectralFile> sf_li = spec_files.getSpectral_file_list().listIterator();
-//		
-//		while(sf_li.hasNext()) {
-//			SpectralFile spec_file = sf_li.next();		
-//			
-//			boolean exists = factory.spectrumExists(spec_file, spec_file.getHierarchyId());
-//		
-//			exist_list.add(exists ? 1 : 0);
-//		
-//		}
-		ArrayList<Boolean> exist_list_ = factory.spectraExist(spec_files.getSpectral_file_list(), spec_files.getSpectral_file_list().get(0).getHierarchyId());
-		
-		for(int i=0;i<exist_list_.size();i++)
+		if(spec_files.getSpectral_file_list() != null) // catch calls with empty lists ... (can happen from e.g. Matlab)
 		{
-			exist_list.add((exist_list_.get(i) == true) ? 1 : 0);
+
+			ArrayList<Boolean> exist_list_ = factory.spectraExist(spec_files.getSpectral_file_list(), spec_files.getSpectral_file_list().get(0).getHierarchyId());
+
+			for(int i=0;i<exist_list_.size();i++)
+			{
+				exist_list.add((exist_list_.get(i) == true) ? 1 : 0);
+			}
+
 		}
-		
+
 		factory.dispose();		
  		
 		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
