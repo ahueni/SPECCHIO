@@ -295,6 +295,8 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public Space[] getSpaces(SpaceQueryDescriptor query_d) throws SPECCHIOFactoryException {
 		
+		//System.out.println("spectrum ids to get space for:" + query_d.spectrum_ids);
+		
 		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName());
 		factory.setMatchOnlySensor(query_d.split_spaces_by_sensor);
 		factory.setMatchOnlySensorAndUnit(query_d.split_spaces_by_sensor_and_unit);
