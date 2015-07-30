@@ -38,7 +38,8 @@ public class Instrument {
 	
 	public int getNoOfBands()
 	{
-		return sensor.getNumberOfChannels().get_value();
+		return getCentreWavelengths().length;
+//		return sensor.getNumberOfChannels().get_value();
 	}
 
 	// avg_wavelengths filled for calibrated instruments only, otherwise the sensor channels are used
