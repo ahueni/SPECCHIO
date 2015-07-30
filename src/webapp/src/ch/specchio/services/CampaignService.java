@@ -172,9 +172,21 @@ public class CampaignService extends SPECCHIOService {
 	@Path("insert")
 	public XmlInteger insert(Campaign c) throws SPECCHIOFactoryException {
 		
+		System.out.println("Inserting new campaign " + c.getName());
+		
+		try
+		{
+		
 		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), c.getType());
 		factory.insertCampaign(c);
 		factory.dispose();
+		
+		}
+		catch(SPECCHIOFactoryException e)
+		{
+			System.out.println(e.toString());
+			throw(e);
+		}
 		
 		return new XmlInteger(c.getId());
 		
