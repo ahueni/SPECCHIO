@@ -208,12 +208,12 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		
 		String query = "INSERT INTO spectrum_view ("
 		+ " hierarchy_level_id, sensor_id, campaign_id, "
-		+ "file_format_id, instrument_id, "
-		+ "measurement_unit_id, measurement_type_id, illumination_source_id, goniometer_id, sampling_environment_id, measurement) "
+		+ "file_format_id, instrument_id, calibration_id, "
+		+ "measurement_unit_id, measurement_type_id, measurement) "
 		+ "select "
 		+ " hierarchy_level_id, sensor_id, campaign_id, "
-		+ "file_format_id, instrument_id, "
-		+ "measurement_unit_id, measurement_type_id, illumination_source_id, goniometer_id, sampling_environment_id, measurement "
+		+ "file_format_id, instrument_id, calibration_id, "
+		+ "measurement_unit_id, measurement_type_id, measurement "
 		+ " from spectrum_view where spectrum_id = " + spectrum_id;
 		
 		Statement stmt;
@@ -533,6 +533,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		}
 		catch (SQLException ex) {
 			// database error
+			System.out.println(ex.toString());
 			throw new SPECCHIOFactoryException(ex);
 		}		
 		
