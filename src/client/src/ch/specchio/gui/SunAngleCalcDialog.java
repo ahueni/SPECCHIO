@@ -6,8 +6,10 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
 import javax.swing.BoxLayout;
@@ -19,6 +21,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+
+import net.e175.klaus.solarpositioning.AzimuthZenithAngle;
+import net.e175.klaus.solarpositioning.Grena3;
 
 import org.joda.time.DateTime;
 
@@ -32,6 +37,7 @@ import ch.specchio.types.MetaSimple;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
+
 
 
 /**
@@ -260,7 +266,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						CelestialAngle angle = calculateSunAngle(
 								(Double)latitude.getValue(),
 								(Double)longitude.getValue(),
-								((DateTime)acquisitionTime.getValue()).toDate()
+								(DateTime)acquisitionTime.getValue()
 							);
 						
 						// build the list of identifiers to be updated
@@ -332,68 +338,90 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 		 * 
 		 * @param latitude	the latitude
 		 * @param longitude	the longitude
-		 * @param date		the date and time
+		 * @param dateTime		the date and time
 		 * 
 		 * @return a new CelestialAngle object representing the position of the sun
 		 */
-		private CelestialAngle calculateSunAngle(double latitude, double longitude, Date date) {
+		private CelestialAngle calculateSunAngle(double latitude, double longitude, DateTime dateTime) {
+			
+		
 
 			// get the time of year
-			TimeZone tz = TimeZone.getDefault();
-			Calendar cal = Calendar.getInstance(tz);
-			cal.setTime(date);
-			int dy = cal.get(Calendar.DAY_OF_YEAR);
-			dy--; // Java starts the count at 1 (first day of year)
-				// but this routine expects the first day as 0 (zero)
-			int hh = cal.get(Calendar.HOUR_OF_DAY);
-			int mm = cal.get(Calendar.MINUTE);
-			int ss = cal.get(Calendar.SECOND);
+////			TimeZone tz = TimeZone.getDefault();
+////			Calendar cal = Calendar.getInstance(tz);
+////			cal.setTime(dateTime);
+////			int dy = cal.get(Calendar.DAY_OF_YEAR);
+//			int dy = dateTime.getDayOfYear();
+//			dy--; // Java starts the count at 1 (first day of year)
+//				// but this routine expects the first day as 0 (zero)
+////			int hh = cal.get(Calendar.HOUR_OF_DAY);
+////			int mm = cal.get(Calendar.MINUTE);
+////			int ss = cal.get(Calendar.SECOND);
+//			
+//			int hh = dateTime.getHourOfDay();
+//			int mm = dateTime.getMinuteOfHour();
+//			int ss = dateTime.getSecondOfMinute();
+//
+//						
+//			double hours = hh + mm/60.0 + ss/3600.0;
+//											
+//			
+//			int timezone = 0; // time zone: we expect the capture time to be in GMT
+//				
+//			double wdy = 2*Math.PI*dy/365.0; 
+//			
+//			// sun declination [rad]
+//			double delta = 0.006918-0.399912*Math.cos(wdy)+0.070257*Math.sin(wdy)-0.006758*Math.cos(2*wdy)+0.000908*Math.sin(2*wdy);
+//			
+//			// longitude correction
+//			double lc = -longitude / 15;
+//			
+//			// time equation
+//			double et = 0.0172+0.4281*Math.cos(wdy)-7.3515*Math.sin(wdy)- 3.3495*Math.cos(2*wdy)-9.3619*Math.sin(2*wdy);
+//			
+//			// true solar time
+//			double tst = hours-timezone+lc+et/60;
+//			double wtst = Math.PI*(tst-12)/12;
+//			
+//			if(wtst > Math.PI)
+//				wtst=wtst-2*Math.PI;
+//			
+//			if(wtst < -Math.PI)
+//				wtst=wtst+2*Math.PI;
+//			
+//			// sun height, sun zenith angle
+//			double lat_r = Math.toRadians(latitude);
+//			
+//			
+//			double h = Math.asin(Math.cos(lat_r)*Math.cos(delta)*Math.cos(wtst)+Math.sin(lat_r)*Math.sin(delta));
+//			
+//			double thz = Math.PI/2 - h;
+//			double nen = Math.sin(lat_r)*Math.cos(delta)*Math.cos(wtst)-Math.cos(lat_r)*Math.sin(delta);
+//			double phi = Math.acos(nen/Math.cos(h));
+//			
+//			if( wtst < 0)
+//				phi=-phi;
+//			
+//			double azimuth = phi + Math.PI;
+//			if(azimuth > 2*Math.PI)
+//				azimuth = azimuth - 2*Math.PI;
+//			
+//			return new CelestialAngle(Math.toDegrees(azimuth), Math.toDegrees(thz));
 			
-						
-			double hours = hh + mm/60.0 + ss/3600.0;
-											
-			
-			int timezone = 0; // time zone: we expect the capture time to be in GMT
-				
-			double wdy = 2*Math.PI*dy/365.0; 
-			
-			// sun declination [rad]
-			double delta = 0.006918-0.399912*Math.cos(wdy)+0.070257*Math.sin(wdy)-0.006758*Math.cos(2*wdy)+0.000908*Math.sin(2*wdy);
-			
-			// longitude correction
-			double lc = -longitude / 15;
-			
-			// time equation
-			double et = 0.0172+0.4281*Math.cos(wdy)-7.3515*Math.sin(wdy)- 3.3495*Math.cos(2*wdy)-9.3619*Math.sin(2*wdy);
-			
-			// true solar time
-			double tst = hours-timezone+lc+et/60;
-			double wtst = Math.PI*(tst-12)/12;
-			
-			if(wtst > Math.PI)
-				wtst=wtst-2*Math.PI;
-			
-			if(wtst < -Math.PI)
-				wtst=wtst+2*Math.PI;
-			
-			// sun height, sun zenith angle
-			double lat_r = Math.toRadians(latitude);
+//	        GregorianCalendar time = new GregorianCalendar(new SimpleTimeZone(+1 * 60 * 60 * 1000, "UTC"));
+//	        time.set(2012, Calendar.JANUARY, 1, 12, 0, 0);
+	        
+			GregorianCalendar time = dateTime.toGregorianCalendar();
+
+	        AzimuthZenithAngle result = Grena3.calculateSolarPosition(time,
+	        		latitude, longitude, 65, 1000, 20);
+	        
+	        
+	        
+	        return new CelestialAngle(result.getAzimuth(),result.getZenithAngle());
+
 			
 			
-			double h = Math.asin(Math.cos(lat_r)*Math.cos(delta)*Math.cos(wtst)+Math.sin(lat_r)*Math.sin(delta));
-			
-			double thz = Math.PI/2 - h;
-			double nen = Math.sin(lat_r)*Math.cos(delta)*Math.cos(wtst)-Math.cos(lat_r)*Math.sin(delta);
-			double phi = Math.acos(nen/Math.cos(h));
-			
-			if( wtst < 0)
-				phi=-phi;
-			
-			double azimuth = phi + Math.PI;
-			if(azimuth > 2*Math.PI)
-				azimuth = azimuth - 2*Math.PI;
-			
-			return new CelestialAngle(Math.toDegrees(azimuth), Math.toDegrees(thz));
 			
 		}
 		
