@@ -1129,6 +1129,8 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 					Space s = specchio_client.loadSpace(space);
 					pr.set_progress(50);
 					
+					//System.out.println(s.getNumberOfDataPoints()); // switch this on when debugging ; my machine got runtime issues in the debugger and not always plots the spectra ...
+					
 					pr.set_operation("Building plot");
 					VM = new VisualisationModule(QueryBuilder.this, specchio_client);
 					SpaceProcessingChainComponent c = new SpaceProcessingChainComponent(QueryBuilder.this, s);
