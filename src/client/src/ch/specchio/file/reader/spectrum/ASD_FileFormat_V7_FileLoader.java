@@ -123,10 +123,17 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		String filename = file.getName();
 
 		String[] filename_tokens = filename.split("\\.");
+		String spectranumber;
 
-		String spectranumber = filename_tokens[0].substring(filename_tokens[0]
+		try {
+			spectranumber = filename_tokens[0].substring(filename_tokens[0]
 				.length() - 5);
 
+		} catch (java.lang.StringIndexOutOfBoundsException e)
+		{
+			spectranumber = "";
+		}
+		
 		// spectrum number is contained in the extension for normal ASD files
 		try {
 			MetaParameter mp = MetaParameter.newInstance(this.attributes_name_hash.get("Spectrum Number"));
