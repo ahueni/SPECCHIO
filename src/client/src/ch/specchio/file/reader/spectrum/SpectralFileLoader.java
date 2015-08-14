@@ -188,6 +188,27 @@ public abstract class SpectralFileLoader {
 	}	
 	
 	
+	protected String remove_unprintable_chars(String s){
+		
+		// http://stackoverflow.com/questions/7161534/fastest-way-to-strip-all-non-printable-characters-from-a-java-string
+		int length = s.length();
+		char[] oldChars = new char[length];
+		s.getChars(0, length, oldChars, 0);
+		int newLen = 0;
+		for (int j = 0; j < length; j++) {
+		    char ch = oldChars[j];
+		    if (ch >= ' ') {
+		        oldChars[newLen] = ch;
+		        newLen++;
+		    }
+		}
+		s = new String(oldChars, 0, newLen);		
+		
+		return s;
+		
+	}
+	
+	
 	
 	/*
 	 * binary to double, float, int and short taken from http://www.captain.at/howto-java-convert-binary-data.php

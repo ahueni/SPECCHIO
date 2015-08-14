@@ -8,10 +8,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -94,6 +90,31 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		{
 			hdr.setComment("");
 		}
+		
+		// Breaks are apparently handled badly, at least at the end of strings.
+		//hdr.setComment(hdr.getComment().replace('\n', '.'));
+		// There can be also a bunch of other invisible characters that mess up the JAXB stack ...
+		
+		
+		
+		hdr.setComment(this.remove_unprintable_chars(hdr.getComment()));
+		
+		
+		
+//		int last_char = hdr.getComment().charAt(hdr.getComment().length()-1);
+//		int second_char = hdr.getComment().charAt(hdr.getComment().length()-2);
+//		
+//		if(hdr.getComment().charAt(hdr.getComment().length()-1) == '\n')
+//		{
+//			hdr.setComment(hdr.getComment().substring(0, hdr.getComment().length()-2));
+//		}
+		
+		
+//		if(first_char == '\n')
+//		{
+//			hdr.setComment("");
+//		}
+//		
 		
 		// date
 		hdr.setCaptureDate(0, read_asd_time(in));
