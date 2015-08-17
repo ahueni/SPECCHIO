@@ -609,7 +609,10 @@ class MainMenu implements ActionListener, ItemListener {
          
          JButton button = new JButton();
         
-         button.setText("<html>" + SPECCHIOApplication.version + "<br><br>" + 
+         button.setText("<html>" + "Version: " + SPECCHIO_ReleaseInfo.getVersion() + "<br><br>" + 
+         "Build Number: " + SPECCHIO_ReleaseInfo.getBuildNumber() + "<br>" +
+         "Build Date: " + SPECCHIO_ReleaseInfo.getBuildDate()
+        		 + "<br><br>" +
         		 "(c) 2006-2015 by Remote Sensing Laboratories (RSL)<br>" +
         		 "Dept. of Geography, " +
         		 "University of Zurich (CH)<br>" +
@@ -626,6 +629,7 @@ class MainMenu implements ActionListener, ItemListener {
          button.setToolTipText(uri.toString());
          button.addActionListener(new OpenUrlAction());
          container.add(button);
+         frame.pack();
          frame.setVisible(true);     
          
 		} catch (IOException e1) {

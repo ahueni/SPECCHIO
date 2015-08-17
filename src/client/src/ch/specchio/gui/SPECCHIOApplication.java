@@ -11,11 +11,11 @@ import ch.specchio.client.SPECCHIOServerDescriptor;
 
 
 public class SPECCHIOApplication {
+
 	
 	private static JFrame frame;
 	private static SPECCHIOApplication instance = null;
 	private SPECCHIOClient client = null;
-	public static String version = "SPECCHIO V3.2.0 Eta";
 	public static Float min_db_version = 3.2F;
 	public static ImageIcon specchio_icon;
 	
@@ -79,9 +79,9 @@ public class SPECCHIOApplication {
 	    */
 	   private static void createAndShowGUI() 
 	   {
-	   System.out.println("Welcome to " + version);
+	   System.out.println("Welcome to " + SPECCHIO_ReleaseInfo.getVersion());
 	      //Create and set up the window.
-	      frame = new JFrame(version);
+	      frame = new JFrame(SPECCHIO_ReleaseInfo.getVersion());
 	      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 	      SPECCHIOApplication app = SPECCHIOApplication.getInstance();
