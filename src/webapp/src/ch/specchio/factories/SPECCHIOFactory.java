@@ -4,11 +4,13 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Hashtable;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
+import javax.swing.JMenuItem;
 
 import ch.specchio.eav_db.Attributes;
 import ch.specchio.eav_db.EAVDBServices;
@@ -25,10 +27,10 @@ public class SPECCHIOFactory {
 	private static final String TEMP_DATABASE_SUFFIX = "_temp";
 	
 	/** the data source name */
-	protected static String datasource_name = null;	
+	protected String datasource_name = null;	
 	
 	/** the data source */
-	private static DataSource ds = null;
+//	private DataSource ds = null;
 	
 	/** the database connection */
 	private Connection conn = null;
@@ -37,10 +39,10 @@ public class SPECCHIOFactory {
 	private boolean my_conn = false;
 	
 	/** the data cache */
-	private static DataCache cache = null;
+	private static Hashtable<String, DataCache> caches = new Hashtable<String, DataCache>();	
 	
 	/** attributes server */
-	private static Attributes attr = null;
+	private static Hashtable<String, Attributes> attrs = new Hashtable<String, Attributes>();
 	
 	/** eav services */
 	private EAVDBServices eav = null;
@@ -67,7 +69,7 @@ public class SPECCHIOFactory {
 		
 		try {
 			// set up database connection
-			SPECCHIOFactory.datasource_name = ds_name;
+			datasource_name = ds_name;
 			init(getDataSource(ds_name).getConnection());
 			this.my_conn = true;
 		}
@@ -91,7 +93,7 @@ public class SPECCHIOFactory {
 		
 		try {
 			// set up database connection
-			SPECCHIOFactory.datasource_name = ds_name;
+			datasource_name = ds_name;
 			init(getDataSource(ds_name).getConnection(db_user, db_password));
 			this.my_conn = true;
 		}
@@ -113,6 +115,7 @@ public class SPECCHIOFactory {
 	 */
 	public SPECCHIOFactory(SPECCHIOFactory factory) throws SPECCHIOFactoryException {
 		
+		datasource_name = factory.getSourceName();
 		init(factory.getConnection());
 		this.my_conn = false;
 		
@@ -126,23 +129,30 @@ public class SPECCHIOFactory {
 	 */
 	private synchronized void configureCaches() throws SPECCHIOFactoryException {
 		
-		if (SPECCHIOFactory.attr == null || SPECCHIOFactory.cache == null) {
+		if (!SPECCHIOFactory.attrs.containsKey(datasource_name) || !SPECCHIOFactory.caches.containsKey(datasource_name)) {
 			// need to populate at least one cache
+			
+			System.out.println("Configuring caches for " + datasource_name);
 			
 			try {
 				// get an SQL statement builder using the default connection to the database
 				Connection conn = getDataSource(datasource_name).getConnection();
 				SQL_StatementBuilder sql = new SQL_StatementBuilder(conn);
 			
-				if (SPECCHIOFactory.attr == null) {
-					// construct and populate the attributes object
-					SPECCHIOFactory.attr = new Attributes(sql);
-				}
+//				if (SPECCHIOFactory.attr == null) {
+//					// construct and populate the attributes object
+//					SPECCHIOFactory.attr = new Attributes(sql);
+//				}
+				Attributes attr = new Attributes(sql);
+				SPECCHIOFactory.attrs.put(datasource_name, attr);
 				
-				if (SPECCHIOFactory.cache == null) {
-					// construct and populate the data cache
-					SPECCHIOFactory.cache = new DataCache(sql, datasource_name);
-				}
+				System.out.println("Number of cached attributes " + attr.getAttributes().size());
+				
+//				if (SPECCHIOFactory.cache == null) {
+//					// construct and populate the data cache
+//					SPECCHIOFactory.cache = new DataCache(sql, datasource_name);
+//				}
+				SPECCHIOFactory.caches.put(datasource_name, new DataCache(sql, datasource_name));
 				
 				// close the connection
 				conn.close();
@@ -247,7 +257,7 @@ public class SPECCHIOFactory {
 	 */
 	public Attributes getAttributes() {
 		
-		return attr;
+		return SPECCHIOFactory.attrs.get(this.getSourceName());
 		
 	}
 	
@@ -263,15 +273,18 @@ public class SPECCHIOFactory {
 	
 	
 	/**
-	 * Get a reference to the data cache, creating the cache if it does not alerady exist.
+	 * Get a reference to the data cache, creating the cache if it does not already exist.
 	 * 
 	 * @return a reference to the unique instance of the data cache.
 	 * 
 	 * @throws SPECCHIOFactoryException	could not create the cache
 	 */
-	public static DataCache getDataCache() throws SPECCHIOFactoryException {
+	public DataCache getDataCache() throws SPECCHIOFactoryException {
 		
-		return cache;
+		System.out.println("Get Cache for data source = " + this.getSourceName());
+		DataCache cache = SPECCHIOFactory.caches.get(this.getSourceName());
+		System.out.println("Source of cache:" + cache.datasource_name);
+		return SPECCHIOFactory.caches.get(this.getSourceName());
 		
 	}
 	
@@ -285,7 +298,8 @@ public class SPECCHIOFactory {
 	 */
 	private static DataSource getDataSource(String DataSource) throws SPECCHIOFactoryException {
 		
-		//if (ds == null) {
+		DataSource ds;
+			//if (ds == null) {
 			try {
 				Context ctx = new InitialContext();
 				ds = (DataSource)ctx.lookup(DataSource); // "jdbc/specchio_test"
@@ -392,7 +406,7 @@ public class SPECCHIOFactory {
 	 */
 	public String getSourceName() {
 		
-		return SPECCHIOFactory.datasource_name;		
+		return datasource_name;		
 	}	
 	
 	

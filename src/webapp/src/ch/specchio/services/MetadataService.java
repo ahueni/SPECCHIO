@@ -436,7 +436,8 @@ public class MetadataService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public MeasurementUnit get_measurement_unit_from_coding(@PathParam("coding") int coding) throws SPECCHIOFactoryException {
 		
-		MeasurementUnit mu = SPECCHIOFactory.getDataCache().get_measurement_unit(coding);
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		MeasurementUnit mu = factory.getDataCache().get_measurement_unit(coding);
 		
 		return mu;
 	}	

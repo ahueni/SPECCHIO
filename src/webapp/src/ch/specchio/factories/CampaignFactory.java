@@ -82,10 +82,11 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 * @param db_user		database account user name
 	 * @param db_password	database account password
 	 * @param type	a string identifying the campaign type
+	 * @param datasource_name	a string identifying the datasource
 	 * 
 	 * @throws SPECCHIOFactoryException	invalid campaign type
 	 */
-	public static CampaignFactory getInstance(String db_user, String db_password, String type) throws SPECCHIOFactoryException {
+	public static CampaignFactory getInstance(String db_user, String db_password, String type, String datasource_name) throws SPECCHIOFactoryException {
 		
 		if ("specchio".equals(type)) {
 			return new SpecchioCampaignFactory(db_user, db_password, datasource_name);

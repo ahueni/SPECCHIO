@@ -43,7 +43,7 @@ public class CampaignService extends SPECCHIOService {
 
 		Response response;
 
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 		try {
 			OutputStream os = getResponse().getOutputStream();
 			factory.exportCampaign(campaign_id, os);
@@ -79,7 +79,7 @@ public class CampaignService extends SPECCHIOService {
 			@PathParam("campaign_id") int campaign_id
 		) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 		Campaign campaign = factory.getCampaign(campaign_id);
 		factory.dispose();
 		
@@ -110,7 +110,7 @@ public class CampaignService extends SPECCHIOService {
 			@PathParam("parent_id") int parent_id
 		) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 		int id = factory.getHierarchyNodeId(campaign_id, name, parent_id);
 		factory.dispose();
 		
@@ -141,7 +141,7 @@ public class CampaignService extends SPECCHIOService {
 			response = Response.status(ClientResponse.Status.FORBIDDEN).build();
 		} else {
 		
-			CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+			CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 			try {
 				factory.importCampaign(user_id, getRequest().getInputStream());
 				response = Response.ok().build();
@@ -177,7 +177,7 @@ public class CampaignService extends SPECCHIOService {
 		try
 		{
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), c.getType());
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), c.getType(), getDataSourceName());
 		factory.insertCampaign(c);
 		factory.dispose();
 		
@@ -215,7 +215,7 @@ public class CampaignService extends SPECCHIOService {
 			@PathParam("parent_id") int parent_id
 		) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 		int id = factory.insertHierarchyNode(campaign_id, name, parent_id);
 		factory.dispose();
 		
@@ -276,7 +276,7 @@ public class CampaignService extends SPECCHIOService {
 	@Path("list/{campaign_type}")
 	public Campaign[] list(@PathParam("campaign_type") String campaign_type) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 		Campaign[] campaigns = factory.getCampaigns();
 		factory.dispose();
 		
@@ -303,7 +303,7 @@ public class CampaignService extends SPECCHIOService {
 			@PathParam("campaign_id") int campaign_id
 		) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 		factory.removeCampaign(campaign_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
@@ -334,7 +334,7 @@ public class CampaignService extends SPECCHIOService {
 //			@PathParam("campaign_id") int campaign_id
 //		) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio");
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio", getDataSourceName());
 		factory.removeCampaigns(d.getSpectrumIds1(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
@@ -361,7 +361,7 @@ public class CampaignService extends SPECCHIOService {
 			@PathParam("hierarchy_id") int hierarchy_id
 		) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type);
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
 		factory.removeHierarchyNode(hierarchy_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
@@ -396,7 +396,7 @@ public class CampaignService extends SPECCHIOService {
 //				@PathParam("campaign_id") int campaign_id
 //			) throws SPECCHIOFactoryException {
 			
-			CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio");
+			CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio", getDataSourceName());
 			factory.removeHierarchyNodes(d.getSpectrumIds1(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 			factory.dispose();
 		
@@ -420,7 +420,7 @@ public class CampaignService extends SPECCHIOService {
 	@Path("update")
 	public String update(Campaign campaign) throws SPECCHIOFactoryException {
 		
-		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign.getType());
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign.getType(), getDataSourceName());
 		factory.updateCampaign(campaign);
 		factory.dispose();
 		
