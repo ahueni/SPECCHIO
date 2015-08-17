@@ -1122,8 +1122,9 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					file_format_id = sff.addFileFormat(spec_file);
 				}
 				
+				//System.out.println("Get sensor via cache");
 				int sensor_id = getDataCache().get_sensor_id_for_file(spec_file, spec_no, this.getDatabaseUserName(), msg);
-				
+				//System.out.println("Got sensor_id via cache: " + sensor_id);
 				if (msg.getMessage() != null)
 				{
 					insert_result.addError(msg);
@@ -1137,7 +1138,10 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				
 				
 				msg = new SpecchioMessage();
+				//System.out.println("Get instrument via cache");
 				Instrument instrument = getDataCache().get_instrument_id_for_file(spec_file, spec_no, msg);
+				
+				//System.out.println("Got instrument via cache: " + instrument.toString());
 				
 				String instrument_id = "null";
 				int calibration_id = 0;

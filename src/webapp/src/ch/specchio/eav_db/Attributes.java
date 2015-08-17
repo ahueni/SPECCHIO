@@ -15,11 +15,11 @@ public class Attributes {
 	
 	private SQL_StatementBuilder SQL; 
 	
-	static ArrayList<attribute> attributes;
-	static ArrayList<Units> units;
-	static ArrayList<Category> categories;
+	ArrayList<attribute> attributes;
+	ArrayList<Units> units;
+	ArrayList<Category> categories;
 	
-	private static boolean lists_are_filled = false;
+	private boolean lists_are_filled = false;
 	
 	public boolean new_attributes_were_inserted = false;
 
@@ -406,7 +406,7 @@ public class Attributes {
 		
 		ArrayList<attribute> matching_attr = new ArrayList<attribute>();
 		
-		ListIterator<attribute> li = Attributes.attributes.listIterator();
+		ListIterator<attribute> li = attributes.listIterator();
 		
 		attribute a = null;
 		
