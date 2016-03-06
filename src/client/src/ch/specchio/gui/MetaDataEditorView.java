@@ -104,6 +104,11 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			
 		// create browser and add to control panel			
 		sdb = new SpectralDataBrowser(specchio_client, true);
+		
+		if (specchio_client.isLoggedInWithRole("admin"))
+		{
+			sdb.restrict_to_view = false;
+		}
 			
 		// load currently selected campaign
 		sdb.build_tree();
