@@ -33,6 +33,7 @@ public class Query {
 	
 	public Query()
 	{
+		this.tablename = "spectrum"; // default value
 	}
 	
 	public Query(String tablename)
