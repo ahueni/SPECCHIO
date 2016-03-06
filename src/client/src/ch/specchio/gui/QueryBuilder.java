@@ -163,7 +163,13 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		    popup.add(menuItem);	    
 		    menuItem = new JMenuItem("Copy R-ready query to clipboard");
 		    menuItem.addActionListener(this);
-		    popup.add(menuItem);	    		    
+		    popup.add(menuItem);
+		    menuItem = new JMenuItem("Copy selected hierarchy ids to clipboard");
+		    menuItem.addActionListener(this);
+		    popup.add(menuItem);	
+		    menuItem = new JMenuItem("Copy selected campaign id to clipboard");
+		    menuItem.addActionListener(this);
+		    popup.add(menuItem);			    
 		    
 			PopupListener popupListener = new PopupListener();
 			addMouseListener(popupListener);				    
@@ -196,6 +202,32 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 				}
 				
 			}
+
+			if("Copy selected hierarchy ids to clipboard".equals(e.getActionCommand()))
+			{
+//				try {
+					qb.copy_hierarchy_ids_to_clipboard();
+//				}
+//				catch (IOException ex) {
+//					// write error; probably never happens
+//					JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not copy to the clipboard", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
+//				}
+				
+				
+			}
+			
+			if("Copy selected campaign id to clipboard".equals(e.getActionCommand()))
+			{
+//				try {
+					qb.copy_campaign_id_to_clipboard();
+//				}
+//				catch (IOException ex) {
+//					// write error; probably never happens
+//					JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not copy to the clipboard", JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon);
+//				}
+				
+				
+			}			
 			
 
 			
@@ -208,6 +240,9 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		this("Query Builder (V3)");
 	}
 	
+
+
+
 
 	public QueryBuilder(String title) throws SPECCHIOClientException
 	{
@@ -481,6 +516,30 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    clipboard.setContents(stringSelection , this);
 		
 	}
+	
+	public void copy_hierarchy_ids_to_clipboard() {
+		
+		ArrayList<Integer> ids = sdb.get_selected_hierarchy_ids();		
+		
+		// copy the string to the clipboard
+		StringSelection stringSelection = new StringSelection(ids.toString());
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+	    clipboard.setContents(stringSelection , this);
+		
+		
+	}
+	
+	public void copy_campaign_id_to_clipboard() {
+		
+		Campaign c = sdb.get_selected_campaign();		
+		
+		// copy the string to the clipboard
+		StringSelection stringSelection = new StringSelection(Integer.toString(c.getId()));
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+	    clipboard.setContents(stringSelection , this);
+		
+		
+	}	
 	
 	
 	public ArrayList<Integer> get_ids_matching_query()
