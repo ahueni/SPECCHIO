@@ -2,6 +2,7 @@ package ch.specchio.gui;
 
 
 import java.awt.Cursor;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -122,6 +123,15 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 					specchio_client.importCampaign(u.getUserId(), fis);
 					fis.close();
 					setVisible(false);
+					
+					// Display message that export has finished
+					JOptionPane.showMessageDialog(
+							(Frame)getOwner(),
+							"XML file has been imported.",
+							"Campaign Import has finished",
+							JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon
+						);			
+					
 				}
 				catch (IOException ex) {
 			  		ErrorDialog error = new ErrorDialog(this, "Error", ex.getMessage(), ex);

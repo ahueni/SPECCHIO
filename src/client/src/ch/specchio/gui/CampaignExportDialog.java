@@ -1,5 +1,6 @@
 package ch.specchio.gui;
 
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -42,6 +43,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 	final JFileChooser fc;
 	JButton load;
 	SPECCHIOClient specchio_client;
+	private File f;
 	
 	public CampaignExportDialog() throws SPECCHIOClientException
 	{
@@ -143,7 +145,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 				// the file name consists of target directory, campaign name plus current date plus time
 			    DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		        Date date = new Date();         
-				File f = new File(
+				f = new File(
 						this.target_dir.getText(),
 						c.getName() + "_" + dateFormat.format(date) +
 							FileTypes.get_filename_extension(FileTypes.CAMPAIGN_EXPORT_XML, HeaderBody.Body)
@@ -261,6 +263,16 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 			
 			// close the progress report
 			pr.setVisible(false);
+			
+			String filesize = String.format("%.2f", f.length()/1024.0/1024);
+			
+			// Display message that export has finished
+			JOptionPane.showMessageDialog(
+					(Frame)getOwner(),
+					"XML file has been written, size is " + filesize + " MB",
+					"Campaign Export has finished",
+					JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon
+				);			
 			
 		}
 		
