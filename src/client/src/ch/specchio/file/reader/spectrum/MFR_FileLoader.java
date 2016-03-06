@@ -198,7 +198,7 @@ public class MFR_FileLoader extends SpectralFileLoader {
 		
 		// calculate dates from Julian days
 		// the dates are also alternating: total, diffuse, total, diffuse, etc
-		sf.setCaptureDates(new DateTime[line_cnt * 2]);
+		//sf.setCaptureDates(new DateTime[line_cnt * 2]);
 		
 		int date_cnt = 0;
 		ListIterator<Double> days = julian_days.listIterator();

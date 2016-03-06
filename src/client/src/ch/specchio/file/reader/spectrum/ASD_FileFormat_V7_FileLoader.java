@@ -109,7 +109,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		 smd = new Metadata();
 		
 		asd_v7_file = new SpectralFile();
-		asd_v7_file.setCaptureDates(new DateTime[1]); // needed if read_hdr is called
+		//asd_v7_file.setCaptureDate(1, new DateTime()); // needed if read_hdr is called
 													// directly!
 		asd_v7_file.setNumberOfSpectra(2); // one for DN and one for the
 											// converted DN values to Radiance

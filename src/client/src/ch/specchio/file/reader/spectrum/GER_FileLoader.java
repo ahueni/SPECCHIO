@@ -53,7 +53,7 @@ public class GER_FileLoader extends SpectralFileLoader {
 		ger_file.addMeasurementUnits(2);
 		ger_file.addMeasurementUnits(2);
 		
-		ger_file.setCaptureDates(new DateTime[ger_file.getNumberOfSpectra()]); 
+		//ger_file.setCaptureDate(0, new DateTime[ger_file.getNumberOfSpectra()]); 
 		
 		file_input = new FileInputStream (file);			
 				
