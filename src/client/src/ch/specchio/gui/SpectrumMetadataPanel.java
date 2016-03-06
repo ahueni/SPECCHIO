@@ -112,6 +112,7 @@ public class SpectrumMetadataPanel extends JPanel {
 		listeners = new LinkedList<MD_ChangeListener>();
 		editable = true;
 		
+
 		
 		// set up vertical box layout
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -314,6 +315,9 @@ public class SpectrumMetadataPanel extends JPanel {
 			fieldPanel = new JPanel();
 			fieldPanel.setLayout(new AlignedBoxLayout(fieldPanel, AlignedBoxLayout.Y_AXIS));
 			add(fieldPanel);
+			
+			// add help string
+			this.setToolTipText("Click menu to add metadata field.");
 			
 			// set up popup menu
 			popupMenu = new JPopupMenu();
