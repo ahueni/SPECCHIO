@@ -377,7 +377,7 @@ class CsvHdrWriter extends CsvWriter {
 class CsvBodyWriter extends CsvWriter {
 	
 	/** number formatter */
-	private static final DecimalFormat df = new java.text.DecimalFormat("###.#########");
+	private static final DecimalFormat df = new java.text.DecimalFormat("###.#########E0");
 	
 	/** the list of spectra to be written out */
 	private List<Spectrum> spectra;
