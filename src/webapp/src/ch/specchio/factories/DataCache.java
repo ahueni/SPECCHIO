@@ -779,7 +779,9 @@ public class DataCache {
 	
 	public void add_instrument(Instrument instr) throws SQLException
 	{
-		if (get_instrument(instr.getInstrumentId()) == null)
+		// only insert if instrument does not exist in cache ..
+		Instrument tmp = get_instrument(instr.getInstrumentId(), instr.getCalibrationId());
+		if (tmp == null)
 			instruments.add(instr);
 	}
 	
