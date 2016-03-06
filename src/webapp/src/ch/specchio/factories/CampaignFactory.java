@@ -60,12 +60,13 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 * Get the campaign object for a given identifier.
 	 * 
 	 * @param campaign_id	the identifier of the desired campaign
+	 * @param is_admin	is the user an administrator?
 	 * 
 	 * @return a reference to a campaign object with the given identifier
 	 * 
 	 * @throws SPECCHIOFactoryException could not create the object
 	 */
-	public abstract Campaign getCampaign(int campaign_id) throws SPECCHIOFactoryException;
+	public abstract Campaign getCampaign(int campaign_id, boolean is_admin) throws SPECCHIOFactoryException;
 	
 	
 	/**
