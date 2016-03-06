@@ -425,7 +425,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 * Get the meta-parameters of a given attribute for a list of spectrum identifiers.
 	 * 
 	 * @param id		the spectrum identifiers for which to retrieve metadata
-	 * @param attrName	the attribute name
+	 * @param attrId	the attribute id
 	 * @param distinct	if true, return distinct values only
 	 * 
 	 * @return a list of meta-parameter objects corresponding to the desired attribute of each input id
