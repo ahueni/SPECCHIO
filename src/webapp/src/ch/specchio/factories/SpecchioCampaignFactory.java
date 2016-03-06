@@ -126,11 +126,12 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * Get the campaign object for a given identifier.
 	 * 
 	 * @param int campaign_id	the identifier of the desired campaign
+	 * @param is_admin	is the user an administrator?	
 	 * 
 	 * @return a reference to a campaign object with the given identifier
 	 */
 	@Override
-	public Campaign getCampaign(int campaign_id) throws SPECCHIOFactoryException {
+	public Campaign getCampaign(int campaign_id, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
 			
@@ -146,7 +147,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			// load campaign data from the database
 			int userId = 0;
 			int researchGroupId = 0;
-			query = "SELECT name,description,path,user_id,research_group_id FROM campaign_view WHERE campaign_id=" + campaign_id; 
+			query = "SELECT name,description,path,user_id,research_group_id FROM " + ((is_admin)? "campaign" : "campaign_view") + " WHERE campaign_id=" + campaign_id; 
 			rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				campaign.setName(rs.getString(1));
@@ -385,11 +386,28 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			Statement stmt = SQL.createStatement();
 		
 			// insert the campaign into the database
-			String query = "INSERT INTO campaign_view(name, path, research_group_id) VALUES (" +
+			String query;
+			
+			if (c.getPath() == null)
+			{
+				query = "INSERT INTO campaign_view(name, path, research_group_id) VALUES (" +
+						SQL.quote_string(c.getName()) + "," +
+						SQL.quote_string("") + "," +
+						Integer.toString(rg.getId()) +
+						")";
+				
+			}
+			else
+			{
+				query = "INSERT INTO campaign_view(name, path, research_group_id) VALUES (" +
 					SQL.quote_string(c.getName()) + "," +
 					SQL.quote_string(c.getPath()) + "," +
 					Integer.toString(rg.getId()) +
 					")";
+			}
+			
+			//System.out.println(query);
+			
 			stmt.executeUpdate(query);
 		
 			// get the campaign id
@@ -399,13 +417,16 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			stmt.close();
 			
 			// update the campaign path table
-			query = "insert into campaign_path_view values(" + Integer.toString(c.getId()) + ",?)";
-			PreparedStatement pstmt = SQL.prepareStatement(query);
-			for (String path : c.getKnownPaths()) {
-				pstmt.setString(1, path);
-				pstmt.executeUpdate();
+			if (c.getPath() != null)
+			{
+				query = "insert into campaign_path_view values(" + Integer.toString(c.getId()) + ",?)";
+				PreparedStatement pstmt = SQL.prepareStatement(query);
+				for (String path : c.getKnownPaths()) {
+					pstmt.setString(1, path);
+					pstmt.executeUpdate();
+				}
+				pstmt.close();
 			}
-			pstmt.close();
 			
 		}
 		catch (SQLException ex) {
