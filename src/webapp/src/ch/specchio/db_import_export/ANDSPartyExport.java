@@ -92,7 +92,7 @@ public class ANDSPartyExport {
 	    } 
 	}
 	
-	public void exportPartyXML( RDACollectionDescriptor rdaCollectionDescriptor)
+	public void exportPartyXML( RDACollectionDescriptor rdaCollectionDescriptor, boolean is_admin)
 	{
 		String errorString = new String("");
 		try {
@@ -204,7 +204,7 @@ public class ANDSPartyExport {
 			Relation relation = new Relation();
 			relation.setType("isCollectorOf");
 			Campaign [] campaigns = specchioCampaignFactory.getCampaigns();
-			Campaign campaign = specchioCampaignFactory.getCampaign(campaigns[0].getId());
+			Campaign campaign = specchioCampaignFactory.getCampaign(campaigns[0].getId(), is_admin);
 			relation.setDescription(campaign.getDescription());
 //			relation.setDescription("Leaf spectral reflectance of seven Australian native vegetation species");
 			RelatedObject relatedObject = new RelatedObject();

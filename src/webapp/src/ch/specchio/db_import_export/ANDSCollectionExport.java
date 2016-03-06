@@ -151,7 +151,7 @@ public class ANDSCollectionExport {
 		return newIntegerArray;
 	}
 	
-	public String exportCollectionXML(RDACollectionDescriptor rdaCollectionDescriptor) throws MetaParameterFormatException
+	public String exportCollectionXML(RDACollectionDescriptor rdaCollectionDescriptor, boolean is_admin) throws MetaParameterFormatException
 	{
 //		String errorString = new String("");
 		try {
@@ -216,7 +216,7 @@ public class ANDSCollectionExport {
 			dates.setDate(date);
 			collection.setDates(dates);
 			Campaign [] campaigns = specchioCampaignFactory.getCampaigns();
-			Campaign campaign = specchioCampaignFactory.getCampaign(campaigns[0].getId());
+			Campaign campaign = specchioCampaignFactory.getCampaign(campaigns[0].getId(), is_admin);
 			Name name = new Name();
 			name.setType("primary");
 			NamePart namePart = new NamePart();
