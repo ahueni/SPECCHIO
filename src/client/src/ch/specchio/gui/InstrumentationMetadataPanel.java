@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.Image;
 import java.awt.Insets;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -70,11 +72,14 @@ public class InstrumentationMetadataPanel extends JPanel {
 	boolean editable = true;
 	boolean allow_conflicts;
 	Color default_background_colour = null;
+	protected SPECCHIOClient specchio_client;
+	protected Frame parent;
 	
-	public InstrumentationMetadataPanel(String object_title) {
+	public InstrumentationMetadataPanel(Frame parent, SPECCHIOClient specchio_client, String object_title) {
 		
 		this.object_title = object_title;
-		
+		this.parent = parent;
+		this.specchio_client = specchio_client;
 		
 		allow_conflicts = false;
 		
@@ -185,15 +190,13 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 	private MouseListener popupListener;
 	private CalibrationMetadataPanel popup_source = null;
 	private ArrayList<CalibrationMetadataPanel> cal_md_panels;
-	private SPECCHIOClient specchio_client;
 	private String object_type;
 	private int object_id = 0;
 
-	public CalibrationListMetadataPanel(SPECCHIOClient specchio_client, String object_type) {
+	public CalibrationListMetadataPanel(Frame parent, SPECCHIOClient specchio_client, String object_type) {
 		
-		super("Calibration Data");
+		super(parent, specchio_client, "Calibration Data");
 		
-		this.specchio_client = specchio_client;
 		this.object_type = object_type;
 		
 		// create GUI using grid layout			
@@ -357,7 +360,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 	
 	public void addCalibrationMetadata(CalibrationMetadata cm)
 	{
-		CalibrationMetadataPanel cmp = new CalibrationMetadataPanel("", cm);
+		CalibrationMetadataPanel cmp = new CalibrationMetadataPanel(parent, specchio_client, "", cm);
 		cal_md_panels.add(cmp);
 		constraints.gridx = 0;
 		constraints.gridy = cal_md_panels.size();
@@ -465,9 +468,9 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 	private CalibrationPlotsMetadataPanel cpm_factors;
 	private CalibrationPlotsMetadataPanel cpm_uncertainty;
 	
-	public CalibrationMetadataPanel(String title, CalibrationMetadata cm)
+	public CalibrationMetadataPanel(Frame parent, SPECCHIOClient specchio_client, String title, CalibrationMetadata cm)
 	{
-		super(title);
+		super(parent, specchio_client, title);
 		
 		calibration_id = cm.getCalibrationId();
 		
@@ -511,7 +514,7 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 		
 		constraints.gridx = 0;
 		constraints.gridy++;
-		cpm_factors = new CalibrationPlotsMetadataPanel("", cm.getCalFactorsId(), cm.getCalibrationFactorsPlot());
+		cpm_factors = new CalibrationPlotsMetadataPanel(parent, specchio_client,"", cm.getCalFactorsId(), cm.getCalibrationFactorsPlot());
 		constraints.gridx = 1;
 		l.insertComponent(cpm_factors, constraints);
 		
@@ -520,7 +523,7 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 		{
 			constraints.gridx = 0;
 			constraints.gridy++;
-			cpm_uncertainty = new CalibrationPlotsMetadataPanel("", cm.getUncertainty_id(), cm.getCalibrationUncertaintyPlot());
+			cpm_uncertainty = new CalibrationPlotsMetadataPanel(parent, specchio_client,"", cm.getUncertainty_id(), cm.getCalibrationUncertaintyPlot());
 			constraints.gridx = 1;
 			l.insertComponent(cpm_uncertainty, constraints);
 		}
@@ -595,8 +598,8 @@ class CalibrationPlotsMetadataPanel extends InstrumentationMetadataPanel
 	
 	private FactorsPlotField spectrum_plot;
 
-	public CalibrationPlotsMetadataPanel(String title, int calibration_id, CalibrationPlotsMetadata cpm) {
-		super(title);
+	public CalibrationPlotsMetadataPanel(Frame parent, SPECCHIOClient specchio_client, String title, int calibration_id, CalibrationPlotsMetadata cpm) {
+		super(parent, specchio_client, title);
 		
 		constraints.gridx = 0;
 		constraints.gridy = 0;
@@ -621,10 +624,17 @@ class InstrumentMetadataPanel extends InstrumentationMetadataPanel implements Ac
 	private JComboBox instrument_owner;
 	private JTextField serial_no;
 	private JComboBox sensor;
+	/** button for adding a new institute */
+	private JButton addInstituteButton;
 	
-	public InstrumentMetadataPanel(Institute owners[], Sensor sensors[])  {
+	/** button text for adding a new institute */
+	private static final String ADD_INSTITUTE = "Add new institute...";
+	
+
+	
+	public InstrumentMetadataPanel(Frame parent, SPECCHIOClient specchio_client, Institute owners[], Sensor sensors[])  {
 		
-		super("Instrument Data");
+		super(parent, specchio_client, "Instrument Data");
 		
 		// save possible owners and sensors for later
 		this.owners = owners;
@@ -650,6 +660,17 @@ class InstrumentMetadataPanel extends InstrumentationMetadataPanel implements Ac
 		instrument_owner.addActionListener(this);
 		constraints.gridx = 1;
 		l.insertComponent(instrument_owner, constraints);
+		
+		// add button to add a new institute easily
+		addInstituteButton = new JButton(ADD_INSTITUTE);
+		addInstituteButton.setActionCommand(ADD_INSTITUTE);
+
+		addInstituteButton.addActionListener(this);
+		constraints.gridx = 2;
+		add(addInstituteButton, constraints);
+		//constraints.gridy++;
+		
+		
 
 		constraints.gridx = 0;
 		constraints.gridy++;
@@ -672,8 +693,41 @@ class InstrumentMetadataPanel extends InstrumentationMetadataPanel implements Ac
 	
 	public void actionPerformed(ActionEvent event)
 	{
-		// the value of a combo box was changed
-		changed(true);
+		
+	if (ADD_INSTITUTE.equals(event.getActionCommand())) {
+		
+		try {
+			// open the institute dialogue
+			InstituteDialog id = new InstituteDialog(parent, specchio_client);
+			id.setVisible(true);
+			
+			Institute inst = id.getInstitute();
+			if (inst != null) {
+				// add the new institute to the combo box and select it
+				instrument_owner.addItem(inst);
+				int ind = instrument_owner.getItemCount();
+				instrument_owner.setSelectedIndex(ind-1);
+				
+				// need to re-layout the dialogue since the combo box size might have changed
+				//pack();
+			}
+		}
+		catch (SPECCHIOClientException ex) {
+			// could not contact the server
+			ErrorDialog error = new ErrorDialog(
+					parent , "Could not create an institute",
+					ex.getUserMessage(),
+					ex
+				);
+			error.setVisible(true);
+		}	
+	}
+		else {
+		
+			// the value of a combo box was changed
+			changed(true);
+		
+		}
 	}
 	
 	
@@ -791,9 +845,9 @@ class PictureMetadataPanel extends InstrumentationMetadataPanel implements Actio
 	ArrayList<FigureStruct> new_pictures;
 	ArrayList<FigureStruct> deleted_pictures;
 
-	public PictureMetadataPanel() {
+	public PictureMetadataPanel(Frame parent, SPECCHIOClient specchio_client) {
 		
-		super("Pictures");
+		super(parent, specchio_client, "Pictures");
 		
 		pic_cnt = 0;	
 		
@@ -829,9 +883,9 @@ class PictureMetadataPanel extends InstrumentationMetadataPanel implements Actio
 	}
 	
 	
-	public PictureMetadataPanel(PictureTable pictures)
+	public PictureMetadataPanel(Frame parent, SPECCHIOClient specchio_client, PictureTable pictures)
 	{	
-		this();
+		this(parent, specchio_client);
 		setPictureTable(pictures);
 	}
 	
@@ -1085,9 +1139,9 @@ class ReferenceMetadataPanel extends InstrumentationMetadataPanel implements Act
 	private JTextField serial_no;
 	private JComboBox sensor;
 
-	public ReferenceMetadataPanel(Institute owners[], ReferenceBrand brands[]) {
+	public ReferenceMetadataPanel(Frame parent, SPECCHIOClient specchio_client, Institute owners[], ReferenceBrand brands[]) {
 		
-		super("Reference Data");
+		super(parent, specchio_client, "Reference Data");
 		
 		// save possible owners and brands for later
 		this.owners = owners;

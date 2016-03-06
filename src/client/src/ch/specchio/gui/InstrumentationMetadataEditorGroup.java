@@ -2,6 +2,7 @@ package ch.specchio.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -43,12 +44,14 @@ public abstract class InstrumentationMetadataEditorGroup extends JPanel implemen
 	private Color update_foreground_colour;
 	
 	protected SPECCHIOClient specchio_client;
+	protected Frame parent;
 	
 	public InstrumentationMetadataEditorGroup(InstrumentationMetadataEditor editor, String object_title, SPECCHIOClient specchio_client) {
 		
 		this.editor = editor;
 		this.object_title = object_title;
 		this.specchio_client = specchio_client;
+		parent = editor;
 		
 		constraints = new GridBagConstraints();		
 		constraints.gridwidth = 1;
@@ -213,19 +216,19 @@ class InstrumentMetadataGroup extends InstrumentationMetadataEditorGroup {
 		sensors = specchio_client.getSensors();
 		
 		// build gui from blocks	
-		instrument_data = new InstrumentMetadataPanel(institutes, sensors);
+		instrument_data = new InstrumentMetadataPanel(parent, specchio_client, institutes, sensors);
 		instrument_data.show_border(true);
 		constraints.gridx = 0;
 		constraints.gridy = 0;
 		l.insertComponent(instrument_data, constraints);
 				
-		picture_data = new PictureMetadataPanel();
+		picture_data = new PictureMetadataPanel(parent, specchio_client);
 		picture_data.show_border(false);
 		constraints.gridx = 1;
 		constraints.gridy = pos_cnt++;
 		l.insertComponent(picture_data, constraints);		
 		
-		cal_data = new CalibrationListMetadataPanel(specchio_client, "instrument");
+		cal_data = new CalibrationListMetadataPanel(parent, specchio_client, "instrument");
 		cal_data.show_border(false);
 		constraints.gridwidth = 2;
 		constraints.gridx = 0;
@@ -363,19 +366,19 @@ class ReferenceMetadataGroup extends InstrumentationMetadataEditorGroup {
 		ReferenceBrand brands[] = specchio_client.getReferenceBrands();
 		
 		// build gui from blocks	
-		reference_data = new ReferenceMetadataPanel(institutes, brands);
+		reference_data = new ReferenceMetadataPanel(parent, specchio_client, institutes, brands);
 		reference_data.show_border(true);
 		constraints.gridx = 0;
 		constraints.gridy = 0;
 		l.insertComponent(reference_data, constraints);
 				
-		picture_data = new PictureMetadataPanel();
+		picture_data = new PictureMetadataPanel(parent, specchio_client);
 		picture_data.show_border(false);
 		constraints.gridx = 1;
 		constraints.gridy = pos_cnt++;
 		l.insertComponent(picture_data, constraints);	
 		
-		cal_data = new CalibrationListMetadataPanel(specchio_client, "reference");
+		cal_data = new CalibrationListMetadataPanel(parent, specchio_client, "reference");
 		cal_data.show_border(false);
 		constraints.gridwidth = 2;
 		constraints.gridx = 0;
