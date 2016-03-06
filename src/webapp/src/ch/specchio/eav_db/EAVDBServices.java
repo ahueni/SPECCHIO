@@ -938,7 +938,7 @@ public class EAVDBServices extends Thread {
 		
 		ArrayList<Integer> filtered = new ArrayList<Integer>();
 		
-		String query = "select " + this.primary_id_name + ", eav." + field + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";		
+		String query = "select frame_x_eav." + this.primary_id_name + ", eav." + field + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";		
 			
 		int cnt = 1;
 		
@@ -992,7 +992,7 @@ public class EAVDBServices extends Thread {
 	{	
 		ArrayList<Integer> filtered = new ArrayList<Integer>();
 		
-		String query = "select " + this.primary_id_name + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";
+		String query = "select frame_x_eav." + this.primary_id_name + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";
 		
 		ResultSet rs;
 		try {
@@ -1021,7 +1021,7 @@ public class EAVDBServices extends Thread {
 	{
 		ArrayList<Integer> filtered = new ArrayList<Integer>();
 		
-		String query = "select " + this.primary_id_name + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and eav.unit_id = " + unit_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";
+		String query = "select frame_x_eav." + this.primary_id_name + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and eav.unit_id = " + unit_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";
 		
 		ResultSet rs;
 		try {
@@ -1214,6 +1214,10 @@ public class EAVDBServices extends Thread {
 					System.out.println("EAV Null value read from DB!");
 				}
 			}
+			catch (java.lang.NullPointerException e) {
+				
+				System.out.println("EAV Null value read from DB for field " + attr.getName() + "!");
+			}						
 			catch (MetaParameterFormatException e) {
 				// should never happen but let's re-throw it as an SQLException just in case
 				throw new SQLException(e);
@@ -1333,24 +1337,30 @@ public class EAVDBServices extends Thread {
 				}
 				else
 				{
-					mp = MetaParameter.newInstance(attr, null);
-					System.out.println("EAV Null value read from DB!");
+					mp = MetaParameter.newInstance(attr, null);					
 				}
+				
+				mp.setEavId(eav_id);
+				mp.setAttributeName(attr.getName());
+				mp.setUnitName(unit_name);
+				mp.setAttributeId(attribute_id);
+				mp.setUnitId(unit_id);
+				mp.setDescription(attr.description);
+				
+				md.addEntry(mp);
+				md.addEntryId(mp.getEavId());								
+				
+				
 			}
+			catch (java.lang.NullPointerException e) {
+				
+				System.out.println("EAV Null value read from DB for field " + attr.getName() + "!");
+			}			
 			catch (MetaParameterFormatException e) {
 				// should never happen but let's re-throw it as an SQL exception just in case.
 				throw new SQLException(e);
 			}
 			
-			mp.setEavId(eav_id);
-			mp.setAttributeName(attr.getName());
-			mp.setUnitName(unit_name);
-			mp.setAttributeId(attribute_id);
-			mp.setUnitId(unit_id);
-			mp.setDescription(attr.description);
-			
-			md.addEntry(mp);
-			md.addEntryId(mp.getEavId());
 
 		}			
 		rs.close();
