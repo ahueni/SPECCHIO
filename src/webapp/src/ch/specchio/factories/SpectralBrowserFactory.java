@@ -3,9 +3,12 @@ package ch.specchio.factories;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.campaign_node;
 import ch.specchio.types.database_node;
 import ch.specchio.types.hierarchy_node;
@@ -229,33 +232,76 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 				if (node instanceof hierarchy_node) {
 					int order_by_attribute_id = getAttributes().get_attribute_id(node.getOrderBy());
 					String order_by_storage_field = getAttributes().get_default_storage_field(order_by_attribute_id);
-					query = "select t1.spectrum_id, t1.string_val from " +
-						"(" +
-							"select spectrum.spectrum_id, eav.string_val " +
-							"from spectrum, spectrum_x_eav, eav " +
-							"where spectrum.hierarchy_level_id = " + node.getId() + " " +
-								"and spectrum_x_eav.spectrum_id = spectrum.spectrum_id " +
-								"and spectrum_x_eav.eav_id = eav.eav_id " +
-								"and eav.attribute_id = " + getAttributes().get_attribute_id("File Name") +
-						") t1 " +
-						"left join " +
-						"(" +
-							"select spectrum_x_eav.spectrum_id, eav.eav_id, eav." + order_by_storage_field + " " +
-							"from spectrum_x_eav, eav " +
-							"where spectrum_x_eav.eav_id = eav.eav_id " +
-								"and eav.attribute_id = " + order_by_attribute_id +
-						") t2 " +
-						"on t2.spectrum_id = t1.spectrum_id " +
-						"order by t2." + order_by_storage_field;
+//					query = "select t1.spectrum_id, t1.string_val from " +
+//						"(" +
+//							"select spectrum.spectrum_id, eav.string_val " +
+//							"from spectrum, spectrum_x_eav, eav " +
+//							"where spectrum.hierarchy_level_id = " + node.getId() + " " +
+//								"and spectrum_x_eav.spectrum_id = spectrum.spectrum_id " +
+//								"and spectrum_x_eav.eav_id = eav.eav_id " +
+//								"and eav.attribute_id = " + getAttributes().get_attribute_id("File Name") +
+//						") t1 " +
+//						"left join " +
+//						"(" +
+//							"select spectrum_x_eav.spectrum_id, eav.eav_id, eav." + order_by_storage_field + " " +
+//							"from spectrum_x_eav, eav " +
+//							"where spectrum_x_eav.eav_id = eav.eav_id " +
+//								"and eav.attribute_id = " + order_by_attribute_id +
+//						") t2 " +
+//						"on t2.spectrum_id = t1.spectrum_id " +
+//						"order by t2." + order_by_storage_field;
+					
+					query = "select spectrum.spectrum_id " +
+								"from spectrum spectrum, spectrum_x_eav, eav eav " +
+								"where spectrum.hierarchy_level_id = " + node.getId() + " " +
+									"and spectrum_x_eav.spectrum_id = spectrum.spectrum_id " +
+									"and spectrum_x_eav.eav_id = eav.eav_id " +
+									"and eav.attribute_id = " + order_by_attribute_id + " order by " + "eav." + order_by_storage_field;
+					
+//					+
+//							") t1 " +
+//							"left join " +
+//							"(" +
+//								"select spectrum_x_eav.spectrum_id, eav.eav_id, eav." + order_by_storage_field + " " +
+//								"from spectrum_x_eav, eav " +
+//								"where spectrum_x_eav.eav_id = eav.eav_id " +
+//									"and eav.attribute_id = " + order_by_attribute_id +
+//							") t2 " +
+//							"on t2.spectrum_id = t1.spectrum_id " +
+//							"order by t2." + order_by_storage_field;					
+//					
+					ArrayList<Integer> ids = new ArrayList<Integer>();
 					
 					
 					ResultSet rs = stmt.executeQuery(query);
 					while (rs.next()) {
-						Integer child_id = rs.getInt(1);
-						String child_name = rs.getString(2);
-						children.add(createChildSpectrumNode((hierarchy_node)node, child_id, child_name));
+						ids.add(rs.getInt(1));
+//						Integer child_id = rs.getInt(1);
+//						String child_name = rs.getString(2);
+//						children.add(createChildSpectrumNode((hierarchy_node)node, child_id, child_name));
 					}	
 					rs.close();
+					
+					
+					if(ids.size() > 0)
+					{
+						// select file name attribute for display
+						MetadataFactory factory = new MetadataFactory(this);
+						
+						MetadataSelectionDescriptor ms_d = new MetadataSelectionDescriptor();
+						ms_d.setIds(ids);
+						ms_d.setAttribute_id(getAttributes().get_attribute_id("File Name"));
+						
+						List<MetaParameter> mp_list = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), false);
+						factory.dispose();
+						
+						for(int i=0;i<ids.size();i++)
+						{ 
+							children.add(createChildSpectrumNode((hierarchy_node)node, ids.get(i), (String) mp_list.get(i).getValue()));
+									
+						}
+					}
+					
 				}
 				
 				stmt.close();
