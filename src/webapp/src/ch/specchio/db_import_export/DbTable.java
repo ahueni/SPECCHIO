@@ -518,6 +518,11 @@ class FieldValueFactory
 			v = new DateTimeFieldValue();
 		}
 		
+		if(type.equals("timestamp"))
+		{
+			v = new DateTimeFieldValue();
+		}		
+		
 		
 		
 		if(v == null)
@@ -559,6 +564,7 @@ class TableField implements DbField
 	
 	void get_value(ResultSet rs) throws SQLException
 	{
+		//String name_ = this.get_name();
 		value.read_value(rs, this.name);
 	}
 	
