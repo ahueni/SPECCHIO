@@ -23,25 +23,26 @@ public class ANDSService extends SPECCHIOService {
 	 * Submit a collection for inclusion in ResearchDataAustralia
 	 *
 	 * @param collection_d	the collection descriptor
+	 * @param is_admin	is the user an administrator?
 	 * 
 	 * @return the new collection identifier, or an empty string if publication failed
 	 */
 	@POST
 	@Produces(MediaType.APPLICATION_XML)
 	@Path("submitCollection")
-	public String submitCollection(RDACollectionDescriptor collection_d) {
+	public String submitCollection(RDACollectionDescriptor collection_d, boolean is_admin) {
 		
 		String collectionId = null;
 		String andsXMLFileLocation = getRequest().getServletContext().getInitParameter("ANDSXMLFileLocation");
 		
 		andsPartyExport = new ANDSPartyExport();
 		andsPartyExport.initialize( getClientUsername(), getClientPassword(), getDataSourceName(), andsXMLFileLocation);
-		andsPartyExport.exportPartyXML( collection_d);
+		andsPartyExport.exportPartyXML( collection_d, is_admin);
 
 		andsCollectionExport = new ANDSCollectionExport();
 		andsCollectionExport.initialize( getClientUsername(), getClientPassword(), getDataSourceName(), andsXMLFileLocation);
 		try {
-			collectionId = andsCollectionExport.exportCollectionXML( collection_d);
+			collectionId = andsCollectionExport.exportCollectionXML( collection_d, is_admin);
 		} catch (MetaParameterFormatException e) {
 			e.printStackTrace();
 		}

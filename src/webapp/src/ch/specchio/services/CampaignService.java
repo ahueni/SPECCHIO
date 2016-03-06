@@ -80,7 +80,7 @@ public class CampaignService extends SPECCHIOService {
 		) throws SPECCHIOFactoryException {
 		
 		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), campaign_type, getDataSourceName());
-		Campaign campaign = factory.getCampaign(campaign_id);
+		Campaign campaign = factory.getCampaign(campaign_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
 		return campaign;
@@ -248,6 +248,7 @@ public class CampaignService extends SPECCHIOService {
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
 				getClientPassword(),
+				getSecurityContext().isUserInRole(UserRoles.ADMIN),
 				getDataSourceName(),
 				campaign_type,
 				campaign_id

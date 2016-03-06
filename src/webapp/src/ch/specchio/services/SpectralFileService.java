@@ -42,7 +42,9 @@ public class SpectralFileService extends SPECCHIOService {
 		
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
-				getClientPassword(), getDataSourceName(),
+				getClientPassword(), 
+				getSecurityContext().isUserInRole(UserRoles.ADMIN),
+				getDataSourceName(),
 				spec_file.getCampaignType(),
 				spec_file.getCampaignId()				
 			);
@@ -71,7 +73,9 @@ public class SpectralFileService extends SPECCHIOService {
 		
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
-				getClientPassword(), getDataSourceName(),
+				getClientPassword(), 
+				getSecurityContext().isUserInRole(UserRoles.ADMIN),
+				getDataSourceName(),
 				spec_files.getCampaignType(),
 				spec_files.getCampaignId()				
 			);
@@ -141,7 +145,9 @@ public class SpectralFileService extends SPECCHIOService {
 
 		SpectralFileFactory factory = new SpectralFileFactory(
 				getClientUsername(),
-				getClientPassword(), getDataSourceName(),
+				getClientPassword(), 
+				getSecurityContext().isUserInRole(UserRoles.ADMIN),
+				getDataSourceName(),
 				spec_file.getCampaignType(),
 				spec_file.getCampaignId()
 			);
