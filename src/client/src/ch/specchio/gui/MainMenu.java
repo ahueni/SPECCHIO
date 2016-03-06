@@ -30,6 +30,7 @@ import ch.specchio.types.Instrument;
 import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.Units;
 import ch.specchio.types.attribute;
+import ch.specchio.queries.EAVQueryConditionObject;
 
 
 class MainMenu implements ActionListener, ItemListener {
@@ -613,7 +614,7 @@ class MainMenu implements ActionListener, ItemListener {
          "Build Number: " + SPECCHIO_ReleaseInfo.getBuildNumber() + "<br>" +
          "Build Date: " + SPECCHIO_ReleaseInfo.getBuildDate()
         		 + "<br><br>" +
-        		 "(c) 2006-2015 by Remote Sensing Laboratories (RSL)<br>" +
+        		 "(c) 2006-2016 by Remote Sensing Laboratories (RSL)<br>" +
         		 "Dept. of Geography, " +
         		 "University of Zurich (CH)<br>" +
         		 "(c) 2013-2014 by University of Wollongong (AU)<br><br>" +
@@ -738,9 +739,15 @@ class MainMenu implements ActionListener, ItemListener {
     	  SPECCHIOClient specchio_client = SPECCHIOApplication.getInstance().getClient();
     	  
     	  try {
-			String has_license = specchio_client.getCapability("END_USER_LICENSE");
-			
-			String short_license = specchio_client.getCapability("END_USER_LICENSE_SHORT_TEXT");
+    		  
+    		  attribute attr = specchio_client.getAttributesNameHash().get("Altitude");
+
+    		  Object cond = new EAVQueryConditionObject(attr);
+
+    		  
+//			String has_license = specchio_client.getCapability("END_USER_LICENSE");
+//			
+//			String short_license = specchio_client.getCapability("END_USER_LICENSE_SHORT_TEXT");
 			
 			int x = 1;
 		} catch (SPECCHIOClientException e2) {
@@ -816,7 +823,8 @@ class MainMenu implements ActionListener, ItemListener {
 
    }
    
-   protected ImageIcon createImageIcon(String path) {
+
+protected ImageIcon createImageIcon(String path) {
        java.net.URL imgURL = getClass().getResource(path);
        if (imgURL != null) {
            return new ImageIcon(imgURL);
