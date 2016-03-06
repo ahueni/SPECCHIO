@@ -141,7 +141,7 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 			
 			// add the spectrum selector
 			spectrumSpinner = new JSpinner(new SpinnerNumberModel(1, 1, spectrumEnum.size(), 1));
-			((JSpinner.DefaultEditor)spectrumSpinner.getEditor()).getTextField().setEditable(false);
+			((JSpinner.DefaultEditor)spectrumSpinner.getEditor()).getTextField().setEditable(true);
 			spectrumSpinner.addChangeListener(this);
 			spectrumSpinnerPanel.add(spectrumSpinner);
 			
