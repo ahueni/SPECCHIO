@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.xml.bind.annotation.*;
 
+import ch.specchio.types.attribute;
+
 
 @XmlRootElement(name="eav_query_condition")
 public class EAVQueryConditionObject extends QueryCondition {
@@ -34,6 +36,15 @@ public class EAVQueryConditionObject extends QueryCondition {
 		this.tablename = tablename;
 		this.fieldname = fieldname;
 	}
+	
+	public EAVQueryConditionObject(attribute attr)
+	{
+		this("eav", attr.getDefaultStorageField());
+		
+		this.attribute_name = attr.getName();
+		this.ref_tablename = "spectrum_x_eav";
+	}
+	
 	
 	
 	public EAVQueryConditionObject(String tablename, String ref_tablename, String attribute_name, String fieldname)
