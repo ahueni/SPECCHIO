@@ -41,7 +41,7 @@ public class SpectralFile {
 	private String file_format_name;
 	private String company;
 	private String comment;
-	private DateTime[] capture_dates;
+	private ArrayList<DateTime> capture_dates = new ArrayList<DateTime>();
 	private DateTime capture_date; // in case there is a single one and we do not
 								// know the number of spectra yet ...
 	private ArrayList<spatial_pos> pos = new ArrayList<spatial_pos>();
@@ -59,7 +59,7 @@ public class SpectralFile {
 	private int instrument_type_number = -1; // e.g. available for ASD
 	private ArrayList<Integer> measurement_units  = new ArrayList<Integer>(); // a number code that defines: refl, rad,
 									// raw (acc. ASD specification)
-	private int[] measurement_type; // CASE number according to Nicodemus and
+	private ArrayList<Integer> measurement_types  = new ArrayList<Integer>(); // CASE number according to Nicodemus and
 									// Schaepman-Strub -> beam geometries
 	private ArrayList<Integer> measurand_designator  = new ArrayList<Integer>(); // internal designator for Reference panel, Target and others in future
 	private ArrayList<Float> sensor_azimuth = new ArrayList<Float>();
@@ -253,10 +253,10 @@ public class SpectralFile {
 	
 	@XmlElement(name="capture_dates")
 	@XmlJavaTypeAdapter(XmlDateTimeAdapter.class)
-	public DateTime[] getCaptureDates() { return this.capture_dates; }
-	public void setCaptureDates(DateTime[] capture_dates) { this.capture_dates = capture_dates; }
-	public DateTime getCaptureDate(int i) { return this.capture_dates[i]; }
-	public void setCaptureDate(int i, DateTime date) { this.capture_dates[i] = date; }
+	public ArrayList<DateTime> getCaptureDates() { return this.capture_dates; }
+	public void setCaptureDates(ArrayList<DateTime> capture_dates) { this.capture_dates = capture_dates; }
+	public DateTime getCaptureDate(int i) { return this.capture_dates.get(i); }
+	public void setCaptureDate(int i, DateTime date) { capture_dates.add(i, date);  } //   if(ithis.capture_dates.set(i, date);
 //	public DateTime getJodaCaptureDate(int i) { 
 //		DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
 //		formatter.withZoneUTC();
@@ -464,10 +464,10 @@ public class SpectralFile {
 	public void setMeasurementId(int i, int measurement_id) { this.measurement_id[i] = measurement_id; }
 	
 	@XmlElement(name="measurement_type")
-	public int[] getMeasurementTypes() { return this.measurement_type; }
-	public void setMeasurementTypes(int measurement_type[]) { this.measurement_type = measurement_type; }
-	public int getMeasurementType(int i) { return this.measurement_type[i]; }
-	public void setMeasurementType(int i, int measurement_type) { this.measurement_type[i] = measurement_type; }
+	public ArrayList<Integer> getMeasurementTypes() { return this.measurement_types; }
+	public void setMeasurementTypes(ArrayList<Integer> measurement_types) { this.measurement_types = measurement_types; }
+	public int getMeasurementType(int i) { return this.measurement_types.get(i); }
+	public void setMeasurementType(int i, int measurement_type) { this.measurement_types.set(i, measurement_type); }
 	
 	@XmlElement(name="measurement_units")
 	public ArrayList<Integer> getMeasurementUnits() { return this.measurement_units; }
@@ -480,7 +480,7 @@ public class SpectralFile {
 	@XmlElement(name="no_of_channels")
 	public ArrayList<Integer> getNumberOfChannels() { return this.no_of_channels; }
 	public void setNumberOfChannels(ArrayList<Integer> no_of_channels) { this.no_of_channels = no_of_channels; }
-	public Integer getNumberOfChannels(int i) { return this.no_of_channels.get(i); }
+	public Integer getNumberOfChannels(int i) {  if(this.measurements != null){ return measurements[i].length;} else {return this.no_of_channels.get(i);} }
 	public void addNumberOfChannels(int n) { this.no_of_channels.add(n); }
 	
 	@XmlElement(name="no_of_ind_spectral_scans")
@@ -501,8 +501,8 @@ public class SpectralFile {
 		this.no_of_spectra = no_of_spectra;
 		
 		// set the size of some arrays that depend on the number of spectra in the file
-		this.capture_dates = new DateTime[no_of_spectra];
-		this.measurement_type = new int[no_of_spectra];
+		//this.capture_dates = new DateTime[no_of_spectra];
+		//this.measurement_type = new int[no_of_spectra];
 	}
 	
 	@XmlElement(name="number_of_spectra_names")
@@ -719,8 +719,8 @@ public class SpectralFile {
 				}
 			}
 		} else {
-
-			for (int i = 0; i < no_of_channels.get(0); i++) {
+			
+			for (int i = 0; i < measurements[spec_no].length; i++) {
 				try {
 					dos.writeFloat(measurements[spec_no][i]);
 				} catch (IOException e) {
