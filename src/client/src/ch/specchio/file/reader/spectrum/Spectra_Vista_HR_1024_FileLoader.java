@@ -168,10 +168,6 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			
 			String[] time_data = tokens[1].split(",");
 			
-			
-			hdr.setCaptureDate(1, get_date_and_time_from_HR_string(time_data[1]));
-			hdr.setCaptureDate(2, hdr.getCaptureDate(1)); // reflectance capture date is same as radiance of target
-			
 			if (time_data[0].equals(" "))
 			{
 				hdr.setCaptureDate(0,  hdr.getCaptureDate(1));
@@ -179,7 +175,12 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			else
 			{
 				hdr.setCaptureDate(0, get_date_and_time_from_HR_string(time_data[0]));
-			}
+			}		
+			
+			hdr.setCaptureDate(1, get_date_and_time_from_HR_string(time_data[1]));
+			hdr.setCaptureDate(2, hdr.getCaptureDate(1)); // reflectance capture date is same as radiance of target
+			
+
 			
 				
 
@@ -588,7 +589,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			ArrayList<String> local_spectra_names = new ArrayList<String>(spec_file.getSpectraNames());
 			ArrayList<String> local_spectra_filenames = spec_file.getSpectraNames();
 //			Integer[] local_spectra_numbers = spec_file.spectra_numbers;
-			DateTime[] local_capture_dates = spec_file.getCaptureDates();
+			ArrayList<DateTime> local_capture_dates = spec_file.getCaptureDates();
 			ArrayList<Integer> local_measurement_units = new ArrayList<Integer>(spec_file.getMeasurementUnits());
 			//spatial_pos[] local_pos = spec_file.pos;	
 			
@@ -601,7 +602,7 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			spec_file.addSpectrumName(local_spectra_names.get(1));
 			spec_file.addSpectrumFilename(local_spectra_filenames.get(1));
 //			spec_file.spectra_numbers[0] = local_spectra_numbers[1];
-			spec_file.setCaptureDate(0, local_capture_dates[1]);
+			spec_file.setCaptureDate(0, local_capture_dates.get(1));
 			spec_file.addMeasurementUnits(local_measurement_units.get(1));
 			//spec_file.pos[0] = local_pos[1];
 			
