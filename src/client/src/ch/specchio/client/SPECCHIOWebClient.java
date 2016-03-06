@@ -76,6 +76,7 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.WebResource.Builder;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
@@ -1197,6 +1198,27 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		  
 	}
 	
+	/**
+	 * Get the space objects for a set of spectrum identifiers.
+	 * Configured to sort by sensor, unit, instrument and calibration
+	 * 
+	 * @param ids								the spectrum identifiers
+	 * @param order_by							the field to order by
+	 */
+	public Space[] getSpaces(ArrayList<Integer> ids, String order_by) throws SPECCHIOWebClientException {
+		
+		  SpaceQueryDescriptor space_d = new SpaceQueryDescriptor(
+				  ids,
+				  false,
+				  false,
+				  order_by
+			);
+		  
+		  return  postForArray(Space.class, "spectrum", "getSpaces", space_d);
+		  
+	}
+		
+	
 	
 	/**
 	 * Get a spectrum.
@@ -2113,7 +2135,9 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	private InputStream getInputStream(String service, String method, String ... args) throws SPECCHIOWebClientException {
 		
 		try {
-			ClientResponse response = getWRBuilder(service, method, args).accept(MediaType.APPLICATION_OCTET_STREAM).get(ClientResponse.class);
+			Builder builder = getWRBuilder(service, method, args);
+			Builder x = builder.accept(MediaType.APPLICATION_OCTET_STREAM);
+			ClientResponse response = x.get(ClientResponse.class);
 			if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
 				throw new ClientHandlerException(
 					web_service.path(buildPath(service, method, args)) +

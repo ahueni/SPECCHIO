@@ -13,6 +13,7 @@ import ch.specchio.queries.Query;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
+import ch.specchio.spaces.SpaceQueryDescriptor;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.Calibration;
@@ -644,6 +645,14 @@ public interface SPECCHIOClient {
 	 */
 	public Space[] getSpaces(ArrayList<Integer> ids, boolean split_spaces_by_sensor, boolean split_spaces_by_sensor_and_unit, String order_by) throws SPECCHIOClientException;
 	
+	/**
+	 * Get the space objects for a set of spectrum identifiers.
+	 * Configured to sort by sensor, unit, instrument and calibration
+	 * 
+	 * @param ids								the spectrum identifiers
+	 * @param order_by							the field to order by
+	 */
+	public Space[] getSpaces(ArrayList<Integer> ids, String order_by) throws SPECCHIOWebClientException;
 	
 	/**
 	 * Get a spectrum.

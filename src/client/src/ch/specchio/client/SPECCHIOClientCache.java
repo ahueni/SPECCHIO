@@ -1010,6 +1010,20 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Get the space objects for a set of spectrum identifiers.
+	 * Configured to sort by sensor, unit, instrument and calibration
+	 * 
+	 * @param ids								the spectrum identifiers
+	 * @param order_by							the field to order by
+	 */
+	public Space[] getSpaces(ArrayList<Integer> ids, String order_by) throws SPECCHIOWebClientException {
+	
+		return realClient.getSpaces(ids, order_by);
+	
+	}
+	
+	
 	
 	/**
 	 * Get a spectrum.
