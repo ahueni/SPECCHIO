@@ -1,5 +1,5 @@
 /* Created by JReleaseInfo AntTask from Open Source Competence Group */
-/* Creation date Tue Feb 23 18:07:59 CET 2016 */
+/* Creation date Fri Apr 08 22:44:26 CEST 2016 */
 package ch.specchio.gui;
 
 import java.util.Date;
@@ -343,11 +343,11 @@ class JReleaseInfoViewer {
 public class SPECCHIO_ReleaseInfo {
 
 
-   /** buildDate (set during build process to 1456247279787L). */
-   private static Date buildDate = new Date(1456247279787L);
+   /** buildDate (set during build process to 1460148266039L). */
+   private static Date buildDate = new Date(1460148266039L);
 
    /**
-    * Get buildDate (set during build process to Tue Feb 23 18:07:59 CET 2016).
+    * Get buildDate (set during build process to Fri Apr 08 22:44:26 CEST 2016).
     * @return Date buildDate
     */
    public static final Date getBuildDate() { return buildDate; }
@@ -374,10 +374,10 @@ public class SPECCHIO_ReleaseInfo {
 
 
    /**
-    * Get buildNumber (set during build process to 60).
+    * Get buildNumber (set during build process to 82).
     * @return int buildNumber
     */
-   public static final int getBuildNumber() { return 60; }
+   public static final int getBuildNumber() { return 82; }
 
 
    /** company (set during build process to "${company}"). */
@@ -390,11 +390,11 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getCompany() { return company; }
 
 
-   /** buildTimeStamp (set during build process to "20160223-1807"). */
-   private static String buildTimeStamp = "20160223-1807";
+   /** buildTimeStamp (set during build process to "20160408-2244"). */
+   private static String buildTimeStamp = "20160408-2244";
 
    /**
-    * Get buildTimeStamp (set during build process to "20160223-1807").
+    * Get buildTimeStamp (set during build process to "20160408-2244").
     * @return String buildTimeStamp
     */
    public static final String getBuildTimeStamp() { return buildTimeStamp; }
@@ -420,11 +420,11 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getCopyright() { return copyright; }
 
 
-   /** version (set during build process to "3.2.1"). */
-   private static String version = "3.2.1.1";
+   /** version (set during build process to "3.2.1.2"). */
+   private static String version = "3.2.1.2";
 
    /**
-    * Get version (set during build process to "3.2.1").
+    * Get version (set during build process to "3.2.1.2").
     * @return String version
     */
    public static final String getVersion() { return version; }
