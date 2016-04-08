@@ -2,6 +2,7 @@ package ch.specchio.gui;
 
 import java.awt.BorderLayout;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -298,6 +299,10 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			
 			// reset the list of deleted fields
 			removed_fields.clear();
+			
+			// reset the redundancy buffer to avoid linking to deleted parameters.
+			// ideally, this should only include the reset for the fields that were removed and not the whole buffer ...
+			this.specchio_client.clearMetaparameterRedundancyList();
 		}
 
 		// update button states
@@ -455,6 +460,14 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		}
 		
 		update.setEnabled(update_reset_state);
+		if(update_reset_state)
+		{				
+			update.setForeground(Color.RED);
+		}
+		else
+		{
+			update.setForeground(Color.BLACK);
+		}
 		reset.setEnabled(update_reset_state);
 	}
 	
