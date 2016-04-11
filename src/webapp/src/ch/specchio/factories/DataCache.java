@@ -8,7 +8,10 @@ import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.ListIterator;
 
 import org.joda.time.format.DateTimeFormat;
@@ -668,7 +671,9 @@ public class DataCache {
 				if (spec_file.getInstrumentName() != null)
 				{
 					instrument_designator= spec_file.getInstrumentName();
-				}					
+				}		
+				
+				int l = instrument_designator.length();
 
 				if (instrument_designator.length() == 0 && spec_file.getCaptureDate(spec_no) != null && spec_file.getCaptureDate(spec_no).toString() != null)
 				{
@@ -682,8 +687,12 @@ public class DataCache {
 
 				if (instrument_designator.length() == 0)
 				{
-					DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd");
-					String str = fmt.print(spec_file.getCaptureDate(spec_no));
+					//DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd");
+					
+					DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+					Calendar cal = Calendar.getInstance();
+					//System.out.println(dateFormat.format(cal.getTime()));					
+					String str = dateFormat.format(cal.getTime());
 	
 					instrument_designator = str  + " (insert time)"; // augment with current time/date
 				}
