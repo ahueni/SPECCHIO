@@ -19,14 +19,12 @@ import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.UserFactory;
 import ch.specchio.model.Address;
 import ch.specchio.model.AddressPart;
-import ch.specchio.model.CitationInfo;
 import ch.specchio.model.Collection;
 import ch.specchio.model.Coverage;
 import ch.specchio.model.Date;
 import ch.specchio.model.Dates;
 import ch.specchio.model.Description;
 import ch.specchio.model.ElectronicAddress;
-import ch.specchio.model.FullCitation;
 import ch.specchio.model.Identifier;
 import ch.specchio.model.Location;
 import ch.specchio.model.Name;
@@ -60,7 +58,6 @@ public class ANDSCollectionExport {
 	private static final String ANDS_COLLECTION_KEY_METAPARAMETER = "ANDS Collection Key";
 	private static final String ANDS_COLLECTION_NAME_METAPARAMETER = "ANDS Collection Name";
 	private static final String ANDS_COLLECTION_DESCRIPTION_METAPARAMETER = "ANDS Collection Description";
-	private static final String CITATION_METAPARAMETER = "Citation";
 	private static final String DATA_USAGE_POLICY_METAPARAMETER = "Data Usage Policy";
 	private static final String DOI_METAPARAMETER = "Digital Object Identifier";
 	private static final String FOR_CODE_METAPARAMETER = "FOR Code";
@@ -220,49 +217,6 @@ public class ANDSCollectionExport {
 		java.util.Collections.sort(fromToDates);
 
 		return fromToDates;
-	}
-	
-	/**
-	 * Build the citation information.
-	 * 
-	 * @param rdaCollectionDescriptor	the collection descriptor
-	 * 
-	 * @return a list of CitationInfo objects, or null if no citation information is available
-	 * 
-	 * @throws SPECCHIOFactoryException database error
-	 */
-	private ArrayList<CitationInfo> obtainCitationInfo(RDACollectionDescriptor rdaCollectionDescriptor) 
-		throws SPECCHIOFactoryException {
-		
-		// get the citations associated with every spectrum in the collection
-		ArrayList<MetaParameter> citationMetaParameters = metadataFactory.getMetaParameterValues(
-				rdaCollectionDescriptor.getSpectrumIds(),
-				CITATION_METAPARAMETER,
-				true
-			);
-		
-		if (citationMetaParameters.size() > 0) {
-		
-			// create a CitationInfo object for each citation in the list
-			ArrayList<CitationInfo> citationInfoList = new ArrayList<CitationInfo>(citationMetaParameters.size());
-			for (MetaParameter mp : citationMetaParameters) {
-				CitationInfo citationInfo = new CitationInfo();
-				FullCitation fullCitation = new FullCitation();
-				fullCitation.setStyle("Harvard");
-				fullCitation.setValue((String)mp.getValue());
-				citationInfo.setFullCitation(fullCitation);
-				citationInfoList.add(citationInfo);
-			}
-			
-			return citationInfoList;
-			
-		} else {
-			
-			// no citation information
-			return null;
-			
-		}
-		
 	}
 	
 	
@@ -837,9 +791,6 @@ public class ANDSCollectionExport {
 		
 		// set coverage
 		collection.setCoverage(obtainCoverage(rdaCollectionDescriptor));
-		
-		// set the citation information
-		collection.setCitationInfo(obtainCitationInfo(rdaCollectionDescriptor));
 		
 		// set related information
 		ArrayList<RelatedInfo> relatedInfoList = obtainRelatedInfo(rdaCollectionDescriptor);
