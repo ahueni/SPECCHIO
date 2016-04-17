@@ -58,7 +58,7 @@
 	   <!-- ========================================================================================== -->
 	   <target name="init">
 	   
-	      <property name="version"           value="3.2.0 Eta"/>  
+	      <property name="version"           value="3.2.1.2"/>  
 	      <property name="packagename"       value="ch.specchio.gui" />
 	      <property name="jreleaseinfoname"  value="SPECCHIOReleaseInfo" />
 	      <property name="organization"      value="RSL, University of Zurich and University of Wollongong" />
@@ -170,15 +170,20 @@
 	<!-- build installation packages -->
 	<target name="package" description="Build installation package" depends="dist">
 		
+		
+    	<!-- move db_config.txt into dist dir -->		
+    	<copy file="${pkg.dir}/db_config.txt" todir="${dist.dir}"/>
+		
 		<!-- plain zip file -->
 		<zip destfile="${pkg.dir}/specchio-client.zip" basedir="${dist.dir}" />
+				
 		
 		<!-- izpack self-installer -->
 		<izpack izPackDir="${izpack.home}" installerType="standard" input="install.xml" basedir="${dist.dir}" output="${pkg.dir}/specchio-client-installer.jar" />
 		
 		<!-- Package with current Release Notes -->
 		<zip destfile="${pkg.dir}/specchio-client-installer-generic-${version}.zip">		    
-		    <zipfileset dir="${pkg.dir}" includes="specchio-client-MacOSX-installer.jar" fullpath="specchio-client-installer.jar"/>
+		    <zipfileset dir="${pkg.dir}" includes="specchio-client-installer.jar" fullpath="specchio-client-installer.jar"/>
 			<zipfileset dir="${doc.dir}" includes="SPECCHIO_ReleaseNotes.pdf" fullpath="SPECCHIO_ReleaseNotes.pdf"/>
 		  </zip>		
 		
