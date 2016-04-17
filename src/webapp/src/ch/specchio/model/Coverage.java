@@ -7,11 +7,11 @@ import javax.xml.bind.annotation.XmlElement;
 
 public class Coverage {
 	
-	@XmlElement(name="spatial")
 	private ArrayList<Spatial> spatial;
 	
 	private Temporal temporal;
 
+	@XmlElement(name="spatial")
 	public ArrayList<Spatial> getSpatial() {
 		return spatial;
 	}

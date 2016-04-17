@@ -4,12 +4,11 @@ import javax.xml.bind.annotation.XmlElement;
 
 public class Address {
 
-	@XmlElement(name = "electronic")
 	private ElectronicAddress electronicAddress;
 	
-	@XmlElement(name = "physical")
 	private PhysicalAddress physicalAddress;
-	
+
+	@XmlElement(name = "electronic")
 	public ElectronicAddress getElectronicAddress() {
 		return this.electronicAddress;
 	}
@@ -17,7 +16,8 @@ public class Address {
 	public void setElectronicAddress(ElectronicAddress electronicAddress) {
 		this.electronicAddress = electronicAddress;
 	}
-	
+
+	@XmlElement(name = "physical")
 	public PhysicalAddress getPhysicalAddress() {
 		return this.physicalAddress;
 	}
