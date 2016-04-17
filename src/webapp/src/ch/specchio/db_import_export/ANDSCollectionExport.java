@@ -3,9 +3,10 @@ package ch.specchio.db_import_export;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -15,8 +16,6 @@ import au.ands.org.researchdata.RDACollectionDescriptor;
 import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.factories.MetadataFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
-import ch.specchio.factories.SpecchioCampaignFactory;
-import ch.specchio.factories.SpectrumFactory;
 import ch.specchio.factories.UserFactory;
 import ch.specchio.model.Address;
 import ch.specchio.model.AddressPart;
@@ -42,11 +41,10 @@ import ch.specchio.model.Rights;
 import ch.specchio.model.Spatial;
 import ch.specchio.model.Subject;
 import ch.specchio.model.Temporal;
-import ch.specchio.types.Campaign;
+import ch.specchio.types.ConflictInfo;
+import ch.specchio.types.ConflictStruct;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
-import ch.specchio.types.Metadata;
-import ch.specchio.types.Spectrum;
 import ch.specchio.types.User;
 import ch.specchio.types.attribute;
 
@@ -60,6 +58,8 @@ public class ANDSCollectionExport {
 	
 	private static final String ACQUISITION_TIME_METAPARAMETER = "Acquisition Time";
 	private static final String ANDS_COLLECTION_KEY_METAPARAMETER = "ANDS Collection Key";
+	private static final String ANDS_COLLECTION_NAME_METAPARAMETER = "ANDS Collection Name";
+	private static final String ANDS_COLLECTION_DESCRIPTION_METAPARAMETER = "ANDS Collection Description";
 	private static final String CITATION_METAPARAMETER = "Citation";
 	private static final String DATA_USAGE_POLICY_METAPARAMETER = "Data Usage Policy";
 	private static final String DOI_METAPARAMETER = "Digital Object Identifier";
@@ -67,14 +67,10 @@ public class ANDSCollectionExport {
 	private static final String LOCATION_NAME_METAPARAMETER = "Location Name";
 	private static final String PUBLICATION_METAPARAMETER = "Publication";
 	
+	private static final String EAVID_TOKEN = "%EAVID%";
+	
 	/** user factory */
 	private UserFactory userFactory;
-	
-	/** campaign factory */
-	private SpecchioCampaignFactory specchioCampaignFactory;
-	
-	/** spectrum factory */
-	private SpectrumFactory spectrumFactory;
 	
 	/** output file location */
 	private String andsXMLFileLocation;
@@ -112,9 +108,7 @@ public class ANDSCollectionExport {
 
 		// create factories, using the same database connection for each
 		userFactory = new UserFactory(dbUser, dbPassword);
-		specchioCampaignFactory = new SpecchioCampaignFactory(userFactory);
 		metadataFactory = new MetadataFactory(userFactory);
-		spectrumFactory = new SpectrumFactory(userFactory);
 		
 		// initialise EAV services
 		eavDBServices = new EAVDBServices( userFactory.getStatementBuilder() , userFactory.getAttributes(), userFactory.getDatabaseUserName());
@@ -179,35 +173,6 @@ public class ANDSCollectionExport {
 		{
 		    createFileAndDirectory( System.getProperty("user.home") + andsXMLFileLocation + System.getProperty("file.separator"), pi, collectionIdString);
 		} 
-	}
-	
-	/**
-	 * Get a list of campaigns from which the collection is drawn.
-	 * 
-	 * @param rdaCollectionDescriptor	the collection descriptor
-	 * 
-	 * @return a list of Campaign objects
-	 * 
-	 * @throws SPECCHIOFactoryException database error
-	 */
-	private List<Campaign> obtainCampaigns(RDACollectionDescriptor rdaCollectionDescriptor)
-		throws SPECCHIOFactoryException {
-		
-		// build a set of campaign identifiers
-		Set<Integer> campaignIds = new TreeSet<Integer>();
-		for (int spectrumId : rdaCollectionDescriptor.getSpectrumIds()) {
-			Spectrum s = spectrumFactory.getSpectrum(spectrumId, false);
-			campaignIds.add(s.getCampaignId());
-		}
-		
-		// build a list of Campaign objects
-		List<Campaign> campaignList = new ArrayList<Campaign>(campaignIds.size());
-		for (int campaignId : campaignIds) {
-			campaignList.add(specchioCampaignFactory.getCampaign(campaignId));
-		}
-		
-		return campaignList;
-		
 	}
 	
 	/**
@@ -279,7 +244,7 @@ public class ANDSCollectionExport {
 	
 	
 	/**
-	 * Obtain a collection identifier and associates it with every spectrum in the
+	 * Obtain a collection identifier and associate it with every spectrum in the
 	 * collection. This method should only be called if the collection is ready to
 	 * be created; otherwise it will create and associate an invalid collection key.
 	 * 
@@ -296,23 +261,6 @@ public class ANDSCollectionExport {
 	 */
 	private String obtainCollectionIdString(RDACollectionDescriptor rdaCollectionDescriptor) throws  SPECCHIOFactoryException
 	{
-
-		// get any existing ANDS collections key for the spectra
-		boolean useExistingKey = false;
-		MetaParameter andsCollectionKey = null;
-		for (int spectrumId : rdaCollectionDescriptor.getSpectrumIds()) {
-			Metadata md = metadataFactory.getMetadataForSpectrum(spectrumId);
-			for (MetaParameter mp : md.get_all_entries(ANDS_COLLECTION_KEY_METAPARAMETER)) {
-				if (andsCollectionKey == null) {
-					// this is the first key we've found
-					andsCollectionKey = mp;
-					useExistingKey = true;
-				} else if (!mp.getEavId().equals(andsCollectionKey.getEavId())) {
-					// found a second key, so we can't use the existing on
-					useExistingKey = false;
-				}
-			}
-		}
 		
 		// convert int spectrum identifiers to Integer spectrum identifiers... grrr
 		Integer[] spectrumIds = new Integer[rdaCollectionDescriptor.getSpectrumIds().length];
@@ -322,24 +270,10 @@ public class ANDSCollectionExport {
 			spectrumIds[i++] = Integer.valueOf(value);
 		}
 		
-		if (!useExistingKey) {
+		MetaParameter andsCollectionKey = updateMetadataWithCreate(ANDS_COLLECTION_KEY_METAPARAMETER, spectrumIds, COLLECTION_PREFIX + EAVID_TOKEN);
+		updateMetadataWithCreate(ANDS_COLLECTION_NAME_METAPARAMETER, spectrumIds, rdaCollectionDescriptor.getPrimaryName());
+		updateMetadataWithCreate(ANDS_COLLECTION_DESCRIPTION_METAPARAMETER, spectrumIds, rdaCollectionDescriptor.getBriefDescription());
 		
-			// no usable existing key; create a new one
-			try {
-				attribute attr = eavDBServices.ATR.get_attribute_info((eavDBServices.ATR.get_attribute_id(ANDS_COLLECTION_KEY_METAPARAMETER)));
-				andsCollectionKey = MetaParameter.newInstance(attr);
-				int collectionId = metadataFactory.updateMetadata(andsCollectionKey, spectrumIds);
-				andsCollectionKey.setValue(COLLECTION_PREFIX + collectionId);
-			}
-			catch (MetaParameterFormatException e) {
-				// collection key attribute does not have type string; re-throw as a database error
-				throw new SPECCHIOFactoryException(e);
-			}
-			
-		}
-		
-		// associate the collection key with all spectra in the collection
-		metadataFactory.updateMetadata(andsCollectionKey, spectrumIds);
 		
 		return (String)andsCollectionKey.getValue();
 	}
@@ -353,34 +287,27 @@ public class ANDSCollectionExport {
 	 * @param rdaCollectionDescriptor	the collection descriptor
 	 * @param campaigns					the campaigns from which the collection is drawn
 	 * 
-	 * @return a Description object representing the collection
+	 * @return a Description object representing the collection, or null if no description is available
 	 * 
 	 * @throws SPECCHIOFactoryException database error
 	 */
-	private Description obtainCollectionDescription(RDACollectionDescriptor rdaCollectionDescriptor, List<Campaign> campaigns)
+	private Description obtainCollectionDescription(RDACollectionDescriptor rdaCollectionDescriptor)
 		throws SPECCHIOFactoryException {
+		
+		Description description = null;
+		if (rdaCollectionDescriptor.getBriefDescription() != null &&
+				rdaCollectionDescriptor.getBriefDescription().length() > 0) {
 
-		// build a string containing the descriptions of all of the campaigns in the collection
-		StringBuffer sb = new StringBuffer();
-		for (Campaign campaign : campaigns) {
-			if (campaign.getDescription() != null && campaign.getDescription().length() > 0) {
-				if (sb.length() > 0) {
-					// insert a blank line between descriptions
-					sb.append("\n\n");
-				}
-				sb.append(campaign.getDescription());
-			} else {
-				errors.add(
-					"The campaign \"" + campaign.getName() + "\" does not have a description. " +
-					"Please add one."
-				);
-			}
+			// build the description object
+			description = new Description();
+			description.setType("brief");
+			description.setValue(rdaCollectionDescriptor.getBriefDescription());
+			
+		} else {
+			
+			errors.add("This collection has no description. You may need to upgrade SPECCHIO.");
+			
 		}
-
-		// build the description object
-		Description description = new Description();
-		description.setType("brief");
-		description.setValue(sb.toString());
 		
 		return description;
 		
@@ -389,44 +316,36 @@ public class ANDSCollectionExport {
 	/**
 	 * Build the name element for a collection.
 	 * 
-	 * If there is no suitable name or description available, an error will be added
+	 * If there is no suitable name available, an error will be added to
 	 * the current error list.
 	 * 
 	 * @param rdaCollectionDescriptor	the collection descriptor
-	 * @param campaigns					the campaigns from which the collection is drawn
 	 * 
-	 * @return a Name object describing the collection
+	 * @return a Name object describing the collection, or null if no name is available
 	 * 
 	 * @throws SPECCHIOFactoryException database error
 	 */
-	private Name obtainCollectionNames(RDACollectionDescriptor rdaCollectionDescriptor, List<Campaign> campaigns)
+	private Name obtainCollectionNames(RDACollectionDescriptor rdaCollectionDescriptor)
 		throws SPECCHIOFactoryException {
-		
-		// build a string containing the descriptions of all of the campaigns in the collection
-		StringBuffer sb = new StringBuffer();
-		for (Campaign campaign : campaigns) {
-			if (campaign.getName() != null && campaign.getName().length() > 0) {
-				if (sb.length() > 0) {
-					// insert a comma between names
-					sb.append(", ");
-				}
-				sb.append(campaign.getName());
-			} else {
-				errors.add(
-					"The campaign with ID " + campaign.getId() + " does not have a name. " +
-					"Please add one."
-				);
-			}
-		}
 
-		// build the Name object
-		Name name = new Name();
-		name.setType("primary");
-		NamePart namePart = new NamePart();
-		namePart.setValue(sb.toString());
-		ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
-		namePartList.add(namePart);
-		name.setNamePartList(namePartList);
+		Name name = null;
+		if (rdaCollectionDescriptor.getPrimaryName() != null &&
+				rdaCollectionDescriptor.getPrimaryName().length() > 0) {
+		
+			// build the Name object
+			name = new Name();
+			name.setType("primary");
+			NamePart namePart = new NamePart();
+			namePart.setValue(rdaCollectionDescriptor.getPrimaryName());
+			ArrayList<NamePart> namePartList = new ArrayList<NamePart>();
+			namePartList.add(namePart);
+			name.setNamePartList(namePartList);
+			
+		} else {
+			
+			errors.add("This collection does not have a name. You may need to upgrade SPECCHIO.");
+			
+		}
 		
 		return name;
 		
@@ -789,6 +708,90 @@ public class ANDSCollectionExport {
 	
 	
 	/**
+	 * Update a metadata value of a set of spectra, creating it if there is no
+	 * suitable existing metadata item.
+	 * 
+	 * If the value parameter contains the string EAVID_TOKEN, this will be replaced by the EAV ID
+	 * of the metaparameter item.
+	 * 
+	 * @param attributeName	the metadata attribute to be changed
+	 * @param spectrumIds	the identifiers of the spectra to be updated
+	 * @param value			the new value for the metadata item
+	 * 
+	 * @return the updated MetaParameter object
+	 * 
+	 * @throws SPECCHIOFactoryException database error
+	 */
+	private MetaParameter updateMetadataWithCreate(String attributeName, Integer spectrumIds[], String value)
+		throws SPECCHIOFactoryException {
+
+		// get the attribute corresponding to the given attribute name
+		int attributeId = eavDBServices.ATR.get_attribute_id(attributeName);
+		if (attributeId == 0) {
+			throw new SPECCHIOFactoryException("Attribute " + attributeName + " does not exist.");
+		}
+		attribute attr = eavDBServices.ATR.get_attribute_info(attributeId);
+		
+		// see if the spectra have an existing shared metadata item with this name
+		MetaParameter mp = null;
+		if (spectrumIds.length > 0) {
+			
+			// start with a set containing all of the metaparameters with the given name for the first spectrum
+			Set<MetaParameter> candidates = new HashSet<MetaParameter>();
+			for (MetaParameter mp1 : metadataFactory.getMetadataForSpectrum(spectrumIds[0]).get_all_entries(attr.id)) {
+				candidates.add(mp1);
+			}
+			
+			// get the conflict information the given attribute over the given set of spectra
+			ConflictInfo conflicts = metadataFactory.detectEavConflicts(spectrumIds).get(attr.id);
+			
+			if (conflicts != null) {
+				// look for an EAV ID with no conflicts
+				Enumeration<Integer> eavIds = conflicts.eavIds();
+				while (eavIds.hasMoreElements()) {
+					Integer eavId = eavIds.nextElement();
+					ConflictStruct conflict = conflicts.getConflictData(eavId);
+					if (conflict.getNumberOfSharingRecords() != conflict.getNumberOfSelectedRecords()) {
+						// this EAV ID is conflicted; remove it from the candidates list
+						for (MetaParameter mp1 : candidates) {
+							if (mp1.getEavId().equals(eavId)) {
+								candidates.remove(mp1);
+								break;
+							}
+						}
+					}
+				}	
+			}
+			
+			// if only one candidate remains, use it
+			if (candidates.size() == 1) {
+				mp = candidates.iterator().next();
+			}
+			
+		}
+
+		if (mp == null) {
+		
+			// no usable existing metadata item; create a new one
+			try {
+				mp = MetaParameter.newInstance(attr);
+				int eavId = metadataFactory.updateMetadata(mp, spectrumIds);
+				mp.setValue(value.replace(EAVID_TOKEN, Integer.toString(eavId)));
+			}
+			catch (MetaParameterFormatException e) {
+				// the attribute does not have type string; re-throw as a database error
+				throw new SPECCHIOFactoryException(e);
+			}
+			
+		}
+		metadataFactory.updateMetadata(mp, spectrumIds);
+		
+		return mp;
+		
+	}
+	
+	
+	/**
 	 * Generate a RIF-CS collection document describing a collection.
 	 * 
 	 * @param rdaCollectionDescriptor	the collection descriptor
@@ -820,9 +823,6 @@ public class ANDSCollectionExport {
 		// get the first and last dates of the items in the collection
 		List<java.util.Date> fromToDateList = obtainFirstLastDates (rdaCollectionDescriptor);
 		
-		// get the campaigns from which the collection is drawn
-		List<Campaign> campaignList = obtainCampaigns(rdaCollectionDescriptor);
-		
 		// create the "collection" element, modified at the current time
 		Collection collection = new Collection();
 		collection.setType("collection");
@@ -839,8 +839,8 @@ public class ANDSCollectionExport {
 		collection.setDates(dates);
 		
 		// set the collection name and description
-		collection.setName(obtainCollectionNames(rdaCollectionDescriptor, campaignList));
-		collection.setDescription(obtainCollectionDescription(rdaCollectionDescriptor, campaignList));
+		collection.setName(obtainCollectionNames(rdaCollectionDescriptor));
+		collection.setDescription(obtainCollectionDescription(rdaCollectionDescriptor));
 		
 		// set location
 		collection.setLocation(obtainLocation(rdaCollectionDescriptor));

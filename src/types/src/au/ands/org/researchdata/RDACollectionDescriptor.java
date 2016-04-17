@@ -20,6 +20,12 @@ public class RDACollectionDescriptor {
 	/** the principal investigator of the collection */
 	private User principalInvestigator;
 	
+	/** the primary collection name */
+	private String primaryName;
+	
+	/** the breif collection description */
+	private String briefDescription;
+	
 	
 	/**
 	 * Default constructor.
@@ -59,6 +65,40 @@ public class RDACollectionDescriptor {
 		}
 		
 	}
+	
+	
+	/**
+	 * Get the brief description of the collection.
+	 * 
+	 * @return the brief description of the collection
+	 */
+	@XmlElement(name="brief_description")
+	public String getBriefDescription() { return briefDescription; }
+	
+	
+	/**
+	 * Set the brief description of the collection.
+	 * 
+	 * @param briefDescriptionIn	a brief description
+	 */
+	public void setBriefDescription(String briefDescriptionIn) { briefDescription = briefDescriptionIn; }
+	
+	
+	/**
+	 * Get the primary name of the collection.
+	 * 
+	 * @return the primary name of the collection
+	 */
+	@XmlElement(name="primary_name")
+	public String getPrimaryName() { return primaryName; }
+	
+	
+	/**
+	 * Set the primary name of the collection.
+	 * 
+	 * @param primaryNameIn	the primary name
+	 */
+	public void setPrimaryName(String primaryNameIn) { primaryName = primaryNameIn; }
 	
 	
 	/**

@@ -1,23 +1,19 @@
 package ch.specchio.gui;
 
 import java.awt.*;
-
 import javax.swing.*;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
-import ch.specchio.client.SPECCHIOClientFactory;
 import ch.specchio.client.SPECCHIOServerDescriptor;
 
 
 public class SPECCHIOApplication {
-
 	
 	private static JFrame frame;
 	private static SPECCHIOApplication instance = null;
 	private SPECCHIOClient client = null;
-	public static Float min_db_version = 3.2F;
-	public static ImageIcon specchio_icon;
+	public static String version = "SPECCHIO V3.0.2";
 	
 	/* progress report in the operations pane */
 	static ProgressReportTextPanel p_rep = null;
@@ -43,15 +39,14 @@ public class SPECCHIOApplication {
 	{
 		return frame;
 	}
-	
 
 	public Component createComponents() {
 
 		JPanel pane = new JPanel(new BorderLayout());
 		OperationsPane op = OperationsPane.getInstance();
-		specchio_icon =new ImageIcon(SPECCHIOClientFactory.getApplicationConfFilename("SPECCHIO_Icon_Mid_Res_small.jpg"));
+		ImageIcon i =new ImageIcon("SPECCHIO_Icon_Mid_Res_small.jpg");
 		  
-		JLabel test = new JLabel("Spectral Database System", specchio_icon, JLabel.CENTER);
+		JLabel test = new JLabel("Spectral Database System", i, JLabel.CENTER);
 		test.setVerticalTextPosition(JLabel.BOTTOM);
 		test.setHorizontalTextPosition(JLabel.CENTER);
 		test.setOpaque(true);
@@ -79,9 +74,9 @@ public class SPECCHIOApplication {
 	    */
 	   private static void createAndShowGUI() 
 	   {
-	   System.out.println("Welcome to " + SPECCHIO_ReleaseInfo.getVersion());
+	   
 	      //Create and set up the window.
-	      frame = new JFrame(SPECCHIO_ReleaseInfo.getVersion());
+	      frame = new JFrame(version);
 	      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 	      SPECCHIOApplication app = SPECCHIOApplication.getInstance();
@@ -136,11 +131,10 @@ public class SPECCHIOApplication {
 			   
 			   	// add connection details to the operations pane
 			   if (p_rep == null) {
-				   p_rep = new ProgressReportTextPanel("Database connection status", d.getDisplayName(false, false));
+				   p_rep = new ProgressReportTextPanel("Database connection status", d.getDisplayName(false));
 	  		  		op.add_report(p_rep);	
 			   }
-			   p_rep.set_operation("Connected as " + d.getDisplayUser() + " to '" + d.getDataSourceName() + "' on:");
-			   p_rep.set_component(d.getDisplayName(false, false));
+			   p_rep.set_operation("Connected as " + d.getDisplayUser() + " to:");
 			   
 			   try {
 				   // enable menu items appropriate for this connection

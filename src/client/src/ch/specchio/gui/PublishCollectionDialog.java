@@ -1,12 +1,14 @@
 package ch.specchio.gui;
 
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -15,14 +17,21 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 import au.ands.org.researchdata.RDACollectionDescriptor;
-
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.types.Campaign;
+import ch.specchio.types.ConflictInfo;
+import ch.specchio.types.ConflictStruct;
+import ch.specchio.types.ConflictTable;
+import ch.specchio.types.MetaParameter;
+import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.User;
+import ch.specchio.types.attribute;
 
 
 /**
@@ -41,6 +50,18 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 	
 	/** the identifiers to be published */
 	private ArrayList<Integer> ids;
+	
+	/** the label for the collection name */
+	private JLabel primaryNameLabel;
+	
+	/** the field for the collection name */
+	private JTextField primaryNameField;
+	
+	/** the label for the collection description */
+	private JLabel briefDescriptionLabel;
+	
+	/** the field for the collection description */
+	private JTextArea briefDescriptionField;
 	
 	/** the label for the research group member list */
 	private JLabel researchGroupLabel;
@@ -93,18 +114,42 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 			campaign = specchioClient.getCampaign(s.getCampaignId());
 		}
 		
-		// set up the root panel with a box layout
+		// set up the root panel with a grid bag layout
 		JPanel rootPanel = new JPanel();
 		getContentPane().add(rootPanel);
-		rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
-		rootPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+		rootPanel.setLayout(new GridBagLayout());
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.insets = new Insets(4, 4, 4, 4);
+		constraints.anchor = GridBagConstraints.WEST;
+		constraints.gridy = 0;
 		
-		// add the label for the research group list
-		researchGroupLabel = new JLabel("Please select the principal investigator:");
-		researchGroupLabel.setAlignmentX(0.5f);
-		rootPanel.add(researchGroupLabel);
+		// add collection name field
+		constraints.gridx = 0;
+		primaryNameLabel = new JLabel("Collection Name:");
+		rootPanel.add(primaryNameLabel, constraints);
+		constraints.gridx = 1;
+		primaryNameField = new JTextField(20);
+		rootPanel.add(primaryNameField, constraints);
+		constraints.gridy++;
+		
+		// add collection description field
+		constraints.gridx = 0;
+		briefDescriptionLabel = new JLabel("Collection Description:");
+		rootPanel.add(briefDescriptionLabel, constraints);
+		constraints.gridx = 1;
+		briefDescriptionField = new JTextArea(5, 20);
+		briefDescriptionField.setLineWrap(true);
+		briefDescriptionField.setWrapStyleWord(true);
+		rootPanel.add(new JScrollPane(briefDescriptionField), constraints);
+		constraints.gridy++;
+		
+		// research group list
+		constraints.gridx = 0;
+		researchGroupLabel = new JLabel("Principal investigator:");
+		rootPanel.add(researchGroupLabel, constraints);
 		
 		// add the research group list
+		constraints.gridx = 1;
 		researchGroupListModel = new DefaultListModel();
 		if (campaign != null) {
 			for (User member : campaign.getResearchGroup().getMembers()) {
@@ -113,12 +158,14 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 		}
 		researchGroupList = new JList(researchGroupListModel);
 		JScrollPane researchGroupScrollPane = new JScrollPane(researchGroupList);
-		researchGroupScrollPane.setAlignmentX(0.5f);
-		rootPanel.add(researchGroupScrollPane);
+		rootPanel.add(researchGroupScrollPane, constraints);
+		constraints.gridy++;
 		
 		// add a panel for the buttons
+		constraints.gridx = 1;
+		constraints.gridwidth = 2;
 		JPanel buttonPanel = new JPanel();
-		rootPanel.add(buttonPanel);
+		rootPanel.add(buttonPanel, constraints);
 		
 		// add the "submit" button
 		submitButton = new JButton(SUBMIT);
@@ -131,6 +178,9 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 		cancelButton.setActionCommand(CANCEL);
 		cancelButton.addActionListener(this);
 		buttonPanel.add(cancelButton);
+		
+		// initialise the fields with existing data
+		prepopulate();
 		
 		// lay out the dialogue
 		pack();
@@ -180,6 +230,20 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 		// construct a new collection
 		RDACollectionDescriptor d = new RDACollectionDescriptor(ids);
 		
+		// get the collection name
+		String primaryName = primaryNameField.getText();
+		if (primaryName == null || primaryName.length() == 0) {
+			throw new SPECCHIOUserInterfaceException("You must provide a collection name.");
+		}
+		d.setPrimaryName(primaryName);
+		
+		// get the collection description
+		String briefDescription = briefDescriptionField.getText();
+		if (briefDescription == null || briefDescription.length() == 0) {
+			throw new SPECCHIOUserInterfaceException("You must provide a collection description.");
+		}
+		d.setBriefDescription(briefDescription);
+		
 		// get the principal investigator
 		User principalInvestigator = (User) researchGroupList.getSelectedValue();
 		if (principalInvestigator == null) {
@@ -202,6 +266,66 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 		
 		return collection_d;
 		
+	}
+	
+	
+	/**
+	 * Pre-populate the dialogue with available data.
+	 *
+	 * @throws SPECCHIOClientException server error
+	 */
+	private void prepopulate() throws SPECCHIOClientException {
+
+		// get the conflict data for the selected spectra
+		ConflictTable conflicts = specchioClient.getEavMetadataConflicts(ids);
+		
+		// get the first spectrum in the list for possible use in pre-population
+		Spectrum s = specchioClient.getSpectrum(ids.get(0), true);
+		
+		// populate the collection name and description, if possible
+		primaryNameField.setText(prepopulateStringAttribute(conflicts, s.getMetadata(), "ANDS Collection Name"));
+		briefDescriptionField.setText(prepopulateStringAttribute(conflicts, s.getMetadata(), "ANDS Collection Description"));
+		
+	}
+
+	/**
+	 * Get the existing non-conflicting value for a string-valued attribute.
+	 * 
+	 * @param conflicts	the conflict data for the set of spectra
+	 * @param attr		the attribute
+	 *
+	 * @return the value of attribute shared by all spectra, or null
+	 * 
+	 * @throws SPECCHIOClientException server error
+	 */
+	private String prepopulateStringAttribute(ConflictTable conflicts, Metadata md, String attributeName)
+		throws SPECCHIOClientException {
+		
+		String value = null;
+		attribute attr = specchioClient.getAttributesNameHash().get(attributeName);
+		if (attr != null) {
+			
+			// get the conflict data for the given attribute
+			ConflictInfo collectionNameConflicts = conflicts.get(attr.id);
+			
+			// search the conflict list for an EAV without conflicts
+			Enumeration<Integer> eavIds = collectionNameConflicts.eavIds();
+			while (eavIds.hasMoreElements()) {
+				Integer eavId = eavIds.nextElement();
+				ConflictStruct conflict = collectionNameConflicts.getConflictData(eavId);
+				if (conflict.getNumberOfSharingRecords() == conflict.getNumberOfSelectedRecords()) {
+					// found it; extract the value from the first spectrum in the list
+					for (MetaParameter mp : md.get_all_entries(attr.id)) {
+						if (mp.getEavId().equals(eavId)) {
+							value = (String)mp.getValue();
+						}
+					}	
+				}
+			}
+			
+		}
+		
+		return value;
 	}
 
 }
