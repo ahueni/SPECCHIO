@@ -50,10 +50,23 @@ public abstract class SpectralFileLoader {
 	
 	// read a number of bytes from the binary file and return them as string
 	protected String read_string(DataInputStream in, int no_of_chars) throws IOException
-	{		
+	{
+		// read the bytes
 		byte[] bytes = new byte[no_of_chars];
 		in.read(bytes);
-		return new String(bytes);
+		
+		// copy them into a StringBuffer until we reach a null, or the end of the buffer
+		StringBuffer buf = new StringBuffer();
+		int n = 0;
+		while (n < bytes.length && bytes[n] != 0) {
+			char c = (char)bytes[n];
+			if (Character.getNumericValue(c) > 0) {
+				buf.append(c);
+			}
+			n++;
+		}
+		
+		return buf.toString();
 	}
 	
 	
