@@ -260,6 +260,7 @@ public class ANDSCollectionExport {
 				fullCitation.setStyle("Harvard");
 				fullCitation.setValue((String)mp.getValue());
 				citationInfo.setFullCitation(fullCitation);
+				citationInfoList.add(citationInfo);
 			}
 			
 			return citationInfoList;
