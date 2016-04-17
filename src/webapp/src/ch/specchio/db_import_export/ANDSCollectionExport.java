@@ -624,7 +624,7 @@ public class ANDSCollectionExport {
 			// create one rights element for every policy
 			for (MetaParameter mp : dataUsagePolicyMetaParameters) {
 				Rights rights = new Rights();
-				rights.setRightsStatement((String)mp.getValue());
+				rights.setAccessRights((String)mp.getValue());
 				rightsList.add(rights);
 			}
 			
@@ -632,7 +632,7 @@ public class ANDSCollectionExport {
 			
 			// no existing policies; generate a standard-form one
 			Rights rights = new Rights();
-			rights.setRightsStatement(
+			rights.setAccessRights(
 					"Data can be shared on a case by case basis. " +
 					"For further information please contact " +
 					rdaCollectionDescriptor.getPrincipalInvestigator().toString() + " " +
