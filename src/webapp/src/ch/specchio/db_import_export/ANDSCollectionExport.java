@@ -370,15 +370,15 @@ public class ANDSCollectionExport {
 		// build a string containing the descriptions of all of the campaigns in the collection
 		StringBuffer sb = new StringBuffer();
 		for (Campaign campaign : campaigns) {
-			if (campaign.getDescription() != null && campaign.getDescription().length() > 0) {
+			if (campaign.getName() != null && campaign.getName().length() > 0) {
 				if (sb.length() > 0) {
-					// insert a blank line between descriptions
-					sb.append("\n\n");
+					// insert a comma between names
+					sb.append(", ");
 				}
-				sb.append(campaign.getDescription());
+				sb.append(campaign.getName());
 			} else {
 				errors.add(
-					"The campaign \"" + campaign.getName() + "\" does not have a description. " +
+					"The campaign with ID " + campaign.getId() + " does not have a name. " +
 					"Please add one."
 				);
 			}
