@@ -54,6 +54,7 @@ public class ANDSCollectionExport {
 	private static final String ANDS_COLLECTION_FILE_NAME_PREFIX = "spectral-collection-";
 	private static final String XML_FILE_POSTFIX = ".xml";
 	private static final String COLLECTION_PREFIX = "uow.edu.au/SL/COL/";
+	private static final String ORIGINATING_SOURCE = "http://www.uow.edu.au";
 	
 	private static final String ACQUISITION_TIME_METAPARAMETER = "Acquisition Time";
 	private static final String ANDS_COLLECTION_KEY_METAPARAMETER = "ANDS Collection Key";
@@ -845,7 +846,7 @@ public class ANDSCollectionExport {
 			RegistryObject ro = new RegistryObject();
 			ro.setCollection(collection);
 			ro.setKey(collectionId);
-			ro.setOriginatingSource("http://researchdata.ands.org.au/registry/orca/register_my_data");
+			ro.setOriginatingSource(ORIGINATING_SOURCE);
 
 			// the registry object's group is the institute of the PI
 			if(pi.getInstitute() != null && pi.getInstitute().getInstituteName() != null && pi.getInstitute().getInstituteName().length() > 0)
