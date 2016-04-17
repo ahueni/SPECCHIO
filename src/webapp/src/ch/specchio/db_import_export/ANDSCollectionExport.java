@@ -56,6 +56,7 @@ public class ANDSCollectionExport {
 	private static final String XML_FILE_POSTFIX = ".xml";
 	private static final String COLLECTION_PREFIX = "uow.edu.au/SL/COL/";
 	private static final String ORIGINATING_SOURCE = "http://www.uow.edu.au";
+	private static final String LOCAL_IDENTIFIER_PREFIX = "Collection~";
 	
 	private static final String ACQUISITION_TIME_METAPARAMETER = "Acquisition Time";
 	private static final String ANDS_COLLECTION_KEY_METAPARAMETER = "ANDS Collection Key";
@@ -526,21 +527,32 @@ public class ANDSCollectionExport {
 	 * Build the list of identifiers for a collection.
 	 * 
 	 * @param rdaCollectionDescriptor	the collection descriptor
+	 * @param collectionId				the collection identifier
 	 * 
 	 * @return a list of Identifier objects
 	 * 
 	 * @throws SPECCHIOFactoryException database error
 	 */
-	private ArrayList<Identifier> obtainIdentifierList(RDACollectionDescriptor rdaCollectionDescriptor)
+	private ArrayList<Identifier> obtainIdentifierList(RDACollectionDescriptor rdaCollectionDescriptor, String collectionId)
 		throws SPECCHIOFactoryException {
 
 		// start with an empty list
 		ArrayList<Identifier> identifierList = new ArrayList<Identifier>();
 		
-		// add a URI
+		// extract the collection number from the end of the collection string
+		int i = collectionId.length() - 1;
+		int pos = 1;
+		int id = 0;
+		while (i >= 0 && Character.isDigit(collectionId.charAt(i))) {
+			id += (int)(collectionId.charAt(i) - '0') * pos;
+			i--;
+			pos *= 10;
+		}
+		
+		// add a local identifier
 		Identifier identifier = new Identifier();
-		identifier.setType("uri");
-		identifier.setValue("http://hdl.handle.net/102.100.100/9338");
+		identifier.setType("local");
+		identifier.setValue(LOCAL_IDENTIFIER_PREFIX + id);
 		identifierList.add(identifier);	
 		
 		// add DOIs
@@ -826,9 +838,6 @@ public class ANDSCollectionExport {
 		dates.setDate(date);
 		collection.setDates(dates);
 		
-		// add identifiers
-		collection.setIdentifierList(obtainIdentifierList(rdaCollectionDescriptor));
-		
 		// set the collection name and description
 		collection.setName(obtainCollectionNames(rdaCollectionDescriptor, campaignList));
 		collection.setDescription(obtainCollectionDescription(rdaCollectionDescriptor, campaignList));
@@ -863,6 +872,9 @@ public class ANDSCollectionExport {
 		if (!hasErrors()) {
 			// everything is okay; create a collection identifier
 			String collectionId = obtainCollectionIdString(rdaCollectionDescriptor);
+			
+			// add identifiers
+			collection.setIdentifierList(obtainIdentifierList(rdaCollectionDescriptor, collectionId));
 			
 			// create a new registry object to represent the collection
 			RegistryObject ro = new RegistryObject();
