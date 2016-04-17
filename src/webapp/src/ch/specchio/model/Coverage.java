@@ -1,17 +1,22 @@
 package ch.specchio.model;
 
+import java.util.ArrayList;
+
+import javax.xml.bind.annotation.XmlElement;
+
 
 public class Coverage {
 	
-	private Spatial spatial;
+	@XmlElement(name="spatial")
+	private ArrayList<Spatial> spatial;
 	
 	private Temporal temporal;
 
-	public Spatial getSpatial() {
+	public ArrayList<Spatial> getSpatial() {
 		return spatial;
 	}
 
-	public void setSpatial(Spatial spatial) {
+	public void setSpatial(ArrayList<Spatial> spatial) {
 		this.spatial = spatial;
 	}
 

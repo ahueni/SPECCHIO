@@ -41,9 +41,13 @@ public class Collection {
 	@XmlElement(name = "relatedInfo")
 	private ArrayList<RelatedInfo> relatedInfoList;
 	
-	private Rights rights;
+	// XmlElement sets the name of the entities
+	@XmlElement(name = "rights")
+	private ArrayList<Rights> rights;
 	
-	private CitationInfo citationInfo;
+	// XmlElement sets the name of the entities
+	@XmlElement(name = "citationInfo")
+	private ArrayList<CitationInfo> citationInfo;
 
 	public void setType(String type) {
 		this.type = type;
@@ -92,28 +96,36 @@ public class Collection {
 	public void setRelatedObjectList(ArrayList<RelatedObject> relatedObjectList) {
 		this.relatedObjectList = relatedObjectList;
 	}
+	
+	public ArrayList<Subject> getSubjectList() {
+		return this.subjectList;
+	}
 
 	public void setSubjectList(ArrayList<Subject> subjectList) {
 		this.subjectList = subjectList;
+	}
+	
+	public ArrayList<RelatedInfo> getRelatedInfoList() {
+		return this.relatedInfoList;
 	}
 
 	public void setRelatedInfoList(ArrayList<RelatedInfo> relatedInfoList) {
 		this.relatedInfoList = relatedInfoList;
 	}
 
-	public Rights getRights() {
+	public ArrayList<Rights> getRights() {
 		return rights;
 	}
 
-	public void setRights(Rights rights) {
+	public void setRights(ArrayList<Rights> rights) {
 		this.rights = rights;
 	}
 
-	public CitationInfo getCitationInfo() {
+	public ArrayList<CitationInfo> getCitationInfo() {
 		return citationInfo;
 	}
 
-	public void setCitationInfo(CitationInfo citationInfo) {
+	public void setCitationInfo(ArrayList<CitationInfo> citationInfo) {
 		this.citationInfo = citationInfo;
 	}
 
