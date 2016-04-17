@@ -252,7 +252,7 @@ public class ANDSPartyExport {
 		// add the relation with the collection
 		Relation relation = new Relation();
 		relation.setType("isCollectorOf");
-		relation.setDescription(user.getDescription());
+		relation.setDescription(collection.getDescription().getValue());
 		RelatedObject relatedObject = new RelatedObject();
 		relatedObject.setKey(collectionId);
 		relatedObject.setRelation(relation);

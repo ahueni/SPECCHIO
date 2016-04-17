@@ -194,7 +194,7 @@ public class ANDSCollectionExport {
 		Set<Integer> campaignIds = new TreeSet<Integer>();
 		for (int spectrumId : rdaCollectionDescriptor.getSpectrumIds()) {
 			Spectrum s = spectrumFactory.getSpectrum(spectrumId, false);
-			campaignIds.add(s.getSpectrumId());
+			campaignIds.add(s.getCampaignId());
 		}
 		
 		// build a list of Campaign objects
@@ -731,7 +731,7 @@ public class ANDSCollectionExport {
 			
 			// no FOR code available; record an error
 			errors.add(
-				"There no FOR codes associated with any spectra in this collection. " + 
+				"There are no FOR codes associated with any spectra in this collection. " + 
 				"You must add codes before submitting the collection."
 			);
 			
