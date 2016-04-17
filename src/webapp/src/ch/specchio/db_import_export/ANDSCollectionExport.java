@@ -131,7 +131,7 @@ public class ANDSCollectionExport {
 	    if(!directoryExists)
 	    	return false;
 
-	    String fullyQualifiedFileName = baseDirectoryString + ANDS_COLLECTION_FILE_NAME_PREFIX + (collectionIdString.substring(COLLECTION_PREFIX.length(), collectionIdString.length())) + XML_FILE_POSTFIX;
+	    String fullyQualifiedFileName = baseDirectoryString + ANDS_COLLECTION_FILE_NAME_PREFIX + extractCollectionIdNumber(collectionIdString) + XML_FILE_POSTFIX;
 		andsCollectionFile = new File( fullyQualifiedFileName);
 
 		return true;
@@ -173,6 +173,30 @@ public class ANDSCollectionExport {
 		{
 		    createFileAndDirectory( System.getProperty("user.home") + andsXMLFileLocation + System.getProperty("file.separator"), pi, collectionIdString);
 		} 
+	}
+	
+	
+	/**
+	 * Extraction the collection ID number from the collection ID.
+	 * 
+	 * @param collectionId	the ID string
+	 * 
+	 * @return the collection number (at the end of the string), or zero if it was not found
+	 */
+	private int extractCollectionIdNumber(String collectionId) {
+
+		// extract the collection number from the end of the collection string
+		int i = collectionId.length() - 1;
+		int pos = 1;
+		int id = 0;
+		while (i >= 0 && Character.isDigit(collectionId.charAt(i))) {
+			id += (int)(collectionId.charAt(i) - '0') * pos;
+			i--;
+			pos *= 10;
+		}
+		
+		return id;
+		
 	}
 	
 	/**
@@ -458,20 +482,10 @@ public class ANDSCollectionExport {
 		// start with an empty list
 		ArrayList<Identifier> identifierList = new ArrayList<Identifier>();
 		
-		// extract the collection number from the end of the collection string
-		int i = collectionId.length() - 1;
-		int pos = 1;
-		int id = 0;
-		while (i >= 0 && Character.isDigit(collectionId.charAt(i))) {
-			id += (int)(collectionId.charAt(i) - '0') * pos;
-			i--;
-			pos *= 10;
-		}
-		
 		// add a local identifier
 		Identifier identifier = new Identifier();
 		identifier.setType("local");
-		identifier.setValue(LOCAL_IDENTIFIER_PREFIX + id);
+		identifier.setValue(LOCAL_IDENTIFIER_PREFIX + extractCollectionIdNumber(collectionId));
 		identifierList.add(identifier);	
 		
 		// add DOIs
