@@ -399,12 +399,8 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				StringBuffer message = new StringBuffer();
 				message.append("A user account has been created, but I could not update the configuration file. ");
 				message.append("Username: " + user.getUsername() + ". Password: " + user.getPassword() + ".");
-				if (d != null) {
-					message.append("\n");
-					message.append("Please add the following line to the file db_config.txt:");
-					message.append("\n");
-					message.append(d.getAccountConfigurationString());
-				}
+				message.append("\n");
+				message.append("Please update the account configuration manually.");
 				ErrorDialog error = new ErrorDialog(
 						(Frame)getOwner(),
 						"Configuration file not updated",

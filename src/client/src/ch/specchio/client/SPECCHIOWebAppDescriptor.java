@@ -30,8 +30,6 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	/** database password */
 	private String password;
 	   
-	/** name of the data source on the glassfish server (JNDI) */
-	private String dataSourceName;
 	
 	/**
 	 * Constructor.
@@ -43,7 +41,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 * @param user		the username
 	 * @param password	the password
 	 */
-	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String user, String password, String dataSourceName) {
+	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String user, String password) {
 		   
 		this.protocol = protocol;
 		this.server = server;
@@ -51,7 +49,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		this.path = path;
 		this.user = user;
 		this.password = password;
-		this.dataSourceName = dataSourceName;
+		
 	}
 	
 	
@@ -63,56 +61,9 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 * @param path		the path to the web application
 	 * @param port		the port number
 	 */
-	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String dataSourceName) {
+	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path) {
 		
-		this(protocol, server, port, path, null, null, dataSourceName);
-		
-	}
-	
-	
-	/**
-	 * Constructor for SPECCHIOClientFactory.process_line().
-	 * 
-	 * @param tokens	the array of strings read from the input file
-	 * 
-	 * @throws SPECCHIOWebClientException	the tokens are not correctly formatted
-	 */
-	public SPECCHIOWebAppDescriptor(String tokens[]) throws SPECCHIOWebClientException {
-		
-		// check that we have the correct number of tokens
-		if (tokens.length < 6) {
-			throw new SPECCHIOWebClientException("Insufficient configuration informaton provided for a SPECCHIO web application server.");
-		}
-		
-		try {
-
-			if (tokens.length >= 6) 
-			{
-
-
-				this.protocol = tokens[0];
-				this.server = tokens[1];
-				this.port = Integer.parseInt(tokens[2]);
-				this.path = tokens[3];
-				this.user = tokens[4];
-				this.password = tokens[5];
-				this.dataSourceName = "jdbc/specchio"; // default value for single database installations
-			}
-			
-			if (tokens.length > 6) 
-			{		
-				// new format including the datasource name
-				this.dataSourceName = tokens[6];
-			}
-
-		}
-		catch (NumberFormatException ex) {
-			// invalid port number
-			throw new SPECCHIOWebClientException("Invalid port number provided for a SPECCHIO web application server.");
-		}
-		
-		
-
+		this(protocol, server, port, path, null, null);
 		
 	}
 		
@@ -129,56 +80,25 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		
 		if (user == null) {
 			// create an anonymous client
-			return new SPECCHIOWebClient(getUrl(), getDataSourceName());
+			return new SPECCHIOWebClient(getUrl());
 		} else {
 			// create a named client
-			return new SPECCHIOWebClient(getUrl(), getDisplayUser(), getPassword(), getDataSourceName());
+			return new SPECCHIOWebClient(getUrl(), getDisplayUser(), getPassword());
 		}
 		
 	}
-	
-	
-
-
-	/**
-	 * Get the string describing the account configuration for db_config.txt
-	 */
-	public String getAccountConfigurationString() {
-		
-		// format is: protocol, server, port, path, username, password
-		return
-			protocol + ", " +
-			server + ", " +
-			port + ", " +
-			path + ", " +
-			user + ", " +
-			password+ ", " +
-			dataSourceName;
-		
-	}
-	
-	/**
-	 * Get the current data source name.
-	 * 
-	 */
-	
-	public String getDataSourceName() {
-		return dataSourceName;
-	}
-	
 
 
 	/**
 	 * Get the display name of this server.
 	 * 
 	 * @param showUser	include the user account details in the display?
-	 * @param show_datasource_name	include the JNDI details in the display?
 	 * 
 	 * @return a string describing the server, suitable for display to the user
 	 */
-	public String getDisplayName(boolean showUser, boolean show_datasource_name) {
+	public String getDisplayName(boolean showUser) {
 		
-		return protocol + "://" + (showUser ? user + "@" : "") + server + ":" + port + path + (show_datasource_name ? "@"+dataSourceName : "")  ;
+		return protocol + "://" + (showUser ? user + "@" : "") + server + ":" + port + path;
 		
 	}
 	
@@ -262,6 +182,16 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	
 	
 	/**
+	 * Get the username.
+	 */
+	public String getUsername() {
+		
+		return user;
+		
+	}
+	
+	
+	/**
 	 * Get the user name.
 	 * 
 	 * @return the user name
@@ -291,7 +221,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 */
 	public String toString() {
 		
-		return getDisplayName(true, true);
+		return getDisplayName(true);
 		
 	}
 
