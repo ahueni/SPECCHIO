@@ -65,7 +65,6 @@ public class ANDSCollectionExport {
 	private static final String DOI_METAPARAMETER = "Digital Object Identifier";
 	private static final String FOR_CODE_METAPARAMETER = "FOR Code";
 	private static final String LOCATION_NAME_METAPARAMETER = "Location Name";
-	private static final String PUBLICATION_METAPARAMETER = "Publication";
 	
 	private static final String EAVID_TOKEN = "%EAVID%";
 	
@@ -394,7 +393,6 @@ public class ANDSCollectionExport {
 		relatedObject.setKey(pi.getExternalId());
 		Relation relation = new Relation();
 		relation.setType("hasCollector");
-		relation.setDescription(pi.getDescription());
 		relatedObject.setRelation(relation);
 		
 		return relatedObject;
@@ -627,10 +625,8 @@ public class ANDSCollectionExport {
 	}
 	
 	/**
-	 * Build the related information list.
-	 * 
-	 * The relation information list will contain a list of every publication associated
-	 * with every spectrum in the collection.
+	 * Build the related information list. SPECCHIO does not currently store any
+	 * related information, so this list is always empty.
 	 * 
 	 * @param rdaCollectionDescriptor	the collection descriptor
 	 * 
@@ -641,31 +637,8 @@ public class ANDSCollectionExport {
 	private ArrayList<RelatedInfo> obtainRelatedInfo(RDACollectionDescriptor rdaCollectionDescriptor)
 		throws SPECCHIOFactoryException {
 		
-		// start with an empty related information list
-		ArrayList<RelatedInfo> relatedInfoList = new ArrayList<RelatedInfo>();
-		
-		// get all the publications associated with spectra in the collection
-		ArrayList<MetaParameter> publicationMetaParameters = metadataFactory.getMetaParameterValues(
-				rdaCollectionDescriptor.getSpectrumIds(),
-				PUBLICATION_METAPARAMETER,
-				true
-			);
-		
-		// convert the metaparameter values into RelatedInfo elements
-		for (MetaParameter mp : publicationMetaParameters) {
-			
-			Identifier identifierLocal = new Identifier();
-			identifierLocal.setType("local");
-			identifierLocal.setValue((String)mp.getValue());
-			
-			RelatedInfo relatedInfoPublication = new RelatedInfo();
-			relatedInfoPublication.setType("publication");
-			relatedInfoPublication.setIdentifier(identifierLocal);
-			
-			relatedInfoList.add(relatedInfoPublication);
-		}
-		
-		return relatedInfoList;
+		// return an empty related information list
+		return new ArrayList<RelatedInfo>();
 		
 	}
 	
