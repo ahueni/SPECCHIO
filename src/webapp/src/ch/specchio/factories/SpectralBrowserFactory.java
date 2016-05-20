@@ -282,6 +282,19 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 					}	
 					rs.close();
 					
+					// complement with spectra that do not have the current attribute and therefore cannot be ordered by it
+					query = "select spectrum.spectrum_id " +
+							"from spectrum spectrum where spectrum.hierarchy_level_id = " + node.getId() + 
+							((ids.size() > 0 )  ?  
+									(" and spectrum_id not in (" + getStatementBuilder().conc_ids(ids) + ")") : "")
+							;
+					
+					rs = stmt.executeQuery(query);
+					while (rs.next()) {
+						ids.add(rs.getInt(1));
+					}
+					rs.close();
+					
 					
 					if(ids.size() > 0)
 					{
