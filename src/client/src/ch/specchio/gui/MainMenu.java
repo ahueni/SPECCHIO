@@ -344,9 +344,10 @@ class MainMenu implements ActionListener, ItemListener {
     		  d.setVisible(true);
     	  }
     	  catch (SPECCHIOClientException ex) {
+    		  String msg = ((ex.getMessage()==null) ? "" : ex.getMessage()) +" : " +ex.getUserMessage();
     		  JOptionPane.showMessageDialog(
     				  SPECCHIOApplication.getInstance().get_frame(),
-    				  ex.getMessage(),
+    				  msg,
     				  "Invalid configuration",
     				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
     			);
@@ -390,20 +391,21 @@ class MainMenu implements ActionListener, ItemListener {
       
       if(edit_db_config_file.equals(e.getActionCommand()))
       {
-    	  File temp = new File(SPECCHIOClientFactory.getDBConfigFilename());
+    	  File temp = new File(SPECCHIOClientFactory.getApplicationFilepath("db_config.txt"));
 
     	  try {
     		  Desktop.getDesktop().open(temp);
     		  
-    		  SPECCHIOClientFactory.getInstance().reloadDBConfigFile();
+    		  //SPECCHIOClientFactory.getInstance().reloadDBConfigFile();
     		  
     	  } catch (IOException e1) {
     		  // TODO Auto-generated catch block
     		  e1.printStackTrace();
     	  } catch (SPECCHIOClientException ex) {
+    		  String msg = ((ex.getMessage()==null) ? "" : ex.getMessage()) +" : " +ex.getUserMessage();
         	  JOptionPane.showMessageDialog(
         			  SPECCHIOApplication.getInstance().get_frame(),
-        			  ex.getMessage(),
+        			  msg,
         			  "Error",
         			  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
         		);
@@ -594,7 +596,8 @@ class MainMenu implements ActionListener, ItemListener {
     	  
     	  BufferedImage myPicture;
 		try {
-			myPicture = ImageIO.read(new File(SPECCHIOClientFactory.getApplicationConfFilename("SPECCHIO_Icon_Mid_Res_small.jpg")));
+			myPicture = ImageIO.read(new File(SPECCHIOClientFactory.getApplicationFilepath("SPECCHIO_Icon_Mid_Res_small.jpg")));
+//			myPicture = ImageIO.read(new File("SPECCHIO_Icon_Mid_Res_small.jpg"));
 			JLabel picLabel = new JLabel(new ImageIcon(myPicture));	  
 
 
