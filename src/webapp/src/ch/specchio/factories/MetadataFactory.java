@@ -560,6 +560,67 @@ public class MetadataFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Get the values of a given meta-parameter for an array of spectrum identifiers.
+	 * 
+	 * @param ids		the spectrum identifiers for which to retrieve metadata
+	 * @param attrId	the attribute identifier
+	 * @param distinct	if true, return distinct values only
+	 * 
+	 * @return a list of meta-parameter objects corresponding to the desired attribute of each input id
+	 *
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<MetaParameter> getMetaParameters(int ids[], Integer attrId, boolean distinct) throws SPECCHIOFactoryException {
+		
+		// convert the array to a list
+		ArrayList<Integer> ids_list = new ArrayList<Integer>(ids.length);
+		for (int i : ids) {
+			ids_list.add(i);
+		}
+		
+		return getMetaParameters(ids_list, attrId, distinct);
+		
+	}
+
+	
+	/**
+	 * Get the values of a given meta-parameter for a list of spectrum identifiers.
+	 * 
+	 * @param id		the spectrum identifiers for which to retrieve metadata
+	 * @param attrName	the attribute name
+	 * @param distinct	if true, return distinct values only
+	 * 
+	 * @return a list of meta-parameter objects corresponding to the desired attribute of each input id
+	 *
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<MetaParameter> getMetaParameters(ArrayList<Integer> ids, String attrName, boolean distinct) throws SPECCHIOFactoryException {
+		
+		return getMetaParameters(ids, getAttributes().get_attribute_id(attrName), distinct);
+		
+	}
+
+	
+	/**
+	 * Get the values of a given meta-parameter for an array of spectrum identifiers.
+	 * 
+	 * @param id		the spectrum identifiers for which to retrieve metadata
+	 * @param attrName	the attribute name
+	 * @param distinct	if true, return distinct values only
+	 * 
+	 * @return a list of meta-parameter objects corresponding to the desired attribute of each input id
+	 *
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<MetaParameter> getMetaParameters(int ids[], String attrName, boolean distinct) throws SPECCHIOFactoryException {
+		
+		return getMetaParameters(ids, getAttributes().get_attribute_id(attrName), distinct);
+		
+	}
+	
+	
+	
+	/**
 	 * Get the data policies for a collection of space.
 	 * 
 	 * @param spaces	the spaces
