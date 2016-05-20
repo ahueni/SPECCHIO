@@ -255,7 +255,13 @@ public class SpectralFile {
 	@XmlJavaTypeAdapter(XmlDateTimeAdapter.class)
 	public ArrayList<DateTime> getCaptureDates() { return this.capture_dates; }
 	public void setCaptureDates(ArrayList<DateTime> capture_dates) { this.capture_dates = capture_dates; }
-	public DateTime getCaptureDate(int i) { return this.capture_dates.get(i); }
+	public DateTime getCaptureDate(int i) { 
+		if (this.capture_dates.size() < i+1)
+			return null;
+		else
+			return this.capture_dates.get(i);
+		
+		}
 	public void setCaptureDate(int i, DateTime date) { capture_dates.add(i, date);  } //   if(ithis.capture_dates.set(i, date);
 //	public DateTime getJodaCaptureDate(int i) { 
 //		DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
