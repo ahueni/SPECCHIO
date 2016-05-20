@@ -128,6 +128,7 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 	 * PREFS_KEY_WEBAPP_PATH		the path
 	 * PREFS_KEY_WEBAPP_USERNAME	the username
 	 * PREFS_KEY_WEBAPP_PASSWORD	the password
+	 * PREFS_KEY_WEBAPP_DATASOURCE	the datasource
 	 */
 	private class SPECCHIOWebAppDescriptorFactory {
 		
@@ -145,7 +146,10 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 		
 		/** key for the password */
 		private static final String PREFS_KEY_WEBAPP_PASSWORD = "password";
-		
+
+		/** key for the jdbc datasource name */
+		private static final String PREFS_KEY_WEBAPP_DATASOURCE = "datasource";
+
 		
 		/**
 		 * Build a server descriptor object from a preferences node.
@@ -162,7 +166,8 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 				node.getInt(PREFS_KEY_WEBAPP_PORT, 0),
 				node.get(PREFS_KEY_WEBAPP_PATH, ""),
 				node.get(PREFS_KEY_WEBAPP_USERNAME, ""),
-				node.get(PREFS_KEY_WEBAPP_PASSWORD, "")
+				node.get(PREFS_KEY_WEBAPP_PASSWORD, ""),
+				node.get(PREFS_KEY_WEBAPP_DATASOURCE, "")
 			);
 			
 		}
@@ -181,8 +186,9 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 			node.put(PREFS_KEY_WEBAPP_SERVER, d.getServer());
 			node.putInt(PREFS_KEY_WEBAPP_PORT, d.getPort());
 			node.put(PREFS_KEY_WEBAPP_PATH, d.getPath());
-			node.put(PREFS_KEY_WEBAPP_USERNAME, d.getUsername());
+			node.put(PREFS_KEY_WEBAPP_USERNAME, d.getDisplayUser());
 			node.put(PREFS_KEY_WEBAPP_PASSWORD, d.getPassword());
+			node.put(PREFS_KEY_WEBAPP_DATASOURCE, d.getDataSourceName());
 			
 		}
 		

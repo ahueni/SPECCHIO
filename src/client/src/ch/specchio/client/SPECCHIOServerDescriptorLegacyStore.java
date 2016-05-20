@@ -114,6 +114,7 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 		DataInputStream data_in = new DataInputStream(file_input);			
 	
 		BufferedReader d = new BufferedReader(new InputStreamReader(data_in));
+		int line_no = 0;
 
 		while(not_eof)
 		{
@@ -121,10 +122,11 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 				
 			if(not_eof)
 			{
-				line = d.readLine();	
+				line = d.readLine();
+				line_no++;
 					
 				// process line and fill it into the connection details list
-				process_line(line);	
+				process_line(line, line_no);	
 			}
 		}
 			
@@ -170,14 +172,16 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 	 * Parse one line of the configuration file.
 	 * 
 	 * @param line	the line
+	 * @param line_no	line number in input file
 	 * 
 	 * @throws SPECCHIOClientException parse error
 	 */
-	private void process_line(String line) throws SPECCHIOClientException
+	private void process_line(String line, int line_no) throws SPECCHIOClientException
 	{
 		if(line.length() > 0)
 		{
 			   
+			System.out.println(line);
 		   SPECCHIOServerDescriptor app = null;
 		   
 			// tokenise the line
@@ -187,7 +191,7 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 			if (tokens[0].equalsIgnoreCase("https") || tokens[0].equalsIgnoreCase("http")) {
 				// web service
 				SPECCHIOWebAppDescriptorFactory f = new SPECCHIOWebAppDescriptorFactory();
-				app = f.buildDescriptor(tokens);
+				app = f.buildDescriptor(tokens, line_no);
 			} else if (tokens[0].equalsIgnoreCase("sql")) {
 				// direct database connection
 				// TODO
@@ -214,14 +218,23 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 		 * Build a web application descriptor for SPECCHIOClientFactory.process_line().
 		 * 
 		 * @param tokens	the array of strings read from the input file
+		 * @param line_no	line number in input file
 		 * 
 		 * @throws SPECCHIOWebClientException	the tokens are not correctly formatted
 		 */
-		public SPECCHIOWebAppDescriptor buildDescriptor(String tokens[]) throws SPECCHIOWebClientException {
+		public SPECCHIOWebAppDescriptor buildDescriptor(String tokens[], int line_no) throws SPECCHIOWebClientException {
 			
 			// check that we have the correct number of tokens
-			if (tokens.length < 6) {
-				throw new SPECCHIOWebClientException("Insufficient configuration informaton provided for a SPECCHIO web application server.");
+			if (tokens.length < 7) {
+				
+				StringBuilder builder = new StringBuilder();
+				for(String s : tokens) {
+				    builder.append(s + ",");
+				}
+				
+				
+				throw new SPECCHIOWebClientException("Insufficient configuration information provided for a SPECCHIO web application server: \n" + 
+				"Please correct line number " + line_no + ":\n " + builder.toString());
 			}
 			
 			try {
@@ -231,8 +244,9 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 				String path = tokens[3];
 				String user = tokens[4];
 				String password = tokens[5];
+				String dataSourceName = tokens[6];
 				
-				return new SPECCHIOWebAppDescriptor(protocol, server, port, path, user, password);
+				return new SPECCHIOWebAppDescriptor(protocol, server, port, path, user, password, dataSourceName);
 			}
 			catch (NumberFormatException ex) {
 				// invalid port number
@@ -257,8 +271,9 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 				d.getServer() + ", " +
 				d.getPort() + ", " +
 				d.getPath() + ", " +
-				d.getUsername() + ", " +
-				d.getPassword();
+				d.getDisplayUser() + ", " +
+				d.getPassword() + ", " +
+				d.getDataSourceName();
 			
 		}
 		

@@ -2,10 +2,13 @@ package ch.specchio.client;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.prefs.BackingStoreException;
+
+import ch.specchio.gui.SPECCHIOApplication;
 
 public class SPECCHIOClientFactory {
 	
@@ -13,7 +16,7 @@ public class SPECCHIOClientFactory {
 	private static SPECCHIOClientFactory instance = null;
 	
 	/** the legacy configuration file name */
-	private static final File legacyConfigFile = new File("db_config.txt");
+	private static final File legacyConfigFile = new File(SPECCHIOClientFactory.getApplicationFilepath("db_config.txt"));
 	
 	/** the list of known servers */
 	private List<SPECCHIOServerDescriptor> apps;
@@ -89,6 +92,38 @@ public class SPECCHIOClientFactory {
 	}
 	
 	
+	public static String getApplicationFilepath(String name)
+	{
+		File conf_file = null;
+		// check if the file is found in the current directory
+		
+		conf_file = new File(name);
+		
+		if(conf_file.isFile())
+		{
+			//System.out.println(name + " found in current dir.");
+			return conf_file.getPath();
+		}
+		else
+		{
+			// 
+			try {
+				File app_dir = new File(SPECCHIOApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+				
+				conf_file = new File(app_dir.getParent() + File.separator + name);
+				
+				//System.out.println(name + " not found in current dir but here: " + conf_file);
+				
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+		return conf_file.getPath();
+	}
+	
 	/**
 	 * Connect to a SPECCHIO web application server.
 	 * 
@@ -132,6 +167,27 @@ public class SPECCHIOClientFactory {
 		
 		return apps;
 		
+	}
+
+
+	public void reloadDBConfigFile() {
+		// initialise the server descriptor list
+		apps = new LinkedList<SPECCHIOServerDescriptor>();
+		
+		// load server descriptors from the legacy db_config.txt file
+		if (legacyConfigFile.exists()) {
+			try {
+				SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorLegacyStore(legacyConfigFile);
+				Iterator<SPECCHIOServerDescriptor> iter = s.getIterator();
+				while (iter.hasNext()) {
+					apps.add(iter.next());
+				}
+			}
+			catch (IOException ex) {
+				// read error; re-throw as a SPECCHIO client exception
+				throw new SPECCHIOClientException(ex);
+			}
+		}		
 	}
 
 }
