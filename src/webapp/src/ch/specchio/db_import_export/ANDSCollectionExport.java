@@ -103,7 +103,7 @@ public class ANDSCollectionExport {
 		throws SPECCHIOFactoryException {
 
 		// create factories, using the same database connection for each
-		userFactory = new UserFactory(dbUser, dbPassword);
+		userFactory = new UserFactory(dbUser, dbPassword, _andsXMLFileLocation);
 		metadataFactory = new MetadataFactory(userFactory);
 		
 		// initialise EAV services
@@ -203,7 +203,7 @@ public class ANDSCollectionExport {
 	private List<java.util.Date> obtainFirstLastDates (RDACollectionDescriptor rdaCollectionDescriptor) throws SPECCHIOFactoryException
 	{
 		// get the acquisition times for all spectra in the collection
-		List<MetaParameter> acquisitionTimes = metadataFactory.getMetaParameterValues(
+		List<MetaParameter> acquisitionTimes = metadataFactory.getMetaParameters(
 				rdaCollectionDescriptor.getSpectrumIds(),
 				ACQUISITION_TIME_METAPARAMETER,
 				true
@@ -365,7 +365,7 @@ public class ANDSCollectionExport {
 		throws SPECCHIOFactoryException {
 
 		// get the spatial location for all spectra in the collection
-		ArrayList<MetaParameter> locationNameMetaParameters = metadataFactory.getMetaParameterValues(
+		ArrayList<MetaParameter> locationNameMetaParameters = metadataFactory.getMetaParameters(
 				rdaCollectionDescriptor.getSpectrumIds(),
 				LOCATION_NAME_METAPARAMETER,
 				true
@@ -441,7 +441,7 @@ public class ANDSCollectionExport {
 		identifierList.add(identifier);	
 		
 		// add DOIs
-		ArrayList<MetaParameter> doiMetaParameters = metadataFactory.getMetaParameterValues(
+		ArrayList<MetaParameter> doiMetaParameters = metadataFactory.getMetaParameters(
 				rdaCollectionDescriptor.getSpectrumIds(),
 				DOI_METAPARAMETER,
 				true
@@ -540,7 +540,7 @@ public class ANDSCollectionExport {
 		ArrayList<Rights> rightsList = new ArrayList<Rights>();
 		
 		// get all of the data user policy metaparameters
-		ArrayList<MetaParameter> dataUsagePolicyMetaParameters = metadataFactory.getMetaParameterValues(
+		ArrayList<MetaParameter> dataUsagePolicyMetaParameters = metadataFactory.getMetaParameters(
 				rdaCollectionDescriptor.getSpectrumIds(),
 				DATA_USAGE_POLICY_METAPARAMETER,
 				true
@@ -611,7 +611,7 @@ public class ANDSCollectionExport {
 		ArrayList<Subject> subjectList = new ArrayList<Subject>();
 		
 		// get the FOR codes for every spectrum in the collection
-		ArrayList<MetaParameter> forCodeMetaParameters = metadataFactory.getMetaParameterValues(
+		ArrayList<MetaParameter> forCodeMetaParameters = metadataFactory.getMetaParameters(
 				rdaCollectionDescriptor.getSpectrumIds(),
 				FOR_CODE_METAPARAMETER,
 				true
