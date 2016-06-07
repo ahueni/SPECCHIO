@@ -425,7 +425,9 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		hdr.addPos(p);
 
 		// integration time in ms
-		int_time = this.read_int(in);
+		//int_time = this.read_int(in);
+		
+		int_time = this.read_uint(in);
 		
 		if(int_time == 8) int_time = 8.5F;
 		

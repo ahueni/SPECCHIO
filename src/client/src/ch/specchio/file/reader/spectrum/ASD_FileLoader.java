@@ -162,7 +162,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		
 		// integration time in ms
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Integration Time"));
-		mp.setValue( this.read_int(in), "ms");
+		mp.setValue( this.read_uint(in), "ms");
 		smd.addEntry(mp);				
 		
 		// read foreoptic
