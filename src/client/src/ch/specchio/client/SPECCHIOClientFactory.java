@@ -31,6 +31,11 @@ public class SPECCHIOClientFactory {
 		// initialise the server descriptor list
 		apps = new LinkedList<SPECCHIOServerDescriptor>();
 		
+		// set up SSL trust store
+		System.setProperty("javax.net.ssl.trustStore", SPECCHIOClientFactory.getApplicationFilepath("specchio.keystore"));
+		System.setProperty("javax.net.ssl.trustStorePassword", "specchio");
+		
+		
 		// load server descriptors from the legacy db_config.txt file
 		if (legacyConfigFile.exists()) {
 			try {
@@ -59,9 +64,6 @@ public class SPECCHIOClientFactory {
 			throw new SPECCHIOClientException(ex);
 		}
 		
-		// set up SSL trust store
-		System.setProperty("javax.net.ssl.trustStore", "specchio.keystore");
-		System.setProperty("javax.net.ssl.trustStorePassword", "specchio");
 		
 	}
 	
