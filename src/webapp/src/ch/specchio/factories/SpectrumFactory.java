@@ -1268,11 +1268,11 @@ public class SpectrumFactory extends SPECCHIOFactory {
 
 				String ids = getStatementBuilder().conc_ids(spectrum_ids);
 
-				// remove datalinks
-//				table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
-//				cmd = "delete from "+table_name+" where " +
-//						"spectrum_id in (" + ids + ") OR linked_spectrum_id in (" + ids + ")";	
-//				stmt.executeUpdate(cmd); 
+				// remove datalinks: this is obsolete with newer databases
+				table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
+				cmd = "delete from "+table_name+" where " +
+						"spectrum_id in (" + ids + ") OR linked_spectrum_id in (" + ids + ")";	
+				stmt.executeUpdate(cmd); 
 				
 				// get eav_ids of the datalinks
 				String query = "select eav_id from eav where spectrum_id in (" + ids + ")"; // restricting by attribute id not needed as only data links have the spectrum_id field filled.
