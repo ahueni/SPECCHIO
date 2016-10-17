@@ -7,11 +7,9 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+
 import java.util.ListIterator;
-import java.util.TimeZone;
+
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -21,16 +19,13 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-
 import org.joda.time.DateTime;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.UserRoles;
-import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
-import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
 import ch.specchio.types.spectral_node_object;
 
@@ -90,7 +85,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 	 */
 	public TimeShiftDialog() throws SPECCHIOClientException {
 		
-		super("UTC Time Correction");
+		super("UTC Time Computation");
 		
 		// save a reference to the client object
 		specchioClient = SPECCHIOApplication.getInstance().getClient();
@@ -315,7 +310,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			// create a progress report
 			int progress = 0;
 			double tot = new Double(this.spectrumIdsIn.size());
-			ProgressReportDialog pr = new ProgressReportDialog(TimeShiftDialog.this, "UTC Time Correction", false, 20);
+			ProgressReportDialog pr = new ProgressReportDialog(TimeShiftDialog.this, "UTC Time Computation", false, 20);
 			pr.set_operation("Updating acquisition times");
 			pr.setVisible(true);
 			
@@ -323,16 +318,15 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 				
 				specchioClient.clearMetaparameterRedundancyList(); // otherwise, repeated calls of the time shift leads to Duplicate entry SQL exception
 				
-				// shift the capture dates of the selected spectra
+				// shift the capture dates of the selected spectra and store as UTC
 				ArrayList<Integer> updatedIds = new ArrayList<Integer>();
-//				for (Integer id : spectrumIds) {
-					
-					// get the existing spectrum with metadata
-					//Spectrum s = specchioClient.getSpectrum(id, true);
+
 					
 				ArrayList<MetaParameter> mpAcquisitionTimes = specchioClient.getMetaparameters(spectrumIdsIn, "Acquisition Time");
+				ArrayList<MetaParameter> mpExisting_utc = specchioClient.getMetaparameters(spectrumIdsIn, "Acquisition Time (UTC)");
 				
 				ListIterator<MetaParameter> mp_li = mpAcquisitionTimes.listIterator();
+				ListIterator<MetaParameter> utcmp_li = mpExisting_utc.listIterator();
 				ListIterator<Integer> spectrum_li = spectrumIdsIn.listIterator();
 				
 				while(mp_li.hasNext())
@@ -343,12 +337,22 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 					
 					DateTime modified_t = t.minusHours(shift);
 					
-					mp.setValue(modified_t);
+					//mp.setValue(modified_t);
 					
 					ArrayList<Integer> tmpId = new ArrayList<Integer>();
 					tmpId.add(spectrum_li.next());
 					
-					specchioClient.updateEavMetadata(mp, tmpId, mp);
+					MetaParameter existing_utc = utcmp_li.next();
+					
+					if (existing_utc.getEavId() == 0)
+					{
+						attribute utc_attribute = specchioClient.getAttributesNameHash().get("Acquisition Time (UTC)");
+						existing_utc = MetaParameter.newInstance(utc_attribute);						
+					}
+					
+					existing_utc.setValue(modified_t);
+					
+					specchioClient.updateEavMetadata(existing_utc, tmpId);
 					
 					// add the identifier to the list of updated identifiers
 					updatedIds.add(tmpId.get(0));					
@@ -356,50 +360,15 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 					pr.set_progress(++progress * 100.0 / tot);
 				}
 				
-					
-					// get the existing capture date
-//					MetaDate mpAcquisitionTime = (MetaDate)s.getMetadata().get_first_entry("Acquisition Time");
-//					if (mpAcquisitionTime != null) {
-//						
-//						TimeZone tz = TimeZone.getTimeZone("UTC");
-//						//TimeZone tz = TimeZone.getDefault();
-//						Calendar cal = Calendar.getInstance(tz);
-//						
-//						cal.setTime((Date) mpAcquisitionTime.getValue());
-//						
-//						// remove gmt offset: to counteract the silly function of assuming local time for the retrieved UTC time, the offset of the local time zome to UTC is compensated for.
-//						// It appears to work at least during European summer time for data that was collected during European summer time ....
-//						long time_in_millis = ((Date) mpAcquisitionTime.getValue()).getTime();
-//						long gmt_offset_in_millis = (long)(shift*3600*1000);
-//						long local_utc_offset = TimeZone.getDefault().getOffset(time_in_millis);
-//						time_in_millis = time_in_millis - (gmt_offset_in_millis - local_utc_offset); // timezone.getOffset(time) - TimeZone.getDefault().getOffset(time)
-//						
-//						// update the metadata object
-//						
-//						cal.setTimeInMillis(time_in_millis);
-//						
-//						mpAcquisitionTime.setValue(cal.getTime());
-//						ArrayList<Integer> id_list = new ArrayList<Integer>();
-//						id_list.add(id);
-//						specchioClient.updateEavMetadata(mpAcquisitionTime, id_list);
-//						
-//						// add the identifier to the list of updated identifiers
-//						updatedIds.add(id);
-//						
-//					}
-					
-					// update progress meter
-//					
-//				}
 	
 				if (updatedIds.size() > 0) {
 					
-					attribute attr = specchioClient.getAttributesNameHash().get("Time Shift");
+					attribute attr = specchioClient.getAttributesNameHash().get("UTC Time Computation");
 					
 					// create a metaparameter noting that the time was shifted
 					MetaParameter mpShift = MetaParameter.newInstance(
 							attr,
-							"Capture time was shifted by " + shift + " hours East using the SPECCHIO timeshift function."
+							"UTC Acquisition Time computed by shifting " + shift + " hours East using the SPECCHIO UTC function."
 						);
 					
 					// add the metaparameter to the database
@@ -411,7 +380,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 				// display a success message
 				String message;
 				if (updatedIds.size() > 0) {
-					message = "Acquisition times of " + Integer.toString(updatedIds.size()) + " spectra successfully shifted.";
+					message = "Acquisition times of " + Integer.toString(updatedIds.size()) + " spectra successfully computed.";
 				} else {
 					message = "No acquisition times found. No data was updated.";
 				}
@@ -425,7 +394,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 			}
 			catch (MetaParameterFormatException ex) {
 				// the time shift attribute has the wrong type
-				ErrorDialog error = new ErrorDialog(TimeShiftDialog.this, "Error", "The time shift attribute has the wrong type. Please contact your system administrator.", ex);
+				ErrorDialog error = new ErrorDialog(TimeShiftDialog.this, "Error", "The UTC Time Computation attribute has the wrong type. Please contact your system administrator.", ex);
 				error.setVisible(true);
 			}
 			
