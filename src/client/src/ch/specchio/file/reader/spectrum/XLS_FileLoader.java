@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import jxl.Cell;
+import jxl.NumberCell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
@@ -54,8 +55,9 @@ public class XLS_FileLoader extends SpectralFileLoader {
 			
 			for(int r=1;r<sheet.getRows();r++)
 			{
-				String value = col1[r].getContents();
-				wvls[r-1] = Float.valueOf(value);
+				NumberCell nc = (NumberCell) col1[r];
+				Double tmp = nc.getValue();					
+				wvls[r-1] = tmp.floatValue();
 			}
 			
 			f.addNumberOfChannels(wvls.length);
@@ -68,7 +70,9 @@ public class XLS_FileLoader extends SpectralFileLoader {
 				Cell[] col = sheet.getColumn(c);
 				for(int r=1;r<sheet.getRows();r++)
 				{
-					spectra[c-1][r-1] = Float.valueOf(col[r].getContents());
+					NumberCell nc = (NumberCell) col[r];
+					Double tmp = nc.getValue();
+					spectra[c-1][r-1] = tmp.floatValue();
 				}
 				
 				f.addWvls(wvls); // add wvls for each spectrum
