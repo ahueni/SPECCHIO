@@ -21,6 +21,9 @@ public class SPECCHIOClientFactory {
 	/** the list of known servers */
 	private List<SPECCHIOServerDescriptor> apps;
 	
+	/** the current client object */
+	private SPECCHIOClient current_client;
+	
 	/**
 	 * Constructor.
 	 * 
@@ -62,7 +65,7 @@ public class SPECCHIOClientFactory {
 		catch (BackingStoreException ex) {
 			// the backing store failed; re-throw as a SPECCHIO client exception
 			throw new SPECCHIOClientException(ex);
-		}
+		}			
 		
 		
 	}
@@ -137,7 +140,8 @@ public class SPECCHIOClientFactory {
 	 */
 	public SPECCHIOClient createClient(SPECCHIOServerDescriptor app) throws SPECCHIOClientException {
 		
-		return new SPECCHIOClientCache(app.createClient());
+		current_client = new SPECCHIOClientCache(app.createClient());
+		return current_client;
 	
 	}
 	
