@@ -1,7 +1,6 @@
 package ch.specchio.gui;
 
 import java.awt.*;
-import java.io.File;
 
 import javax.swing.*;
 
@@ -25,12 +24,20 @@ public class SPECCHIOApplication {
 	
 	protected SPECCHIOApplication()
 	{
+//		GatewayServer gatewayServer = new GatewayServer(this);
+//        gatewayServer.start();
+//        System.out.println("Specchio - Python Gateway Server Started");		
 	}
 	
 	public SPECCHIOClient getClient()
 	{
 		return client;
 	}
+	
+	public SPECCHIOClientFactory getClientFactory()
+	{
+		return SPECCHIOClientFactory.getInstance();
+	}	
 	
 	public static SPECCHIOApplication getInstance() 
 	{
@@ -80,9 +87,9 @@ public class SPECCHIOApplication {
 	    */
 	   private static void createAndShowGUI() 
 	   {
-	   System.out.println("Welcome to " + SPECCHIO_ReleaseInfo.getVersion());
+		   System.out.println("Welcome to " + SPECCHIO_ReleaseInfo.getVersion());
 	      //Create and set up the window.
-	      frame = new JFrame(SPECCHIO_ReleaseInfo.getVersion());
+	      frame = new JFrame(SPECCHIO_ReleaseInfo.getVersion() + " - Build " + SPECCHIO_ReleaseInfo.getBuildNumber());
 	      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 	      SPECCHIOApplication app = SPECCHIOApplication.getInstance();
