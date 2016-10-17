@@ -1272,7 +1272,13 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				table_name = (is_admin)? "spectrum_datalink" : "spectrum_datalink_view";
 				cmd = "delete from "+table_name+" where " +
 						"spectrum_id in (" + ids + ") OR linked_spectrum_id in (" + ids + ")";	
+				try{
 				stmt.executeUpdate(cmd); 
+				} catch (SQLException ex)
+				{
+					// ignore the datalink error: newer databases do not have that table anymore!
+					// SQLException msg = ex;
+				}
 				
 				// get eav_ids of the datalinks
 				String query = "select eav_id from eav where spectrum_id in (" + ids + ")"; // restricting by attribute id not needed as only data links have the spectrum_id field filled.
