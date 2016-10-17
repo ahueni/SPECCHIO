@@ -154,6 +154,7 @@ public class SpectralFile {
 
 	private boolean asd_v7_radiance_flag;
 	private boolean asd_v7_reflectance_flag;
+	private boolean create_unit_folder_for_asd_old_files;
 	
 	private  ArrayList<SpecchioMessage> file_errors = new ArrayList<SpecchioMessage>();
 	private int file_error_code;
@@ -180,6 +181,7 @@ public class SpectralFile {
 		}
 		this.setFileErrorCode(SpectralFile.NO_ERRORS);
 		this.setMeasurementUnits(spec_file.getMeasurementUnits());
+		this.setCreateUnitFolderForasdOldFiles(spec_file.getCreateUnitFolderForasdOldFiles());
 	}
 
 	@XmlElement(name="arm_length")
@@ -276,7 +278,12 @@ public class SpectralFile {
 	
 	@XmlElement(name="capturing_software_version")
 	public String getCapturingSoftwareVersion() { return this.capturing_software_version; }
-	public void setCapturingSoftwareVersion(String capturing_software_version) { this.capturing_software_version = capturing_software_version; }
+	public void setCapturingSoftwareVersion(String capturing_software_version) { this.capturing_software_version = capturing_software_version; }	
+	
+	@XmlElement(name="create_unit_folder_for_asd_old_files")
+	public boolean getCreateUnitFolderForasdOldFiles() { return this.create_unit_folder_for_asd_old_files; }
+	public void setCreateUnitFolderForasdOldFiles(boolean create_unit_folder_for_asd_old_files) { this.create_unit_folder_for_asd_old_files = create_unit_folder_for_asd_old_files; }
+
 	
 	@XmlElement(name="comment")
 	public String getComment() { return this.comment; }
