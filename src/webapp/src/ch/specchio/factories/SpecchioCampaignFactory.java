@@ -290,6 +290,119 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	
 	
 	/**
+	 * Get the file path of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns path as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */
+	@Override
+	public String getHierarchyFilePath(int hierarchy_id) throws SPECCHIOFactoryException {
+
+		String path = "";
+		String folder_path = "";
+		String delimiter = "/";
+		
+		try {		
+			
+			ArrayList<String> parts = new ArrayList<String>();
+			
+			Statement stmt = getStatementBuilder().createStatement();
+			
+			int parent_id = 0;
+			int campaign_id;
+			do{
+				// get parent id
+				
+				ResultSet rs = stmt.executeQuery("select parent_level_id, name, campaign_id from hierarchy_level where hierarchy_level_id = " + hierarchy_id);
+				while (rs.next()) {
+					parent_id = rs.getInt(1);	
+					parts.add(rs.getString(2));
+					campaign_id = rs.getInt(3);	
+				}
+				rs.close();
+				
+				hierarchy_id = parent_id;
+
+			} while (parent_id != 0);
+			
+			
+			// try to find the filepath that fits the top directory
+			String query = "select path from campaign_path_view where path like '%" + parts.get(parts.size()-1) + "'";
+			ResultSet rs = stmt.executeQuery(query);
+			
+			while (rs.next()) {
+				folder_path = rs.getString(1);
+			}
+			rs.close();
+			stmt.close();
+			
+			// build full path
+			if (folder_path.indexOf('\\') >= 0)
+			{
+				delimiter = "\\";
+			}
+			
+			path = folder_path;
+			
+			for(int i=0; i < parts.size()-1;i++)
+			{
+				
+				path = path + delimiter + parts.get(i);
+			}
+			
+			
+			return path;
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+
+		
+	}	
+	
+
+	/**
+	 * Get the name of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns name as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	
+	@Override
+	public String getHierarchyName(int hierarchy_id)
+			throws SPECCHIOFactoryException {
+		String name = "";
+		
+		try {		
+			
+			Statement stmt = getStatementBuilder().createStatement();
+
+			ResultSet rs = stmt.executeQuery("select name from hierarchy_level where hierarchy_level_id = " + hierarchy_id);
+			while (rs.next()) {
+				name = rs.getString(1);
+			}
+			rs.close();
+			stmt.close();
+			
+			return name;
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+
+	}	
+	
+	
+	
+	/**
 	 * Import a campaign from an input stream.
 	 * 
 	 * @param userId	the identifier of the user who will own the campaign
@@ -760,6 +873,39 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	
 	
 	/**
+	 * Rename a hierarchy in the database and also on the file system if path is accessible.
+	 * 
+	 * @param hierarchy_id	id of the hierarchy to be renamed
+	 * @param name	new name of the hierarchy
+	 */	
+	public void renameHierarchy(int hierarchy_id, String name) throws SPECCHIOFactoryException
+	{		
+
+		try {
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			String query;
+			
+			// update the hierarchy_level table
+			ArrayList<String> attr_and_vals = new ArrayList<String>(6);
+			attr_and_vals.add("name"); attr_and_vals.add(name);
+			
+			query = SQL.assemble_sql_update_query(
+					SQL.conc_attr_and_vals("hierarchy_level_view", attr_and_vals.toArray(new String[attr_and_vals.size()])),
+					"hierarchy_level_view",
+					"hierarchy_level_id=" + hierarchy_id);
+			stmt.executeUpdate(query);			
+			
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}			
+		
+	}
+		
+	
+	/**
 	 * Update campaign information.
 	 * 
 	 * @param campaign	the new campaign information
@@ -869,6 +1015,9 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 		}
 		
 	}
+
+
+
 			
 			
 		

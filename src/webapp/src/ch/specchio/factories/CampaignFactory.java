@@ -116,6 +116,18 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 		
 	}
 	
+	/**
+	 * Get the name of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns name as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	public abstract String getHierarchyName(int hierarchy_id) throws SPECCHIOFactoryException;
+	
+	
 	
 	/**
 	 * Get the identifier of a node in a campaign's hierarchy.
@@ -130,6 +142,16 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 */
 	public abstract int getHierarchyNodeId(int campaign_id, String name, int parent_id) throws SPECCHIOFactoryException;
 	
+	/**
+	 * Get the file path of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns path as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	public abstract String getHierarchyFilePath(int hierarchy_id) throws SPECCHIOFactoryException;
 	
 	/**
 	 * Import a campaign from an input stream.
@@ -208,6 +230,13 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 */
 	public abstract void removeHierarchyNodes(ArrayList<Integer> ids, boolean is_admin) throws SPECCHIOFactoryException;	
 	
+	/**
+	 * Rename a hierarchy in the database and also on the file system if path is accessible.
+	 * 
+	 * @param hierarchy_id	id of the hierarchy to be renamed
+	 * @param name	new name of the hierarchy
+	 */	
+	public abstract void renameHierarchy(int hierarchy_id, String name) throws SPECCHIOFactoryException;
 	
 	/**
 	 * Update campaign information.
