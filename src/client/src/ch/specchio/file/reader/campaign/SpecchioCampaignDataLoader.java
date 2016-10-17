@@ -90,7 +90,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			is_garbage = true; // marks this directory as the one recognised as garbage
 		}
 
-		// get the names of all files in dirs in the current dir
+		// get the names of all files in dirs in the current dir. NOTE: the order of the files is not guaranteed
 		String[] whole_content = dir.list();
 		if (whole_content == null) {
 			throw new FileNotFoundException("The campaign directory " + dir.toString() + " does not exist.");
