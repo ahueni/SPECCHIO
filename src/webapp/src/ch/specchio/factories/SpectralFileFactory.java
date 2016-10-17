@@ -362,6 +362,23 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 
 		}
 		
+		if (spec_file.getCreateUnitFolderForasdOldFiles() == true) {
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.Reflectance)) {
+				getSubHierarchyId(subhierarchies, hierarchy_id, "Reflectance");
+			}
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.Radiance)) {
+				getSubHierarchyId(subhierarchies, hierarchy_id, "Radiance");
+			}
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.DN)) {
+				getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
+			}
+
+			
+		}
+		
 		return subhierarchies;
 	}
 	
@@ -901,6 +918,25 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			
 
 		}
+		
+		if (spec_file.getCreateUnitFolderForasdOldFiles() == true) {
+			special_hierarchy_files = true;
+			
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.Reflectance)) {
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("Reflectance"))));
+			}
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.Radiance)) {
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("Radiance"))));
+			}
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.DN)) {
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("DN"))));
+			}			
+
+		}		
+		
 
 		if (!special_hierarchy_files) {
 			
