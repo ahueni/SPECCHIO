@@ -1,5 +1,6 @@
 package ch.specchio.client;
 
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
@@ -22,6 +23,7 @@ import ch.specchio.jaxb.XmlIntegerAdapter;
 import ch.specchio.jaxb.XmlString;
 import ch.specchio.jaxb.XmlStringAdapter;
 import ch.specchio.plots.GonioSamplingPoints;
+import ch.specchio.queries.EAVQueryConditionObject;
 import ch.specchio.queries.Query;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.ReferenceSpaceStruct;
@@ -732,6 +734,20 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Return an EAVQueryConditionObject configured for the supplied attribute.
+	 * 
+	 * @param attr	attribute object
+	 * @return 
+	 * 
+	 * @return EAVQueryConditionObject
+	 */
+	public EAVQueryConditionObject getEAVQueryConditionObject(attribute attr)
+	{
+		return new EAVQueryConditionObject(attr);
+	}
+	
+	
+	/**
 	 * Get the count of existing metaparameters for the supplied spectrum ids and attribute id
 	 * 
 	 * @param attribute_id	id of the attribute
@@ -783,6 +799,36 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Get the file path of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns path as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */
+	public String getHierarchyFilePath(int hierarchy_id) throws SPECCHIOClientException
+	{
+		String path = getString("campaign", "getHierarchyFilePath", Integer.toString(hierarchy_id));	
+
+		return path;
+	}		
+	
+	/**
+	 * Get the name of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns name as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	public String getHierarchyName(int hierarchy_id) throws SPECCHIOClientException	{
+		String name = getString("campaign", "getHierarchyName", Integer.toString(hierarchy_id));	
+
+		return name;
+	}		
 	
 	/**
 	 * Get the parent_id for a given hierarchy_id
@@ -1036,6 +1082,17 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return adapter.unmarshalArray(postForArray(XmlString.class, "metadata", "getPoliciesForSpace", space));
 		
 	}
+	
+	
+	/**
+	 * Get an empty query object
+	 * 
+	 * @return a Query Object
+	 */
+	public Query getQueryObject() throws SPECCHIOClientException {
+		return new Query();
+	}
+	
 	
 	
 	/**
@@ -1665,6 +1722,32 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		postForInteger("metadata", "remove_metaparameters_of_given_attribute", new MetadataUpdateDescriptor(mp, spectrum_ids));
 				
 	}
+	
+	/**
+	 * Rename a hierarchy in the database and also on the file system if the path is accessible.
+	 * The rename on the database will only be applied if a rename on the file system succeeded.
+	 * 
+	 * @param hierarchy_id	id of the hierarchy to be renamed
+	 * @param name	new name of the hierarchy
+	 * @return true if and only if the renaming succeeded; false otherwise
+	 */	
+	public boolean renameHierarchy(int hierarchy_id, String name) throws SPECCHIOClientException
+	{
+		
+		// rename the folder on the file system
+		String path = getHierarchyFilePath(hierarchy_id);
+		File f = new File(path);
+		File new_name = new File(f.getParentFile().getPath() + File.separator + name);
+		boolean success = f.renameTo(new_name);
+		
+		if (success)
+		{
+			getInteger("campaign", "renameHierarchy", Integer.toString(hierarchy_id), name);
+		}
+		
+		return success;
+			
+	}	
 	
 	
 	/**

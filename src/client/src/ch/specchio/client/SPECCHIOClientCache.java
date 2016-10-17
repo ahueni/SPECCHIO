@@ -11,6 +11,7 @@ import java.util.Set;
 import au.ands.org.researchdata.RDACollectionDescriptor;
 import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.GonioSamplingPoints;
+import ch.specchio.queries.EAVQueryConditionObject;
 import ch.specchio.queries.Query;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.ReferenceSpaceStruct;
@@ -603,6 +604,19 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.getEavMetadataConflicts(spectrum_ids);
 		
 	}
+	
+	/**
+	 * Return an EAVQueryConditionObject configured for the supplied attribute.
+	 * 
+	 * @param attr	attribute object
+	 * @return 
+	 * 
+	 * @return EAVQueryConditionObject
+	 */
+	public EAVQueryConditionObject getEAVQueryConditionObject(attribute attr)
+	{
+		return realClient.getEAVQueryConditionObject(attr);
+	}	
 
 	
 	/**
@@ -662,6 +676,36 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.getHierarchyParentId(hierarchy_id);
 		
 	}
+	
+	/**
+	 * Get the file path of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns path as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */
+	public String getHierarchyFilePath(int hierarchy_id) throws SPECCHIOClientException {
+		
+		return realClient.getHierarchyFilePath(hierarchy_id);		
+	}	
+	
+	
+	/**
+	 * Get the name of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns name as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	public String getHierarchyName(int hierarchy_id) throws SPECCHIOClientException	{
+		
+		return realClient.getHierarchyName(hierarchy_id);
+		
+	}			
 	
 	
 	/**
@@ -874,6 +918,16 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.getPoliciesForSpace(space);
 		
 	}
+	
+	/**
+	 * Get an empty query object
+	 * 
+	 * @return a Query Object
+	 */
+	public Query getQueryObject() throws SPECCHIOClientException {
+		return realClient.getQueryObject();
+	}
+	
 	
 	
 	/**
@@ -1502,6 +1556,22 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		realClient.removeSpectralNodes(sns);
 		
 	}	
+	
+	/**
+	 * Rename a hierarchy in the database and also on the file system if path is accessible.
+	 * The rename on the database will only be applied if a rename on the file system succeeded.
+	 * 
+	 * @param hierarchy_id	id of the hierarchy to be renamed
+	 * @param name	new name of the hierarchy
+	 * 
+	 * @return true if and only if the renaming succeeded; false otherwise
+	 */	
+	public boolean renameHierarchy(int hierarchy_id, String name) throws SPECCHIOClientException {
+		
+		return realClient.renameHierarchy(hierarchy_id, name);
+		
+	}		
+	
 	
 	
 	/**

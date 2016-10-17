@@ -9,11 +9,11 @@ import au.ands.org.researchdata.RDACollectionDescriptor;
 
 import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.GonioSamplingPoints;
+import ch.specchio.queries.EAVQueryConditionObject;
 import ch.specchio.queries.Query;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
-import ch.specchio.spaces.SpaceQueryDescriptor;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.Calibration;
@@ -371,6 +371,16 @@ public interface SPECCHIOClient {
 
 	
 	/**
+	 * Return an EAVQueryConditionObject configured for the supplied attribute.
+	 * 
+	 * @param attr	attribute object
+	 * @return 
+	 * 
+	 * @return EAVQueryConditionObject
+	 */	
+	public EAVQueryConditionObject getEAVQueryConditionObject(attribute attr);
+	
+	/**
 	 * Get the count of existing metaparameters for the supplied spectrum ids and attribute id
 	 * 
 	 * @param attribute_id	id of the attribute
@@ -413,6 +423,28 @@ public interface SPECCHIOClient {
 	 */
 	public int getHierarchyParentId(int hierarchy_id) throws SPECCHIOClientException;
 		
+	/**
+	 * Get the file path of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns path as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */
+	public String getHierarchyFilePath(int hierarchy_id) throws SPECCHIOClientException;
+	
+	/**
+	 * Get the name of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns name as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	public String getHierarchyName(int hierarchy_id) throws SPECCHIOClientException;	
+	
 	
 	/**
 	 * Get all of the institutes in the database.
@@ -549,6 +581,14 @@ public interface SPECCHIOClient {
 	 * @return an array of Policy objects
 	 */
 	public String[] getPoliciesForSpace(Space space) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Get an empty query object
+	 * 
+	 * @return a Query Object
+	 */
+	public Query getQueryObject() throws SPECCHIOClientException;
 	
 	
 	/**
@@ -983,6 +1023,17 @@ public interface SPECCHIOClient {
 	public void removeSpectralNodes(ArrayList<spectral_node_object> sns) throws SPECCHIOWebClientException;
 	
 	
+	
+	/**
+	 * Rename a hierarchy in the database and also on the file system if path is accessible.
+	 * The rename on the database will only be applied if a rename on the file system succeeded.
+	 * 
+	 * @param hierarchy_id	id of the hierarchy to be renamed
+	 * @param name	new name of the hierarchy
+	 * @return true if and only if the renaming succeeded; false otherwise
+	 */	
+	public boolean renameHierarchy(int hierarchy_id, String name) throws SPECCHIOClientException;	
+	
 	/**
 	 * Set the progress report interface to which progress made by this
 	 * client will be reported.
@@ -1153,6 +1204,9 @@ public interface SPECCHIOClient {
 	 * @throws SPECCHIOClientException
 	 */
 	public void updateUser(User user) throws SPECCHIOClientException;
+
+
+	
 
 	
 
