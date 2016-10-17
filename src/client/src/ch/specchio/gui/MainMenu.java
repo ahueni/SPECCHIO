@@ -26,11 +26,9 @@ import ch.specchio.client.SPECCHIOClientFactory;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.types.Category;
-import ch.specchio.types.Instrument;
 import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.Units;
 import ch.specchio.types.attribute;
-import ch.specchio.queries.EAVQueryConditionObject;
 
 
 class MainMenu implements ActionListener, ItemListener {
@@ -42,6 +40,7 @@ class MainMenu implements ActionListener, ItemListener {
    String connect_to_db = "Connect to database";
    String edit_user_account = "Edit user information";
    String edit_db_config_file = "Edit db_config file";
+   String preferences = "Preferences";
    String metadata_editor = "Edit metadata";
    String metadata_from_xls = "Get metadata from XLS";
    String data_removal = "Remove data";
@@ -58,7 +57,7 @@ class MainMenu implements ActionListener, ItemListener {
    String campaign_export = "Export campaign";
    String campaign_import = "Import campaign";
    String add_target_reference_links = "Target-reference links";
-   String time_shift = "Correct local time to UTC";
+   String time_shift = "Compute UTC";
    String sun_angle_calc = "Sun angle calculation";
    String gonio_angle_calc = "Gonio angle calculation";
    String test = "test";
@@ -112,6 +111,13 @@ class MainMenu implements ActionListener, ItemListener {
       menu.add(menuItem);
       public_menu_items.put(edit_db_config_file, menuItem);
       
+      menu.addSeparator();
+      
+      menuItem = new JMenuItem(preferences);
+      menuItem.addActionListener(this);
+      menu.add(menuItem);
+      public_menu_items.put(preferences, menuItem);
+
       
       menuBar.add(menu);
       
@@ -414,6 +420,23 @@ class MainMenu implements ActionListener, ItemListener {
 
       }
       
+      
+      if(preferences.equals(e.getActionCommand()))
+      {
+    	  try {
+    		  new Preferences();
+    	  }
+    	  catch (SPECCHIOClientException ex) {
+    		  JOptionPane.showMessageDialog(
+    				  SPECCHIOApplication.getInstance().get_frame(),
+    				  ex.getMessage(),
+    				  "Error",
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
+    			);
+    	  }
+    	  
+
+      }
       
 
       if(metadata_editor.equals(e.getActionCommand()))
@@ -743,9 +766,12 @@ class MainMenu implements ActionListener, ItemListener {
     	  
     	  try {
     		  
-    		  attribute attr = specchio_client.getAttributesNameHash().get("Altitude");
+    		  specchio_client.renameHierarchy(2173, "Artificial");
+    		  //specchio_client.getHierarchyFilePath(2530);
+    		  
+//    		  Spectrum s = specchio_client.getSpectrum(268081, false);
 
-    		  Object cond = new EAVQueryConditionObject(attr);
+    		  //Object cond = new EAVQueryConditionObject(attr);
 
     		  
 //			String has_license = specchio_client.getCapability("END_USER_LICENSE");
