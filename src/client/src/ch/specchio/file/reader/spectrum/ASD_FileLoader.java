@@ -8,10 +8,12 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.prefs.BackingStoreException;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOPreferencesStore;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -66,6 +68,14 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		asd_file.setMeasurements(read_data(data_in, asd_file.getNumberOfChannels(0)));
 		
 		data_in.close ();
+		
+		try {
+			SPECCHIOPreferencesStore prefs = new SPECCHIOPreferencesStore();			
+			asd_file.setCreateUnitFolderForasdOldFiles(prefs.getBooleanPreference("CREATE_UNIT_FOLDER_FOR_OLD_ASD_FILES"));			
+		} catch (BackingStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		return asd_file;
 	}
