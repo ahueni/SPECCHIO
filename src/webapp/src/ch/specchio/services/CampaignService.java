@@ -118,6 +118,32 @@ public class CampaignService extends SPECCHIOService {
 		
 	}
 	
+	/**
+	 * Get the name of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns name as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("getHierarchyName/{hierarchy_id: [0-9]+}")	
+	public String getHierarchyName(@PathParam("hierarchy_id") int hierarchy_id) throws SPECCHIOFactoryException {
+		
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio", getDataSourceName());
+		
+		String name = factory.getHierarchyName(hierarchy_id);
+		
+		factory.dispose();
+		
+		
+		return name;
+		
+	}
+			
+	
 	
 	/**
 	 * Import a campaign.
@@ -262,6 +288,32 @@ public class CampaignService extends SPECCHIOService {
 	}
 	
 	
+	/**
+	 * Get the file path of a hierarchy.
+	 * 
+	 * @param hierarchy_id		the identifier of the hierarchy
+	 * 
+	 * @returns path as string
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("getHierarchyFilePath/{hierarchy_id: [0-9]+}")	
+	public String getHierarchyFilePath(@PathParam("hierarchy_id") int hierarchy_id) throws SPECCHIOFactoryException {
+		
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio", getDataSourceName());
+		
+		String path = factory.getHierarchyFilePath(hierarchy_id);
+		
+		factory.dispose();
+		
+		
+		return path;
+		
+	}
+	
+	
 	
 	/**
 	 * Get a list of the campaigns in the database.
@@ -403,6 +455,34 @@ public class CampaignService extends SPECCHIOService {
 		
 		return new XmlInteger(1);
 		
+	}	
+	
+	
+	/**
+	 * Rename a hierarchy
+	 * 
+	 * @param hierarchy_id	    the identifier of the hierarchy
+	 * @param hierarchy_name	the new name of the hierarchy
+	 * 
+	 * @return 1
+	 *
+	 * @throws SPECCHIOFactoryException
+	 */
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("renameHierarchy/{hierarchy_id: [0-9]+}/{hierarchy_name}")	
+	public XmlInteger renameHierarchy(		
+			@PathParam("hierarchy_id") int hierarchy_id,
+			@PathParam("hierarchy_name") String hierarchy_name
+			) throws SPECCHIOFactoryException {
+		
+		CampaignFactory factory = CampaignFactory.getInstance(getClientUsername(), getClientPassword(), "specchio", getDataSourceName());
+		
+		factory.renameHierarchy(hierarchy_id, hierarchy_name);
+		
+		factory.dispose();
+		
+		return new XmlInteger(1);		
 	}	
 	
 	
