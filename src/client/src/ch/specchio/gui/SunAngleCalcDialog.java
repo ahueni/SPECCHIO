@@ -4,13 +4,9 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.SimpleTimeZone;
-import java.util.TimeZone;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -257,7 +253,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 					MetaSimple longitude = (MetaSimple)md.get_first_entry("Longitude");
 					
 					// get acquisition time
-					MetaDate acquisitionTime = (MetaDate)md.get_first_entry("Acquisition Time");
+					MetaDate acquisitionTime = (MetaDate)md.get_first_entry("Acquisition Time (UTC)");
 					
 					// calculate angles only if we have a position and acquisition time
 					if (latitude != null && longitude != null && acquisitionTime != null) {
