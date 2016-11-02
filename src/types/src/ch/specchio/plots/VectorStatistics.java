@@ -89,20 +89,32 @@ public class VectorStatistics {
 		
 		
 		// get standard deviation			
-		for(int i = 0; i < vectors.size();i++)
-		{		
-			
-			for(band = start_ind; band <= end_ind;band++)
-			{
-				if(!Double.isNaN(vectors.get(i)[band])) // filter NaNs
+		if (N > 1)
+		{
+			for(int i = 0; i < vectors.size();i++)
+
+			{		
+
+				for(band = start_ind; band <= end_ind;band++)
 				{
-					sum += Math.pow(vectors.get(i)[band] - mean, 2);	
+					if(!Double.isNaN(vectors.get(i)[band])) // filter NaNs
+					{
+						sum += Math.pow(vectors.get(i)[band] - mean, 2);	
+					}
 				}
 			}
+			var = sum/(N-1);
+			std_dev = sqrt(var);
+			
+			
+		}
+		else
+		{
+			var = 0;
+			std_dev = 0;
+			
 		}
 		
-		var = sum/(N-1);
-		std_dev = sqrt(var);
 		
 	}
 	
