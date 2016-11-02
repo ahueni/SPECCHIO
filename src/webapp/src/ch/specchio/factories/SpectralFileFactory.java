@@ -1735,13 +1735,21 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			
 			stmt.executeUpdate(insert_string);
 			
-			insert_string = "insert into " + SQL.prefix(getTempDatabaseName(), "spectra_existence_in_db") + "(spectrum_id, filename) (select spectrum.spectrum_id, eav.string_val from spectrum, spectrum_x_eav, eav, hierarchy_level_x_spectrum "  +
+//			insert_string = "insert into " + SQL.prefix(getTempDatabaseName(), "spectra_existence_in_db") + "(spectrum_id, filename) (select spectrum.spectrum_id, eav.string_val from spectrum, spectrum_x_eav, eav, hierarchy_level_x_spectrum "  +
+//					" where spectrum.spectrum_id=spectrum_x_eav.spectrum_id" +
+//					" and spectrum_x_eav.eav_id=eav.eav_id" +
+//					" and eav.attribute_id=" + getAttributes().get_attribute_id("File Name") +
+//					" and eav.string_val in (" + quoted_filenames + ") " +
+//					" and hierarchy_level_x_spectrum.spectrum_id=spectrum.spectrum_id" +
+//					" and hierarchy_level_x_spectrum.hierarchy_level_id " + p_id_and_op.op + " " + p_id_and_op.id + ")";
+			
+			insert_string = "insert into " + SQL.prefix(getTempDatabaseName(), "spectra_existence_in_db") + "(spectrum_id, filename) (select spectrum.spectrum_id, eav.string_val from spectrum, spectrum_x_eav, eav "  +
 					" where spectrum.spectrum_id=spectrum_x_eav.spectrum_id" +
 					" and spectrum_x_eav.eav_id=eav.eav_id" +
 					" and eav.attribute_id=" + getAttributes().get_attribute_id("File Name") +
 					" and eav.string_val in (" + quoted_filenames + ") " +
-					" and hierarchy_level_x_spectrum.spectrum_id=spectrum.spectrum_id" +
-					" and hierarchy_level_x_spectrum.hierarchy_level_id " + p_id_and_op.op + " " + p_id_and_op.id + ")";
+					" and spectrum.hierarchy_level_id " + p_id_and_op.op + " " + p_id_and_op.id + ")";
+			
 			
 			
 			stmt.executeUpdate(insert_string);
