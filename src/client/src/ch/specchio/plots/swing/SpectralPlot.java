@@ -232,11 +232,22 @@ public abstract class SpectralPlot extends JPanel
 			double vis_nir_start = 300;
 			double vis_nir_end = 1300;
 			
-			VectorStatistics stats = new VectorStatistics();
+			int start_ind = space.get_index_of_band(vis_nir_start);
+			int end_ind = space.get_index_of_band(vis_nir_end);
 			
-			stats.calc_stats(vectors, space.get_index_of_band(vis_nir_start), space.get_index_of_band(vis_nir_end));	
+			if (start_ind > 0 & end_ind > 0)
+			{
 			
-			plot.setYRange(0, stats.mean()+1*stats.standardDeviation());
+				VectorStatistics stats = new VectorStatistics();
+			
+				stats.calc_stats(vectors, start_ind, end_ind);	
+				
+				if (stats.standardDeviation() > 0)
+					plot.setYRange(0, stats.mean()+1*stats.standardDeviation());
+			
+			}
+//			else
+//				plot.setYRange(0, stats.max());
 
 //			pTransform1.autoScale(dataset, ChartConstants.AUTOAXES_FAR, ChartConstants.AUTOAXES_FAR);
 //			pTransform1.setScaleY(0, stats.mean()+1*stats.standardDeviation());
