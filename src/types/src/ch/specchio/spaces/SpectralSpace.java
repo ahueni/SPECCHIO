@@ -194,11 +194,24 @@ public class SpectralSpace extends Space {
 		public int space_type() {
 			return SpaceTypes.SpectralSpace;
 		}
+		
+		
+//		public boolean isWavenumber()
+//		{
+//			if(this.avg_wavelengths[0] < this.avg_wavelengths[this.dimensionality-1])
+//				return false;
+//			else
+//				return true;			
+//			
+//		}
 
 
 		public String get_x_axis_label() {
 			
 			String x_label = "Wavelength [nm]";
+			
+//			if (isWavenumber())
+//				x_label = "Wavenumber [cm-1]";
 			
 			if(!this.wvls_are_known)
 			{
