@@ -19,10 +19,16 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.prefs.BackingStoreException;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOClientFactory;
+import ch.specchio.client.SPECCHIOPreferencesStore;
+import ch.specchio.client.SPECCHIOServerDescriptor;
+import ch.specchio.client.SPECCHIOServerDescriptorLegacyStore;
+import ch.specchio.client.SPECCHIOServerDescriptorPreferencesStore;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.types.Category;
@@ -72,6 +78,7 @@ class MainMenu implements ActionListener, ItemListener {
    
    /** menu items accessiable only to administrative users */
    Hashtable<String, JMenuItem> admin_menu_items;
+private JMenuItem dbConfigmenuItem;
    
    private static MainMenu instance = null;
 
@@ -106,10 +113,21 @@ class MainMenu implements ActionListener, ItemListener {
       
       menu.addSeparator();
       
-      menuItem = new JMenuItem(edit_db_config_file);
-      menuItem.addActionListener(this);
-      menu.add(menuItem);
-      public_menu_items.put(edit_db_config_file, menuItem);
+      dbConfigmenuItem = new JMenuItem(edit_db_config_file);
+      dbConfigmenuItem.addActionListener(this);
+      menu.add(dbConfigmenuItem);
+      try {
+		SPECCHIOPreferencesStore prefs = new SPECCHIOPreferencesStore();		
+		enable_db_config_tool(prefs.getBooleanPreference("DB_CONFIG_FILE_CREATION_AND_EDITING"));		
+	} catch (BackingStoreException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+      
+      //public_menu_items.put(edit_db_config_file, menuItem);
       
       menu.addSeparator();
       
@@ -287,6 +305,18 @@ class MainMenu implements ActionListener, ItemListener {
 			menuItem.setEnabled(enable);
 		}
 	}
+	
+	public void enable_db_config_tool(boolean enable)
+	{
+		if(enable)
+		{
+			dbConfigmenuItem.setEnabled(true);
+		}
+		else
+		{
+			dbConfigmenuItem.setEnabled(false);
+		}				
+	}
 
    JMenuBar getMenu() {
       return menuBar;
@@ -402,9 +432,35 @@ class MainMenu implements ActionListener, ItemListener {
     	  try {
     		  Desktop.getDesktop().open(temp);
     		  
-    		  //SPECCHIOClientFactory.getInstance().reloadDBConfigFile();
+    	  } catch (java.lang.IllegalArgumentException ex) {
     		  
-    	  } catch (IOException e1) {
+    		  // the file does not exist yet: create a new one and fill it with info from the preferences
+    		  try {
+				temp.createNewFile();
+				
+				// write existing configuration data into the file
+				SPECCHIOServerDescriptorPreferencesStore prefs = new SPECCHIOServerDescriptorPreferencesStore();
+				SPECCHIOServerDescriptorLegacyStore legacy_prefs = new SPECCHIOServerDescriptorLegacyStore(temp);
+				
+				Iterator<SPECCHIOServerDescriptor> pref_it = prefs.getIterator();
+				
+				while(pref_it.hasNext())
+				{
+					legacy_prefs.addServerDescriptor(pref_it.next());
+				}
+				
+				Desktop.getDesktop().open(temp);
+				
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (BackingStoreException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+    		  
+    	  }
+    	  catch (IOException e1) {
     		  // TODO Auto-generated catch block
     		  e1.printStackTrace();
     	  } catch (SPECCHIOClientException ex) {
