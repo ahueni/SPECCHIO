@@ -181,7 +181,7 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 		if(line.length() > 0)
 		{
 			   
-			System.out.println(line);
+		   // System.out.println(line);
 		   SPECCHIOServerDescriptor app = null;
 		   
 			// tokenise the line
