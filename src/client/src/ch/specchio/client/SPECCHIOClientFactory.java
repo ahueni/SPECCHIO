@@ -52,20 +52,21 @@ public class SPECCHIOClientFactory {
 				// read error; re-throw as a SPECCHIO client exception
 				throw new SPECCHIOClientException(ex);
 			}
-		}
-		
-		// load server descriptors from the preferences store
-		try {
-			SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorPreferencesStore();
-			Iterator<SPECCHIOServerDescriptor> iter = s.getIterator();
-			while (iter.hasNext()) {
-				apps.add(iter.next());
+		}		
+		else // load server descriptors from the preferences store
+		{
+			try {
+				SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorPreferencesStore();
+				Iterator<SPECCHIOServerDescriptor> iter = s.getIterator();
+				while (iter.hasNext()) {
+					apps.add(iter.next());
+				}
 			}
+			catch (BackingStoreException ex) {
+				// the backing store failed; re-throw as a SPECCHIO client exception
+				throw new SPECCHIOClientException(ex);
+			}	
 		}
-		catch (BackingStoreException ex) {
-			// the backing store failed; re-throw as a SPECCHIO client exception
-			throw new SPECCHIOClientException(ex);
-		}			
 		
 		
 	}
