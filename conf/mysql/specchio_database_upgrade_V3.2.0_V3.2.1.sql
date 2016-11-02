@@ -7,3 +7,9 @@ INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `descrip
 -- Waypoint ID Attribute
 
 INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `description`) VALUES ('Waypoint ID', (select category_id from category where name = 'Location'), 'string_val', 'Name or ID of a waypoint');
+
+
+
+-- db version
+INSERT INTO `specchio`.`schema_info` (`version`, `date`) VALUES ('3.2.1', CURDATE());
+
