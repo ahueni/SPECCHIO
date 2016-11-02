@@ -320,6 +320,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 				
 				// shift the capture dates of the selected spectra and store as UTC
 				ArrayList<Integer> updatedIds = new ArrayList<Integer>();
+				ArrayList<Integer> not_updatedIds = new ArrayList<Integer>();
 
 					
 				ArrayList<MetaParameter> mpAcquisitionTimes = specchioClient.getMetaparameters(spectrumIdsIn, "Acquisition Time");
@@ -335,27 +336,35 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 					
 					DateTime t = (DateTime) mp.getValue();
 					
-					DateTime modified_t = t.minusHours(shift);
-					
-					//mp.setValue(modified_t);
-					
-					ArrayList<Integer> tmpId = new ArrayList<Integer>();
-					tmpId.add(spectrum_li.next());
-					
-					MetaParameter existing_utc = utcmp_li.next();
-					
-					if (existing_utc.getEavId() == 0)
+					if(mp.getEavId() == 0)
 					{
-						attribute utc_attribute = specchioClient.getAttributesNameHash().get("Acquisition Time (UTC)");
-						existing_utc = MetaParameter.newInstance(utc_attribute);						
+						not_updatedIds.add(spectrum_li.next());
 					}
+					else
+					{
+						DateTime modified_t = t.minusHours(shift);
 					
-					existing_utc.setValue(modified_t);
-					
-					specchioClient.updateEavMetadata(existing_utc, tmpId);
-					
-					// add the identifier to the list of updated identifiers
-					updatedIds.add(tmpId.get(0));					
+						//mp.setValue(modified_t);
+						
+						ArrayList<Integer> tmpId = new ArrayList<Integer>();
+						tmpId.add(spectrum_li.next());
+						
+						MetaParameter existing_utc = utcmp_li.next();
+						
+						if (existing_utc.getEavId() == 0)
+						{
+							attribute utc_attribute = specchioClient.getAttributesNameHash().get("Acquisition Time (UTC)");
+							existing_utc = MetaParameter.newInstance(utc_attribute);						
+						}
+						
+						existing_utc.setValue(modified_t);
+						
+						specchioClient.updateEavMetadata(existing_utc, tmpId);
+						
+						// add the identifier to the list of updated identifiers
+						updatedIds.add(tmpId.get(0));					
+	
+					}
 					
 					pr.set_progress(++progress * 100.0 / tot);
 				}
@@ -381,6 +390,12 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 				String message;
 				if (updatedIds.size() > 0) {
 					message = "Acquisition times of " + Integer.toString(updatedIds.size()) + " spectra successfully computed.";
+					
+					if(updatedIds.size() != spectrumIdsIn.size())
+					{
+						message = message + "\nAcquisition times of " + (spectrumIdsIn.size() - updatedIds.size()) + " spectra could not be computed due to missing acquisition time.";
+					}
+					
 				} else {
 					message = "No acquisition times found. No data was updated.";
 				}
