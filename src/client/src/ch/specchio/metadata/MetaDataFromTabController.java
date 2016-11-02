@@ -324,7 +324,7 @@ public class MetaDataFromTabController  {
 		{
 			boolean match = false;
 			
-			if (table_value != null) {
+			if (table_value != null && db_val != null) {
 				
 				if (db_val instanceof Integer) {
 					
@@ -353,7 +353,11 @@ public class MetaDataFromTabController  {
 					
 				} else if (db_val instanceof String) {
 					
-					match = table_value.equals(db_val);
+					if (table_value instanceof Number) {
+						match = table_value.toString().equals(db_val);
+					} else if (table_value instanceof String) {
+						match = table_value.equals(db_val);
+					}
 				}
 				
 			}
