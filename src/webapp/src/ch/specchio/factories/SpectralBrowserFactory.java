@@ -208,7 +208,7 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 				String query = null;
 				if (node instanceof campaign_node) {
 					query = "select hierarchy_level_id, name from " + getChildViewName((campaign_node)node) +
-							" where campaign_id = " + node.getId() + " and parent_level_id is null";
+							" where campaign_id = " + node.getId() + " and parent_level_id is null" + " order by name";
 				} else if (node instanceof database_node) {
 					query = "select campaign_id, name from " + getChildViewName((database_node)node);
 				} else if (node instanceof hierarchy_node) {
