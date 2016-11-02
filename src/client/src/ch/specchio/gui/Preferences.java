@@ -21,6 +21,7 @@ public class Preferences extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	SPECCHIOClient specchio_client;
 	private JCheckBox asd_unit_folder;
+	private JCheckBox db_config_file_creation_and_editing;
 	SPECCHIOPreferencesStore prefs;
 	
 	GridbagLayouter l;
@@ -38,6 +39,12 @@ public class Preferences extends JFrame implements ActionListener {
 			asd_unit_folder.addActionListener((ActionListener) this);
 			asd_unit_folder.setSelected(prefs.getBooleanPreference("CREATE_UNIT_FOLDER_FOR_OLD_ASD_FILES"));
 			
+			db_config_file_creation_and_editing = new JCheckBox("Enable editing of db_config file");
+			db_config_file_creation_and_editing.setActionCommand("db_config_file_creation_and_editing");
+			db_config_file_creation_and_editing.addActionListener((ActionListener) this);
+			db_config_file_creation_and_editing.setSelected(prefs.getBooleanPreference("DB_CONFIG_FILE_CREATION_AND_EDITING"));
+			
+			
 			constraints = new GridBagConstraints();
 			
 			// some default values. subclasses can always overwrite these
@@ -49,11 +56,16 @@ public class Preferences extends JFrame implements ActionListener {
 			
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			
+			l = new GridbagLayouter(this);
+			
+			
 			// build GUI
+			constraints.gridx = 1;
+			l.insertComponent(asd_unit_folder, constraints);
 			
-			this.setLayout(new BorderLayout());
-			this.add("West", asd_unit_folder);				
-			
+			constraints.gridy = 2;	
+			l.insertComponent(db_config_file_creation_and_editing, constraints);
+
 			pack();
 			
 			this.setVisible(true);
@@ -81,6 +93,22 @@ public class Preferences extends JFrame implements ActionListener {
 				e1.printStackTrace();
 			}
 		}
+		
+		if(e.getActionCommand().equals("db_config_file_creation_and_editing"))
+		{
+			
+			try {
+				prefs.setBooleanPreference(this.db_config_file_creation_and_editing.isSelected(), "DB_CONFIG_FILE_CREATION_AND_EDITING");				
+
+				MainMenu menu = MainMenu.getInstance();
+				menu.enable_db_config_tool(prefs.getBooleanPreference("DB_CONFIG_FILE_CREATION_AND_EDITING"));				
+				
+				
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}		
 
 
 	}
