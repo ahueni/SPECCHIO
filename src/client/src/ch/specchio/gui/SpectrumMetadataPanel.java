@@ -25,6 +25,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -348,6 +349,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				
 				try {
 				
+					SpectrumMetadataComponent smc = null;
 					// create a new field for this attribute
 					attribute a = (attribute)menuItem.getClientProperty(ATTRIBUTE);
 					MetaParameter mp = MetaParameter.newInstance(a);
@@ -374,7 +376,8 @@ public class SpectrumMetadataPanel extends JPanel {
 						mdcc.addField(field);
 							
 						// add the new field to the panel
-						addField(field);
+						smc = addField(field);
+						smc.getInputComponent().requestFocusInWindow();
 						
 						// notify the metadata change listeners
 						fireMetadataFieldAdded(field);
@@ -387,7 +390,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				
 					// force re-draw
 					revalidate();
-					repaint();
+					repaint();					
 				
 				}
 				catch (SPECCHIOClientException ex) {
@@ -814,6 +817,8 @@ public class SpectrumMetadataPanel extends JPanel {
 			
 		}
 		
+		public abstract JComponent getInputComponent();
+		
 		
 		/**
 		 * Get the horizontal alignment position. 
@@ -967,6 +972,12 @@ public class SpectrumMetadataPanel extends JPanel {
 			box.setEnabled(enabled);
 			text.setEnabled(enabled);
 			
+		}
+
+
+		@Override
+		public JComponent getInputComponent() {			
+			return this.text;
 		}
 		
 	}
@@ -1240,6 +1251,12 @@ public class SpectrumMetadataPanel extends JPanel {
 			text.setEnabled(enabled && !fieldHasMultipleValues());
 			
 		}
+
+
+		@Override
+		public JComponent getInputComponent() {
+			return text;
+		}
 		
 	}
 	
@@ -1350,6 +1367,12 @@ public class SpectrumMetadataPanel extends JPanel {
 			super.setEnabled(enabled);
 			viewButton.setEnabled(enabled && !fieldHasMultipleValues());
 			
+		}
+
+
+		@Override
+		public JComponent getInputComponent() {
+			return viewButton;
 		}
 		
 	}
@@ -1542,6 +1565,11 @@ public class SpectrumMetadataPanel extends JPanel {
 				fireMetadataAnnotationChanged(getField(), newValue);
 			}	
 			
+		}
+
+		@Override
+		public JComponent getInputComponent() {
+			return text;
 		}		
 		
 			
@@ -1722,6 +1750,12 @@ public class SpectrumMetadataPanel extends JPanel {
 			text.setEnabled(enabled && !fieldHasMultipleValues());
 			
 		}
+
+
+		@Override
+		public JComponent getInputComponent() {
+			return text;
+		}
 		
 	}
 	
@@ -1871,6 +1905,12 @@ public class SpectrumMetadataPanel extends JPanel {
 			super.setEnabled(enabled);
 			selectButton.setEnabled(enabled && !fieldHasMultipleValues());
 			
+		}
+
+
+		@Override
+		public JComponent getInputComponent() {
+			return text;
 		}
 		
 	}
