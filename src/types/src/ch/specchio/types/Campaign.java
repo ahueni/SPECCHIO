@@ -24,6 +24,9 @@ public abstract class Campaign {
 	/** campaign investigator */
 	private String investigator;
 	
+	/** campaign User */
+	private User user;	
+	
 	/** path to campaign data */
 	private String path;
 	
@@ -131,7 +134,30 @@ public abstract class Campaign {
 		
 	}
 	
+	/**
+	 * Get the campaign user.
+	 * 
+	 * @return the user of the campaign
+	 */
+	@XmlElement(name="user")
+	public User getUser() {
+		
+		return user;
+		
+	}
 	
+	
+	/**
+	 * Set the campaign user.
+	 * 
+	 * @param user	 the user of the campaign
+	 */
+	public void setUser(User user) {
+		
+		this.user = user;
+		
+	}
+		
 	/**
 	 * Get the list of paths from which this campaign has been loaded.
 	 * 
