@@ -1343,6 +1343,28 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get the identifiers of all spectra that match a full text search.
+	 * 
+	 * @param search_str		the search string
+	 * 
+	 * @return an array list of spectrum identifiers
+	 */
+	public ArrayList<Integer> getSpectrumIdsMatchingFullTextSearch(String search_str) throws SPECCHIOClientException {
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		XmlString xmlstr = new XmlString();
+		xmlstr.setString(search_str);
+		
+		List<Integer> id_array = adapter.unmarshalList(postForList(XmlInteger.class, "spectrum", "full_text_search", xmlstr));
+
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		
+		ids.addAll(id_array);
+		return ids;
+	}	
+	
+	
+	/**
 	 * Get the spectrum identifiers that match a given query.
 	 * 
 	 * @param query	the query

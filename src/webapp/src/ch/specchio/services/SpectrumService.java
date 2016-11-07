@@ -14,6 +14,7 @@ import ch.specchio.factories.SpaceFactory;
 import ch.specchio.factories.SpectrumFactory;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.jaxb.XmlIntegerAdapter;
+import ch.specchio.jaxb.XmlString;
 import ch.specchio.plots.GonioSamplingPoints;
 import ch.specchio.queries.Query;
 import ch.specchio.spaces.ReferenceSpaceStruct;
@@ -330,6 +331,32 @@ public class SpectrumService extends SPECCHIOService {
 		return table;
 		
 	}
+	
+	/**
+	 * Get the identifiers of all spectra that match a full text search.
+	 * 
+	 * @param search_str		the search string
+	 * 
+	 * @return an array of identifiers
+	 * 
+	 * @throws SPECCHIOFactoryException	could not access the database
+	 */	
+	@POST
+	@Path("full_text_search")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger[] full_text_search(XmlString search_str) throws SPECCHIOFactoryException {
+		
+		
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		List<Integer> ids = factory.getSpectrumIdsMatchingFullTextSearch(search_str.getString());
+		factory.dispose();
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);
+		
+	}	
 	
 	
 	/**
