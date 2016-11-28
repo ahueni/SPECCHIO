@@ -142,7 +142,9 @@ public class MetaDate extends MetaParameter {
 	}
 	
 	public Date valueAsDate() {
-		return ((DateTime) this.getValue()).toDate();
+		// conversion trick to avoid forcing to local time zone: https://www.mkyong.com/java/convert-datetime-to-date-but-timezone-is-missing/
+		Date dateInZ = ((DateTime) this.getValue()).toLocalDateTime().toDate();
+		return dateInZ;
 	}
 	
 	public DateTime valueAsDateTime() {
