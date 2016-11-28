@@ -359,7 +359,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 						
 						existing_utc.setValue(modified_t);
 						
-						specchioClient.updateEavMetadata(existing_utc, tmpId);
+						specchioClient.updateEavMetadata(existing_utc, tmpId, existing_utc);
 						
 						// add the identifier to the list of updated identifiers
 						updatedIds.add(tmpId.get(0));					
