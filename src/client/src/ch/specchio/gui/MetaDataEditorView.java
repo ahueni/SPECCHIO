@@ -92,7 +92,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 					
 			
 		JPanel control_panel = new JPanel();
-		GridbagLayouter control_panel_l = new GridbagLayouter(control_panel);	
+		//GridbagLayouter control_panel_l = new GridbagLayouter(control_panel);	
 			
 		// create tabbed pane
 		metadata_tabs = new JTabbedPane();
@@ -113,29 +113,35 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			
 		// load currently selected campaign
 		sdb.build_tree();
+		
+		control_panel.setLayout(new BorderLayout());
+		control_panel.add("Center", sdb);
 					
-		JPanel sdb_panel = new JPanel();
-		sdb_panel.add(sdb);
-		constraints.gridy = 0;
-		constraints.gridx = 0;
-		constraints.gridwidth = 2;
-		control_panel_l.insertComponent(sdb_panel, constraints);
+		//JPanel sdb_panel = new JPanel();
+		//sdb_panel.add(sdb);
+//		constraints.gridy = 0;
+//		constraints.gridx = 0;
+//		constraints.gridwidth = 2;
+//		control_panel_l.insertComponent(sdb, constraints);
 
-			// add tree listener
+		// add tree listener
 		sdb.tree.addTreeSelectionListener(this);
 		sdb.tree.putClientProperty("browser", sdb);
 			
 		// add update and reset buttons
+		JPanel button_panel = new JPanel();
+		GridbagLayouter button_panel_l = new GridbagLayouter(button_panel);
 		constraints.gridwidth = 1;
 		constraints.gridy++;
 		constraints.gridx = 0;
 		update = new JButton("Update");	
 		update.addActionListener(this);
-		control_panel_l.insertComponent(update, constraints);
+		button_panel_l.insertComponent(update, constraints);
 		constraints.gridx++;
 		reset = new JButton("Reset");
 		reset.addActionListener(this);
-		control_panel_l.insertComponent(reset, constraints);	
+		button_panel_l.insertComponent(reset, constraints);	
+		control_panel.add("South", button_panel);
 
 		setUpdateResetButtonsState();
 		
