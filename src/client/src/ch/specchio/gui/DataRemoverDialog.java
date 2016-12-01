@@ -160,7 +160,7 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 		sdb = new SpectralDataBrowser(specchio_client, !specchio_client.isLoggedInWithRole(UserRoles.ADMIN));
 		
 		sdb.build_tree();
-		this.add("West", sdb);
+		this.add("Center", sdb);
 		
 		// add tree listener
 		sdb.tree.addTreeSelectionListener(this);
@@ -184,7 +184,7 @@ public class DataRemoverDialog extends JFrame implements ActionListener, TreeSel
 		l.insertComponent(cancel, constraints);
 				
 		// add control panel to dialog
-		this.add("Center", control);
+		this.add("East", control);
 				
 		pack();
 		
