@@ -1353,7 +1353,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
 		XmlString xmlstr = new XmlString();
-		xmlstr.setString(search_str);
+		xmlstr.setString("%" + search_str + "%");
 		
 		List<Integer> id_array = adapter.unmarshalList(postForList(XmlInteger.class, "spectrum", "full_text_search", xmlstr));
 
@@ -1755,16 +1755,27 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 */	
 	public boolean renameHierarchy(int hierarchy_id, String name) throws SPECCHIOClientException
 	{
-		
+		boolean success = false;
 		// rename the folder on the file system
 		String path = getHierarchyFilePath(hierarchy_id);
+		//path = "/Volumes/apexdata/APEX2013/_VAL_Data/GPNP_2013-08-31/MM077_GPNP__130831_spectra/s1";
 		File f = new File(path);
-		File new_name = new File(f.getParentFile().getPath() + File.separator + name);
-		boolean success = f.renameTo(new_name);
 		
-		if (success)
+		if(f.exists())
 		{
-			getInteger("campaign", "renameHierarchy", Integer.toString(hierarchy_id), name);
+			File new_name = new File(f.getParentFile().getPath() + File.separator + name);
+			success = f.renameTo(new_name);
+			if (success)
+			{
+				getInteger("campaign", "renameHierarchy", Integer.toString(hierarchy_id), name);
+			}
+		}
+		else
+		{
+			String error_msg = "Error: hierarchy renaming can only be carried out on a machine where the specified path is accessible:\n" + 
+					path + "\n";
+			System.out.print(error_msg);
+			throw new SPECCHIOWebClientException(error_msg);						
 		}
 		
 		return success;
