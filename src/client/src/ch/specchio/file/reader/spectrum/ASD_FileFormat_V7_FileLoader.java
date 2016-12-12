@@ -319,6 +319,12 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		hdr.setCompany("ASD");
 
 		String file_version = read_string(in, 3);
+		
+		if(!file_version.substring(0, 2).equals("as"))
+		{
+			throw new IOException("Corrupted ASD file: File format string = " + file_version + ".\n Expecting 'asN' where N is a file version number.");			
+		}
+		
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("File Version"));
 		mp.setValue( file_version, "String");
 		smd.addEntry(mp);					
