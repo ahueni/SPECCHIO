@@ -550,6 +550,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 					data_in = new DataInputStream(file_input);
 					ASD_FileLoader asd_loader = new ASD_FileLoader();
 					SpectralFile sf = asd_loader.asd_file;
+					sf.setFilename(files.get(0).getName());
 		
 					asd_loader.read_ASD_header(data_in, sf);
 		
