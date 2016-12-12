@@ -48,7 +48,12 @@ public class MD_EAV_Field extends MD_Field {
 	
 	public int get_conflict_status()
 	{
-		return conflict.getConflictData(mp.getEavId()).getStatus();
+		try{
+			return conflict.getConflictData(mp.getEavId()).getStatus();
+		}catch(NullPointerException e)
+		{
+			return ConflictInfo.conflict; // if this eav_id cannot be found, then it did not exist for the first spectrum and hence we have conflict
+		}
 	}	
 	
 	public int getNoOfSharingRecords()
