@@ -1,5 +1,6 @@
 package ch.specchio.gui;
 
+import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -93,20 +94,21 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 		// initialise member variables
 		selectedIds = null;
 		
-		// set up the main panel with a flow layout
+		// set up the main panel with a border layout
 		JPanel rootPanel = new JPanel();
+		rootPanel.setLayout(new BorderLayout());
 		getContentPane().add(rootPanel);
 		
 		// add the spectral data browser
 		sdb = new SpectralDataBrowser(specchioClient, !specchioClient.isLoggedInWithRole(UserRoles.ADMIN));
 		sdb.build_tree();
 		sdb.tree.addTreeSelectionListener(this);
-		rootPanel.add(sdb);
+		rootPanel.add("Center",sdb);
 		
 		// create a panel for the other controls with a gridbag layout
 		JPanel controlPanel = new JPanel();
 		controlPanel.setLayout(new GridBagLayout());
-		rootPanel.add(controlPanel);
+		rootPanel.add("East", controlPanel);
 		GridBagConstraints constraints = new GridBagConstraints();
 		constraints.insets = new Insets(4, 4, 4, 4);
 		constraints.anchor = GridBagConstraints.WEST;
@@ -359,7 +361,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 						
 						existing_utc.setValue(modified_t);
 						
-						specchioClient.updateEavMetadata(existing_utc, tmpId, existing_utc);
+						specchioClient.updateEavMetadata(existing_utc, tmpId);
 						
 						// add the identifier to the list of updated identifiers
 						updatedIds.add(tmpId.get(0));					
