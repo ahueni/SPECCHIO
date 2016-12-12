@@ -23,6 +23,8 @@ public class Attributes {
 	
 	public boolean new_attributes_were_inserted = false;
 
+	public int boolean_unit_id;
+
 	
 	public Attributes(SQL_StatementBuilder SQL) throws SQLException
 	{
@@ -46,11 +48,36 @@ public class Attributes {
 	{
 		if (lists_are_filled) return;
 		
-		String query = "select a.attribute_id, a.name, c.category_id, c.name, c.string_val, a.default_unit_id, a.default_storage_field, a.description, a.cardinality from attribute a, category c where a.category_id = c.category_id order by a.name";
-				
+		
+		String query = "select unit_id, name, description, short_name from unit";
+		
 		// create a list of existing attributes
 		Statement stmt = SQL.createStatement();
 		ResultSet rs = stmt.executeQuery(query);
+
+		
+		while (rs.next()) 
+		{
+			Units u = new Units();
+			
+			u.id = rs.getInt(1);
+			u.name = rs.getString(2);
+			u.description = rs.getString(3);
+			u.short_name = rs.getString(4);
+			
+			if(u.short_name.equals("Boolean"))
+				this.boolean_unit_id = u.id;
+			
+			
+			units.add(u);
+					
+		}
+		
+		rs.close();			
+		
+		query = "select a.attribute_id, a.name, c.category_id, c.name, c.string_val, a.default_unit_id, a.default_storage_field, a.description, a.cardinality from attribute a, category c where a.category_id = c.category_id order by a.name";
+						
+		rs = stmt.executeQuery(query);
 		
 		while (rs.next()) 
 		{
@@ -66,6 +93,10 @@ public class Attributes {
 			a.description = rs.getString(8);
 			a.cardinality = rs.getInt(9);
 			
+			// special case: handling of boolean values stored in int_val fields
+			if(a.default_unit_id == this.boolean_unit_id) 
+				a.is_boolean_value = true;
+			
 			attributes.add(a);
 					
 		}
@@ -73,24 +104,7 @@ public class Attributes {
 		rs.close();		
 		
 		
-		query = "select unit_id, name, description, short_name from unit";
-		
-		rs = stmt.executeQuery(query);
-		
-		while (rs.next()) 
-		{
-			Units u = new Units();
-			
-			u.id = rs.getInt(1);
-			u.name = rs.getString(2);
-			u.description = rs.getString(3);
-			u.short_name = rs.getString(4);
-			
-			units.add(u);
-					
-		}
-		
-		rs.close();	
+
 		
 		query = "select category_id, name from category order by name";
 		
