@@ -53,6 +53,7 @@ public class SpectralFile {
 							// http://www.brockmann-consult.de/beam/doc/help/BeamDimapFormat.html
 	private String interleave;
 	private int byte_order; // little (0) or big endian (1)
+	private boolean is_calibration_file = false; // e.g. available for ASD: ILL, REF and RAW files
 	private int foreoptic_degrees; // e.g. available for ASD
 	private int calibration_series = -1; // e.g. available for ASD
 	private String instrument_number = null; // e.g. available for ASD
@@ -418,6 +419,10 @@ public class SpectralFile {
 	@XmlElement(name="interleave")
 	public String getInterleave() { return this.interleave; }
 	public void setInterleave(String interleave) { this.interleave = interleave; }
+	
+	@XmlElement(name="is_calibration_file")
+	public boolean isCalibrationFile() { return this.is_calibration_file; }
+	public void setCalibrationFile(boolean is_calibration_file) { this.is_calibration_file = is_calibration_file; }		
 	
 	@XmlElement(name="is_specpr_file")
 	public boolean isSpecprFile() { return this.is_specpr_file; }
