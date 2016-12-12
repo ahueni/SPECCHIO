@@ -22,6 +22,7 @@ public class attribute {
 	@XmlElement public String default_storage_field;
 	@XmlElement public String description;
 	@XmlElement public int cardinality;
+	@XmlElement public boolean is_boolean_value = false;
 	
 	public String getName()
 	{
