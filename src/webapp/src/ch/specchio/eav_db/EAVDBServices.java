@@ -136,7 +136,7 @@ public class EAVDBServices extends Thread {
 		if (mp.getEavId() == 0) // only insert if not yet existing
 		{		
 			get_metaparameter_attribute_and_unit_ids(mp);
-			int eav_id = insert_eav(campaign_id, mp.getDefaultStorageField(), mp.getValue(), mp.getAttributeId(), mp.getUnitId());
+			int eav_id = insert_eav(campaign_id, mp.getDefaultStorageField(), mp.getEAVValue(), mp.getAttributeId(), mp.getUnitId());
 			mp.setEavId(eav_id);
 		}
 		return mp.getEavId();
