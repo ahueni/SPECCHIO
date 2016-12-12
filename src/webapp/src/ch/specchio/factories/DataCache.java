@@ -1099,6 +1099,25 @@ public class DataCache {
 
 	}
 	
+	public Sensor get_sensorByCompanyAndNoOfBands(String company, int number_of_bands)
+	{
+		Sensor sensor = null;
+		Sensor s;
+		
+			// search through sensor list
+			ListIterator<Sensor> li = sensors.listIterator();
+	
+			while(li.hasNext() && sensor == null)
+			{
+				s = li.next();
+				if(s.getManufacturerShortName().get_value().equals(company) && s.getNumberOfChannels().get_value() == number_of_bands)
+					sensor = s;			
+			}
+
+		return sensor;		
+
+	}	
+	
 	// returns the sensor_id based on information read from the input file
 	// or 'null' if sensor could not be found in the database
 	public Integer get_sensor_id_for_file(SpectralFile spec_file, int spec_no, String username, SpecchioMessage msg) throws SQLException, SPECCHIOFactoryException {
@@ -1139,7 +1158,7 @@ public class DataCache {
 				// last case: for ASD calibration files where the instrument type number
 				// is set to zero for the *.ILL and *.REF files
 				if (spec_file.getCompany().equals("ASD") && spec_file.getInstrumentTypeNumber() == 0) {
-					s = get_sensor(new Float[spec_file.getNumberOfChannels(0)]);
+					s = get_sensorByCompanyAndNoOfBands(spec_file.getCompany(), spec_file.getNumberOfChannels(spec_no));
 					if (s == null)
 						return sensor_id; // "null"
 					else
