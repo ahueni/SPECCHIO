@@ -737,6 +737,16 @@ public interface SPECCHIOClient {
 	
 	
 	/**
+	 * Get the identifiers of all spectra that match a full text search.
+	 * 
+	 * @param search_str		the search string
+	 * 
+	 * @return an array list of spectrum identifiers
+	 */
+	public ArrayList<Integer> getSpectrumIdsMatchingFullTextSearch(String search_str) throws SPECCHIOClientException;
+	
+	
+	/**
 	 * Get the spectrum identifiers that match a given query.
 	 * 
 	 * @param query	the query
