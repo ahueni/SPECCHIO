@@ -375,6 +375,10 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.DN)) {
 				getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
 			}
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.Irradiance)) {
+				getSubHierarchyId(subhierarchies, hierarchy_id, "Irradiance");
+			}			
 
 			
 		}
@@ -933,7 +937,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			
 			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.DN)) {
 				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("DN"))));
+			}
+			
+			if (spec_file.getMeasurementUnits(0).equals(MeasurementUnit.Irradiance)) {
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("Irradiance"))));
 			}			
+			
+			
+			
 
 		}		
 		
