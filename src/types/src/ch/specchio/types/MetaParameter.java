@@ -10,7 +10,7 @@ import ch.specchio.jaxb.XmlMetaParameterValueAdapter;
  * This class represents a metadata parameter.
  */
 @XmlRootElement(name="meta_parameter")
-@XmlSeeAlso({MetaDate.class,MetaDocument.class,MetaFile.class,MetaImage.class,MetaMatrix.class,MetaSimple.class,MetaTaxonomy.class,MetaLink.class})
+@XmlSeeAlso({MetaDate.class,MetaDocument.class,MetaFile.class,MetaImage.class,MetaMatrix.class,MetaSimple.class,MetaTaxonomy.class,MetaLink.class,MetaBoolean.class})
 public abstract class MetaParameter {
 
 	private String default_storage_field = null;
@@ -25,6 +25,7 @@ public abstract class MetaParameter {
 	private Integer eav_id = 0;
 	private String description; // help string
 	private String annotation;
+	private Boolean is_boolean_value = false; // setting for integer values acting as booleans
 	
 	protected MetaParameter() {
 		
@@ -59,6 +60,7 @@ public abstract class MetaParameter {
 		this.unit_id = attr.default_unit_id;
 		this.default_storage_field = attr.getDefaultStorageField();
 		this.description = attr.description;
+		this.is_boolean_value = attr.is_boolean_value;
 	}
 	
 	
@@ -85,6 +87,13 @@ public abstract class MetaParameter {
 	@XmlElement(name="default_storage_field")
 	public String getDefaultStorageField() { return this.default_storage_field; }
 	public void setDefaultStorageField(String default_storage_field) { this.default_storage_field = default_storage_field; }
+	
+	
+	@XmlElement(name="is_boolean_value")
+	public Boolean getIsBooleanValue() { return this.is_boolean_value; }
+	public void setIsBooleanValue(Boolean is_boolean_value) { this.is_boolean_value = is_boolean_value; }
+	
+	
 	
 	@XmlElement(name="eav_id")
 	public Integer getEavId() { return this.eav_id; }
@@ -154,10 +163,16 @@ public abstract class MetaParameter {
 		
 	}
 	
+	// values converted for DB insert: by default just the values as is
+	public Object getEAVValue() {
+		
+		return this.value;
+		
+	}	
 	
 	public void setValue(Object value) throws MetaParameterFormatException {
 		
-		this.value = value;
+			this.value = value;
 		
 	}
 	
@@ -209,6 +224,8 @@ public abstract class MetaParameter {
 			mp = new MetaDocument(attr);
 		else if (attr.default_storage_field.equals("taxonomy_id"))
 			mp = new MetaTaxonomy(attr);
+		else if (attr.is_boolean_value)
+			mp = new MetaBoolean(attr);		
 		else
 			mp = new MetaSimple(attr);
 		
@@ -225,8 +242,7 @@ public abstract class MetaParameter {
 		
 		if (attr.getDefaultStorageField().equals("datetime_val") && MetaDate.supportsValue(meta_value)) {
 			mp = new MetaDate(attr, meta_value);
-		}
-		else if (attr.getDefaultStorageField().equals("spectrum_id") && MetaLink.supportsValue(meta_value)) {
+		} else if (attr.getDefaultStorageField().equals("spectrum_id") && MetaLink.supportsValue(meta_value)) {
 			mp = new MetaLink(attr, meta_value);
 		} else if (MetaImage.supportsValue(meta_value)) {
 			mp = new MetaImage(attr, meta_value);
@@ -236,6 +252,8 @@ public abstract class MetaParameter {
 			mp = new MetaMatrix(attr, meta_value);
 		} else if (attr.getDefaultStorageField().equals("taxonomy_id") && MetaTaxonomy.supportsValue(meta_value)) {
 			mp = new MetaTaxonomy(attr, meta_value);
+		} else if (attr.is_boolean_value) {
+			mp = new MetaBoolean(attr, meta_value);				
 		} else {
 			mp = new MetaSimple(attr, meta_value);
 		}
