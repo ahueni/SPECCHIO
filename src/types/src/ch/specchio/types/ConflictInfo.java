@@ -12,6 +12,10 @@ import ch.specchio.jaxb.XmlMapAdapter;
 @XmlSeeAlso(ConflictStruct.class)
 public class ConflictInfo {
 	
+	public static final int non_existent = 0;
+	public static final int no_conflict = 1;
+	public static final int conflict = 2;
+	
 	private Hashtable<Integer, ConflictStruct> conflict_structs = new Hashtable<Integer, ConflictStruct>();
 	
 	public ConflictInfo()
