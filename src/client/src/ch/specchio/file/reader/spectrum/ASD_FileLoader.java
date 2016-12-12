@@ -43,16 +43,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		asd_file.setFilename(file.getName());
 		asd_file.setFileFormatName(this.file_format_name);
 		
-		// spectrum number is contained in the extension for normal ASD files
-		try {			
-			MetaParameter mp = MetaParameter.newInstance(this.attributes_name_hash.get("Spectrum Number"));
-			mp.setValue(Integer.valueOf(asd_file.getExt()), "RAW");
-			smd.addEntry(mp);				
-			
-		} catch (NumberFormatException e) {
-			// exception: must be a system calibration file
-//			asd_file.spectra_numbers[0] = 0;
-		}	
+
 						
 		asd_file.addSpectrumFilename(asd_file.getFilename());
 		
@@ -82,6 +73,17 @@ public class ASD_FileLoader extends SpectralFileLoader {
 	
 	public void read_ASD_header(DataInputStream in, SpectralFile hdr) throws IOException, MetaParameterFormatException
 	{
+		
+		// spectrum number is contained in the extension for normal ASD files
+		try {			
+			MetaParameter mp = MetaParameter.newInstance(this.attributes_name_hash.get("Spectrum Number"));
+			mp.setValue(Integer.valueOf(asd_file.getExt()), "RAW");
+			smd.addEntry(mp);				
+			
+		} catch (NumberFormatException e) {
+			// exception: must be a system calibration file
+			asd_file.setCalibrationFile(true);
+		}			
 		
 		// read the company name
 		hdr.setCompany(read_string(in, 3));
@@ -190,6 +192,55 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		// read instrument number
 		hdr.setInstrumentNumber(read_short(in).toString());
 		
+		if(this.asd_file.isCalibrationFile())
+		{
+			// try to get instrument number and calibration from file name
+			if(asd_file.getFilename().endsWith(".REF") || asd_file.getFilename().endsWith(".ref") )
+			{			
+				if (asd_file.getBasename().startsWith("BSE") || asd_file.getBasename().startsWith("bse"))
+				{
+					String no_and_cal = asd_file.getBasename().substring(3);
+					
+					asd_file.setInstrumentNumber(no_and_cal.substring(0, no_and_cal.length()-1));
+					
+					asd_file.setCalibrationSeries(Integer.valueOf(no_and_cal.substring(no_and_cal.length()-1, no_and_cal.length())));
+				}
+				
+				if(asd_file.getBasename().startsWith("ABS") || asd_file.getBasename().startsWith("abs"))
+				{				
+					String[] tokens = asd_file.getBasename().substring(3).split("_");
+					
+					String no_and_cal = tokens[0];
+					
+					asd_file.setInstrumentNumber(no_and_cal.substring(0, no_and_cal.length()-1));
+					
+					asd_file.setCalibrationSeries(Integer.valueOf(no_and_cal.substring(no_and_cal.length()-1, no_and_cal.length())));
+				}
+				
+				
+			}
+			
+			if(asd_file.getFilename().endsWith(".ILL") || asd_file.getFilename().endsWith(".ill") )
+			{
+				String no_and_cal = asd_file.getBasename().substring(3);				
+				asd_file.setInstrumentNumber(no_and_cal.substring(0, no_and_cal.length()-1));				
+				asd_file.setCalibrationSeries(Integer.valueOf(no_and_cal.substring(no_and_cal.length()-1, no_and_cal.length())));					
+			}
+			
+			if(asd_file.getFilename().endsWith(".raw") || asd_file.getFilename().endsWith(".raw") )
+			{
+				String no_and_cal = asd_file.getBasename().substring(2);				
+				asd_file.setInstrumentNumber(no_and_cal.substring(0, no_and_cal.length()-1));				
+				asd_file.setCalibrationSeries(Integer.valueOf(no_and_cal.substring(no_and_cal.length()-1, no_and_cal.length())));	
+				
+				String fov_str = asd_file.getBasename().substring(0, 1);
+				
+				
+				
+			}			
+			
+		}
+		
 		// skip to sample count
 		skip(in, 27);
 		
@@ -261,8 +312,17 @@ public class ASD_FileLoader extends SpectralFileLoader {
 //		formatter.setTimeZone(tz);
 		
 		//String out=formatter.format(cal.getTime());		
+		
+		if(!this.asd_file.isCalibrationFile())
+		{
+			return new DateTime(year, month+1, mday, hour, min, sec, DateTimeZone.UTC); // joda months start at 1
+		}
+		else
+		{
+			return new DateTime(year, 1, 1, 0, 0, 0, DateTimeZone.UTC); // joda months start at 1
+		}
 						
-		return new DateTime(year, month+1, mday, hour, min, sec, DateTimeZone.UTC); // joda months start at 1
+		
 	}
 	
 	spatial_pos read_gps_data(DataInputStream in) throws IOException
