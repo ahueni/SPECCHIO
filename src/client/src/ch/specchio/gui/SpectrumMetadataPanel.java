@@ -24,6 +24,7 @@ import javax.activation.MimetypesFileTypeMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -56,6 +57,7 @@ import ch.specchio.metadata.MD_Field;
 import ch.specchio.metadata.MD_Spectrum_Field;
 import ch.specchio.types.Capabilities;
 import ch.specchio.types.CategoryTable;
+import ch.specchio.types.MetaBoolean;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaLink;
 import ch.specchio.types.MetaDocument;
@@ -369,6 +371,10 @@ public class SpectrumMetadataPanel extends JPanel {
 						}
 						
 					}
+					
+					if (mp instanceof MetaBoolean) {
+						value = mp.getValue();
+					}
 				
 					if (field != null) {
 						
@@ -381,7 +387,7 @@ public class SpectrumMetadataPanel extends JPanel {
 						
 						// notify the metadata change listeners
 						fireMetadataFieldAdded(field);
-						if (mp instanceof MetaFile) {
+						if (mp instanceof MetaFile || mp instanceof MetaBoolean) {
 							// adding a file changes the value as well
 							fireMetadataFieldChanged(field, value);
 						}
@@ -721,7 +727,10 @@ public class SpectrumMetadataPanel extends JPanel {
 				return new SpectrumFileEavMetadataComponent(container, field);
 			} else if (mp instanceof MetaDocument) {
 				return new SpectrumFileEavMetadataComponent(container, field);
-			} else {
+			} else if (mp instanceof MetaBoolean) {
+				return new SpectrumBooleanEavMetadataComponent(container, field);
+			} 
+			else {
 				return new SpectrumSimpleEavMetadataComponent(container, field);
 			}
 			
@@ -1851,6 +1860,7 @@ public class SpectrumMetadataPanel extends JPanel {
 						TaxonomyNodeObject taxonomy;
 						taxonomy = specchioClient.getTaxonomyNode(tax_id);
 						selectButton.setText(taxonomy.getName());
+						selectButton.setToolTipText(taxonomy.getDescription());
 						
 						// notify listeners of the change
 						fireMetadataFieldChanged(getField(), taxonomy_id);
@@ -1915,6 +1925,132 @@ public class SpectrumMetadataPanel extends JPanel {
 		
 	}
 	
+	
+	/**
+	 * Component for manipulating booleans.
+	 */
+	private class SpectrumBooleanEavMetadataComponent extends SpectrumEavMetadataComponent implements ActionListener {
+		
+		/** serialisation version identifier */
+		private static final long serialVersionUID = 1L;
+		
+		/** the "checkbox"  */
+		private JCheckBox check;;
+		
+		/** the text field for non-editable display */
+		private JTextField text;
+		
+		/** action command for the "select" button */
+		private static final String SELECT = "Select";
+		
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param container	the category container panel to which this component belongs
+		 * @param field	the metadata field represented by this component
+		 * 
+		 * @throws SPECCHIOClientException	could not contact the server
+		 */
+		public SpectrumBooleanEavMetadataComponent(SpectrumMetadataCategoryContainer container, MD_EAV_Field field) throws SPECCHIOClientException {
+			
+			super(container, field);
+
+			String displayString = "NIL";
+			if(!fieldHasMultipleValues()) {				
+				
+				check = new JCheckBox();
+			
+				check.setSelected((Boolean) field.getMetaParameter().getValue());
+			}
+			else
+			{
+				displayString = "-- multiple taxa --";
+				check = new JCheckBox(displayString, false);
+				check.setEnabled(false);
+			}
+												
+			// create a button for selecting the taxonomy
+			check.setActionCommand(SELECT);
+			check.addActionListener(this);
+			add(check);
+			
+			// create a text field but don't display it yet
+//			text = new JTextField(displayString, 30);
+//			text.setEditable(false);
+			
+			
+		}
+		
+		
+		/**
+		 * Button handler.
+		 * 
+		 * @param	the event
+		 */
+		public void actionPerformed(ActionEvent event) {
+			
+			if (SELECT.equals(event.getActionCommand())) {
+			
+				// notify listeners of the change
+				fireMetadataFieldChanged(getField(), this.check.isSelected());
+
+				
+			} else {
+				
+				// pass pop-up menu actions to the super class
+				super.actionPerformed(event);
+				
+			}
+			
+		}
+		
+		
+		/**
+		 * Make the field editable or not.
+		 * 
+		 * @param editable true to make the field editable, false otherwise
+		 */
+		public void setEditable(boolean editable) {
+			
+			if (editable) {
+				// display the combo box
+				//remove(text);
+				add(check);
+			} else {
+				// display the label
+				remove(check);
+				//add(text);
+			}
+			
+			// force re-draw
+			revalidate();
+			repaint();
+			
+		}
+		
+		
+		/**
+		 * Enable or disable the field.
+		 *
+		 * @param enabled	true or false
+		 */
+		public void setEnabled(boolean enabled) {
+			
+			super.setEnabled(enabled);
+			check.setEnabled(enabled && !fieldHasMultipleValues());
+			
+		}
+
+
+		@Override
+		public JComponent getInputComponent() {
+			return check;
+		}
+		
+	}
+	
+		
 	
 	/**
 	 * Component for manipulating spectrum links.
