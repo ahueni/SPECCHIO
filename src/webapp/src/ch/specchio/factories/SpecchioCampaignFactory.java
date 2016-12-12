@@ -172,6 +172,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 				User investigator = uf.getUser(userId);
 				if (investigator != null) {
 					campaign.setInvestigator(investigator.toString());
+					campaign.setUser(investigator);
 				}
 				uf.dispose();
 			}
