@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.xml.bind.UnmarshalException;
 
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -106,6 +107,13 @@ public class SPECCHIOWebClientException extends SPECCHIOClientException {
 	}
 	
 	
+	public SPECCHIOWebClientException(javax.ws.rs.WebApplicationException ex) {
+		super(ex.getCause().getMessage(), ex);
+		
+		userMessage = message;
+	}
+
+
 	/**
 	 * Get an error message suitable for displaying to the user.
 	 *
