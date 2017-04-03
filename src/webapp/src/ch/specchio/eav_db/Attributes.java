@@ -23,7 +23,7 @@ public class Attributes {
 	
 	public boolean new_attributes_were_inserted = false;
 
-	public int boolean_unit_id;
+	public int boolean_unit_id = -1;
 
 	
 	public Attributes(SQL_StatementBuilder SQL) throws SQLException
