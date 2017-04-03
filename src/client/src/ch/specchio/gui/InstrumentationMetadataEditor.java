@@ -2,14 +2,18 @@ package ch.specchio.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.util.Vector;
 
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 
+import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -18,6 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
+import javax.swing.plaf.metal.MetalComboBoxUI;
 
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.UserRoles;
@@ -33,7 +40,7 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 	
 
 	private static final long serialVersionUID = 1L;
-	JComboBox instrument_combo, reference_combo;
+	SteppedComboBox instrument_combo, reference_combo;
 	JTabbedPane metadata_tabs;
 	InstrumentMetadataGroup instrument_data_group;
 	ReferenceMetadataGroup reference_data_group;
@@ -96,11 +103,13 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 				GridbagLayouter control_panel_l = new GridbagLayouter(current_instrument_panel);
 					
 				// add instrument combo
-				instrument_combo = new JComboBox();
+				instrument_combo = new SteppedComboBox();
 				load_instruments();
 				//current_instrument_panel.add(instrument_combo);
 				combo_table_data c = (combo_table_data) instrument_combo.getSelectedItem();			
 				instrument_combo.addActionListener(imde); // actions handled in metadata editor instance
+				instrument_combo.setPreferredComboWidth(50);
+								
 				constraints.gridx = 0;
 				constraints.gridy = 0;		
 				control_panel_l.insertComponent(instrument_combo, constraints);
@@ -151,7 +160,7 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 				GridbagLayouter curr_reference_panel_l = new GridbagLayouter(current_reference_panel);
 				
 				// add reference combo
-				reference_combo = new JComboBox();
+				reference_combo = new SteppedComboBox();
 				load_references();
 				combo_table_data cr = (combo_table_data) reference_combo.getSelectedItem();			
 				reference_combo.addActionListener(imde); // actions handled in metadata editor instance
@@ -485,3 +494,8 @@ public class InstrumentationMetadataEditor extends MetaDataEditorBase {
 	
 
 }
+
+
+
+
+
