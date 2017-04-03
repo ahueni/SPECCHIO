@@ -11,5 +11,5 @@ INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `descrip
 
 
 -- db version
-INSERT INTO `specchio`.`schema_info` (`version`, `date`) VALUES ('3.2.1', CURDATE());
+INSERT INTO `specchio`.`schema_info` (`version`, `date`) VALUES ('3.21', CURDATE());
 
