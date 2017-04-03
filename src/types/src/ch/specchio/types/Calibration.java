@@ -1,11 +1,18 @@
 package ch.specchio.types;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import ch.specchio.jaxb.XmlDateAdapter;
+//import ch.specchio.jaxb.XmlIntegerAdapter;
 
 
 /**
@@ -24,11 +31,13 @@ public class Calibration {
 	protected Integer calibration_id;
 	protected int cal_factors_id;
 	protected int uncertainty_id;		
-	private int calibration_no;
+	//private int calibration_no;
+	private String name = "";
 	private String comments;	
 	private double[] factors;
 	private double[] uncertainty;
 	private int measurement_unit_id;
+	private int field_of_view; // indicates the FOV in degrees in case there is a FOV dependency 
 	
 	public Calibration() {
 		calibration_id = 0;
@@ -58,9 +67,9 @@ public class Calibration {
 		this.comments = comments; }
 
 	@XmlElement(name="calibration_number")
-	public int getCalibration_number() {
+	public int getCalibrationNumber() {
 		return calibration_number; }
-	public void setCalibration_number(int calibration_number) {
+	public void setCalibrationNumber(int calibration_number) {
 		this.calibration_number = calibration_number; }
 
 	@XmlElement(name="calibration_id")
@@ -78,9 +87,9 @@ public class Calibration {
 	public Integer getCalibrationId() { return this.calibration_id; }
 	public void setCalibrationId(Integer calibration_id) { this.calibration_id = calibration_id; }
 	
-	@XmlElement(name="calibration_no")
-	public int getCalibrationNumber() { return this.calibration_no; }
-	public void setCalibrationNumber(int calibration_no) { this.calibration_no = calibration_no; }
+//	@XmlElement(name="calibration_no")
+//	public int getCalibrationNumber() { return this.calibration_no; }
+//	public void setCalibrationNumber(int calibration_no) { this.calibration_no = calibration_no; }
 	
 	@XmlElement(name="uncertainty_id")
 	public int getUncertainty_id() {
@@ -121,5 +130,71 @@ public class Calibration {
 	public void setMeasurement_unit_id(int measurement_unit_id) {
 		this.measurement_unit_id = measurement_unit_id;
 	}
+	
+
+	public int getField_of_view() {
+		return field_of_view;
+	}
+	public void setField_of_view(int field_of_view) {
+		this.field_of_view = field_of_view;
+	}	
+	
+	
+	
+	public String getName() {
+		return name;
+	}
+
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+
+	public InputStream getFactorsInputStream()
+	{
+		return getInputStream(this.factors);
+	}
+	
+	public InputStream getUncertaintyInputStream()
+	{
+		return getInputStream(this.getUncertainty());
+	}	
+	
+	
+	/**
+	 * Write the floats into a ByteArrayOutputStream, store as byte array,
+	 * the open as ByteArrayInputStream to use in an SQL statement
+	 */
+	private InputStream getInputStream(double[] data) {
+		byte[] temp_buf;
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		DataOutput dos = new DataOutputStream(baos);
+
+
+			for (int i = 0; i < data.length; i++) {
+				try {
+					dos.writeFloat((float) data[i]);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				catch (NullPointerException e){
+					//temp_buf = new byte[no_of_channels.get(0)];
+					
+//					// log the error
+//					file_errors.add(new SpecchioMessage("Spectrum contains null values.", SpecchioMessage.ERROR));
+					
+					break;
+				}
+			}
+
+		temp_buf = baos.toByteArray();
+
+		InputStream refl = new ByteArrayInputStream(temp_buf);
+
+		return refl;
+	}
+
+
 
 }
