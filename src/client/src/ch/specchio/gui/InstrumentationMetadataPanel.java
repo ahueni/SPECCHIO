@@ -477,6 +477,15 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 		// create GUI using grid layout		
 		constraints.gridx = 0;
 		constraints.gridy = 0;
+		
+		l.insertComponent(new JLabel("Calibration Name:"), constraints);									
+		calibration_no = new JTextField(cm.getName(), 10);
+		calibration_no.addKeyListener(this);
+		constraints.gridx = 1;
+		l.insertComponent(calibration_no, constraints);				
+		
+		constraints.gridx = 0;
+		constraints.gridy++;		
 		l.insertComponent(new JLabel("Cal Date:"), constraints);
 		calibration_date = new JCalendarCombo(
 			    JCalendar.DISPLAY_DATE | JCalendar.DISPLAY_TIME,
@@ -503,6 +512,18 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 		calibration_no.addKeyListener(this);
 		constraints.gridx = 1;
 		l.insertComponent(calibration_no, constraints);		
+		
+		if(cm.getField_of_view() != 0)
+		{
+			constraints.gridx = 0;
+			constraints.gridy++;
+			l.insertComponent(new JLabel("FOV:"), constraints);									
+			comment = new JTextField(Integer.toString(cm.getField_of_view()), 20);
+			comment.addKeyListener(this);
+			constraints.gridx = 1;
+			l.insertComponent(comment, constraints);
+			
+		}
 		
 		constraints.gridx = 0;
 		constraints.gridy++;
@@ -621,9 +642,9 @@ class InstrumentMetadataPanel extends InstrumentationMetadataPanel implements Ac
 	private Sensor sensors[];
 	
 	private JTextField instrument_name;
-	private JComboBox instrument_owner;
+	private SteppedComboBox instrument_owner;
 	private JTextField serial_no;
-	private JComboBox sensor;
+	private SteppedComboBox sensor;
 	/** button for adding a new institute */
 	private JButton addInstituteButton;
 	
@@ -652,12 +673,13 @@ class InstrumentMetadataPanel extends InstrumentationMetadataPanel implements Ac
 		constraints.gridx = 0;
 		constraints.gridy++;
 		l.insertComponent(new JLabel("Instrument owner:"), constraints);									
-		instrument_owner = new JComboBox();
+		instrument_owner = new SteppedComboBox();	
 		instrument_owner.addItem(null);
 		for (Institute owner : owners) {
 			instrument_owner.addItem(owner);
 		}
 		instrument_owner.addActionListener(this);
+		instrument_owner.setPreferredComboWidth(50);
 		constraints.gridx = 1;
 		l.insertComponent(instrument_owner, constraints);
 		
@@ -684,9 +706,10 @@ class InstrumentMetadataPanel extends InstrumentationMetadataPanel implements Ac
 		constraints.gridx = 0;
 		constraints.gridy++;
 		l.insertComponent(new JLabel("Sensor:"), constraints);									
-		sensor = new JComboBox(sensors);
+		sensor = new SteppedComboBox(sensors);
 		sensor.addActionListener(this);
 		constraints.gridx = 1;
+		sensor.setPreferredComboWidth(50);
 		l.insertComponent(sensor, constraints);
 		
 	}
@@ -878,7 +901,7 @@ class PictureMetadataPanel extends InstrumentationMetadataPanel implements Actio
 		new_pictures = new ArrayList<FigureStruct>();
 		deleted_pictures = new ArrayList<FigureStruct>();	
 		
-		setPreferredSize(new Dimension(500, 350));
+		setPreferredSize(new Dimension(250, 170));
 		
 	}
 	
