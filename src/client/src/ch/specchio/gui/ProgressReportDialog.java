@@ -37,6 +37,22 @@ public class ProgressReportDialog extends JDialog implements ProgressReportInter
 		init(include_component_label, columns);
 	}
 	
+	/**
+	 * Constructor for calling from a frame.
+	 * 
+	 * @param owner						the frame that owns this dialogue
+	 * @param title						the title of the dialogue
+	 * @param include_component_label	include the "component" section?
+	 * @param columns					the number of columns in the "operation" and "component" fields
+	 * @param modal						modal switch
+	 */
+	public ProgressReportDialog(Frame owner, String title, boolean include_component_label, int columns, boolean modal)
+	{
+		super(owner, title + " Progress", modal);	
+		
+		init(include_component_label, columns);
+	}	
+	
 	
 	/**
 	 * Constructor for calling from a dialogue.
@@ -106,6 +122,11 @@ public class ProgressReportDialog extends JDialog implements ProgressReportInter
 	public boolean set_progress(int value)
 	{
 		return progressPanel.set_progress(value);
+	}
+	
+	public void setToDocumentModal()
+	{
+		this.setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
 	}
 
 }
