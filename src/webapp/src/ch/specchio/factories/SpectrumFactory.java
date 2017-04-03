@@ -356,7 +356,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		try {
 			Statement stmt = getStatementBuilder().createStatement();
 		
-			String query = "select spectrum_x_eav.spectrum_id, eav.string_val from spectrum_x_eav, eav where spectrum_x_eav.eav_id = eav.eav_id and eav.string_val like '" + search_str + "'";
+			String query = "select distinct spectrum_x_eav.spectrum_id, eav.string_val from spectrum_x_eav, eav where spectrum_x_eav.eav_id = eav.eav_id and eav.string_val like '" + search_str + "'";
 			
 			ResultSet rs = stmt.executeQuery(query);
 			while (rs.next()) {
@@ -1005,6 +1005,47 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Get the number of spectra in database
+	 * 
+	 * @param String		empty string
+	 * 
+	 * @return the number of spectra in the database
+	 * 
+	 * @throws SPECCHIOFactoryException	could not access the database
+	 */	
+	public int getSpectrumCountInDB() {
+		
+		int count = 0;
+		
+		try {
+			
+			
+			
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			
+			String query = "select count(*) from spectrum";
+			
+			ResultSet rs = stmt.executeQuery(query);
+			
+			while (rs.next()) {				
+				count = rs.getInt(1);
+			}
+			rs.close();
+			stmt.close();
+			
+
+		} catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		return count;
+	}
+	
+	
+	
+	/**
 	 * Get the spectrum data links that refer to a given target and/or reference.
 	 * 
 	 * @param target_ids	the identifiers of the target spectra (null or empty to match all targets)
@@ -1459,5 +1500,6 @@ public class SpectrumFactory extends SPECCHIOFactory {
 
 		
 	}
+
 
 }
