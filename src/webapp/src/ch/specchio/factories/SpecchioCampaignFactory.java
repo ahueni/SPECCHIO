@@ -497,32 +497,35 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			
 			// create SQL-building objects
 			SQL_StatementBuilder SQL = getStatementBuilder();
-			Statement stmt = SQL.createStatement();
+			
 		
 			// insert the campaign into the database
 			String query;
+			String path;
 			
 			if (c.getPath() == null)
 			{
 				query = "INSERT INTO campaign_view(name, path, research_group_id) VALUES (" +
 						SQL.quote_string(c.getName()) + "," +
-						SQL.quote_string("") + "," +
+						"?" + "," +
 						Integer.toString(rg.getId()) +
 						")";
-				
+				path = "";
 			}
 			else
 			{
 				query = "INSERT INTO campaign_view(name, path, research_group_id) VALUES (" +
 					SQL.quote_string(c.getName()) + "," +
-					SQL.quote_string(c.getPath()) + "," +
+					"?" + "," +
 					Integer.toString(rg.getId()) +
 					")";
+				path = c.getPath();
 			}
 			
 			//System.out.println(query);
-			
-			stmt.executeUpdate(query);
+			PreparedStatement stmt = SQL.prepareStatement(query);
+			stmt.setString(1, path);
+			stmt.executeUpdate();
 		
 			// get the campaign id
 			ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
@@ -535,8 +538,8 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			{
 				query = "insert into campaign_path_view values(" + Integer.toString(c.getId()) + ",?)";
 				PreparedStatement pstmt = SQL.prepareStatement(query);
-				for (String path : c.getKnownPaths()) {
-					pstmt.setString(1, path);
+				for (String p : c.getKnownPaths()) {
+					pstmt.setString(1, p);
 					pstmt.executeUpdate();
 				}
 				pstmt.close();
