@@ -13,6 +13,7 @@ import java.util.TimeZone;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -26,6 +27,8 @@ import org.freixas.jcalendar.DateListener;
 import org.freixas.jcalendar.JCalendar;
 import org.freixas.jcalendar.JCalendarCombo;
 
+import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.query_builder.EAVQueryField;
 import ch.specchio.query_builder.QueryCategoryContainer;
 import ch.specchio.query_builder.QueryController;
@@ -33,6 +36,9 @@ import ch.specchio.query_builder.QueryField;
 import ch.specchio.query_builder.QueryForm;
 import ch.specchio.query_builder.SpectrumQueryField;
 import ch.specchio.types.CategoryTable;
+import ch.specchio.types.MetaTaxonomy;
+import ch.specchio.types.TaxonomyNodeObject;
+import ch.specchio.types.attribute;
 
 
 /**
@@ -104,7 +110,7 @@ public class SpectrumQueryPanel extends JPanel {
 			
 			// create and add panels for each category container
 			for (QueryCategoryContainer qcc : form.getContainers()) {
-				SpectrumQueryCategoryContainer panel = new SpectrumQueryCategoryContainer(qcc);
+				SpectrumQueryCategoryContainer panel = new SpectrumQueryCategoryContainer(qcc, this.controller.getSpecchio_client());
 				add(panel);
 			}
 			
@@ -136,6 +142,9 @@ public class SpectrumQueryPanel extends JPanel {
 		
 		/** component factory */
 		private SpectrumQueryComponentFactory factory;
+		
+		/** the client object */
+		public SPECCHIOClient specchioClient;		
 
 		
 		/**
@@ -143,12 +152,14 @@ public class SpectrumQueryPanel extends JPanel {
 		 * 
 		 * @param mdcc	the category container to be displayed in this panel
 		 */
-		public SpectrumQueryCategoryContainer(QueryCategoryContainer qcc) {
+		public SpectrumQueryCategoryContainer(QueryCategoryContainer qcc, SPECCHIOClient specchioClient) {
 			
 			super();
 			
 			// save a reference to the parameters
 			this.qcc = qcc;
+			
+			this.specchioClient = specchioClient;
 			
 			// add a border with the category name
 			Border blackline = BorderFactory.createLineBorder(Color.BLACK);
@@ -161,7 +172,7 @@ public class SpectrumQueryPanel extends JPanel {
 			add(fieldPanel);
 			
 			// add fields
-			factory = new SpectrumQueryComponentFactory(this);
+			factory = new SpectrumQueryComponentFactory(this, specchioClient);
 			ListIterator<QueryField> iter = qcc.getFields().listIterator();
 			while (iter.hasNext()) {
 				
@@ -197,17 +208,19 @@ public class SpectrumQueryPanel extends JPanel {
 		/** the category container panel */
 		private SpectrumQueryCategoryContainer container;
 		
+		/** the client object */
+		public SPECCHIOClient specchioClient;
 		
 		/**
 		 * Constructor.
 		 * 
 		 * @param container	the category container panel to which components will belong
 		 */
-		public SpectrumQueryComponentFactory(SpectrumQueryCategoryContainer container) {
+		public SpectrumQueryComponentFactory(SpectrumQueryCategoryContainer container, SPECCHIOClient specchioClient) {
 			
-			// save a reference to the parameiters for later
+			// save a reference to the parameters for later
 			this.container = container;
-			
+			this.specchioClient = specchioClient;
 		}
 		
 		
@@ -271,6 +284,8 @@ public class SpectrumQueryPanel extends JPanel {
 				return new SpectrumDoubleEavQueryComponent(container, field);
 			} else if ("datetime_val".equals(field.get_fieldname())) {
 				return new SpectrumDateEavQueryComponent(container, field);
+			} else if ("taxonomy_id".equals(field.get_fieldname())) {
+				return new SpectrumTaxonomyEavQueryComponent(container, field, specchioClient);				
 			} else {
 				// this should never happen
 				return null;
@@ -353,6 +368,10 @@ public class SpectrumQueryPanel extends JPanel {
 		
 		/** the panel that contains the controls */
 		private JPanel controlPanel;
+		
+		/** the client object */
+		public SPECCHIOClient specchioClient;
+		
 		
 		/**
 		 * Constructor for a range query.
@@ -904,7 +923,7 @@ public class SpectrumQueryPanel extends JPanel {
 	
 	
 	/**
-	 * Base class for number-valued fields.
+	 * class for date fields.
 	 */
 	private class SpectrumDateEavQueryComponent extends SpectrumEavQueryComponent {
 		
@@ -1027,5 +1046,87 @@ public class SpectrumQueryPanel extends JPanel {
 			
 		
 	}
+	
+	
+	/**
+	 * class for date fields.
+	 */
+	private class SpectrumTaxonomyEavQueryComponent extends SpectrumEavQueryComponent implements ActionListener {
+		
+		/** serialisation version identifier */
+		private static final long serialVersionUID = 1L;
+		private JButton selectButton;
+		
+		
+		/**
+		 * Constructor for a range query.
+		 * 
+		 * @param container	the category container panel to which this component belongs
+		 * @param lower		the lower bound query field
+		 * @param upper		the upper bound query field
+		 */
+		public SpectrumTaxonomyEavQueryComponent(SpectrumQueryCategoryContainer container, EAVQueryField field, SPECCHIOClient specchioClient) {
+			
+			super(container, field, null);
+			this.specchioClient = specchioClient;
+			
+			// create taxonomy field
+			String displayString = "NIL";
+			selectButton = new JButton(displayString);
+			
+			selectButton.setActionCommand("SELECT");
+			selectButton.addActionListener(this);			
+			
+			getControlPanel().add(selectButton);
+		}
+
+
+
+		@Override
+		public void actionPerformed(ActionEvent event) {
+			if ("SELECT".equals(event.getActionCommand())) {
+				
+				try {
+					
+					QueryField f = this.getField(0);
+					
+					String tax_name = f.getLabel();
+					
+					attribute attr = specchioClient.getAttributesNameHash().get(tax_name);
+					
+					MetaTaxonomy mp = (MetaTaxonomy) MetaTaxonomy.newInstance(attr);
+					
+					// show the taxonomy selection dialog
+					TaxonomySelectionDialog d = new TaxonomySelectionDialog(owner, specchioClient, mp);
+					d.setLocation(selectButton.getLocationOnScreen());
+					d.setVisible(true);
+
+					int tax_id = d.getSelectedTaxonomyId();
+					if (tax_id > 0) {
+						Long taxonomy_id = (long) tax_id;
+					
+						// update value of taxonomy button
+						TaxonomyNodeObject taxonomy;
+						taxonomy = specchioClient.getTaxonomyNode(tax_id);
+						selectButton.setText(taxonomy.getName());
+						selectButton.setToolTipText(taxonomy.getDescription());						
+						
+						
+						// notify listeners of the change
+						fireConditionChanged(f, tax_id);
+					}
+					
+				} catch (SPECCHIOClientException ex) {
+					ErrorDialog error = new ErrorDialog(owner, "Could not retrieve taxonomy", ex.getUserMessage(), ex);
+					error.setVisible(true);
+				}
+				
+			}
+			
+		}
+			
+			
+		
+	}	
 
 }
