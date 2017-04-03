@@ -358,13 +358,16 @@ public class SpectrumMetadataPanel extends JPanel {
 					mp.setUnits(specchioClient.getAttributeUnits(a));
 					MD_EAV_Field field = getForm().createEAVField(mp);
 					
-					Object value = null;
+//					Object value = null;
 					if (mp instanceof MetaFile) {
 						// need to load the value from a file
-						value = loadMetaFileValue((MetaFile)mp);
-						if (value != null) {
+						mp = loadMetaFileValue((MetaFile)mp);
+						if (mp.getValue() != null) {
 							// copy the value into the field
-							field.getMetaParameter().setValue(value);
+							field.getMetaParameter().setValue(mp.getValue());
+							field.getMetaParameter().setAnnotation(mp.getAnnotation());
+							fireMetadataAnnotationChanged(field, mp.getAnnotation());
+//							value = mp.getValue();
 						} else {
 							// loading was aborted; prevent addition of the field
 							field = null;
@@ -372,9 +375,9 @@ public class SpectrumMetadataPanel extends JPanel {
 						
 					}
 					
-					if (mp instanceof MetaBoolean) {
-						value = mp.getValue();
-					}
+//					if (mp instanceof MetaBoolean) {
+//						value = mp.getValue();
+//					}
 				
 					if (field != null) {
 						
@@ -387,10 +390,13 @@ public class SpectrumMetadataPanel extends JPanel {
 						
 						// notify the metadata change listeners
 						fireMetadataFieldAdded(field);
-						if (mp instanceof MetaFile || mp instanceof MetaBoolean) {
-							// adding a file changes the value as well
-							fireMetadataFieldChanged(field, value);
-						}
+//						if (mp instanceof MetaFile || mp instanceof MetaBoolean) {
+//							// adding a file changes the value as well
+//							fireMetadataFieldChanged(field, value);
+//						}
+						
+						// always fire a change event
+						fireMetadataFieldChanged(field, mp.getValue());
 						
 					}
 				
@@ -477,7 +483,7 @@ public class SpectrumMetadataPanel extends JPanel {
 		 * 
 		 * @return the object read from the file, or null if the user cancelled or there was an error
 		 */
-		private Object loadMetaFileValue(MetaFile mp)  {
+		private MetaFile loadMetaFileValue(MetaFile mp)  {
 			
 			// create a file chooser
 			JFileChooser fc;
@@ -506,8 +512,10 @@ public class SpectrumMetadataPanel extends JPanel {
 					MimetypesFileTypeMap mimetypes = new MimetypesFileTypeMap();
 					FileInputStream fis = new FileInputStream(file);
 					mp.readValue(fis, mimetypes.getContentType(file));
+					if(MetaImage.class == mp.getClass())
+						mp.setAnnotation(previous_path);
 					
-					return mp.getValue();
+					return mp;
 				}
 				catch (IOException ex) {
 					// read error
@@ -1428,10 +1436,23 @@ public class SpectrumMetadataPanel extends JPanel {
 					if (image != null) {
 						int im_width = ip.image.getImage().getWidth();
 						int im_height = ip.image.getImage().getHeight();
-						int width = 300;
+						int width;
+						int heigth;
 						float factor = im_height / (im_width*1.0f);
 						
-						int heigth = (int) (width*factor);
+						if(im_width > im_height)
+						{
+							width = 300;
+							heigth = (int) (width*factor);
+						}
+						else
+						{
+							width = 200;
+							heigth = (int) (width*factor);
+							
+						}
+												
+						
 						ip.setSize(width, heigth);
 						ip.setPreferredSize(new Dimension(width , heigth));
 						
@@ -1962,10 +1983,11 @@ public class SpectrumMetadataPanel extends JPanel {
 				check = new JCheckBox();
 			
 				check.setSelected((Boolean) field.getMetaParameter().getValue());
+				displayString = field.getMetaParameter().getValue().toString();
 			}
 			else
 			{
-				displayString = "-- multiple taxa --";
+				displayString = "-- multiple values --";
 				check = new JCheckBox(displayString, false);
 				check.setEnabled(false);
 			}
@@ -1976,8 +1998,8 @@ public class SpectrumMetadataPanel extends JPanel {
 			add(check);
 			
 			// create a text field but don't display it yet
-//			text = new JTextField(displayString, 30);
-//			text.setEditable(false);
+			text = new JTextField(displayString, 30);
+			text.setEditable(false);
 			
 			
 		}
@@ -2020,7 +2042,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			} else {
 				// display the label
 				remove(check);
-				//add(text);
+				add(text);
 			}
 			
 			// force re-draw
