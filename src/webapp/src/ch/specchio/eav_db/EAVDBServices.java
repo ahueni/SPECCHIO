@@ -153,16 +153,27 @@ public class EAVDBServices extends Thread {
 		{
 			int eav_id = 0;
 			
+//			String query = "insert into " + this.eav_view_name + " (campaign_id, attribute_id, " + field_name + ", unit_id) " +
+//					"values(" +
+//						String.valueOf(campaign_id) + "," +
+//						String.valueOf(attribute_id) + "," +
+//						SQL.quote_value(value) + "," +
+//						Integer.toString(unit_id) +
+//					")";
+			
+			// switch to prepared statement to avoid SQL injections in strings with e.g. backslashes
 			String query = "insert into " + this.eav_view_name + " (campaign_id, attribute_id, " + field_name + ", unit_id) " +
 					"values(" +
 						String.valueOf(campaign_id) + "," +
 						String.valueOf(attribute_id) + "," +
-						SQL.quote_value(value) + "," +
+						"?" + "," +
 						Integer.toString(unit_id) +
 					")";
+			
 		
-			Statement stmt = SQL.createStatement();
-			stmt.executeUpdate(query);
+			PreparedStatement stmt = SQL.prepareStatement(query);
+			stmt.setString(1, SQL.quote_value(value));
+			stmt.executeUpdate();
 				
 			ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
 				
@@ -217,10 +228,11 @@ public class EAVDBServices extends Thread {
 	
 	public void update_eav_annotation(int eav_id, String annotation) throws SQLException {
 		
-		String query = "update " + this.eav_view_name + " set string_val = '" + annotation + "' where eav_id = " + eav_id;
+		String query = "update " + this.eav_view_name + " set string_val = ? where eav_id = " + eav_id;
 		
-		Statement stmt = SQL.createStatement();
-		stmt.executeUpdate(query);		
+		PreparedStatement stmt = SQL.prepareStatement(query);
+		stmt.setString(1, annotation);
+		stmt.executeUpdate();		
 		
 		stmt.close();
 	}
@@ -1290,6 +1302,17 @@ public class EAVDBServices extends Thread {
 				}
 				else if (string_val != null && binary_val == null)
 				{
+					for(int i=0;i<((String) string_val).length();i++)
+					{
+						if(((String) string_val).charAt(i) == 0)
+						{
+							StringBuilder myName = new StringBuilder((String) string_val);
+							myName.setCharAt(i, '_');
+							string_val = myName.toString();
+							string_val = "!!!!!!!" + string_val;
+						}
+					}
+					
 					mp = MetaParameter.newInstance(attr, string_val);
 				}
 				else if (taxonomy_id != null)
@@ -1331,6 +1354,19 @@ public class EAVDBServices extends Thread {
 					
 					if (string_val != null)
 					{
+						// code to find strings that had null values inserted by SQL injections (e.g. \0 due to path names in Windows)
+//						char c = ((String) string_val).charAt(75);
+//						int ic = c;
+						for(int i=0;i<((String) string_val).length();i++)
+						{
+							if(((String) string_val).charAt(i) == 0)
+							{
+								StringBuilder myName = new StringBuilder((String) string_val);
+								myName.setCharAt(i, '_');
+								string_val = myName.toString();
+								string_val = "!!!!!!!" + string_val;
+							}
+						}
 						mp.setAnnotation((String) string_val);
 					}
 					
@@ -1546,15 +1582,23 @@ public class EAVDBServices extends Thread {
 		
 		String field = ATR.get_default_storage_field(mp.getAttributeId());
 
+//		String query = "update " + get_eav_view_name() +
+//				" set attribute_id = " + mp.getAttributeId() +
+//				", " + field +" = " + SQL.quote_string(mp.valueAsString()) +
+//				", unit_id = " + mp.getUnitId() +
+//				" where eav_id = " + mp.getEavId();
+		
 		String query = "update " + get_eav_view_name() +
 				" set attribute_id = " + mp.getAttributeId() +
-				", " + field +" = " + SQL.quote_string(mp.valueAsString()) +
+				", " + field +" = " + "?" +
 				", unit_id = " + mp.getUnitId() +
 				" where eav_id = " + mp.getEavId();
 		
+		
 		try {
-			Statement stmt = SQL.createStatement();
-			stmt.executeUpdate(query);
+			PreparedStatement stmt = SQL.prepareStatement(query);
+			stmt.setString(1, mp.valueAsString());
+			stmt.executeUpdate();
 			stmt.close();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
