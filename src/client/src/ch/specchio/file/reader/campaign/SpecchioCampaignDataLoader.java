@@ -2,16 +2,24 @@ package ch.specchio.file.reader.campaign;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.ListIterator;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.file.reader.spectrum.*;
+import ch.specchio.spaces.MeasurementUnit;
+import ch.specchio.types.Calibration;
+import ch.specchio.types.Instrument;
+import ch.specchio.types.InstrumentDescriptor;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
 import ch.specchio.types.SpectralFiles;
+import ch.specchio.types.Spectrum;
+import ch.specchio.types.attribute;
 
 public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
@@ -23,6 +31,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	ArrayList<String> file_errors = new ArrayList<String>();
 	private int successful_file_counter;
 	private int parsed_file_counter;
+	private ArrayList<SpectralFileLoader> loaders_of_new_instruments = new ArrayList<SpectralFileLoader>();
 
 	public SpecchioCampaignDataLoader(CampaignDataLoaderListener listener, SPECCHIOClient specchio_client) {
 		super(listener);
@@ -167,7 +176,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 
 
-			ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();			
+			ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();		
+			//ArrayList<SpectralFileLoader> spectral_file_loader_list = new ArrayList<SpectralFileLoader>();	
+			Hashtable<Integer, SpectralFileLoader> spectral_file_loader_hash = new Hashtable<Integer, SpectralFileLoader>();
 
 			// iterate over the files
 			ListIterator<File> file_li = files.listIterator();
@@ -200,6 +211,15 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 								// add to file list
 								spectral_file_list.add(spec_file);
+								
+								// keep a copy of the file loader for new ASD files to insert calibration data later on
+								if(spec_file.getAsdV7())
+								{
+									int id = spec_file.get_asd_instr_and_cal_fov_identifier();
+									if(!spectral_file_loader_hash.containsKey(id))
+										spectral_file_loader_hash.put(id, sfl);
+								
+								}
 
 							}
 							else
@@ -285,6 +305,18 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						insert_result = insert_spectral_file(spec_file, parent_id);
 
 						spectrum_counter += insert_result.getSpectrumIds().size();
+						
+						// check if there was a new instrument inserted and keep in new list for updates of calibration
+						// can only do so for radiances
+						if(spec_file.getAsdV7() && spec_file.getAsdV7RadianceFlag() && !insert_result.getAdded_new_instrument().isEmpty() && insert_result.getAdded_new_instrument().get(0)) // currently only for new ASD files, hence, always first entry
+						{
+							int id = spec_file.get_asd_instr_and_cal_fov_identifier();
+							
+							SpectralFileLoader loader = spectral_file_loader_hash.get(id);
+							loader.insert_result = insert_result;
+							
+							loaders_of_new_instruments.add(loader);
+						}
 
 						if(insert_result.getSpectrumIds().size() > 0) successful_file_counter++;
 
@@ -320,6 +352,75 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 					index = index + 1;
 
 				}
+				
+				// insert new instrument calibration factors if available: only ASD new binary file version till now ...
+//				if(loaders_of_new_instruments.size()>0)
+//				{
+//					for(SpectralFileLoader loader : loaders_of_new_instruments)
+//					{
+//						// get involved instrument id by getting the metadata of the inserted spectrum
+//						Spectrum s = specchio_client.getSpectrum(loader.insert_result.getSpectrumIds().get(0), false);
+//						
+//						ASD_FileFormat_V7_FileLoader loader_ = (ASD_FileFormat_V7_FileLoader) loader;
+//						
+//						// lamp
+//						Calibration c = new Calibration();																		
+//						c.setInstrumentId(s.getInstrumentId());
+//						c.setCalibrationNumber(loader_.getSpec_file().getCalibrationSeries());
+//						c.setName("LMP");
+//						c.setComments("Calibration Lamp Radiance");
+//						c.setMeasurement_unit_id(specchio_client.getMeasurementUnitFromCoding(MeasurementUnit.Radiance).getUnitId());
+//						
+//						double[] doubleArray = new double[loader_.getSpec_file().getNumberOfChannels(0)];
+//						for (int i = 0; i < loader_.getSpec_file().getNumberOfChannels(0); i++) {
+//						    doubleArray[i] = loader_.lamp_calibration_data[0][i];  // no casting needed
+//						}
+//						
+//						c.setFactors(doubleArray);						
+//						
+//						specchio_client.insertInstrumentCalibration(c);
+//						
+//						
+//						// reference panel
+//						c.setName("BSE");
+//						c.setComments("Calibration Reference Panel Reflectance");
+//						c.setMeasurement_unit_id(specchio_client.getMeasurementUnitFromCoding(MeasurementUnit.Reflectance).getUnitId());
+//						
+//						for (int i = 0; i < loader_.getSpec_file().getNumberOfChannels(0); i++) {
+//						    doubleArray[i] = loader_.base_calibration_data[0][i];  // no casting needed
+//						}
+//						
+//						c.setFactors(doubleArray);												
+//						specchio_client.insertInstrumentCalibration(c);
+//						
+//						// Digital Numbers obtained during calibration
+//						c.setName("DN");
+//						c.setComments("Instrument Digital Numbers during Calibration for FOV =" + loader_.getSpec_file().getForeopticDegrees() + " degrees");
+//						c.setMeasurement_unit_id(specchio_client.getMeasurementUnitFromCoding(MeasurementUnit.DN).getUnitId());
+//						
+//						for (int i = 0; i < loader_.getSpec_file().getNumberOfChannels(0); i++) {
+//						    doubleArray[i] = loader_.fibre_optic_data[0][i];  // no casting needed
+//						}
+//						
+//						c.setFactors(doubleArray);		
+//						c.setField_of_view(loader_.getSpec_file().getForeopticDegrees());
+//						specchio_client.insertInstrumentCalibration(c);
+//							
+//					}					
+//					
+//				}
+				
+				// check if new calibrations must be added for ASDs
+				Enumeration<SpectralFileLoader> asd_file_loaders = spectral_file_loader_hash.elements();
+				while(asd_file_loaders.hasMoreElements())
+				{					
+					SpectralFileLoader loader = asd_file_loaders.nextElement();
+					if(loader.getSpec_file().getAsdV7RadianceFlag()) // only for radiance data
+						insert_instrument_calibration_if_required(loader);
+				}
+				
+				
+				
 			}
 
 		} 
@@ -365,6 +466,106 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		return results;
 		
 	}
+	
+	
+	public void insert_instrument_calibration_if_required(SpectralFileLoader loader)
+	{
+		
+
+		ASD_FileFormat_V7_FileLoader loader_ = (ASD_FileFormat_V7_FileLoader) loader;
+							
+		Instrument instr = specchio_client.getInstrumentForSpectralFile(loader_.getSpec_file());
+		
+		Calibration c = new Calibration();	
+		c.setInstrumentId(instr.getInstrumentId());
+		c.setCalibrationNumber(loader_.getSpec_file().getCalibrationSeries());
+		
+		boolean exists = specchio_client.instrumentCalibrationExists(c);
+		
+		if(!exists)
+		{
+			// insert new calibration
+			insert_asd_instrument_calibration(loader_, instr, "LMP");
+			insert_asd_instrument_calibration(loader_, instr, "BSE");
+			insert_asd_instrument_calibration(loader_, instr, "DN");			
+		}	
+		else
+		{
+			// calibration exists, now check if that particular foreoptic exists
+			c.setField_of_view(loader_.getSpec_file().getForeopticDegrees());
+			
+			exists = specchio_client.instrumentCalibrationExists(c);
+			
+			if(!exists)
+			{
+				// this foreoptic calibration does not yet exist
+				insert_asd_instrument_calibration(loader_, instr, "DN");
+				
+			}
+		}
+		
+		
+
+		
+		
+		
+	}
+	
+	
+	private void insert_asd_instrument_calibration(ASD_FileFormat_V7_FileLoader loader, Instrument instr, String cal_type)
+	{
+		
+		double[] doubleArray = null;
+		
+		Calibration c = new Calibration();																		
+		c.setInstrumentId(instr.getInstrumentId());
+		c.setCalibrationNumber(loader.getSpec_file().getCalibrationSeries());		
+		
+		// lamp
+		if(cal_type == "LMP")
+		{
+			c.setName("LMP");
+			c.setComments("Calibration Lamp Radiance");
+			c.setMeasurement_unit_id(specchio_client.getMeasurementUnitFromCoding(MeasurementUnit.Radiance).getUnitId());
+			doubleArray = get_double_array(loader, loader.lamp_calibration_data);			
+		}
+		
+		
+		// reference panel
+		if(cal_type == "BSE")
+		{
+			c.setName("BSE");
+			c.setComments("Calibration Reference Panel Reflectance");
+			c.setMeasurement_unit_id(specchio_client.getMeasurementUnitFromCoding(MeasurementUnit.Reflectance).getUnitId());
+			doubleArray = get_double_array(loader, loader.base_calibration_data);		
+		}
+		
+		
+		// Digital Numbers obtained during calibration
+		if(cal_type == "DN")
+		{
+			c.setName("DN");
+			c.setComments("Instrument Digital Numbers during Calibration for FOV =" + loader.getSpec_file().getForeopticDegrees() + " degrees");
+			c.setMeasurement_unit_id(specchio_client.getMeasurementUnitFromCoding(MeasurementUnit.DN).getUnitId());
+			doubleArray = get_double_array(loader, loader.fibre_optic_data);	
+			c.setField_of_view(loader.getSpec_file().getForeopticDegrees());
+		}		
+		
+		c.setFactors(doubleArray);								
+		specchio_client.insertInstrumentCalibration(c);	
+		
+	}
+	
+	
+	private double[] get_double_array(ASD_FileFormat_V7_FileLoader loader, Float[][] input_arr)
+	{		
+		double[] doubleArray = new double[loader.getSpec_file().getNumberOfChannels(0)];
+		for (int i = 0; i < loader.getSpec_file().getNumberOfChannels(0); i++) {
+		    doubleArray[i] = input_arr[0][i];  // no casting needed
+		}	
+		return doubleArray;
+	}
+	
 
 	public int insert_hierarchy(String name, Integer parent_id) throws SPECCHIOClientException {
 		
