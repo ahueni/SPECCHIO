@@ -10,6 +10,7 @@ public class SpectralFileInsertResult {
 	
 	private ArrayList<Integer> spectrum_ids;
 	private ArrayList<SpecchioMessage> errors;
+	private ArrayList<Boolean> added_new_instruments;
 	
 //	private ArrayList<SpectralFile> spectral_file_list;
 //	private String campaign_type = "specchio";
@@ -20,6 +21,7 @@ public class SpectralFileInsertResult {
 	{
 		spectrum_ids = new ArrayList<Integer>();
 		errors = new ArrayList<SpecchioMessage>();
+		added_new_instruments = new ArrayList<Boolean>();
 	}
 
 	@XmlElement(name="spectrum_ids")
@@ -50,6 +52,7 @@ public class SpectralFileInsertResult {
 	
 	
 	public void add(SpectralFileInsertResult result) {
+		this.added_new_instruments.addAll(result.getAdded_new_instrument());
 		spectrum_ids.addAll(result.getSpectrumIds());
 		errors.addAll(result.getErrors());
 	}	
@@ -71,6 +74,21 @@ public class SpectralFileInsertResult {
 		
 		return nonred_errors;
 	}
+
+	@XmlElement(name="added_new_instrument")
+	public ArrayList<Boolean> getAdded_new_instrument() {
+		return added_new_instruments;
+	}
+
+	public void setAdded_new_instrument(ArrayList<Boolean> added_new_instrument) {
+		this.added_new_instruments = added_new_instrument;
+	}
+	
+	public void addAdded_new_instrument(Boolean added_new_instrument) {
+		this.added_new_instruments.add(added_new_instrument);
+	}	
+	
+	
 	
 //	@XmlElement(name="spectral_file_list")
 //	public ArrayList<SpectralFile> getSpectral_file_list() {
