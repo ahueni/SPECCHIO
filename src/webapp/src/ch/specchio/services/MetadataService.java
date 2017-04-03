@@ -236,12 +236,47 @@ public class MetadataService extends SPECCHIOService {
 			ms_d.setAttribute_id(factory.getAttributes().get_attribute_id(ms_d.getAttributeName()));			
 		}		
 		
-		List<MetaParameter> mp_list = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), false);
+		List<MetaParameter> mp_list = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), ms_d.getDistinct());
 		factory.dispose();
 		
 		return mp_list.toArray(new MetaParameter[mp_list.size()]);
 		
 	}	
+	
+	/**
+	 * Get the list of list of metaparameter values for given spectrum ids and attributes.
+	 * 
+	 * @param ms_d	metadata selection descriptor
+	 * 
+	 * @return an array of all the values
+	 * 
+	 * @throws SPECCHIOFactoryException	could not connect to the database, or invalid value for attribute name
+	 */
+	@POST
+	@Path("get_list_of_multiple_metaparameter_vals")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public MetaParameter[] get_list_of_multiple_metaparameter_vals(MetadataSelectionDescriptor ms_d) throws SPECCHIOFactoryException {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+				
+		ArrayList<ArrayList<MetaParameter>> mp_lists = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_ids());
+		factory.dispose();
+		
+		
+		MetaParameter[] mp_array= new MetaParameter[mp_lists.size()*ms_d.getIds().size()];
+		
+		int i = 0;
+		for(ArrayList<MetaParameter>mp_list: mp_lists)
+		{
+			//MetaParameter[] tmp = mp_list.toArray(new MetaParameter[mp_list.size()]);
+			for(MetaParameter mp : mp_list)
+				mp_array[i++] = mp;
+		}
+		
+		return mp_array;
+		
+	}		
 	
 	
 	/**
