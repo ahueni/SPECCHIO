@@ -1,5 +1,10 @@
 package ch.specchio.types;
 
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -64,7 +69,10 @@ public class MetaImage extends MetaFile {
 	{
 		try {
 			SerialisableBufferedImage image = new SerialisableBufferedImage();
-			image.readImage(is, mimeType);
+			image.readImage(is, mimeType);			
+			BufferedImage bimg = image.getImage();			
+			BufferedImage bimg_resized = resizeImage(bimg, bimg.getWidth(), bimg.getHeight());			
+			image.setImage(bimg_resized);
 			setValue(image);
 		}
 		catch (ClassNotFoundException ex) {
@@ -76,8 +84,42 @@ public class MetaImage extends MetaFile {
 			ex.printStackTrace();
 		}
 	}
-	
-	
+
+	/**
+	 * This function resizes the image file and returns a BufferedImage object
+	 * Based on: http://stackoverflow.com/questions/24745147/java-resize-image-without-losing-quality
+	 */
+	public static BufferedImage resizeImage(final Image image, int width, int height) {
+
+		float ratio = width / (float) (height);
+
+		int targeth;
+		int targetw;
+		
+		if (width > height)
+		{
+			targeth = 400;
+			targetw = (int) (targeth * ratio);
+		}
+		else
+		{
+			targeth = (int) (400/ratio); // maintain same resolution as for landscape pics
+			targetw = (int) (targeth * ratio);			
+		}
+
+		final BufferedImage bufferedImage = new BufferedImage(targetw, targeth, BufferedImage.TYPE_INT_RGB);
+		final Graphics2D graphics2D = bufferedImage.createGraphics();
+		graphics2D.setComposite(AlphaComposite.Src);
+		graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
+		graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+		graphics2D.drawImage(image, 0, 0, targetw, targeth, null);
+		graphics2D.dispose();
+
+		return bufferedImage;
+	}	
+
+
 	/** initialise the meta-parameter with an empty value */
 	@Override
 	public void setEmptyValue()
