@@ -42,7 +42,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		asd_file.setPath(file.getAbsolutePath());		
 		asd_file.setFilename(file.getName());
 		asd_file.setFileFormatName(this.file_format_name);
-		
+		asd_file.setHas_standardised_wavelengths(true);
 
 						
 		asd_file.addSpectrumFilename(asd_file.getFilename());
@@ -62,7 +62,9 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		
 		try {
 			SPECCHIOPreferencesStore prefs = new SPECCHIOPreferencesStore();			
-			asd_file.setCreateUnitFolderForasdOldFiles(prefs.getBooleanPreference("CREATE_UNIT_FOLDER_FOR_OLD_ASD_FILES"));			
+			asd_file.setCreateUnitFolderForasdOldFiles(prefs.getBooleanPreference("CREATE_UNIT_FOLDER_FOR_OLD_ASD_FILES"));
+			//asd_file.setCreate_DN_folder_for_asd_files(prefs.getBooleanPreference("CREATE_UNIT_FOLDER_FOR_OLD_ASD_FILES"));
+			
 		} catch (BackingStoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -253,7 +255,8 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		// read instrument type
 		hdr.setInstrumentTypeNumber(in.readByte());
 		
-		skip(in, 4); // cal bulb no
+		Integer bulb_no = this.read_ulong(in);
+		//skip(in, 4); // cal bulb no: appears to be usually zero
 
 		mp = MetaParameter.newInstance(attributes_name_hash.get("Gain_SWIR1"));
 		mp.setValue( this.read_short(in), "RAW");
