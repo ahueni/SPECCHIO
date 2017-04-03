@@ -68,6 +68,29 @@ public class SpectrumService extends SPECCHIOService {
 	
 	
 	/**
+	 * Get the number of spectra in database
+	 * 
+	 * @param String		empty string
+	 * 
+	 * @return the number of spectra in the database
+	 * 
+	 * @throws SPECCHIOFactoryException	could not access the database
+	 */
+	@GET
+	@Path("countInDB")
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger countInDB() throws SPECCHIOFactoryException {
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		int count = factory.getSpectrumCountInDB();
+		factory.dispose();
+		
+		return new XmlInteger(count);
+		
+	}	
+	
+	
+	/**
 	 * Delete target-reference links.
 	 * 
 	 * @param eav_id		the eav_id identifier
@@ -220,7 +243,7 @@ public class SpectrumService extends SPECCHIOService {
 	 * 
 	 * @return an array of Space objects representing the calibration factors identified in the query descriptor
 	 * 
-	 * @throws SPECCHIOFactoryException	databaase error
+	 * @throws SPECCHIOFactoryException	database error
 	 */
 	@POST
 	@Path("getCalibrationSpaces")
