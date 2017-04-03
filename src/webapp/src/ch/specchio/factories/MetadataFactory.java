@@ -151,6 +151,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			double multi_value_cnt;
 			Integer attribute_id;
 			Integer eav_id;
+			Integer no_of_spectra = ids.length;
 //			Integer eav_id_cnt_dist;
 			ConflictStruct conflict;
 			ArrayList<Integer> eav_ids_to_double_check = new ArrayList<Integer>();
@@ -160,10 +161,33 @@ public class MetadataFactory extends SPECCHIOFactory {
 			ArrayList<Integer> eav_ids_first_spectrum = this.getEavServices().get_eav_ids(ids[0]);
 			
 			// get the attributes occuring only once or multiple times
-			String query = "SELECT count(eav.eav_id), attribute_id " +
-					"from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-					getStatementBuilder().conc_ids(ids[0]) +
-					") and sxe.eav_id = eav.eav_id group by attribute_id order by attribute_id";	
+//			String query = "SELECT count(eav.eav_id), attribute_id " +
+//					"from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+//					getStatementBuilder().conc_ids(ids[0]) +
+//					") and sxe.eav_id = eav.eav_id group by attribute_id order by attribute_id";	
+			
+			
+			// create temp table
+			String temp_tablename = getStatementBuilder().prefix(getTempDatabaseName(), "multi_attr_compilation");
+			
+			
+				// create temporary table
+			String ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " + temp_tablename + " " +
+					"(eav_id_cnt INT NOT NULL, " +
+					"attr_id INT NOT NULL)";
+			stmt.executeUpdate(ddl_string);			
+			
+			
+			
+			String query = "insert into " + temp_tablename + " " +
+			"(eav_id_cnt, attr_id) " + "SELECT count(eav.eav_id), attribute_id " +
+			"from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+			getStatementBuilder().conc_ids(ids) +
+			") and sxe.eav_id = eav.eav_id group by attribute_id, sxe.spectrum_id order by attribute_id";	
+		
+			stmt.executeUpdate(query);
+			
+			query = "select eav_id_cnt, attr_id from " + temp_tablename + " group by attr_id, eav_id_cnt";
 			
 			ResultSet rs;
 			
@@ -180,19 +204,22 @@ public class MetadataFactory extends SPECCHIOFactory {
 					multi_attributes.add(attribute_id);
 			}
 					
-			
+			query = "delete from " + temp_tablename;
+			stmt.executeUpdate(query);
 			
 			// deal with single metaparameters per attribute first
-			query = "SELECT count(eav.int_val), count(distinct eav.int_val), " +
+			query = "SELECT count(eav.binary_val), count(distinct eav.binary_val), " +
+					"count(eav.int_val), count(distinct eav.int_val), " +
 					"count(eav.string_val), count(distinct eav.string_val), " +
 					"count(eav.double_val), count(distinct eav.double_val), " +
+					"count(eav.datetime_val), count(distinct eav.datetime_val), " +
 					"count(eav.taxonomy_id), count(distinct eav.taxonomy_id), " +
 					"count(distinct sxe.spectrum_id), eav.attribute_id, eav.eav_id, count(distinct eav.eav_id)" +
 					" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
 					getStatementBuilder().conc_ids(ids) +
 				") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
 				getStatementBuilder().conc_ids(single_attributes) + ") " +
-				"group by attribute_id order by attribute_id";	
+				"group by attribute_id, eav_id order by attribute_id";	
 
 			
 
@@ -204,12 +231,16 @@ public class MetadataFactory extends SPECCHIOFactory {
 			while (rs.next()) {
 				i = 1;
 				
+				int binary_val_cnt = rs.getInt(i++);
+				int  binary_val_cnt_dist = rs.getInt(i++);				
 				int int_val_cnt = rs.getInt(i++);
 				int int_val_cnt_dist = rs.getInt(i++);
 				int string_val_cnt = rs.getInt(i++);
 				int string_val_cnt_dist = rs.getInt(i++);
 				int double_val_cnt = rs.getInt(i++);
 				int double_val_cnt_dist = rs.getInt(i++);
+				int datetime_val_cnt = rs.getInt(i++);
+				int datetime_val_cnt_dist = rs.getInt(i++);				
 				int taxonomy_val_cnt = rs.getInt(i++);
 				int taxonomy_val_cnt_dist = rs.getInt(i++);
 				int spectrum_cnt = rs.getInt(i++);
@@ -220,15 +251,20 @@ public class MetadataFactory extends SPECCHIOFactory {
 				attribute attr = this.getAttributes().get_attribute_info(attribute_id);
 				
 				if(attr.default_storage_field.equals(attribute.INT_VAL))
-					status = getConflictStatus(int_val_cnt, int_val_cnt_dist, spectrum_cnt);				
+					status = getConflictStatus(int_val_cnt, int_val_cnt_dist, spectrum_cnt, no_of_spectra);				
 				if(attr.default_storage_field.equals(attribute.STRING_VAL))
-					status = getConflictStatus(string_val_cnt, string_val_cnt_dist, spectrum_cnt);
+					status = getConflictStatus(string_val_cnt, string_val_cnt_dist, spectrum_cnt, no_of_spectra);
 				if(attr.default_storage_field.equals(attribute.DOUBLE_VAL))
-					status = getConflictStatus(double_val_cnt, double_val_cnt_dist, spectrum_cnt);
+					status = getConflictStatus(double_val_cnt, double_val_cnt_dist, spectrum_cnt, no_of_spectra);
+				if(attr.default_storage_field.equals(attribute.DATETIME_VAL))
+					status = getConflictStatus(datetime_val_cnt, datetime_val_cnt_dist, spectrum_cnt, no_of_spectra);				
 				if(attr.default_storage_field.equals(attribute.TAXONOMY_VAL))
-					status = getConflictStatus(taxonomy_val_cnt, taxonomy_val_cnt_dist, spectrum_cnt);
+					status = getConflictStatus(taxonomy_val_cnt, taxonomy_val_cnt_dist, spectrum_cnt, no_of_spectra);
+				if(attr.default_storage_field.equals(attribute.BINARY_VAL))
+					status = getConflictStatus(binary_val_cnt, binary_val_cnt_dist, spectrum_cnt, no_of_spectra);
 				
-				//System.out.print(attr.getName() + ": " + status);
+				
+//				System.out.print(attr.getName() + ": " + status);
 				
 				conflict = new ConflictStruct(status, 1, ids.length);
 
@@ -271,9 +307,14 @@ public class MetadataFactory extends SPECCHIOFactory {
 			// Check each attribute exclusively
 			for(Integer attr_id : multi_attributes)
 			{
+				ArrayList<Integer> ids_as_list = new ArrayList<Integer>(ids.length); 
+				for (Integer id : ids) {
+					ids_as_list.add(id);
+				}
+				
 				attribute attr = this.getAttributes().get_attribute_info(attr_id);
-				// get all eav_ids for this attribute from the first spectrum
-				ArrayList<Integer> eav_ids = this.getEavServices().get_eav_ids(ids[0], attr_id);
+				// get all eav_ids for this attribute from all spectra
+				ArrayList<Integer> eav_ids = this.getEavServices().get_eav_ids(ids_as_list, true, attr_id);
 				
 				for(int eav_id_ : eav_ids)
 				{
@@ -284,7 +325,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 							" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
 							getStatementBuilder().conc_ids(ids) +
 						") and sxe.eav_id = eav.eav_id and eav.attribute_id = " + attr_id +
-						 " and eav." + attr.getDefaultStorageField() + " = (select " + attr.getDefaultStorageField() + " from eav where eav_id = " + eav_id_ + ")";	
+						 " and eav." + attr.getDefaultStorageField() + " = (select " + attr.getDefaultStorageField() + " from eav where eav_id = " + eav_id_ + ")  group by eav.eav_id";	
 					
 					rs = stmt.executeQuery(query);
 
@@ -301,15 +342,17 @@ public class MetadataFactory extends SPECCHIOFactory {
 						
 						
 						
-						if(val_cnt == spectrum_cnt && val_cnt_dist == 1 && spectrum_cnt == ids.length)
-							status = ConflictInfo.no_conflict;
-						else if(val_cnt == 0)
-							status = ConflictInfo.non_existent;
-						else
-							status = ConflictInfo.conflict;		
+//						if(val_cnt == spectrum_cnt && val_cnt_dist == 1 && spectrum_cnt == ids.length)
+//							status = ConflictInfo.no_conflict;
+//						else if(val_cnt == 0)
+//							status = ConflictInfo.non_existent;
+//						else
+//							status = ConflictInfo.conflict;		
+						
+						status = getConflictStatus(val_cnt, val_cnt_dist, spectrum_cnt, no_of_spectra);
 						
 						
-						//System.out.print(attr.getName() + " / " + value.toString() + ": " + status);
+//						System.out.print(attr.getName() + " / " + value.toString() + ": " + status);
 						
 						conflict = new ConflictStruct(status, 1, ids.length);
 
@@ -435,11 +478,11 @@ public class MetadataFactory extends SPECCHIOFactory {
 	
 	
 	private int getConflictStatus(int val_cnt, int val_cnt_dist,
-			int spectrum_cnt) {
+			int spectrum_cnt, int no_of_spectra) {
 		
 		int status;
 		
-		if(val_cnt == spectrum_cnt && val_cnt_dist == 1)
+		if(val_cnt == spectrum_cnt && val_cnt_dist == 1 && no_of_spectra == spectrum_cnt)
 			status = ConflictInfo.no_conflict;
 		else if(val_cnt == 0)
 			status = ConflictInfo.non_existent;
@@ -627,6 +670,29 @@ public class MetadataFactory extends SPECCHIOFactory {
 			
 	}
 	
+	
+	/**
+	 * Get the meta-parameters of the given attributes for a list of spectrum identifiers.
+	 * 
+	 * @param id		the spectrum identifiers for which to retrieve metadata
+	 * @param attrId	the attribute id
+	 * @param distinct	if true, return distinct values only
+	 * 
+	 * @return a list of list of meta-parameter objects corresponding to the desired attribute of each input id
+	 *
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<ArrayList<MetaParameter>> getMetaParameters(ArrayList<Integer> ids, ArrayList<Integer> attrIds) throws SPECCHIOFactoryException {
+
+		ArrayList<ArrayList<MetaParameter>> mp_lists = new ArrayList<ArrayList<MetaParameter>>();
+		
+		for(Integer attr_id : attrIds)
+		{
+			mp_lists.add(this.getMetaParameters(ids, attr_id, false));			
+		}				
+		
+		return mp_lists;
+	}
 	
 	/**
 	 * Get the meta-parameters of a given attribute for a list of spectrum identifiers.
