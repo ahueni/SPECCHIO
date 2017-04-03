@@ -21,6 +21,7 @@ public class SPECCHIOApplication {
 	
 	/* progress report in the operations pane */
 	static ProgressReportTextPanel p_rep = null;
+	static ProgressReportTextPanel db_rep = null;
 	
 	protected SPECCHIOApplication()
 	{
@@ -150,6 +151,14 @@ public class SPECCHIOApplication {
 			   p_rep.set_operation("Connected as " + d.getDisplayUser() + " to '" + d.getDataSourceName() + "' on:");
 			   p_rep.set_component(d.getDisplayName(false, false));
 			   
+			   if (db_rep == null) {
+				   db_rep = new ProgressReportTextPanel("Database Info","");				   
+	  		  		op.add_report(db_rep);	
+			   }
+			   db_rep.set_operation("Number of spectra in database: " + client.getSpectrumCountInDB());
+			   db_rep.setPreferredSize(p_rep.getSize());
+			   
+			   
 			   try {
 				   // enable menu items appropriate for this connection
 				   MainMenu.getInstance().enable_tools_for_client(client);
@@ -165,6 +174,11 @@ public class SPECCHIOApplication {
 				   op.remove_report(p_rep);
 				   p_rep = null;
 			   }
+			   if (db_rep != null) {
+				   op.remove_report(db_rep);
+				   db_rep = null;
+			   }
+			   
 			   
 			   // disable menu items
 			   try {
