@@ -54,6 +54,7 @@ public class SpectralFile {
 	private String interleave;
 	private int byte_order; // little (0) or big endian (1)
 	private boolean is_calibration_file = false; // e.g. available for ASD: ILL, REF and RAW files
+	private boolean has_standardised_wavelengths = false; // this is true for e.g. the ASDs where all instruments are resampled to same wavelengths
 	private int foreoptic_degrees; // e.g. available for ASD
 	private int calibration_series = -1; // e.g. available for ASD
 	private String instrument_number = null; // e.g. available for ASD
@@ -152,10 +153,16 @@ public class SpectralFile {
 	private boolean asd_v7;
 
 	private Float[][] dn;
+	
+	// ASD specific calibration data
+	private Float[] base_calibration_data;
+	private Float[] lamp_calibration_data;
+	private Float[] fibre_optic_data;	
 
 	private boolean asd_v7_radiance_flag;
 	private boolean asd_v7_reflectance_flag;
 	private boolean create_unit_folder_for_asd_old_files;
+	private boolean create_DN_folder_for_asd_files;
 	
 	private  ArrayList<SpecchioMessage> file_errors = new ArrayList<SpecchioMessage>();
 	private int file_error_code;
@@ -183,6 +190,7 @@ public class SpectralFile {
 		this.setFileErrorCode(SpectralFile.NO_ERRORS);
 		this.setMeasurementUnits(spec_file.getMeasurementUnits());
 		this.setCreateUnitFolderForasdOldFiles(spec_file.getCreateUnitFolderForasdOldFiles());
+		this.setCreate_DN_folder_for_asd_files(spec_file.getCreate_DN_folder_for_asd_files());
 	}
 
 	@XmlElement(name="arm_length")
@@ -285,6 +293,9 @@ public class SpectralFile {
 	public boolean getCreateUnitFolderForasdOldFiles() { return this.create_unit_folder_for_asd_old_files; }
 	public void setCreateUnitFolderForasdOldFiles(boolean create_unit_folder_for_asd_old_files) { this.create_unit_folder_for_asd_old_files = create_unit_folder_for_asd_old_files; }
 
+	@XmlElement(name="create_DN_folder_for_asd_files")
+	public boolean getCreate_DN_folder_for_asd_files() {	return create_DN_folder_for_asd_files;}
+	public void setCreate_DN_folder_for_asd_files(boolean create_DN_folder_for_asd_files) {	this.create_DN_folder_for_asd_files = create_DN_folder_for_asd_files;}	
 	
 	@XmlElement(name="comment")
 	public String getComment() { return this.comment; }
@@ -768,6 +779,45 @@ public class SpectralFile {
 
 	public void setFileErrorCode(int file_error_code) {
 		this.file_error_code = file_error_code;
+	}
+
+	public Float[] getBase_calibration_data() {
+		return base_calibration_data;
+	}
+
+	public void setBase_calibration_data(Float[] base_calibration_data) {
+		this.base_calibration_data = base_calibration_data;
+	}
+
+	public Float[] getLamp_calibration_data() {
+		return lamp_calibration_data;
+	}
+
+	public void setLamp_calibration_data(Float[] lamp_calibration_data) {
+		this.lamp_calibration_data = lamp_calibration_data;
+	}
+
+	public Float[] getFibre_optic_data() {
+		return fibre_optic_data;
+	}
+
+	public void setFibre_optic_data(Float[] fibre_optic_data) {
+		this.fibre_optic_data = fibre_optic_data;
+	}
+
+	public int get_asd_instr_and_cal_fov_identifier() {
+		// combined identifier including instrument number and calibration number and fov (currently only for ASD files)
+		String tmp = this.getInstrumentNumber() + this.getCalibrationSeries() + this.getForeopticDegrees();
+		
+		return Integer.valueOf(tmp);
+	}
+
+	public boolean has_standardised_wavelengths() {
+		return has_standardised_wavelengths;
+	}
+
+	public void setHas_standardised_wavelengths(boolean has_standardised_wavelengths) {
+		this.has_standardised_wavelengths = has_standardised_wavelengths;
 	}
 
 }
