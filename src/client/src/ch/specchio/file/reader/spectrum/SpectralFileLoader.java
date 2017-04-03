@@ -6,6 +6,7 @@
 package ch.specchio.file.reader.spectrum;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
+import ch.specchio.types.SpectralFileInsertResult;
 import ch.specchio.types.attribute;
 
 
@@ -29,6 +31,7 @@ public abstract class SpectralFileLoader {
 	private SPECCHIOClient specchio_client;
 	Hashtable<String, attribute> attributes_name_hash;	
 	protected SpectralFile spec_file;
+	public SpectralFileInsertResult insert_result; // field to store the insert result (used for instrument calibration updates)
 	
 	public SpectralFileLoader(String file_format_name)
 	{
@@ -83,6 +86,16 @@ public abstract class SpectralFileLoader {
 		
 	
 
+	public SpectralFile getSpec_file() {
+		return spec_file;
+	}
+
+
+	public void setSpec_file(SpectralFile spec_file) {
+		this.spec_file = spec_file;
+	}
+
+
 	protected Integer read_short(DataInputStream in) throws IOException
 	{
 		byte[] b = new byte[2];
@@ -116,6 +129,17 @@ public abstract class SpectralFileLoader {
 		
 		return as_int;
 	}	
+	
+	protected Integer read_ulong(DataInputStream in) throws IOException {
+		byte[] b = new byte[4];
+		if (in.read(b) == -1)
+			throw new EOFException();
+		long n = arr2long(b, 0);
+
+		int as_int = (int) n;
+
+		return as_int;
+	}		
 	
 	protected Float read_float(DataInputStream in) throws IOException
 	{
