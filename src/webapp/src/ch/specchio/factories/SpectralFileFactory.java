@@ -348,7 +348,8 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 
 		if (spec_file.getAsdV7() == true) {
 			
-			getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
+			if(spec_file.getCreate_DN_folder_for_asd_files() || ((spec_file.getAsdV7RadianceFlag() == false) && (spec_file.getAsdV7ReflectanceFlag() == false)))
+				getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
 
 			// insert radiance spectrum
 			if (spec_file.getAsdV7RadianceFlag() == true) {
@@ -907,8 +908,9 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 
 		if (spec_file.getAsdV7() == true) {
 			special_hierarchy_files = true;
-			// insert dn spectrum
-			addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("DN"))));
+			// insert dn spectrum if required by user or if DN are the only data in the input file
+			if(spec_file.getCreate_DN_folder_for_asd_files() || ((spec_file.getAsdV7RadianceFlag() == false) && (spec_file.getAsdV7ReflectanceFlag() == false)))
+				addNonNullSpectrumIds(insert_result,insertSpectrumAndHierarchyLink(spec_file, 0, spectrumExists_(spec_file, subhierarchies.get("DN"))));
 
 			// insert radiance spectrum
 			if (spec_file.getAsdV7RadianceFlag() == true) {
@@ -1199,6 +1201,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				{
 					instrument_id = Integer.toString(instrument.getInstrumentId());			
 					calibration_id = instrument.getCalibrationId();
+					insert_result.addAdded_new_instrument(instrument.isNewly_inserted());
 				}
 				
 				if (msg.getMessage() != null)
@@ -1228,7 +1231,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 						+ SQL.is_null_key_get_val_and_op(getDataCache().get_measurement_unit_id_for_file(spec_file, spec_no)).id
 						+")";
 				
-				System.out.println(query);
+				//System.out.println(query);
 				
 				Statement stmt = getStatementBuilder().createStatement();
 				stmt.executeUpdate(query);
