@@ -42,6 +42,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
@@ -52,6 +54,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.constants.UserRoles;
+import ch.specchio.metadata.MDE_Controller;
 import ch.specchio.proc_modules.FileOutputManager;
 import ch.specchio.proc_modules.ModuleException;
 import ch.specchio.proc_modules.RadianceToReflectance;
@@ -72,7 +75,7 @@ import ch.specchio.types.Campaign;
 import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.Spectrum;
 
-public class QueryBuilder extends JFrame  implements ActionListener, TreeSelectionListener, ChangeListener, ClipboardOwner, QueryConditionChangeInterface 
+public class QueryBuilder extends JFrame  implements ActionListener, TreeSelectionListener, ChangeListener, ClipboardOwner, QueryConditionChangeInterface, ListSelectionListener 
 {
 
 	private static final long serialVersionUID = 1L;
@@ -88,6 +91,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	public SpectralDataBrowser sdb;
 	public JCheckBox show_only_my_data;
 	
+	private JButton run_query;
 	private JButton show_report;
 	private JButton file_export;
 	private JButton process;
@@ -97,7 +101,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	
 	JRadioButton split_spaces_by_sensor_and_unit = new JRadioButton("Split spaces by sensor and unit");
 	JRadioButton split_spaces_by_sensor = new JRadioButton("Split spaces by sensor");
-	JRadioButton split_spaces_by_sensor_and_unit_and_instrument_and_cal = new JRadioButton("Split spaces by sensor, instrument, calibration_no and unit");
+	JRadioButton split_spaces_by_sensor_and_unit_and_instrument_and_cal = new JRadioButton("Split spaces by sensor, instrument, calibr_no and unit");
 	
 	ButtonGroup split_group = new ButtonGroup();
 
@@ -118,6 +122,12 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	private ArrayList<Integer> unsorted_spectrum_ids;
 	
 	private boolean sorted_ids_ready = false;
+
+
+	private SpectrumMetadataCategoryList category_list;
+
+
+	private JScrollPane scroll_pane;
 	
 	
 	// new class for a JTextArea to include a popup listener
@@ -295,16 +305,27 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		constraints.gridheight = 1;
 		constraints.anchor = GridBagConstraints.WEST;
 		constraints.fill = GridBagConstraints.HORIZONTAL;
-
-		// add query results panel
 		constraints.gridx = 0;
 		constraints.gridy = 0;
+		
+		if (mds_restrictions)
+		{
+			run_query =  new JButton("Run Query");
+			run_query.setActionCommand("run_query");
+			run_query.addActionListener(this);
+			
+			query_panel_l.insertComponent(run_query, constraints);	
+			constraints.gridy++;
+		}
+		
+
+		// add query results panel
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
 		JPanel SQL_query_panel = new JPanel();
 		Border blackline = BorderFactory.createLineBorder(Color.black);
 		TitledBorder tb = BorderFactory.createTitledBorder(blackline, "Matching Spectra");
 		SQL_query_panel.setBorder(tb);
-		SQL_query = new SQLQueryArea(this, 8, 50);
+		SQL_query = new SQLQueryArea(this, 8, 30);
 		SQL_query.setLineWrap(true);
 		SQL_query.setWrapStyleWord(true);
 		SQL_query.setEditable(false);
@@ -341,19 +362,21 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		query_panel_l.insertComponent(file_export, constraints);
 		
 		
-		process = new JButton("Process");
-		process.setActionCommand("process");
-		process.addActionListener(this);		
-
-		constraints.gridx++;	
-		query_panel_l.insertComponent(process, constraints);
-		
 		spectral_plot = new JButton("Spectral Plot");
 		spectral_plot.setActionCommand(VisualisationSelectionDialog.spectral_multiplot);
 		spectral_plot.addActionListener(this);		
 
 		constraints.gridx++;	
-		query_panel_l.insertComponent(spectral_plot, constraints);		
+		query_panel_l.insertComponent(spectral_plot, constraints);	
+		
+		process = new JButton("Process");
+		process.setActionCommand("process");
+		process.addActionListener(this);		
+
+		constraints.gridx = 0 ;	
+		constraints.gridy++;	
+		query_panel_l.insertComponent(process, constraints);
+		
 		
 		refl = new JButton("Refl.Calc");
 		refl.setActionCommand("refl");
@@ -381,7 +404,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		split_group.add(this.split_spaces_by_sensor_and_unit_and_instrument_and_cal);		
 		
 		constraints.gridx = 0;	
-		constraints.gridy = 3;
+		constraints.gridy++;
 		
 		query_panel_l.insertComponent(new JLabel("Splitting rules for file export and plotting:"), constraints);	
 		constraints.gridy++;
@@ -427,7 +450,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    menuItem = new JMenuItem("Test");
 	    menuItem.addActionListener(this);
 	    test_menu.add(menuItem);	    
-//	    menuBar.add(test_menu);
+	    menuBar.add(test_menu);
 	    
 	    
 	    this.setJMenuBar(menuBar);		
@@ -464,12 +487,18 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		
 		if (mds_restrictions)
 		{
-			QueryController qc = new QueryController(this.specchio_client, "Standard");
+			
+			MDE_Controller mdec = new MDE_Controller(specchio_client);
+			category_list = new SpectrumMetadataCategoryList(mdec.getFormFactory());
+			category_list.addListSelectionListener(this);			
+
+			QueryController qc = new QueryController(this.specchio_client, "Standard", category_list.getFormDescriptor());
 			qc.addChangeListener(this);
 			SpectrumQueryPanel query_condition_panel = new SpectrumQueryPanel(this, qc);
-			JScrollPane scroll_pane = new JScrollPane(query_condition_panel);
+			scroll_pane = new JScrollPane(query_condition_panel);
 			scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
-			data_selection_tabs.addTab("Query conditions", scroll_pane);
+			data_selection_tabs.addTab("Query conditions", scroll_pane);		
+
 		}
 		
 		is_admin = specchio_client.isLoggedInWithRole(UserRoles.ADMIN);
@@ -480,6 +509,12 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		
 		add("East", query_panel);
 		add("Center", data_selection_tabs);
+		
+		if (category_list != null)
+			add("West", category_list);
+		
+		
+		
 		pack();
 		
 		// disable the action buttons until a selection is made
@@ -649,6 +684,11 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	
 	public void actionPerformed(ActionEvent e) 
 	{
+		
+	      if("run_query".equals(e.getActionCommand()))
+	      {   
+	    	  changed(true);
+	      }
 		
 		// SDB combobox
 		if("comboBoxChanged".equals(e.getActionCommand()))
@@ -861,7 +901,11 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	      {
 	    	  try {
 	    		  
-	    		  MatlabAdaptedArrayList<Object> out = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Site ID");
+//	    		  MatlabAdaptedArrayList<Object> out = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Site ID");
+	    		  
+	    		  MatlabAdaptedArrayList<Object> joda_time = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Acquisition Time");
+	    		  
+	    		  System.out.println(joda_time.size());
 	    		  
 	    		  int x = 1;
 				// ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
@@ -1034,7 +1078,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		}
 
 		
-		changed(true);
+		// changed(true);
 		
 	}
 	
@@ -1224,6 +1268,22 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 		  	pr.setVisible(false);
 			
 		}
+		
+	}
+
+	@Override
+	public void valueChanged(ListSelectionEvent arg0) {
+
+		data_selection_tabs.remove(scroll_pane);
+
+		QueryController qc = new QueryController(this.specchio_client, "Standard", category_list.getFormDescriptor());
+		qc.addChangeListener(this);
+		
+		SpectrumQueryPanel query_condition_panel = new SpectrumQueryPanel(this, qc);
+		scroll_pane = new JScrollPane(query_condition_panel);
+		scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
+		data_selection_tabs.addTab("Query conditions", scroll_pane);		
+				
 		
 	}
 	
