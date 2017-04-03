@@ -9,6 +9,8 @@ import javax.ws.rs.core.*;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.factories.InstrumentationFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
+import ch.specchio.factories.SpectralFileFactory;
+import ch.specchio.jaxb.XmlBoolean;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
@@ -20,6 +22,7 @@ import ch.specchio.types.Reference;
 import ch.specchio.types.ReferenceBrand;
 import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
+import ch.specchio.types.SpectralFile;
 
 
 /**
@@ -161,6 +164,28 @@ public class InstrumentationService extends SPECCHIOService {
 		return instrument;
 	}	
 	
+	
+	/**
+	 * Get a instrument object for a given spectral file object.
+	 * 
+	 * @param spec_file		the spectral file
+	 * 
+	 * @return a new Instrument object
+	 * 
+	 * @throws SPECCHIOFactoryException	the instrument does not exist
+	 */
+	@POST
+	@Path("getInstrumentForSpectralFile")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public Instrument getInstrumentForSpectralFile(SpectralFile spec_file) throws SPECCHIOFactoryException {
+		
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		Instrument instrument = factory.getInstrumentForSpectralFile(spec_file);
+		factory.dispose();
+		
+		return instrument;
+	}		
 	
 	/**
 	 * Get the calibration metadata for an instrument.
@@ -308,7 +333,8 @@ public class InstrumentationService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public String insertInstrumentCalibration(Calibration cal) throws SPECCHIOFactoryException {
 		
-		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		//InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		InstrumentationFactory factory = new InstrumentationFactory(getDataSourceName()); // insert as admin
 		factory.insertInstrumentCalibration(cal);
 		factory.dispose();
 		
@@ -407,6 +433,27 @@ public class InstrumentationService extends SPECCHIOService {
 		return new XmlInteger(picture_id);
 		
 	}
+
+	/**
+	 * Test for the existence of a calibration in the database.
+	 * 
+	 * @param cal		calibration object to check
+	 * 
+	 * @return true if the calibration already exists in the database, false otherwise
+	 */
+	
+	@POST
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	@Path("instrument_calibration_exists")
+	public XmlBoolean instrumentCalibrationExists(Calibration cal) throws SPECCHIOFactoryException {
+		
+		InstrumentationFactory factory = new InstrumentationFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		boolean b = factory.instrumentCalibrationExists(cal);
+		factory.dispose();		
+		
+		return  new XmlBoolean(b);
+	}		
 	
 	
 	/**
