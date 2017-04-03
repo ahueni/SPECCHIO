@@ -285,7 +285,7 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		// work out column name
 		String id_column = object_type + "_id";
 
-		String query = "select calibration_id,calibration_no,calibration_date,comments, cal_factors, uncertainty, reference_id, instrument_id from calibration " +
+		String query = "select calibration_id,calibration_no,calibration_date,comments, cal_factors, uncertainty, reference_id, instrument_id, fov, name from calibration " +
 				" where " + id_column + "=" + Integer.toString(object_id);
 
 		List<CalibrationMetadata> cmlist = getCalibrationMetadata(query);
@@ -324,6 +324,8 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 				cm.setCalibrationUncertaintyPlot(getCalibrationPlotsMetadata(cm.getUncertainty_id(), "uncertainty"));				
 				cm.setReferenceId(rs.getInt(7));
 				cm.setInstrumentId(rs.getInt(8));
+				cm.setField_of_view(rs.getInt(9));
+				cm.setName(rs.getString(10));
 				
 				// fill factors from space
 				cm.setFactors(cm.getCalibrationFactorsPlot().getSpace().getVectors().get(0));
@@ -398,7 +400,8 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			
 			// read information from database
 			SQL_StatementBuilder SQL = getStatementBuilder();
-			Statement stmt = SQL.createStatement();			String[] tables = new String[]{"instrument"};
+			Statement stmt = SQL.createStatement();			
+			String[] tables = new String[]{"instrument"};
 			String[] attr = new String[]{"name", "institute_id", "serial_number", "sensor_id"};
 			String query = SQL.assemble_sql_select_query(
 						SQL.conc_attributes(attr),
@@ -484,6 +487,29 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		return instruments.toArray(new InstrumentDescriptor[instruments.size()]);
 	
 	}
+	
+	
+	/**
+	 * Get a instrument object for a given spectral file object.
+	 * 
+	 * @param spec_file		the spectral file
+	 * 
+	 * @return a new Instrument object
+	 * 
+	 * @throws SPECCHIOFactoryException	the instrument does not exist
+	 */	
+	public Instrument getInstrumentForSpectralFile(SpectralFile spec_file) throws SPECCHIOFactoryException {
+		
+		try {
+			return this.getDataCache().get_instrument_id_for_file(spec_file, 0, new SpecchioMessage());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
 	
 	
 	/**
@@ -760,6 +786,10 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 					uncert_id = insertInstrumentationFactors(spec_file, 1);
 				}			
 			}
+			else
+			{
+				cal_factor_id = this.insertCalibrationFactors(cal);
+			}
 			
 			int referenced_id = 0;
 			
@@ -779,8 +809,11 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			Statement stmt = SQL.createStatement();
 			id_and_op_struct cal_factor = SQL.is_null_key_get_val_and_op(cal_factor_id);
 			id_and_op_struct cal_uncert = SQL.is_null_key_get_val_and_op(uncert_id);
-			String query = "insert into calibration (" + id_column + ", cal_factors, uncertainty, comments, calibration_no) " +
-					"values (" + referenced_id + "," + cal_factor.id + "," + cal_uncert.id + ", '" + cal.getComments() + "'," + cal.getCalibration_number() + ")";
+			String fov = (cal.getField_of_view() != 0)? Integer.toString(cal.getField_of_view()) : "null";
+			String query = "insert into calibration (" + id_column + ", cal_factors, uncertainty, comments, calibration_no, fov, name) " +
+					"values (" + referenced_id + "," + cal_factor.id + "," + cal_uncert.id + ", '" 
+					+ cal.getComments() + "'," + cal.getCalibrationNumber() + "," + fov  + ", '" 
+					+ cal.getName() + "'" + ")";
 			stmt.executeUpdate(query);
 			
 			// get the identifier of the new instrument
@@ -879,6 +912,58 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		return insertCalibration(INSTRUMENT, cal);
 		
 	}
+	
+	/**
+	 * Insert calibration factors into the database.
+	 * 
+	 * @param cal			the calibration
+	 * @return id of the new calibration factor entry
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public int insertCalibrationFactors(Calibration cal) throws SPECCHIOFactoryException {
+		
+		Integer id = 0;
+		
+		try {
+			// get the sensor id
+			SpecchioMessage msg = new SpecchioMessage();
+			int sensor_id = this.getInstrument(cal.getInstrumentId()).getSensorId();
+			
+			Statement stmt = getStatementBuilder().createStatement();
+			String query = "INSERT INTO instrumentation_factors "
+				+ "(loading_date, sensor_id, measurement_unit_id) "
+				+ "VALUES (" + "current_timestamp, " + Integer.toString(sensor_id) + ", "
+				+ cal.getMeasurement_unit_id() + ")";
+			stmt.executeUpdate(query);
+			ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+			while (rs.next())
+				id = rs.getInt(1);
+			rs.close();
+			stmt.close();
+
+			// insert the measurement blob
+			query = "UPDATE instrumentation_factors set measurement = ? where instrumentation_factors_id = " + id.toString();
+			PreparedStatement pstmt = getStatementBuilder().prepareStatement(query);
+
+			InputStream refl = cal.getFactorsInputStream();
+			pstmt.setBinaryStream(1, refl, cal.getFactors().length * 4);
+			pstmt.executeUpdate();
+			refl.close();
+			pstmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+		catch (IOException ex) {
+			// don't know why this would happen
+			throw new SPECCHIOFactoryException(ex);
+		}
+
+		return id;		
+		
+	}	
 	
 	
 	/**
@@ -1074,6 +1159,45 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		return picture_id;
 		
 	}
+	
+	/**
+	 * Test for the existence of a calibration in the database.
+	 * 
+	 * @param cal		calibration object to check
+	 * 
+	 * @return true if the calibration already exists in the database, false otherwise
+	 */	
+	public boolean instrumentCalibrationExists(Calibration cal) {
+		int cnt = 0;
+		try {
+			
+			// read information from database
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();			
+
+			String query = "select count(*) from calibration where instrument_id = " + cal.getInstrumentId() +
+					" and calibration_no = " + cal.getCalibrationNumber() + " and fov " + (cal.getField_of_view() == 0?"is null": " = " + cal.getField_of_view());
+			
+						
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				cnt = rs.getInt(1);
+			}
+			rs.close();		
+			
+			stmt.close();
+			
+		} catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+		if(cnt > 0)
+			return true;
+		else		
+			return false;
+	}
+	
 	
 	
 	/**
@@ -1518,6 +1642,10 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 		updatePicture(REFERENCE, picture);
 		
 	}
+
+
+
+
 
 
 

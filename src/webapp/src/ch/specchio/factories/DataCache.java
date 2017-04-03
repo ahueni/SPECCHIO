@@ -90,7 +90,7 @@ public class DataCache {
 			while (rs.next()) {
 				cal = new Calibration();
 				cal.setCalibration_id(rs.getInt(1));
-				cal.setCalibration_number(rs.getInt(2));
+				cal.setCalibrationNumber(rs.getInt(2));
 				cal.setCalibrationDate(rs.getDate(3));
 				cal.setComments(rs.getString(4));
 				cal.setCalFactorsId(rs.getInt(5));
@@ -709,11 +709,12 @@ public class DataCache {
 				instr.setInstrumentNumber(spec_file.getInstrumentNumber());
 				instr.setSensor(s);
 				instr.setAverageWavelengths(d_wvls);
+				instr.setNewly_inserted(true);
 
 				factory.insertInstrument(instr);					
 
 				// create new calibration with wavelength calibration factors: only for instruments where wvls are not resampled to blueprint (e.g. ASD is always blueprint)
-				if(spec_no < spec_file.getWvls().size())
+				if(spec_file.has_standardised_wavelengths())
 				{
 					int cal_id = insert_calibration(spec_file, spec_no, instr);
 
@@ -821,7 +822,7 @@ public class DataCache {
 //						SQL.conc_attributes(attr),
 //						SQL.conc_tables(tables),
 //						"");
-			String query = "SELECT i.instrument_id, name, institute_id, serial_number, i.sensor_id, calibration_id FROM instrument as i left join calibration as c on i.instrument_id = c.instrument_id";
+			String query = "SELECT i.instrument_id, i.name, institute_id, serial_number, i.sensor_id, calibration_id FROM instrument as i left join calibration as c on i.instrument_id = c.instrument_id";
 			
 						
 			ResultSet rs = stmt.executeQuery(query);
