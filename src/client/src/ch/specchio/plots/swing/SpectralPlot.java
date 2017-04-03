@@ -235,7 +235,7 @@ public abstract class SpectralPlot extends JPanel
 			int start_ind = space.get_index_of_band(vis_nir_start);
 			int end_ind = space.get_index_of_band(vis_nir_end);
 			
-			if (start_ind > 0 & end_ind > 0)
+			if (start_ind >= 0 & end_ind > 0)
 			{
 			
 				VectorStatistics stats = new VectorStatistics();
