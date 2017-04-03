@@ -5,6 +5,7 @@ CREATE DATABASE `specchio_temp`;
 ALTER TABLE `specchio`.`specchio_user` ADD COLUMN `password` VARCHAR(100);
 ALTER TABLE `specchio`.`specchio_user` ADD COLUMN `external_id` VARCHAR(255);
 ALTER TABLE `specchio`.`specchio_user` ADD COLUMN signup_date datetime DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE `specchio`.`specchio_user` ADD COLUMN `description` VARCHAR(250);
 CREATE TABLE `specchio`.`specchio_group`(
 	`group_id` INT(10) NOT NULL PRIMARY KEY,
 	`group_name` CHAR(16)
@@ -19,12 +20,12 @@ CREATE TABLE `specchio`.`specchio_user_group` (
 INSERT INTO `specchio`.`specchio_user_group` VALUES('sdb_admin', 'admin');
 
 -- change the password of sdb_admin in the two following lines
-UPDATE `specchio`.`specchio_user` SET PASSWORD=MD5('xXY7!fe@') where `user`='sdb_admin';
-UPDATE mysql.user SET Password=PASSWORD('xXY7!fe@') WHERE User='sdb_admin';
+--UPDATE `specchio`.`specchio_user` SET PASSWORD=MD5('xXY7!fe@') where `user`='sdb_admin';
+--UPDATE mysql.user SET Password=PASSWORD('xXY7!fe@') WHERE User='sdb_admin';
 
-GRANT SUPER ON *.* TO 'sdb_admin'@'localhost';
-GRANT CREATE USER ON *.* TO 'sdb_admin'@'localhost';
-FLUSH PRIVILEGES;
+--GRANT SUPER ON *.* TO 'sdb_admin'@'localhost';
+--GRANT CREATE USER ON *.* TO 'sdb_admin'@'localhost';
+--FLUSH PRIVILEGES;
 
 
 -- finer calibration date control
@@ -100,7 +101,10 @@ INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('cm2/g');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('ugrams/cm2');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('cm2');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('g/cm2');
-INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values(null, null, 'RAW');
+INSERT INTO `specchio`.`unit`(`short_name`) SELECT * FROM (SELECT 'RAW') AS tmp
+WHERE NOT EXISTS (
+    SELECT short_name FROM `specchio`.`unit` WHERE short_name = 'RAW'
+) LIMIT 1;
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('ms', 'Millisecond', 'ms');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Degrees', 'Angular value in degrees', 'Degrees');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('String', 'String', 'String');
@@ -111,9 +115,18 @@ INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('mg/kg');
 INSERT INTO `specchio`.`unit`(`short_name`) VALUES ('g/g');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Deci Siemens / Metre', null, 'dS/m');
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Metres', null, 'm');
-INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Degrees Celcius', 'Temperature unit in degrees Celcius', '�C');
-INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Hectopascal', 'Pressure unit in Hectopascal', 'hPa');
-INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Metres / second', 'Velocity', 'm/s');
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) SELECT * FROM (SELECT 'Degrees Celcius', 'Temperature unit in degrees Celcius', '�C') AS tmp
+WHERE NOT EXISTS (
+    SELECT name FROM `specchio`.`unit` WHERE name = 'Degrees Celcius'
+) LIMIT 1;
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`)  SELECT * FROM (SELECT 'Hectopascal', 'Pressure unit in Hectopascal', 'hPa') AS tmp
+WHERE NOT EXISTS (
+    SELECT name FROM `specchio`.`unit` WHERE name = 'Hectopascal'
+) LIMIT 1;
+INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) SELECT * FROM (SELECT 'Metres / second', 'Velocity', 'm/s') AS tmp
+WHERE NOT EXISTS (
+    SELECT name FROM `specchio`.`unit` WHERE name = 'Metres / second'
+) LIMIT 1;
 
 --INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Percent', null, '%'); -- apparently already exists in V2.2 schema ...
 
