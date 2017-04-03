@@ -18,6 +18,7 @@ public class Instrument {
 	private MetaDatatype<String> instr_no;
 	
 	private boolean is_valid; // can be invalid if it is a dummy (i.e. not loaded from db)
+	private boolean newly_inserted = false;
 	
 	public Instrument()
 	{
@@ -102,6 +103,14 @@ public class Instrument {
 		
 		return instr_name.value;
 		
+	}
+
+	public boolean isNewly_inserted() {
+		return newly_inserted;
+	}
+
+	public void setNewly_inserted(boolean newly_inserted) {
+		this.newly_inserted = newly_inserted;
 	}
 
 }
