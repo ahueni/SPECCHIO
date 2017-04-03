@@ -188,6 +188,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	}
 	
 	
+	
 	/**
 	 * Connect to the SPECCHIO web application.
 	 * 
@@ -925,6 +926,28 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Get a instrument object for a given spectral file object.
+	 * 
+	 * @param spec_file		the spectral file
+	 * 
+	 * @return a new Instrument object
+	 */	
+	public Instrument getInstrumentForSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException {
+		
+		Instrument instr = null;
+		try {
+			instr = postForObject(Instrument.class, "instrumentation", "getInstrumentForSpectralFile", spec_file);
+		} catch (SPECCHIOWebClientException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			System.out.println(e.getDetails());
+			throw e;
+		}
+		
+		return instr;
+	}	
+	
 	
 	/**
 	 * Get all of the pictures for an instrument.
@@ -1028,7 +1051,39 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
-	 * Get values for spectrum ids and EAV attribute
+	 * Get list of metaparameters for spectrum ids and EAV attributes
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute_ids		list of attribute ids
+	 * 
+	 * @return list of list of metaparameters, or null if the field does not exist	 
+	 */
+	public ArrayList<ArrayList<MetaParameter>> getMetaparameters(ArrayList<Integer> ids, ArrayList<Integer> attribute_ids) throws SPECCHIOWebClientException{
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(ids, attribute_ids);
+		
+		MetaParameter[] mp_list = postForArray(MetaParameter.class, "metadata", "get_list_of_multiple_metaparameter_vals", mds);
+		
+		// rebuild list of lists
+		ArrayList<ArrayList<MetaParameter>> out_list = new ArrayList<ArrayList<MetaParameter>>();
+		int cnt = 0;
+		
+		
+		for (int i = 0; i <attribute_ids.size(); i++) {
+			ArrayList<MetaParameter> temp_list = new ArrayList<MetaParameter>();
+			for (int j = 0; j <ids.size(); j++) {
+				temp_list.add(mp_list[cnt++]);
+			}
+			out_list.add(temp_list);
+		}		
+		
+		
+		return out_list;		
+	}	
+	
+	
+	/**
+	 * Get values for spectrum ids and EAV attribute (distinct values by default)
 	 * 
 	 * @param ids		spectrum ids
 	 * @param attribute		attribute name
@@ -1037,7 +1092,37 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 */
 	public MatlabAdaptedArrayList<Object> getMetaparameterValues(ArrayList<Integer> ids, String attribute_name) throws SPECCHIOWebClientException {
 		
+		return getMetaparameterValues(ids, attribute_name, true);
+		
+//		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(ids, attribute_name);
+//		
+//		MetaParameter[] mps = postForArray(MetaParameter.class, "metadata", "get_list_of_metaparameter_vals", mds);
+//		
+//		
+//		MatlabAdaptedArrayList<Object> out_list = new MatlabAdaptedArrayList<Object>();
+//		
+//		for (int i = 0; i < mps.length; i++) {
+//			out_list.add(mps[i].getValue());
+//		}		
+//		
+//		
+//		return out_list;
+		
+	}
+	
+	/**
+	 * Get values for spectrum ids and EAV attribute
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute		attribute name
+	 * @param distinct		defines if distinct values should be returned or repeated values for the given spectrum ids
+	 * 
+	 * @return list of values, or null if the field does not exist	 
+	 */
+	public MatlabAdaptedArrayList<Object> getMetaparameterValues(ArrayList<Integer> ids, String attribute_name, Boolean distinct) throws SPECCHIOWebClientException {
+		
 		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(ids, attribute_name);
+		mds.setDistinct(distinct);
 		
 		MetaParameter[] mps = postForArray(MetaParameter.class, "metadata", "get_list_of_metaparameter_vals", mds);
 		
@@ -1051,7 +1136,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 		return out_list;
 		
-	}
+	}	
 	
 	
 	/**
@@ -1326,6 +1411,15 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 	}
 	
+	
+	/**
+	 * Get the number of spectra in the database
+	 * 
+	 * @return the number of spectra in the database
+	 */
+	public int getSpectrumCountInDB() throws SPECCHIOClientException {
+		return getInteger("spectrum", "countInDB");
+	}		
 	
 	/**
 	 * Get the identifiers of all spectra beneath a given node of the spectral data browser
@@ -1651,6 +1745,19 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return postForInteger("spectrum", "insertTargetReferenceLinks", new SpectrumIdsDescriptor(target_id, reference_ids));
 		
 	}
+	
+	/**
+	 * Test for the existence of a calibration in the database.
+	 * 
+	 * @param cal		calibration object to check
+	 * 
+	 * @return true if the calibration already exists in the database, false otherwise
+	 */
+	public boolean instrumentCalibrationExists(Calibration cal) throws SPECCHIOWebClientException {
+
+		return postForBoolean("instrumentation", "instrument_calibration_exists", cal);
+		
+	}		
 
 
 	/**
@@ -2303,6 +2410,32 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		}
 		
 	}
+	
+	/**
+	 * Get an integer from a web service.
+	 * 
+	 * @param service	the service name
+	 * @param method	the service method
+	 * 
+	 * @return the return value of the service call
+	 * @throws SPECCHIOWebClientException 
+	 */
+	private Integer getInteger(String service, String method) throws SPECCHIOWebClientException {
+		
+		try {
+			return getWRBuilder(service, method).accept(MediaType.APPLICATION_XML).get(XmlInteger.class).getInteger();
+			
+		}
+		catch (UniformInterfaceException ex) {
+			// could represent any kind of HTTP error
+			throw new SPECCHIOWebClientException(ex);
+		}
+		catch (ClientHandlerException ex) {
+			// could represent any kind of network error
+			throw new SPECCHIOWebClientException(ex);
+		}
+		
+	}	
 
 
 	/**
@@ -2338,6 +2471,12 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 			// could represent any kind of network error
 			throw new SPECCHIOWebClientException(ex);
 		}
+		catch (javax.ws.rs.WebApplicationException ex) {
+			// could represent any kind of HTTP error
+			throw new SPECCHIOWebClientException(ex);
+		}
+		
+		
 		
 	}
 	

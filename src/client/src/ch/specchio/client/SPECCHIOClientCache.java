@@ -770,6 +770,20 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Get a instrument object for a given spectral file object.
+	 * 
+	 * @param spec_file		the spectral file
+	 * 
+	 * @return a new Instrument object
+	 */	
+	public Instrument getInstrumentForSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException {
+		
+		return realClient.getInstrumentForSpectralFile(spec_file);
+		
+	}
+	
+	
 	
 	/**
 	 * Get all of the pictures for an instrument.
@@ -864,6 +878,21 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Get list of metaparameters for spectrum ids and EAV attributes
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute_ids		list of attribute ids
+	 * 
+	 * @return list of list of metaparameters, or null if the field does not exist	 
+	 */
+	public ArrayList<ArrayList<MetaParameter>> getMetaparameters(ArrayList<Integer> ids, ArrayList<Integer> attribute_ids) throws SPECCHIOWebClientException{
+		
+		return realClient.getMetaparameters(ids, attribute_ids);
+		
+	}
+	
+	
 	
 	/**
 	 * Get values for spectrum ids and EAV attribute
@@ -876,6 +905,21 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	public MatlabAdaptedArrayList<Object> getMetaparameterValues(ArrayList<Integer> ids, String attribute_name) throws SPECCHIOWebClientException {
 		
 		return realClient.getMetaparameterValues(ids, attribute_name);
+		
+	}
+	
+	/**
+	 * Get values for spectrum ids and EAV attribute
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute		attribute name
+	 * @param distinct		defines if distinct values should be returned or repeated values for the given spectrum ids
+	 * 
+	 * @return list of values, or null if the field does not exist	 
+	 */
+	public MatlabAdaptedArrayList<Object> getMetaparameterValues(ArrayList<Integer> ids, String attribute_name, Boolean distinct) throws SPECCHIOWebClientException {
+	
+		return realClient.getMetaparameterValues(ids, attribute_name, distinct);
 		
 	}
 	
@@ -1106,6 +1150,15 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.getSpectrumCalibrationSpaces(spectrum_ids);
 		
 	}
+	
+	/**
+	 * Get the number of spectra in the database
+	 * 
+	 * @return the number of spectra in the database
+	 */
+	public int getSpectrumCountInDB() throws SPECCHIOClientException {
+		return realClient.getSpectrumCountInDB();
+	}	
 	
 	
 	/**
@@ -1454,6 +1507,19 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		return realClient.insertTargetReferenceLinks(target_id, reference_ids);
 		
 	}
+	
+	/**
+	 * Test for the existence of a calibration in the database.
+	 * 
+	 * @param cal		calibration object to check
+	 * 
+	 * @return true if the calibration already exists in the database, false otherwise
+	 */
+	 public boolean instrumentCalibrationExists(Calibration cal) throws SPECCHIOWebClientException {
+			
+			return realClient.instrumentCalibrationExists(cal);
+			
+		}		
 
 
 	/**
@@ -1832,6 +1898,9 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		realClient.updateUser(user);
 		
 	}
+
+
+
 
 
 

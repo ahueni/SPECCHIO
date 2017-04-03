@@ -493,6 +493,16 @@ public interface SPECCHIOClient {
 	
 	
 	/**
+	 * Get a instrument object for a given spectral file object.
+	 * 
+	 * @param spec_file		the spectral file
+	 * 
+	 * @return a new Instrument object
+	 */	
+	public Instrument getInstrumentForSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException;
+	
+	
+	/**
 	 * Get all of the pictures for an instrument.
 	 * 
 	 * @param instrument_id	the instrument identifier
@@ -541,6 +551,17 @@ public interface SPECCHIOClient {
 	
 	
 	/**
+	 * Get list of metaparameters for spectrum ids and EAV attributes
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute_ids		list of attribute ids
+	 * 
+	 * @return list of list of metaparameters, or null if the field does not exist	 
+	 */
+	public ArrayList<ArrayList<MetaParameter>> getMetaparameters(ArrayList<Integer> ids, ArrayList<Integer> attribute_ids) throws SPECCHIOWebClientException;
+	
+	
+	/**
 	 * Get values for spectrum ids and EAV attribute
 	 * 
 	 * @param ids		spectrum ids
@@ -549,6 +570,18 @@ public interface SPECCHIOClient {
 	 * @return list of values, or null if the field does not exist
 	 */	
 	public MatlabAdaptedArrayList<Object> getMetaparameterValues(ArrayList<Integer> ids, String attribute_name) throws SPECCHIOWebClientException;	
+	
+	/**
+	 * Get values for spectrum ids and EAV attribute
+	 * 
+	 * @param ids		spectrum ids
+	 * @param attribute		attribute name
+	 * @param distinct		defines if distinct values should be returned or repeated values for the given spectrum ids
+	 * 
+	 * @return list of values, or null if the field does not exist	 
+	 */
+	public MatlabAdaptedArrayList<Object> getMetaparameterValues(ArrayList<Integer> ids, String attribute_name, Boolean distinct) throws SPECCHIOWebClientException;
+	
 	
 	/**
 	 * Get the metadata conflicts for a set of spectra and set of fields.
@@ -706,6 +739,14 @@ public interface SPECCHIOClient {
 	
 	
 	/**
+	 * Get the number of spectra in the database
+	 * 
+	 * @return the number of spectra in the database
+	 */
+	public int getSpectrumCountInDB() throws SPECCHIOClientException;
+	
+	
+	/**
 	 * Get the calibration spaces for a set of spectra.
 	 * 
 	 * @param spectrum_ids	the spectrum identifiers
@@ -767,7 +808,7 @@ public interface SPECCHIOClient {
 	
 	
 	/**
-	 * Get the number of spectra that matach a given query.
+	 * Get the number of spectra that match a given query.
 	 * 
 	 * @param query	the query
 	 * 
@@ -955,6 +996,15 @@ public interface SPECCHIOClient {
 	 */
 	public int insertTargetReferenceLinks(int target_id, ArrayList<Integer> reference_ids) throws SPECCHIOClientException;
 
+	
+	/**
+	 * Test for the existence of a calibration in the database.
+	 * 
+	 * @param cal		calibration object to check
+	 * 
+	 * @return true if the calibration already exists in the database, false otherwise
+	 */
+	 public boolean instrumentCalibrationExists(Calibration cal) throws SPECCHIOWebClientException;	
 
 	/**
 	 * Test whether or not the client is logged in under a given role.
