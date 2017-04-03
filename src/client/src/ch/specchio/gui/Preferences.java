@@ -1,7 +1,6 @@
 package ch.specchio.gui;
 
 
-import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -21,6 +20,7 @@ public class Preferences extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	SPECCHIOClient specchio_client;
 	private JCheckBox asd_unit_folder;
+	private JCheckBox asd_DN_folder;
 	private JCheckBox db_config_file_creation_and_editing;
 	SPECCHIOPreferencesStore prefs;
 	
@@ -39,11 +39,18 @@ public class Preferences extends JFrame implements ActionListener {
 			asd_unit_folder.addActionListener((ActionListener) this);
 			asd_unit_folder.setSelected(prefs.getBooleanPreference("CREATE_UNIT_FOLDER_FOR_OLD_ASD_FILES"));
 			
+			asd_DN_folder = new JCheckBox("Insert DN data for new ASD binary files");			
+			asd_DN_folder.setActionCommand("asd_DN_folder");
+			asd_DN_folder.addActionListener((ActionListener) this);
+			asd_DN_folder.setSelected(prefs.getBooleanPreference("CREATE_DN_FOLDER_FOR_ASD_FILES"));
+			asd_DN_folder.setToolTipText("DN data will be added in addition to the regular spectra.");
+			
+			
 			db_config_file_creation_and_editing = new JCheckBox("Enable editing of db_config file");
 			db_config_file_creation_and_editing.setActionCommand("db_config_file_creation_and_editing");
 			db_config_file_creation_and_editing.addActionListener((ActionListener) this);
 			db_config_file_creation_and_editing.setSelected(prefs.getBooleanPreference("DB_CONFIG_FILE_CREATION_AND_EDITING"));
-			
+			db_config_file_creation_and_editing.setToolTipText("A text file will be created, containing your connection strings.");
 			
 			constraints = new GridBagConstraints();
 			
@@ -64,7 +71,11 @@ public class Preferences extends JFrame implements ActionListener {
 			l.insertComponent(asd_unit_folder, constraints);
 			
 			constraints.gridy = 2;	
+			l.insertComponent(asd_DN_folder, constraints);
+						
+			constraints.gridy++;	
 			l.insertComponent(db_config_file_creation_and_editing, constraints);
+			
 
 			pack();
 			
@@ -93,6 +104,18 @@ public class Preferences extends JFrame implements ActionListener {
 				e1.printStackTrace();
 			}
 		}
+		
+		if(e.getActionCommand().equals("asd_DN_folder"))
+		{
+			
+			try {
+				prefs.setBooleanPreference(this.asd_DN_folder.isSelected(), "CREATE_DN_FOLDER_FOR_ASD_FILES");				
+
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}		
 		
 		if(e.getActionCommand().equals("db_config_file_creation_and_editing"))
 		{
