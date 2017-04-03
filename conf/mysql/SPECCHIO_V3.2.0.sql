@@ -110,7 +110,7 @@ CREATE TABLE `campaign` (
   KEY `FK_campaign_research_group_id` (`research_group_id`),
   CONSTRAINT `FK_campaign_research_group_id` FOREIGN KEY (`research_group_id`) REFERENCES `research_group` (`research_group_id`),
   CONSTRAINT `FK_campaign_user_id` FOREIGN KEY (`user_id`) REFERENCES `specchio_user` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 ROW_FORMAT=FIXED;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1048,7 +1048,7 @@ CREATE TABLE `spectrum` (
   CONSTRAINT `spectrum_ibfk_4` FOREIGN KEY (`sensor_id`) REFERENCES `sensor` (`sensor_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `spectrum_ibfk_5` FOREIGN KEY (`instrument_id`) REFERENCES `instrument` (`instrument_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `spectrum_ibfk_9` FOREIGN KEY (`measurement_unit_id`) REFERENCES `measurement_unit` (`measurement_unit_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=FIXED;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
