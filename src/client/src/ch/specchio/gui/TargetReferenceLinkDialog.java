@@ -1006,22 +1006,32 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 			// compile list of spectrum_ids
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			for (SpectrumDataLink link : links) {
-				if(show_linked_spectrum)
-					ids.add(link.getReferencedId());
+				if(show_linked_spectrum){
+					if(!ids.contains(link.getReferencedId()))
+						ids.add(link.getReferencedId());
+				}
+			
 				else
 					ids.add(link.getReferencingId());
 			}
 			
-			// get the filenames from the server
-			ArrayList<Object> filenames = specchioClient.getMetaparameterValues(ids, "File Name");
+			// get the filenames from the server: 
+			ArrayList<Object> filenames = specchioClient.getMetaparameterValues(ids, "File Name", false);
 			
 			// fill the list with information from the server
-			int i=0;
+			//int i=0;
+			int ind = 0;
 			for (SpectrumDataLink link : links) {
-				TargetReferenceListEntry e = new TargetReferenceListEntry(link, filenames.get(i).toString());
+				
+				if(show_linked_spectrum)
+					ind = ids.indexOf(link.getReferencedId());
+				else
+					ind = ids.indexOf(link.getReferencingId());
+				
+				TargetReferenceListEntry e = new TargetReferenceListEntry(link, filenames.get(ind).toString());
 				e.showLink(show_linked_spectrum);
 				model.addElement(e);
-				i++;
+				//i++;
 			}
 			
 		}
@@ -1189,8 +1199,8 @@ public class TargetReferenceLinkDialog extends JDialog implements ActionListener
 				int num = 0;
 				for (Integer targetId : targetIds)
 				{
-					// create a link from the target to all of the references
-					num += specchioClient.insertTargetReferenceLinks(targetId, referenceIds);
+					// create a link from the target to the closest of the references
+					num += specchioClient.insertClosestTargetReferenceLink(targetId, referenceIds);
 					
 					// update progress
 					cnt++;
