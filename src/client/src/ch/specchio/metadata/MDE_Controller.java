@@ -27,6 +27,7 @@ public class MDE_Controller {
 	MDE_Form form;
 	MD_FormDescriptor form_descriptor;
 	Hashtable<Integer, attribute> attributes;
+	Boolean do_conflict_detection = true;
 	
 	
 	public MDE_Controller(SPECCHIOClient specchio_client) throws SPECCHIOClientException
@@ -63,6 +64,16 @@ public class MDE_Controller {
 	}
 	
 	
+	public Boolean getDo_conflict_detection() {
+		return do_conflict_detection;
+	}
+
+
+	public void setDo_conflict_detection(Boolean do_conflict_detection) {
+		this.do_conflict_detection = do_conflict_detection;
+	}
+
+
 	public void set_form_descriptor(MD_FormDescriptor form_descriptor) throws SPECCHIOClientException
 	{
 		this.form_descriptor = form_descriptor;	
@@ -81,6 +92,8 @@ public class MDE_Controller {
 	{
 		if (ids != null && ids.size() > 0)
 		{
+			ConflictTable eav_conflict_stati;
+			
 			// get form					
 			form = form_factory.getForm(form_descriptor);
 			form.set_spectrum_ids(ids);
@@ -89,7 +102,18 @@ public class MDE_Controller {
 			Spectrum s = specchio_client.getSpectrum(ids.get(0), false);
 
 			// add EAV parameters including their conflict status
-			ConflictTable eav_conflict_stati = specchio_client.getEavMetadataConflicts(ids);
+			if(do_conflict_detection)
+			{
+				eav_conflict_stati = specchio_client.getEavMetadataConflicts(ids);
+			}
+			else
+			{
+				// speedup: simplify conflict detection by supplying only one spectrum
+				ArrayList<Integer> first_id = new ArrayList<Integer>();
+				first_id.add(ids.get(0));
+				eav_conflict_stati = specchio_client.getEavMetadataConflicts(first_id);
+			}
+			
 			Enumeration<String> conflicts = eav_conflict_stati.conflicts();
 			while (conflicts.hasMoreElements()) {
 				try {
