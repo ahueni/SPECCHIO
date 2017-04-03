@@ -16,7 +16,8 @@ public class MetadataSelectionDescriptor {
 	private String attribute_name;
 	private Integer attribute_id;
 	private Object value;
-	
+	private ArrayList<Integer> attribute_ids;
+	private Boolean distinct = true;
 	
 	/**
 	 * Default Constructor.
@@ -52,7 +53,12 @@ public class MetadataSelectionDescriptor {
 		
 	}
 	
-	
+	public MetadataSelectionDescriptor(ArrayList<Integer> ids, ArrayList<Integer> attribute_ids) {
+		
+		this.ids = ids;
+		this.attribute_ids = attribute_ids;
+		
+	}	
 		
 	
 	@XmlElement(name="ids")
@@ -72,6 +78,15 @@ public class MetadataSelectionDescriptor {
 		this.attribute_id = attribute_id;
 	}
 
+	@XmlElement(name="attribute_ids")
+	public ArrayList<Integer> getAttribute_ids() {
+		return attribute_ids;
+	}
+
+	public void setAttribute_ids(ArrayList<Integer> attribute_ids) {
+		this.attribute_ids = attribute_ids;
+	}	
+	
 	@XmlElement(name="value")
 	public Object getValue() {
 		return value;
@@ -79,6 +94,15 @@ public class MetadataSelectionDescriptor {
 
 	public void setValue(Object value) {
 		this.value = value;
+	}
+
+	@XmlElement(name="distinct")
+	public Boolean getDistinct() {
+		return distinct;
+	}
+
+	public void setDistinct(Boolean distinct) {
+		this.distinct = distinct;
 	}
 	
 
