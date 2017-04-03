@@ -10,10 +10,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.prefs.BackingStoreException;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOPreferencesStore;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -34,12 +36,12 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	// String dc_corr_comment = null;
 	// long dc_time = -1;
 
-	Float[][] reference_data;
-	Float[][] base_calibration_data;
-	Float[][] lamp_calibration_data;
-	Float[][] fibre_optic_data;
-	Float[][] dn;
-	Float[][] absolute_reflectance_file;
+	public Float[][] reference_data;
+	public Float[][] base_calibration_data;
+	public Float[][] lamp_calibration_data;
+	public Float[][] fibre_optic_data;
+	public Float[][] dn;
+	public Float[][] absolute_reflectance_file;
 
 	boolean reference_flag = false;
 
@@ -94,7 +96,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	int[] cbSwir1Gain;
 	int[] cbSwir2Gain;
 
-	SpectralFile asd_v7_file;
+	//SpectralFile spec_file;
 	
 	Metadata smd;
 
@@ -108,17 +110,18 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		
 		 smd = new Metadata();
 		
-		asd_v7_file = new SpectralFile();
-		//asd_v7_file.setCaptureDate(1, new DateTime()); // needed if read_hdr is called
+		 spec_file = new SpectralFile();
+		//spec_file.setCaptureDate(1, new DateTime()); // needed if read_hdr is called
 													// directly!
-		asd_v7_file.setNumberOfSpectra(2); // one for DN and one for the
+		spec_file.setNumberOfSpectra(2); // one for DN and one for the
 											// converted DN values to Radiance
 											// or Reflectance		
 
-		asd_v7_file.setAsdV7(true);
-		asd_v7_file.setPath(file.getAbsolutePath());
-		asd_v7_file.setFilename(file.getName());
-		asd_v7_file.setFileFormatName(this.file_format_name);
+		spec_file.setAsdV7(true);
+		spec_file.setPath(file.getAbsolutePath());
+		spec_file.setFilename(file.getName());
+		spec_file.setFileFormatName(this.file_format_name);
+		spec_file.setHas_standardised_wavelengths(true);
 
 		String filename = file.getName();
 
@@ -142,23 +145,23 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		} catch (NumberFormatException e) {
 			// exception: must be a system calibration file
-//			asd_v7_file.spectra_numbers[0] = 0;
+//			spec_file.spectra_numbers[0] = 0;
 		}
 
-		asd_v7_file.addSpectrumFilename(asd_v7_file.getFilename());
+		spec_file.addSpectrumFilename(spec_file.getFilename());
 
 		file_input = new FileInputStream(file);
 
 		data_in = new DataInputStream(file_input);
 
-		read_ASD_spectrum_file_header(data_in, asd_v7_file);
+		read_ASD_spectrum_file_header(data_in, spec_file);
 
 		// DN values are stored in the first row of the measurements array,
 		// Radiance or Reflectance values in the second
-		asd_v7_file.setMeasurements(new Float[2][asd_v7_file.getNumberOfChannels(0)]);
-		asd_v7_file.setDn(read_data(data_in, asd_v7_file.getNumberOfChannels(0)));
-		for (int i = 0; i < asd_v7_file.getNumberOfChannels(0); i++) {
-			asd_v7_file.getMeasurements()[0][i] = asd_v7_file.getDn()[0][i]; // the DN
+		spec_file.setMeasurements(new Float[2][spec_file.getNumberOfChannels(0)]);
+		spec_file.setDn(read_data(data_in, spec_file.getNumberOfChannels(0)));
+		for (int i = 0; i < spec_file.getNumberOfChannels(0); i++) {
+			spec_file.getMeasurements()[0][i] = spec_file.getDn()[0][i]; // the DN
 																	// values
 																	// are
 																	// stored in
@@ -169,20 +172,20 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 																	// array.
 		}
 
-		read_reference_file_header(data_in, asd_v7_file);
+		read_reference_file_header(data_in, spec_file);
 
-		reference_data = read_data(data_in, asd_v7_file.getNumberOfChannels(0));		
+		reference_data = read_data(data_in, spec_file.getNumberOfChannels(0));		
 		
 		if (data_in.available() > 0) {
-			read_classifier_data(data_in, asd_v7_file);
+			read_classifier_data(data_in, spec_file);
 		}
 
 		if (data_in.available() > 0) {
-			read_dependent_variables(data_in, asd_v7_file);
+			read_dependent_variables(data_in, spec_file);
 		}
 
 		if (data_in.available() > 0) {
-			read_calibration_header(data_in, asd_v7_file);
+			read_calibration_header(data_in, spec_file);
 		}
 
 		if (no_of_cal_buffers > 0 && data_in.available() > 0) {
@@ -194,39 +197,39 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 				if (cbType[i] == 0)
 					absolute_reflectance_file = read_data(data_in,
-							asd_v7_file.getNumberOfChannels(0));
+							spec_file.getNumberOfChannels(0));
 
 				if (cbType[i] == 1)
 					base_calibration_data = read_data(data_in,
-							asd_v7_file.getNumberOfChannels(0));
+							spec_file.getNumberOfChannels(0));
 
 				// Read Lamp Calibration Data
 				if (cbType[i] == 2)
 					lamp_calibration_data = read_data(data_in,
-							asd_v7_file.getNumberOfChannels(0));
+							spec_file.getNumberOfChannels(0));
 
 				// Read Fibre Optic Data
 				if (cbType[i] == 3)
 					fibre_optic_data = read_data(data_in,
-							asd_v7_file.getNumberOfChannels(0));
+							spec_file.getNumberOfChannels(0));
 
 			}
 
 			if (reference_flag == false) {
-				asd_v7_file.setAsdV7RadianceFlag(true);
-				//asd_v7_file.setAsdV7ReflectanceFlag(true);
+				spec_file.setAsdV7RadianceFlag(true);
+				//spec_file.setAsdV7ReflectanceFlag(true);
 
-				Float[][] radiances = new Float[1][asd_v7_file.getNumberOfChannels(0)];
+				Float[][] radiances = new Float[1][spec_file.getNumberOfChannels(0)];
 
 				if (base_calibration_data != null
 						&& lamp_calibration_data != null
 						&& fibre_optic_data != null) {
-					asd_v7_file.addSpectrumFilename(asd_v7_file.getFilename());
-					asd_v7_file.addMeasurementUnits(0, 0); // DN
-					asd_v7_file.addMeasurementUnits(1, 2); // Radiance				
-					radiances = convert_DN2L(asd_v7_file.getNumberOfChannels(0));
-					for (int i = 0; i < asd_v7_file.getNumberOfChannels(0); i++) {
-						asd_v7_file.getMeasurements()[1][i] = radiances[0][i]; // the
+					spec_file.addSpectrumFilename(spec_file.getFilename());
+					spec_file.addMeasurementUnits(0, 0); // DN
+					spec_file.addMeasurementUnits(1, 2); // Radiance				
+					radiances = convert_DN2L(spec_file.getNumberOfChannels(0));
+					for (int i = 0; i < spec_file.getNumberOfChannels(0); i++) {
+						spec_file.getMeasurements()[1][i] = radiances[0][i]; // the
 																			// converted
 																			// radiance
 																			// values
@@ -247,23 +250,23 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 			if (reference_flag == true) { // routine to convert dn values into
 				// reflectance values
-				asd_v7_file.setAsdV7RadianceFlag(false);
-				asd_v7_file.setAsdV7ReflectanceFlag(true);
-				asd_v7_file.addSpectrumFilename(asd_v7_file.getFilename());
-				asd_v7_file.addMeasurementUnits(0, 0); // DN
-				asd_v7_file.addMeasurementUnits(1, 1); // Reflectance
+				spec_file.setAsdV7RadianceFlag(false);
+				spec_file.setAsdV7ReflectanceFlag(true);
+				spec_file.addSpectrumFilename(spec_file.getFilename());
+				spec_file.addMeasurementUnits(0, 0); // DN
+				spec_file.addMeasurementUnits(1, 1); // Reflectance
 				
 
-				Float[][] reflectances = convert_DN2R(asd_v7_file.getNumberOfChannels(0));
+				Float[][] reflectances = convert_DN2R(spec_file.getNumberOfChannels(0));
 
 				if (absolute_reflectance_file != null) {
-					for (int i = 0; i < asd_v7_file.getNumberOfChannels(0); i++) {
-						asd_v7_file.getMeasurements()[1][i] = reflectances[0][i]
+					for (int i = 0; i < spec_file.getNumberOfChannels(0); i++) {
+						spec_file.getMeasurements()[1][i] = reflectances[0][i]
 								/ absolute_reflectance_file[0][i];
 					}
 				} else {
-					for (int i = 0; i < asd_v7_file.getNumberOfChannels(0); i++) {
-						asd_v7_file.getMeasurements()[1][i] = reflectances[0][i];
+					for (int i = 0; i < spec_file.getNumberOfChannels(0); i++) {
+						spec_file.getMeasurements()[1][i] = reflectances[0][i];
 					}
 				}
 			}
@@ -273,39 +276,48 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 																// convert dn
 																// values into
 			// reflectance values
-			asd_v7_file.setAsdV7RadianceFlag(false);
-			asd_v7_file.setAsdV7ReflectanceFlag(true);
-			asd_v7_file.addSpectrumFilename(asd_v7_file.getFilename());
-			asd_v7_file.addMeasurementUnits(0, 0); // DN
-			asd_v7_file.addMeasurementUnits(1, 1); // Reflectance
+			spec_file.setAsdV7RadianceFlag(false);
+			spec_file.setAsdV7ReflectanceFlag(true);
+			spec_file.addSpectrumFilename(spec_file.getFilename());
+			spec_file.addMeasurementUnits(0, 0); // DN
+			spec_file.addMeasurementUnits(1, 1); // Reflectance
 			
 
-			Float[][] reflectances = convert_DN2R(asd_v7_file.getNumberOfChannels(0));
-			for (int i = 0; i < asd_v7_file.getNumberOfChannels(0); i++) {
-				asd_v7_file.getMeasurements()[1][i] = reflectances[0][i];
+			Float[][] reflectances = convert_DN2R(spec_file.getNumberOfChannels(0));
+			for (int i = 0; i < spec_file.getNumberOfChannels(0); i++) {
+				spec_file.getMeasurements()[1][i] = reflectances[0][i];
 			}
 
 		}
 		
 		if (no_of_cal_buffers < 1 && reference_flag == false) { // Just DN's in this file
 			
-			asd_v7_file.setNumberOfSpectra(1);
+			spec_file.setNumberOfSpectra(1);
 
-			asd_v7_file.setAsdV7RadianceFlag(false);
-			asd_v7_file.setAsdV7ReflectanceFlag(false);
+			spec_file.setAsdV7RadianceFlag(false);
+			spec_file.setAsdV7ReflectanceFlag(false);
 		
 		}
 		else
 		{
 			// either reflectance or radiance was added
 			// therefore, we must add another metadata entry
-			asd_v7_file.addEavMetadata(smd);
+			spec_file.addEavMetadata(smd);
 		}
 		
 
 		data_in.close();
+		
+		try {
+			SPECCHIOPreferencesStore prefs = new SPECCHIOPreferencesStore();			
+			spec_file.setCreate_DN_folder_for_asd_files(prefs.getBooleanPreference("CREATE_DN_FOLDER_FOR_ASD_FILES"));
+			
+		} catch (BackingStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 
-		return asd_v7_file;
+		return spec_file;
 	}
 
 	public void read_ASD_spectrum_file_header(DataInputStream in,
@@ -467,7 +479,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		// read instrument type
 		hdr.setInstrumentTypeNumber(in.readByte());
 
-		skip(in, 4); // cal bulb no
+		Integer bulb_no = this.read_ulong(in);
+		//skip(in, 4); // cal bulb no: appears to be usually zero
 		
 		gain_swir1 = this.read_short(in);
 		gain_swir2 = this.read_short(in);
@@ -520,9 +533,9 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		reference_flag = in.readBoolean();
 
 		skip(in, 1 + 8 + 8);
-		skip(in, 2); // random, educated skip
+		skip(in, 2); // random, educated skip: update: this is actually the length of the following string
 		String useless_description = this.read_string(in,
-				this.asd_v7_file.getComment().length());
+				this.spec_file.getComment().length());
 
 	}
 
@@ -1020,14 +1033,14 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		int swir_1_top;
 		
 		// conversion depends on the number of channels
-		if(this.asd_v7_file.getNumberOfChannels(0) > 751) // likely threshold is 751 channels for the handheld
+		if(this.spec_file.getNumberOfChannels(0) > 751) // likely threshold is 751 channels for the handheld
 		{
 			vnir_top = 1000 - 350 + 1;
 			swir_1_top = vnir_top + 800;
 		}
 		else
 		{
-			vnir_top = this.asd_v7_file.getNumberOfChannels(0);
+			vnir_top = this.spec_file.getNumberOfChannels(0);
 			swir_1_top = vnir_top + 0;
 		}
 		
@@ -1061,15 +1074,15 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		gain_v[2] = (float) 2048 / (float) gain_swir2;
 
 		for (int i = 0; i < vnir_top; i++) {
-			l[0][i] = s[0][i] * asd_v7_file.getDn()[0][i] / gain_v[0];
+			l[0][i] = s[0][i] * spec_file.getDn()[0][i] / gain_v[0];
 		}
 
 		for (int i = vnir_top; i < swir_1_top; i++) {
-			l[0][i] = s[0][i] * asd_v7_file.getDn()[0][i] / gain_v[1];
+			l[0][i] = s[0][i] * spec_file.getDn()[0][i] / gain_v[1];
 		}
 
 		for (int i = swir_1_top; i < channels; i++) {
-			l[0][i] = s[0][i] * asd_v7_file.getDn()[0][i] / gain_v[2];
+			l[0][i] = s[0][i] * spec_file.getDn()[0][i] / gain_v[2];
 		}
 
 		return l;
@@ -1079,7 +1092,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	public Float[][] convert_DN2R(int channels) {
 		Float[][] refl = new Float[1][channels];
 		for (int i = 0; i < channels; i++) {
-			refl[0][i] = asd_v7_file.getDn()[0][i] / reference_data[0][i];
+			refl[0][i] = spec_file.getDn()[0][i] / reference_data[0][i];
 		}
 
 		return refl;
@@ -1167,8 +1180,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 			// pos.latitude = lat_deg + lat_min;
 			// pos.longitude = lon_deg + lon_min;
 			// pos.altitude = alt;
-			pos.latitude = asd_v7_file.DDDmm2DDDdecimals(lat);
-			pos.longitude = asd_v7_file.DDDmm2DDDdecimals(lon);
+			pos.latitude = spec_file.DDDmm2DDDdecimals(lat);
+			pos.longitude = spec_file.DDDmm2DDDdecimals(lon);
 			pos.altitude = alt;
 		}
 
@@ -1230,6 +1243,17 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		return as_int;
 	}
+	
+	protected Integer read_ulong(DataInputStream in) throws IOException {
+		byte[] b = new byte[4];
+		if (in.read(b) == -1)
+			throw new EOFException();
+		long n = arr2long(b, 0);
+
+		int as_int = (int) n;
+
+		return as_int;
+	}	
 
 	protected Float read_float(DataInputStream in) throws IOException {
 		byte[] b = new byte[4];
