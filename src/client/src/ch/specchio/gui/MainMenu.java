@@ -31,9 +31,14 @@ import ch.specchio.client.SPECCHIOServerDescriptorLegacyStore;
 import ch.specchio.client.SPECCHIOServerDescriptorPreferencesStore;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.metadata.MetaDataFromTabModel;
+import ch.specchio.queries.Query;
+import ch.specchio.types.Campaign;
 import ch.specchio.types.Category;
+import ch.specchio.types.MetaParameter;
 import ch.specchio.types.SpecchioCampaign;
+import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.Units;
+import ch.specchio.types.User;
 import ch.specchio.types.attribute;
 
 
@@ -69,6 +74,7 @@ class MainMenu implements ActionListener, ItemListener {
    String test = "test";
    String info = "About";
    String list_eav_metadata_attributes = "List available Metadata Elements";
+   String get_user_contacts = "Get SPECCHIO user contacts";
    
    /** menu items accessible to all clients */
    Hashtable<String, JMenuItem> public_menu_items;
@@ -223,7 +229,7 @@ private JMenuItem dbConfigmenuItem;
       menuItem.addActionListener(this);
       menu.add(menuItem);
       user_menu_items.put(time_shift, menuItem);
-      
+            
       menuItem = new JMenuItem(sun_angle_calc);
       menuItem.addActionListener(this);
       menu.add(menuItem);
@@ -248,7 +254,14 @@ private JMenuItem dbConfigmenuItem;
       menuItem = new JMenuItem(list_eav_metadata_attributes);
       menuItem.addActionListener(this);
       menu.add(menuItem);
-      user_menu_items.put(list_eav_metadata_attributes, menuItem);
+      user_menu_items.put(list_eav_metadata_attributes, menuItem);      
+      
+      menuItem = new JMenuItem(get_user_contacts);
+      menuItem.setEnabled(false);
+      menuItem.addActionListener(this);
+      menu.add(menuItem);
+      admin_menu_items.put(get_user_contacts, menuItem);      
+      
       
       menuItem = new JMenuItem(info);
       menuItem.addActionListener(this);
@@ -696,7 +709,7 @@ private JMenuItem dbConfigmenuItem;
          "Build Number: " + SPECCHIO_ReleaseInfo.getBuildNumber() + "<br>" +
          "Build Date: " + SPECCHIO_ReleaseInfo.getBuildDate()
         		 + "<br><br>" +
-        		 "(c) 2006-2016 by Remote Sensing Laboratories (RSL)<br>" +
+        		 "(c) 2006-2017 by Remote Sensing Laboratories (RSL)<br>" +
         		 "Dept. of Geography, " +
         		 "University of Zurich (CH)<br>" +
         		 "(c) 2013-2014 by University of Wollongong (AU)<br><br>" +
@@ -813,6 +826,60 @@ private JMenuItem dbConfigmenuItem;
 			}
       }
       
+      if(get_user_contacts.equals(e.getActionCommand()))
+      {
+    	  
+    	  SPECCHIOClient specchio_client = SPECCHIOApplication.getInstance().getClient();
+    	  
+    	  User[] users = specchio_client.getUsers();
+    	  
+    	// write the meta-parameter value to a temporary file
+    	  File temp;
+    	  try {
+    		  temp = File.createTempFile("specchio", ".txt");
+
+    		  temp.deleteOnExit();
+    		  FileOutputStream fos = new FileOutputStream(temp);
+
+    		  BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+
+    		  bw.write("\n");
+    		  bw.write("User contacts of this database");
+    		  bw.write("\n");
+    		  bw.write("================================================================");
+    		  bw.write("\n");
+    		  bw.write("\n");
+    		  bw.write("Emails:");
+    		  bw.write("\n");
+    		  bw.write("\n");
+    		  
+    		  for(User user : users)
+    		  {
+    			  
+    			  bw.write(user.getEmailAddress());
+    			  bw.write(",");
+    		  }
+    		  
+    		  bw.write("\n");
+
+    		  bw.close();
+
+    		  //mp_file.writeValue(fos);
+    		  fos.close();
+
+    		  // launch the external viewer
+    		  Desktop.getDesktop().open(temp);				
+
+
+    	  } catch (IOException e1) {
+    		  e1.printStackTrace();
+    	  } catch (SPECCHIOClientException e1) {
+    		  e1.printStackTrace();
+    	  }
+
+
+      }
+      
       
       if(test.equals(e.getActionCommand()))
       {
@@ -822,7 +889,31 @@ private JMenuItem dbConfigmenuItem;
     	  
     	  try {
     		  
-    		  specchio_client.renameHierarchy(2173, "Artificial");
+//    		  Campaign c = specchio_client.getCampaign(1);
+    		  
+//    		  TaxonomyNodeObject node = specchio_client.getTaxonomyRootNode(specchio_client.getAttributesNameHash().get("Basic Target Type").getId());
+    		  
+    		  //Hashtable<String, Integer> hash = specchio_client.getTaxonomyHash(specchio_client.getAttributesNameHash().get("Basic Target Type").getId());
+    		  
+    		  ArrayList<Integer> ids = new ArrayList<Integer>();
+    		  ids.add(251403);
+    		  ids.add(251412);
+    		  ids.add(251413);
+    		  
+    		  ArrayList<Integer> attribute_ids = new ArrayList<Integer>();
+    		  attribute_ids.add(specchio_client.getAttributesNameHash().get("Basic Target Type").getId());
+    		  attribute_ids.add(specchio_client.getAttributesNameHash().get("Integration Time").getId());
+    		  
+    		  ArrayList<ArrayList<MetaParameter>> data = specchio_client.getMetaparameters(ids, attribute_ids);
+    		  
+    	//	  specchio_client.getSpectrumIdsMatchingQuery(null);
+    		  
+    		  //specchio_client.renameHierarchy(2758, "CCCC");
+//    		  specchio_client.renameHierarchy(2164, "s2_t1_Water");
+    		  
+    		  
+//    		  specchio_client.getSpectrumIdsMatchingFullTextSearch("%grass%");
+//    		  specchio_client.renameHierarchy(2173, "Artificial");
     		  //specchio_client.getHierarchyFilePath(2530);
     		  
 //    		  Spectrum s = specchio_client.getSpectrum(268081, false);
@@ -870,6 +961,9 @@ private JMenuItem dbConfigmenuItem;
     			);
     	  }
       }
+      
+           
+      
       
       if (sun_angle_calc.equals(e.getActionCommand()))
       {
