@@ -1302,16 +1302,16 @@ public class EAVDBServices extends Thread {
 				}
 				else if (string_val != null && binary_val == null)
 				{
-					for(int i=0;i<((String) string_val).length();i++)
-					{
-						if(((String) string_val).charAt(i) == 0)
-						{
-							StringBuilder myName = new StringBuilder((String) string_val);
-							myName.setCharAt(i, '_');
-							string_val = myName.toString();
-							string_val = "!!!!!!!" + string_val;
-						}
-					}
+//					for(int i=0;i<((String) string_val).length();i++)
+//					{
+////						if(((String) string_val).charAt(i) == 0)
+////						{
+////							StringBuilder myName = new StringBuilder((String) string_val);
+////							myName.setCharAt(i, '_');
+////							string_val = myName.toString();
+////							string_val = "!!!!!!!" + string_val;
+////						}
+//					}
 					
 					mp = MetaParameter.newInstance(attr, string_val);
 				}
@@ -1357,16 +1357,16 @@ public class EAVDBServices extends Thread {
 						// code to find strings that had null values inserted by SQL injections (e.g. \0 due to path names in Windows)
 //						char c = ((String) string_val).charAt(75);
 //						int ic = c;
-						for(int i=0;i<((String) string_val).length();i++)
-						{
-							if(((String) string_val).charAt(i) == 0)
-							{
-								StringBuilder myName = new StringBuilder((String) string_val);
-								myName.setCharAt(i, '_');
-								string_val = myName.toString();
-								string_val = "!!!!!!!" + string_val;
-							}
-						}
+//						for(int i=0;i<((String) string_val).length();i++)
+//						{
+//							if(((String) string_val).charAt(i) == 0)
+//							{
+//								StringBuilder myName = new StringBuilder((String) string_val);
+//								myName.setCharAt(i, '_');
+//								string_val = myName.toString();
+//								string_val = "!!!!!!!" + string_val;
+//							}
+//						}
 						mp.setAnnotation((String) string_val);
 					}
 					
