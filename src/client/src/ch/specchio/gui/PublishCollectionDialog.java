@@ -93,7 +93,7 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 	 *
 	 * @param owner		the frame that owns this dialog
 	 * @param ids		the identifiers to be published
-	 * @param model		is the dialogue modal?
+	 * @param modal		is the dialogue modal?
 	 * 
 	 * @throws SPECCHIOClientException	error contacting the server
 	 */

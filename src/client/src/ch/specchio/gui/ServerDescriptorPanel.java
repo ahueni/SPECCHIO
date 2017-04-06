@@ -225,9 +225,9 @@ public abstract class ServerDescriptorPanel extends JPanel {
 	
 	
 	/**
-	 * Set the contents of the path field.
+	 * Set the contents of the dataSourceName field.
 	 * 
-	 * @param	the path
+	 * @param	dataSourceName	dataSourceName
 	 */
 	public void setDataSourceName(String dataSourceName) {
 		
@@ -251,7 +251,7 @@ public abstract class ServerDescriptorPanel extends JPanel {
 	/**
 	 * Set the contents of the path field.
 	 * 
-	 * @param	the path
+	 * @param	path	Path
 	 */
 	public void setPath(String path) {
 		

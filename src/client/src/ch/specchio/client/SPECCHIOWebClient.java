@@ -395,7 +395,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Get the spectrum identifiers that do not have a reference to the specified attribute.
 	 * 
 	 * @param spectrum_ids	list of ids to filter
-	 * @param attribute_id	attribute id to filter with
+	 * @param attribute_name	attribute_name to filter with
 	 * 
 	 * @return an array list of spectrum identifiers that match the filter
 	 */
@@ -738,7 +738,6 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Return an EAVQueryConditionObject configured for the supplied attribute.
 	 * 
 	 * @param attr	attribute object
-	 * @return 
 	 * 
 	 * @return EAVQueryConditionObject
 	 */
@@ -805,7 +804,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @param hierarchy_id		the identifier of the hierarchy
 	 * 
-	 * @returns path as string
+	 * @return path as string
 	 * 
 	 * @throws SPECCHIOFactoryException	the database could not accessed
 	 */
@@ -821,7 +820,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @param hierarchy_id		the identifier of the hierarchy
 	 * 
-	 * @returns name as string
+	 * @return name		name as string
 	 * 
 	 * @throws SPECCHIOFactoryException	the database could not accessed
 	 */	
@@ -1027,7 +1026,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Get metaparameters for spectrum ids and EAV attribute
 	 * 
 	 * @param ids		spectrum ids
-	 * @param attribute		attribute name
+	 * @param attribute_name		attribute name
 	 * 
 	 * @return list of metaparameters, or null if the field does not exist	 
 	 */
@@ -1086,7 +1085,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Get values for spectrum ids and EAV attribute (distinct values by default)
 	 * 
 	 * @param ids		spectrum ids
-	 * @param attribute		attribute name
+	 * @param attribute_name		attribute name
 	 * 
 	 * @return list of values, or null if the field does not exist	 
 	 */
@@ -1114,7 +1113,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Get values for spectrum ids and EAV attribute
 	 * 
 	 * @param ids		spectrum ids
-	 * @param attribute		attribute name
+	 * @param attribute_name		attribute name
 	 * @param distinct		defines if distinct values should be returned or repeated values for the given spectrum ids
 	 * 
 	 * @return list of values, or null if the field does not exist	 
@@ -1254,7 +1253,6 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * Get a reference space.
 	 * 
 	 * @param input_ids
-	 * @param local_ids
 	 * 
 	 * @return a ReferenceSpaceStruct object, or null if no space could be found
 	 */
@@ -1513,7 +1511,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * @param target_ids	the identifiers of the target spectra (null or empty to match all targets)
 	 * @param reference_ids	the identifiers of the reference spectra (null or empty to match all references)
 	 * 
-	 * @returns an array of SpectrumDataLink objects
+	 * @return an array of SpectrumDataLink objects
 	 */
 	public SpectrumDataLink[] getTargetReferenceLinks(ArrayList<Integer> target_ids, ArrayList<Integer> reference_ids) throws SPECCHIOClientException {
 		
@@ -2209,7 +2207,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	/**
 	 * Update the metadata fields for a set of spectra
 	 * 
-	 * @param spectrum_ids	the spectrum identifiers
+	 * @param ids	the spectrum identifiers
 	 * @param field			the name of the field to be updated
 	 * @param id
 	 */
@@ -2249,7 +2247,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	/**
 	 * Update the information about a user.
 	 * 
-	 * @param user	the user data
+	 * @param newUser	the user data
 	 * 
 	 * @throws SPECCHIOClientException
 	 */
@@ -2513,8 +2511,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * hierarchy if it doesn't exist.
 	 * 
 	 * @param campaign	the campaign into which to insert the hierarchy
-	 * @param parent_id			the identifier of the the parent of the hierarchy
-	 * @param hierarchy_name	the name of the desired hierarchy
+	 * @param name	the name of the desired hierarchy
+	 * @param parent_id			the identifier of the the parent of the hierarchy	 
 	 * 
 	 * @return the identifier of the child of parent_id with the name hierarchy_name
 	 */

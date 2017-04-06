@@ -19,7 +19,7 @@ public class AlignedBoxLayout extends BoxLayout {
 	/**
 	 * Constructor.
 	 * 
-	 * @param target	the container to be laid out
+	 * @param container	the container to be laid out
 	 * @param axis		the axis along which to lay out the components
 	 */
 	public AlignedBoxLayout(Container container, int axis) {

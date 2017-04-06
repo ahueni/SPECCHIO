@@ -33,8 +33,8 @@ public class XmlMapEntry<K, V> implements Map.Entry<K, V> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param key	the key
-	 * @param value	the value
+	 * @param keyIn	the key
+	 * @param valueIn	the value
 	 */
 	public XmlMapEntry(K keyIn, V valueIn) {
 		
@@ -59,7 +59,7 @@ public class XmlMapEntry<K, V> implements Map.Entry<K, V> {
 	/**
 	 * Get the key of the entry.
 	 * 
-	 * @returns the key
+	 * @return key	the key
 	 */
 	@XmlElement(name="key")
 	public K getKey() {
@@ -73,7 +73,7 @@ public class XmlMapEntry<K, V> implements Map.Entry<K, V> {
 	 * Set the key of the entry.
 	 * 
 	 * @param keyIn	the new key
-	 * @return 
+	 * @return key 	the key
 	 */
 	public K setKey(K keyIn) {
 		
@@ -87,7 +87,7 @@ public class XmlMapEntry<K, V> implements Map.Entry<K, V> {
 	/**
 	 * Get the value of the entry.
 	 * 
-	 * @returns the value
+	 * @return	value the value
 	 */
 	@XmlElement(name="value")
 	public V getValue() {
@@ -101,7 +101,7 @@ public class XmlMapEntry<K, V> implements Map.Entry<K, V> {
 	 * Set the value of the entry.
 	 * 
 	 * @param valueIn	the new value
-	 * @return 
+	 * @return value the value
 	 */
 	public V setValue(V valueIn) {
 		

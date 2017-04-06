@@ -79,8 +79,8 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	/**
 	 * Handler for completion of loading.
 	 * @param parsedFileCount		the total number of files parsed so far
-	 * @param fileCount		the new value of the file counter
-	 * @param spectrumCount	the new value of the spectrum counter 
+	 * @param num_files		the number of files
+	 * @param num_spectra	the number of spectra 
 	 * @param file_errors	a list of files that contained errors
 	 */
 	public void campaignDataLoaded(int parsedFileCount, int num_files, int num_spectra, List<String> file_errors) {
@@ -132,7 +132,6 @@ public class LoadCampaignDataHandler implements CampaignDataLoaderListener {
 	/**
 	 * Handler for file count updates.
 	 * 
-	 * @param parsedFileCount		the total number of files parsed so far
 	 * @param fileCount		the new value of the file counter
 	 * @param spectrumCount	the new value of the spectrum counter
 	 */

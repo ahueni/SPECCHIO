@@ -183,7 +183,7 @@ public class TaxonomyBrowser extends JScrollPane implements ActionListener {
 		/**
 		 * Constructor.
 		 * 
-		 * @param sn	the spectral node object for this tree node
+		 * @param tn	the taxonomy node object for this tree node
 		 */
 		public TaxonomyNode(TaxonomyBrowser browser, TaxonomyNodeObject tn) {
 		
@@ -245,7 +245,7 @@ public class TaxonomyBrowser extends JScrollPane implements ActionListener {
 		/**
 		 * Get the taxonomy node object associated with this tree node
 		 * 
-		 * @returns the taxonomy node object associated with this tree node
+		 * @return the taxonomy node object associated with this tree node
 		 */
 		public TaxonomyNodeObject getNode() {
 			

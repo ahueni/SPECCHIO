@@ -402,7 +402,7 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 		/**
 		 * Get the spectral node object associated with this tree node
 		 * 
-		 * @returns the spectral node object associated with this tree node
+		 * @return the spectral node object associated with this tree node
 		 */
 		public spectral_node_object getNode() {
 			
@@ -414,7 +414,7 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 		/**
 		 * Get the identifier of the spectral node object associated with this tree node
 		 * 
-		 * @returns the identifier of the spectra node object associated with this tree node
+		 * @return the identifier of the spectra node object associated with this tree node
 		 */
 		public int getNodeId() {
 			

@@ -70,7 +70,7 @@ public class SharedMD_Dialog extends JDialog implements ActionListener {
 	 * Constructor.
 	 * 
 	 * @param owner		the owner of this dialogue
-	 * @param mode		SharedMD_Dialog.UPDATE or SharedMD_Dialog.DELETE
+	 * @param op		SharedMD_Dialog.UPDATE or SharedMD_Dialog.DELETE
 	 * @param fields	the fields to be updated or deleted
 	 */
 	public SharedMD_Dialog(Frame owner, int op, List<MD_Field> fields) {
