@@ -450,7 +450,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    menuItem = new JMenuItem("Test");
 	    menuItem.addActionListener(this);
 	    test_menu.add(menuItem);	    
-	    menuBar.add(test_menu);
+	    //menuBar.add(test_menu);
 	    
 	    
 	    this.setJMenuBar(menuBar);		
