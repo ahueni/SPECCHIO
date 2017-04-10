@@ -2511,8 +2511,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * hierarchy if it doesn't exist.
 	 * 
 	 * @param campaign	the campaign into which to insert the hierarchy
-	 * @param name	the name of the desired hierarchy
-	 * @param parent_id			the identifier of the the parent of the hierarchy	 
+	 * @param parent_id			the identifier of the the parent of the hierarchy
+	 * @param hierarchy_name	the name of the desired hierarchy
 	 * 
 	 * @return the identifier of the child of parent_id with the name hierarchy_name
 	 */
