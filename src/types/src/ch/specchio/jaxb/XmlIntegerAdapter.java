@@ -86,7 +86,7 @@ public class XmlIntegerAdapter extends XmlAdapter<XmlInteger, Integer> {
 	 * 
 	 * @param xml	the XML Integer array
 	 * 
-	 * @return n	a new array of String objects
+	 * @return a new array of Sring objects
 	 */
 	public Integer[] unmarshalArray(XmlInteger[] xml) {
 		

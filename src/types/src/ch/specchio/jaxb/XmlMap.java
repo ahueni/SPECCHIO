@@ -200,9 +200,9 @@ public class XmlMap<K, V> implements Map<K, V> {
 	/**
 	 * Remove an entry from the map. Not supported.
 	 * 
-	 * @param key	the key of the entry to be removed
+	 * @param the key of the entry to be removed
 	 * 
-	 * @return V	the value corresponding to the key
+	 * @return the value corresponding to the key
 	 * 
 	 * @throws UnsupportedOperationException	always
 	 */
