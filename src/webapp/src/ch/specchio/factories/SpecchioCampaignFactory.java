@@ -20,7 +20,7 @@ import ch.specchio.types.ResearchGroup;
 import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.User;
 
-public class SpecchioCampaignFactory extends CampaignFactory {
+public class SpecchioCampaignFactory extends SPECCHIOFactory {
 	
 	
 	/**
@@ -113,7 +113,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * @throws SPECCHIOFactoryException	no such campaign
 	 * @throws IOException				could not write to the output stream
 	 */
-	@Override
 	public void exportCampaign(int campaign_id, OutputStream os) throws SPECCHIOFactoryException, IOException {
 		
 		CampaignExport cex = new CampaignExport(getStatementBuilder(), getDatabaseName(), campaign_id);
@@ -130,7 +129,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @return a reference to a campaign object with the given identifier
 	 */
-	@Override
 	public Campaign getCampaign(int campaign_id, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
@@ -202,10 +200,11 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	/**
 	 * Get the list of campaigns in the database.
 	 * 
+	 * @param is_admin	is the user an administrator?
+	 * 
 	 * @throws SPECCHIOFactoryException the list could not be generated
 	 */
-	@Override
-	public Campaign[] getCampaigns() throws SPECCHIOFactoryException {
+	public Campaign[] getCampaigns(boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
 			
@@ -213,7 +212,7 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 			Statement stmt = getConnection().createStatement();
 			
 			// get the list of campaign names from the database
-			ResultSet rs = stmt.executeQuery("SELECT campaign_id,name,path FROM campaign_view");
+			ResultSet rs = stmt.executeQuery("SELECT campaign_id,name,path FROM " + ((is_admin)? "campaign" : "campaign_view") + "");
 			
 			// put the results into a list
 			List<Campaign> results = new LinkedList<Campaign>();
@@ -253,7 +252,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the database could not accessed
 	 */
-	@Override
 	public int getHierarchyNodeId(int campaign_id, String name, int parent_id) throws SPECCHIOFactoryException {
 		
 		try {
@@ -299,7 +297,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the database could not accessed
 	 */
-	@Override
 	public String getHierarchyFilePath(int hierarchy_id) throws SPECCHIOFactoryException {
 
 		String path = "";
@@ -376,7 +373,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * @throws SPECCHIOFactoryException	the database could not accessed
 	 */	
 	
-	@Override
 	public String getHierarchyName(int hierarchy_id)
 			throws SPECCHIOFactoryException {
 		String name = "";
@@ -412,7 +408,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * @throws IOException				the stream could not be read
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	@Override
 	public void importCampaign(int userId, InputStream is) throws IOException, SPECCHIOFactoryException {
 		
 		try {
@@ -488,7 +483,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the campaign could not be inserted
 	 */
-	@Override
 	public void insertCampaign(Campaign c) throws SPECCHIOFactoryException {
 		
 		try {
@@ -565,7 +559,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the node could not be inserted
 	 */
-	@Override
 	public int insertHierarchyNode(int campaign_id, String name, int parent_id) throws SPECCHIOFactoryException {
 		
 		try {
@@ -608,7 +601,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the campaign could not be removed
 	 */
-	@Override
 	public void removeCampaign(int campaign_id, boolean is_admin) throws SPECCHIOFactoryException
 	{
 		
@@ -669,7 +661,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the campaign could not be removed
 	 */
-	@Override
 	public void removeCampaigns(ArrayList<Integer> ids, boolean is_admin) throws SPECCHIOFactoryException
 	{
 		
@@ -731,7 +722,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be remove
 	 */
-	@Override
 	public void removeHierarchyNode(int hierarchy_id, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
@@ -786,7 +776,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	the sub-hierarchy could not be remove
 	 */
-	@Override
 	public void removeHierarchyNodes(ArrayList<Integer> ids, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
@@ -916,7 +905,6 @@ public class SpecchioCampaignFactory extends CampaignFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	@Override
 	public void updateCampaign(Campaign campaign) throws SPECCHIOFactoryException {
 		
 		try {

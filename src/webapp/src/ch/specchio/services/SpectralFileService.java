@@ -45,7 +45,6 @@ public class SpectralFileService extends SPECCHIOService {
 				getClientPassword(), 
 				getSecurityContext().isUserInRole(UserRoles.ADMIN),
 				getDataSourceName(),
-				spec_file.getCampaignType(),
 				spec_file.getCampaignId()				
 			);
 				
@@ -76,7 +75,6 @@ public class SpectralFileService extends SPECCHIOService {
 				getClientPassword(), 
 				getSecurityContext().isUserInRole(UserRoles.ADMIN),
 				getDataSourceName(),
-				spec_files.getCampaignType(),
 				spec_files.getCampaignId()				
 			);
 		
@@ -148,7 +146,6 @@ public class SpectralFileService extends SPECCHIOService {
 				getClientPassword(), 
 				getSecurityContext().isUserInRole(UserRoles.ADMIN),
 				getDataSourceName(),
-				spec_file.getCampaignType(),
 				spec_file.getCampaignId()
 			);
 		SpectralFileInsertResult insert_result = factory.insertSpectralFile(spec_file, spec_file.getHierarchyId());

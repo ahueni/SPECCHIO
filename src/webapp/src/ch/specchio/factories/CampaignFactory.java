@@ -87,7 +87,7 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	invalid campaign type
 	 */
-	public static CampaignFactory getInstance(String db_user, String db_password, String type, String datasource_name) throws SPECCHIOFactoryException {
+	public static SpecchioCampaignFactory getInstance(String db_user, String db_password, String type, String datasource_name) throws SPECCHIOFactoryException {
 		
 		if ("specchio".equals(type)) {
 			return new SpecchioCampaignFactory(db_user, db_password, datasource_name);
@@ -106,7 +106,7 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	invalid campaign type
 	 */
-	public static CampaignFactory getInstance(SPECCHIOFactory factory, String type) throws SPECCHIOFactoryException {
+	public static SpecchioCampaignFactory getInstance(SPECCHIOFactory factory, String type) throws SPECCHIOFactoryException {
 		
 		if ("specchio".equals(type)) {
 			return new SpecchioCampaignFactory(factory);

@@ -39,7 +39,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	private Campaign campaign = null;
 	
 	/** campaign factory for inserting hierarchy nodes */
-	private CampaignFactory campaign_factory = null;
+	private SpecchioCampaignFactory campaign_factory = null;
 	
 	/**
 	 * Constructor. This constructor builds a spectral file factory that is not associated with
@@ -72,17 +72,16 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * @param db_password	database account password
 	 * @param ds_name		datasource name
 	 * @param is_admin	is the user an administrator? 
-	 * @param campaign_type	the type of campaign to which the spectra will belong
 	 * @param campaign_id	the identifier of the campaign to which the spectra will belong
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SpectralFileFactory(String db_user, String db_password, boolean is_admin, String ds_name, String campaign_type, int campaign_id) throws SPECCHIOFactoryException {
+	public SpectralFileFactory(String db_user, String db_password, boolean is_admin, String ds_name, int campaign_id) throws SPECCHIOFactoryException {
 		
 		this(db_user, db_password, ds_name);
 		
 		// save campaign information for later
-		campaign_factory = CampaignFactory.getInstance(this, campaign_type);
+		campaign_factory = new SpecchioCampaignFactory(this);
 		campaign = campaign_factory.getCampaign(campaign_id, is_admin);
 		
 	}
