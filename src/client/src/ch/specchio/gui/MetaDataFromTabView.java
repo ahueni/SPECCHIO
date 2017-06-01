@@ -362,7 +362,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 			try {
 				progressMonitor = new ProgressMonitor(this,
 		                "Inserting selected Metadata Parameters from XLS ...",
-		                "", 0, 100);
+		                "", 0, 0);
 				progressMonitor.setProgress(0);
 				worker = controller.getInsertWorker(progressMonitor);
 				worker.addPropertyChangeListener(this);
