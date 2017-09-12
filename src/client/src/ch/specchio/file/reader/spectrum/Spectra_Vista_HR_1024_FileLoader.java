@@ -301,7 +301,8 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			coord[0] = spec_file.DDDmm2DDDdecimals(file_coord[0]);
 			coord[1] = spec_file.DDDmm2DDDdecimals(file_coord[1]);
 			
-			if (coords[0].equals("S") || coords[0].equals("E"))
+//			if (coords[0].equals("S") || coords[0].equals("E"))
+			if (coords[1].equals("S") || coords[1].equals("W"))
 			{
 				coord[0] = coord[0]*(-1);
 				coord[1] = coord[1]*(-1);
@@ -322,7 +323,8 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 			String c1_ = coords[0].substring(coords[0].length()-1);
 			String c2_ = coords[1].substring(coords[0].length()-1);
 			
-			if (c1_.equals("S") || c2_.equals("E"))
+//			if (c1_.equals("S") || c2_.equals("E"))
+			if (c1_.equals("S") || c2_.equals("W"))
 			{
 				coord[0] = coord[0]*(-1);
 				coord[1] = coord[1]*(-1);
