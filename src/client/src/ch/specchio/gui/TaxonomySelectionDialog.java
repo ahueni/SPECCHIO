@@ -53,7 +53,7 @@ public class TaxonomySelectionDialog extends JDialog implements ActionListener {
 		getContentPane().add(rootPanel);
 		
 		// add the taxonomy browser
-		browser = new TaxonomyBrowser(specchioClient, mp.getAttributeId());
+		browser = new TaxonomyBrowser(specchioClient, mp);
 		rootPanel.add(browser, BorderLayout.CENTER);
 		
 		// add the "apply" button
