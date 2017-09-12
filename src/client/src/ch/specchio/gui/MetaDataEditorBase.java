@@ -1,6 +1,7 @@
 package ch.specchio.gui;
 
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.JFrame;
 
@@ -8,11 +9,11 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 
 
-public abstract class MetaDataEditorBase extends JFrame implements ActionListener
+public abstract class MetaDataEditorBase extends SpectralMetaDataBase implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
-	public SpectralDataBrowser sdb;
-	SPECCHIOClient specchio_client;
+//	public SpectralDataBrowser sdb;
+//	SPECCHIOClient specchio_client;
 
 	public MetaDataEditorBase(String frame_title) throws SPECCHIOClientException
 	{
