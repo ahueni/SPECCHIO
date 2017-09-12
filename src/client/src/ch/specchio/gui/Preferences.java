@@ -10,6 +10,8 @@ import java.util.prefs.BackingStoreException;
 
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
@@ -22,10 +24,13 @@ public class Preferences extends JFrame implements ActionListener {
 	private JCheckBox asd_unit_folder;
 	private JCheckBox asd_DN_folder;
 	private JCheckBox db_config_file_creation_and_editing;
+	private JTextField input_directory, output_directory;
+	
 	SPECCHIOPreferencesStore prefs;
 	
 	GridbagLayouter l;
 	GridBagConstraints constraints;
+	
 	
 
 	public Preferences() throws SPECCHIOClientException {
@@ -52,6 +57,21 @@ public class Preferences extends JFrame implements ActionListener {
 			db_config_file_creation_and_editing.setSelected(prefs.getBooleanPreference("DB_CONFIG_FILE_CREATION_AND_EDITING"));
 			db_config_file_creation_and_editing.setToolTipText("A text file will be created, containing your connection strings.");
 			
+			
+			input_directory = new JTextField();
+			input_directory.setActionCommand("input_directory_definition");
+			input_directory.addActionListener((ActionListener) this);
+			input_directory.setText(prefs.getStringPreference("INPUT_DIRECTORY"));
+			input_directory.setToolTipText("Defines where files, like XLS files or SPECCHIO XML files are read from by default.");
+
+			
+			output_directory = new JTextField();
+			output_directory.setActionCommand("output_directory_definition");
+			output_directory.addActionListener((ActionListener) this);
+			output_directory.setText(prefs.getStringPreference("OUTPUT_DIRECTORY"));
+			output_directory.setToolTipText("Defines where files, like XLS files or SPECCHIO XML files are written to by default.");
+
+			
 			constraints = new GridBagConstraints();
 			
 			// some default values. subclasses can always overwrite these
@@ -76,6 +96,19 @@ public class Preferences extends JFrame implements ActionListener {
 			constraints.gridy++;	
 			l.insertComponent(db_config_file_creation_and_editing, constraints);
 			
+			constraints.gridy++;	
+			l.insertComponent(new JLabel("Input Directory"), constraints);
+			
+			constraints.gridx = 2;
+			l.insertComponent(input_directory, constraints);
+
+			constraints.gridy++;
+			constraints.gridx = 1;
+			l.insertComponent(new JLabel("Output Directory"), constraints);
+			
+			constraints.gridx = 2;
+			l.insertComponent(output_directory, constraints);
+
 
 			pack();
 			
@@ -126,6 +159,30 @@ public class Preferences extends JFrame implements ActionListener {
 				MainMenu menu = MainMenu.getInstance();
 				menu.enable_db_config_tool(prefs.getBooleanPreference("DB_CONFIG_FILE_CREATION_AND_EDITING"));				
 				
+				
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}		
+		
+		if(e.getActionCommand().equals("input_directory_definition"))
+		{
+			
+			try {
+				prefs.setStringPreference(this.input_directory.getText(), "INPUT_DIRECTORY");				
+				
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}		
+
+		if(e.getActionCommand().equals("output_directory_definition"))
+		{
+			
+			try {
+				prefs.setStringPreference(this.output_directory.getText(), "OUTPUT_DIRECTORY");				
 				
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
