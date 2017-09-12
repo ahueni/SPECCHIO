@@ -162,8 +162,16 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		// read data type
 		hdr.addMeasurementUnits((int) in.readByte());
 		
+		// wavelength info
+		skip(in, 4);		
+		
+		// get starting wavelength
+		float starting_wvl = this.read_float(in);
+		float wvl_step = this.read_float(in);
+		byte data_format = in.readByte();
+		
 		// skip till channels
-		skip(in, 17);
+		skip(in, 4);
 		
 		// get number of channels
 		hdr.addNumberOfChannels(read_short(in));
@@ -279,6 +287,18 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		// skip to end of header
 		skip(in, 40);
 		
+		
+		// fill wavelength vector to avoid issues with unknown type numbers when looking for suitable sensors
+		Float[] wvls = new Float[hdr.getNumberOfChannels(0)];
+		
+		for (int i=0;i<hdr.getNumberOfChannels().get(0);i++)
+		{
+			wvls[i] = starting_wvl + i;
+		}
+		
+		hdr.addWvls(wvls);				
+		
+		
 	}
 	
 	Float[][] read_data(DataInputStream in, int channels) throws IOException
@@ -354,7 +374,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 //			pos.longitude = lon_deg + lon_min;
 //			pos.altitude = alt;			
 			pos.latitude = asd_file.DDDmm2DDDdecimals(lat);
-			pos.longitude = asd_file.DDDmm2DDDdecimals(lon);
+			pos.longitude = asd_file.DDDmm2DDDdecimals(lon) * (-1); // correct to the standard definition of longitude: East of Greenwich is positive, West is negative
 			pos.altitude = alt;						
 		}
 		
