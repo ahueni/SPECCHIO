@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.prefs.BackingStoreException;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -25,6 +26,7 @@ import javax.swing.JTextField;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.client.SPECCHIOPreferencesStore;
 import ch.specchio.constants.FileTypes;
 import ch.specchio.constants.HeaderBody;
 import ch.specchio.types.Campaign;
@@ -40,7 +42,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 	Connection db_conn;
 	GridbagLayouter l;
 	JTextField target_dir;
-	final JFileChooser fc;
+	JFileChooser fc;
 	JButton load;
 	SPECCHIOClient specchio_client;
 	private File f;
@@ -54,6 +56,21 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 		this.specchio_client = SPECCHIOApplication.getInstance().getClient();
 		
 		fc = new JFileChooser();
+		
+		SPECCHIOPreferencesStore prefs;
+		try {
+			prefs = new SPECCHIOPreferencesStore();
+			
+			fc = new JFileChooser(prefs.getStringPreference("OUTPUT_DIRECTORY"));
+			
+		} catch (BackingStoreException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
@@ -85,7 +102,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 		constraints.gridx = 0;	
 		constraints.gridwidth = 1;
 		l.insertComponent(new JLabel("Target directory:"), constraints);
-		target_dir = new JTextField(40);
+		target_dir = new JTextField(fc.getCurrentDirectory().getAbsolutePath(), 40);
 		target_dir.setEditable(false);
 		constraints.gridx = 1;		
 		l.insertComponent(target_dir, constraints);
@@ -103,7 +120,7 @@ public class CampaignExportDialog   extends JFrame implements ActionListener
 		l.insertComponent(load, constraints);
 		load.setActionCommand("export");
 		load.addActionListener(this);
-		load.setEnabled(false);
+		//load.setEnabled(false);
 		
 		constraints.gridx = 1;
 		JButton cancel = new JButton("Cancel");
