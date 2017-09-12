@@ -13,8 +13,8 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Scanner;
 
@@ -33,8 +33,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
-import org.jfree.io.IOUtils;
-
 
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
@@ -42,10 +40,15 @@ import ch.specchio.metadata.MDE_Controller;
 import ch.specchio.metadata.MDE_Form;
 import ch.specchio.metadata.MD_ChangeListener;
 import ch.specchio.metadata.MD_Field;
+import ch.specchio.proc_modules.VisualisationSelectionDialog;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.MetaSpatialGeometry;
+import ch.specchio.types.MetaTaxonomy;
+import ch.specchio.types.Point2D;
 
 public class MetaDataEditorView extends MetaDataEditorBase implements ListSelectionListener, MD_ChangeListener, TreeSelectionListener {
 	
@@ -72,6 +75,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	String measurement_support = "Compute measurement support";
 	String altitude_augmentation = "Augment altitude (api.geonames.org/astergdem)";
 	String E_W_Switch = "Switch longitude E-W";
+	String RadiometricCalibration = "Radiometric Calibration";
 	private JMenuBar menuBar;
 	private ArrayList<MD_Field> shared_fields;
 	private int shared_field_opt;
@@ -80,7 +84,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		super("Metadata Editor V3");
 		
 		// set up controller
-		mdec = new MDE_Controller(specchio_client);
+		mdec = new MDE_Controller(specchio_client, this);
 		form = mdec.getForm();
 		
 		// create menu
@@ -102,8 +106,40 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		menuItem.addActionListener(this);
 		menu.add(menuItem);
 		
+		menuItem = new JMenuItem(RadiometricCalibration);
+		menuItem.addActionListener(this);
+		menuItem.setEnabled(false); // under development
+		//menu.add(menuItem);		
 		
 		menuBar.add(menu);
+		
+		// create visualisation menu
+		menu = new JMenu("Visualisations");
+	    menuItem = new JMenuItem(VisualisationSelectionDialog.spectral_multiplot);
+	    menuItem.addActionListener(this);
+	    menu.add(menuItem);	    
+	    
+	    menuItem = new JMenuItem(VisualisationSelectionDialog.spectral_scatter_multiplot);
+	    menuItem.addActionListener(this);
+	    menu.add(menuItem);	   
+	    
+	    menuItem = new JMenuItem(VisualisationSelectionDialog.time_line_plot);
+	    menuItem.addActionListener(this);
+	    menu.add(menuItem);		    
+	    
+	    menuItem = new JMenuItem(VisualisationSelectionDialog.time_line_expl);
+	    menuItem.addActionListener(this);
+	    menu.add(menuItem);		
+	    
+	    menuItem = new JMenuItem(VisualisationSelectionDialog.sampling_points_plot);
+	    menuItem.addActionListener(this);
+	    menu.add(menuItem);	
+	    
+	    menuItem = new JMenuItem(VisualisationSelectionDialog.gonio_hem_expl);
+	    menuItem.addActionListener(this);
+	    menu.add(menuItem);		    
+	    
+	    menuBar.add(menu);		
 		
 		this.setJMenuBar(menuBar);
 		
@@ -131,7 +167,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		setLayout(new BorderLayout());
 		this.setLayout(new BorderLayout());
 			
-		// create scroll panes to hold metadata
+		// create scroll panes to hold metadata and category panel
 		JScrollPane campaign_scroll_pane = new JScrollPane();
 		campaign_scroll_pane.getViewport().add(campaign_panel);
 		campaign_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
@@ -139,6 +175,9 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		metadata_scroll_pane.getViewport().add(metadata_panel);
 		metadata_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
 					
+		JScrollPane category_scroll_pane = new JScrollPane();
+		category_scroll_pane.getViewport().add(category_list);
+		category_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
 			
 		JPanel control_panel = new JPanel();
 		//GridbagLayouter control_panel_l = new GridbagLayouter(control_panel);	
@@ -204,7 +243,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 		add("West", new JScrollPane(control_panel));
 		add("Center", metadata_tabs);
-		add("East", category_list);
+		add("East", category_scroll_pane);
 		pack();
 		
 
@@ -221,7 +260,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	
 	
 	
-	private void buildGUI() throws SPECCHIOClientException
+	private void buildGUI(boolean manual_interaction) throws SPECCHIOClientException
 	{
 		category_panels = new ArrayList<JPanel>();
 		constraints.gridy = 0;
@@ -236,8 +275,52 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		campaign_panel.revalidate();
 		campaign_panel.repaint();
 		
+		if(!manual_interaction && form != null)
+		{
+
+			MetaTaxonomy ap_domain = (MetaTaxonomy) form.getEavParameterFromContainer("Application Domain", "General");
+
+			if(ap_domain != null)
+			{
+				// control of application domain has moved to MDE_Controller
+
+//				// update the categories according to the application domain
+//				ArrayList<Integer> selected_categories = null;
+//				Long taxonomy_id =  (Long) ap_domain.getValue();
+//
+//
+//				selected_categories = specchio_client.getMetadataCategoriesForApplicationDomain(taxonomy_id.intValue());
+//				if(selected_categories.size()>0)
+//				{
+//					category_list.setSelected(selected_categories);
+//					TaxonomyNodeObject tmp = specchio_client.getTaxonomyNode(taxonomy_id.intValue());
+//					category_list.setApplicationDomain(tmp.getName());
+//				}
+//				else
+//				{
+//					category_list.setAllSelected(true);
+//					category_list.setApplicationDomain(null);
+//				}
+			}
+			else
+			{
+				// enable all categories
+				if(category_list.isApplicationDomainEnabled())
+				{
+					category_list.setAllSelected(true);
+					category_list.setApplicationDomain(null);
+					mdec.set_form_descriptor(category_list.getFormDescriptor(), false);
+				}
+			}
+		}
+		
+		
+		form = mdec.getForm();	
+		
 		// set up metadata panel
 		metadata_panel.setForm(form);
+		
+		
 		
 	}
 	
@@ -277,28 +360,38 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 		if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
 			
-//			ProgressReportDialog pr = new ProgressReportDialog(this, "Metadata Update", true, 20, true);
-//			pr.setToDocumentModal(); // prevent from other clicks in metadata editor during update
-//			pr.set_operation("Updating metadata ...");
-//			pr.setVisible(true);
-//			//pr.set_min_max(1, changed_fields.size());
-//			int progress = 0;
-//			
-//			// perform updates
-//			for (MD_Field field : changed_fields) {
-//				pr.set_component(field.getLabel());
-//				
-//				if (shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL) {
-//					mdec.update(field);
-//				} else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION) {
-//					mdec.update_selection(field);
-//				}
-//				pr.set_progress(++progress/changed_fields.size()*100);
-//			}
-//			
-//			pr.setVisible(false);
+			// Exception handling from a thread and GUI update of dialog box using swing worker
+			final UpdateThread thread = new UpdateThread(this);
 			
-			UpdateThread thread = new UpdateThread(this);
+			Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+				
+				public void uncaughtException(Thread th, Throwable ex) {
+
+					final SPECCHIOClientException e = (SPECCHIOClientException) ex;
+					
+					Runnable r = new Runnable() {
+
+						@Override
+						public void run() {
+							ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Error");
+							error.init(e.getUserMessage(),e);							
+							error.setVisible(true);	
+						}
+
+					};
+
+					javax.swing.SwingUtilities.invokeLater(r) ; // execute r's run method on the swing thread
+					
+					
+				};
+
+			};					
+
+			    	
+
+			
+			
+			thread.setUncaughtExceptionHandler(h);
 			thread.start();
 			try {
 				thread.join();
@@ -390,6 +483,27 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 	}	
 	
+	public ArrayList<Integer> get_ids_matching_query()
+	{
+		if(!this.sorted_ids_ready)
+		{
+			reloadGUI();
+		}
+		
+		return ids_matching_query;
+	}
+		
+	
+
+	public SpectrumMetadataCategoryList getCategory_list() {
+		return category_list;
+	}
+
+
+	public void setCategory_list(SpectrumMetadataCategoryList category_list) {
+		this.category_list = category_list;
+	}
+
 
 	public void actionPerformed(ActionEvent e) {
 		
@@ -431,6 +545,70 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			}
 		}    
 		
+		if(RadiometricCalibration.equals(e.getActionCommand()))
+		{
+			try {
+				System.out.println(e.getActionCommand());
+				
+				// requirements:
+				// - DN data must be selected
+				// - instrument must have a calibration available for the selected timeframe
+				
+				// for ASD spectrometer only at this point:
+				
+				// get the calibration number of the instrument used for these spectra 
+				
+				
+				// get calibration ids
+				//ArrayList<Integer> cal_ids = this.specchio_client.getCalibrationIds(mdec.getIds());
+				
+				// get calibrated instruments and coefficients
+				
+				int i = 0;
+				
+				
+			}
+			catch (SPECCHIOClientException ex) {
+				ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
+				error.setVisible(true);	
+			}
+		}    
+		
+		
+		
+		
+	      if(VisualisationSelectionDialog.gonio_hem_expl.equals(e.getActionCommand()) 
+	    		  || VisualisationSelectionDialog.sampling_points_plot.equals(e.getActionCommand())
+	    	  || VisualisationSelectionDialog.time_line_plot.equals(e.getActionCommand())
+	    	  || VisualisationSelectionDialog.time_line_expl.equals(e.getActionCommand()))
+	      {	 
+	    	  startOperation();
+	    	  VisualisationThread thread = new VisualisationThread(
+	    			  e.getActionCommand(),
+	    			  get_ids_matching_query(),
+    				  split_spaces_by_sensor.isSelected(),
+    				  split_spaces_by_sensor_and_unit.isSelected(),
+    				  sdb.get_order_by_field()
+    			);
+	    	  thread.start();
+	    	  endOperation();	 			  
+	      }	      
+	      
+	      
+	      if(VisualisationSelectionDialog.spectral_multiplot.equals(e.getActionCommand())
+	    	  || VisualisationSelectionDialog.spectral_scatter_multiplot.equals(e.getActionCommand()))
+	      {	 
+	    	  startOperation();
+	    	  VisualisationThread thread = new VisualisationThread(
+	    			  e.getActionCommand(),
+	    			  this.get_ids_matching_query_not_sorted(),
+    				  split_spaces_by_sensor.isSelected(),
+    				  split_spaces_by_sensor_and_unit.isSelected(),
+    				  sdb.get_order_by_field()
+    			);
+	    	  thread.start();
+	    	  endOperation();	 			  
+	      }			
 		
 		
 		
@@ -478,7 +656,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 					added_fields.clear();
 					changed_annotations.clear();
 					
-					buildGUI();
+					buildGUI(false);
 					
 				}
 		  		catch (SPECCHIOClientException ex) {
@@ -511,8 +689,6 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			// get values
 			
 			// get existing metaparameters
-			ArrayList<Integer> attribute_ids = new ArrayList<Integer>();
-			attribute_ids.add(specchio_client.getAttributesNameHash().get("Longitude").getId());
 			
 			ArrayList<MetaParameter> existing_parameters = specchio_client.getMetaparameters(ids_with_lon, "Longitude");
 					
@@ -538,8 +714,61 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			
 			}
 			
-			this.reloadGUI();
+			//this.reloadGUI();
 						
+		
+		}
+		
+		ArrayList<String> attribute_names = new ArrayList<String>();
+		attribute_names.add("Spatial Extent");
+		attribute_names.add("Spatial Position");
+		attribute_names.add("Spatial Transect");
+		
+		Iterator<String> attr_it = attribute_names.iterator();
+		
+		while(attr_it.hasNext())
+		{
+			String attr_name = attr_it.next();
+			ids_with_lon = specchio_client.filterSpectrumIdsByHavingAttribute(mdec.getIds(),attr_name);
+			
+			if(ids_with_lon.size() > 0)
+			{
+				// get values
+				
+				// get existing metaparameters				
+				ArrayList<MetaParameter> existing_parameters = specchio_client.getMetaparameters(ids_with_lon, attr_name);
+						
+				for(int i=0;i<ids_with_lon.size();i++)
+				{
+					
+					MetaSpatialGeometry mp = (MetaSpatialGeometry) existing_parameters.get(i);
+					
+						ArrayList<Integer> ids = new ArrayList<Integer>();
+						ids.add(ids_with_lon.get(i));	
+						
+						@SuppressWarnings("unchecked")
+						ArrayListWrapper<Point2D> coords = (ArrayListWrapper<Point2D>) mp.getValue();
+						
+						Iterator<Point2D> coords_it = coords.getList().iterator();
+						
+						while(coords_it.hasNext())
+						{
+							Point2D coord = coords_it.next();
+							coord.setX(coord.getX()*(-1));
+						}
+						
+						specchio_client.updateEavMetadata(mp, ids);
+						
+
+				
+				}
+				
+				
+							
+			
+			}	
+			
+			this.reloadGUI();
 		
 		}
 		
@@ -801,10 +1030,10 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 		startOperation();
 		try {
-			mdec.set_form_descriptor(category_list.getFormDescriptor());
+			mdec.set_form_descriptor(category_list.getFormDescriptor(), true);
 			form = mdec.getForm();
 			
-			buildGUI();
+			buildGUI(true);
 		}
   		catch (SPECCHIOClientException ex) {
 			ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
@@ -830,6 +1059,8 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			ArrayList<Integer> spectrum_ids = sdb.get_selected_spectrum_ids();
 			Campaign campaign = sdb.get_selected_campaign();
 	
+			ids_matching_query = spectrum_ids;
+			sorted_ids_ready = true;
 			mdec.set_campaign(campaign);
 			mdec.set_spectrum_ids(spectrum_ids);		
 			form = mdec.getForm();
@@ -840,7 +1071,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			campaign_panel.setCampaign(campaign);
 			this.setUpdateResetButtonsState();		
 				
-			buildGUI();
+			buildGUI(false);
 		}
   		catch (SPECCHIOClientException ex) {
 			ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
@@ -969,7 +1200,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		/**
 		 * Thread entry point.
 		 */
-		public void run() {
+		public void run() throws SPECCHIOClientException {
 			
 			sdb.tree.removeTreeSelectionListener(mde); // disable selections in the databrowser to avoid conflicts during updates
 			
@@ -986,7 +1217,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 				pr.set_component(field.getLabel());
 				
 				if (shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL) {
-					mdec.update(field);
+						mdec.update(field);
 				} else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION) {
 					mdec.update_selection(field);
 				}
