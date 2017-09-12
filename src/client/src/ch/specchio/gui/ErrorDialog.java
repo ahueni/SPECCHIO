@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Iterator;
 
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -31,10 +32,21 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
 
 import ch.specchio.client.SPECCHIOClientException;
 
@@ -61,6 +73,16 @@ public class ErrorDialog extends JDialog implements ActionListener {
 	/** the button for dismissing the dialogue */
 	private JButton dismissButton;
 	
+	public JButton getDismissButton() {
+		return dismissButton;
+	}
+
+
+	public void setDismissButton(JButton dismissButton) {
+		this.dismissButton = dismissButton;
+	}
+
+
 	/** the button for requesting more details */
 	private JButton detailsButton;
 	
@@ -78,6 +100,19 @@ public class ErrorDialog extends JDialog implements ActionListener {
 	
 	/** the string for the details button when details are displayed */
 	private static final String REMOVE_DETAILS = "Less...";
+	
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param owner		the owner of this dialogue
+	 * @param title		the title of the dialogue
+	 */
+	public ErrorDialog(Frame owner, String title) {
+		
+		super(owner, title, true);
+		
+	}
 	
 	
 	/**
@@ -118,7 +153,7 @@ public class ErrorDialog extends JDialog implements ActionListener {
 	 * @param message	the message for the dialogue
 	 * @param ex		the exception that caused the error (may be null)
 	 */
-	private void init(String message, Exception ex) {
+	public void init(String message, Exception ex) {
 		
 		// save the input parameters for later
 		exception = ex;
@@ -140,8 +175,12 @@ public class ErrorDialog extends JDialog implements ActionListener {
 		// place the message at the top right
 		messageComponent = new JPanel();
 		messageComponent.setLayout(new BoxLayout(messageComponent, BoxLayout.Y_AXIS));
+		
+		
+		
 		for (String line : message.split("\n")) {
-			messageComponent.add(new JLabel(line));
+			String formatted_line = formatMessage(line, true);
+			messageComponent.add(new JLabel(formatted_line));
 		}
 		constraints.gridx = 1;
 		constraints.gridy = 0;
@@ -200,67 +239,10 @@ public class ErrorDialog extends JDialog implements ActionListener {
 		if (ex instanceof SPECCHIOClientException) {
 			// use the details message stored inside the exception
 			String details = ((SPECCHIOClientException)ex).getDetails();
+			
+			String formatted_msg = formatMessage(details, false);
+			detailsArea.setText(formatted_msg);
 					
-			if (details != null && details.length() > 0 && details.charAt(0) == '<') {
-				
-				// the details message may contain an XHTML response from the web server; try to parse it
-				try {
-					// create a document factory with all validation disabled (http://stackoverflow.com/questions/6204827/xml-parsing-too-slow)
-					DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
-					documentFactory.setNamespaceAware(false);
-					documentFactory.setValidating(false);
-					documentFactory.setFeature("http://xml.org/sax/features/namespaces", false);
-					documentFactory.setFeature("http://xml.org/sax/features/validation", false);
-					documentFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-					documentFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
-					// try to parse the document as XML
-					StringReader reader = new StringReader(details);
-					DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
-					Document document = documentBuilder.parse(new InputSource(reader));
-					reader.close();
-					
-					// now output it to a string with nice indenting
-					StringWriter writer = new StringWriter();
-					TransformerFactory transformerFactory = TransformerFactory.newInstance();
-					Transformer transformer = transformerFactory.newTransformer();
-					transformer.setOutputProperty(OutputKeys.METHOD, "html");
-					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-					transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-					transformer.transform(new DOMSource(document), new StreamResult(writer));
-					writer.close();
-					
-					// display it in the text area
-					detailsArea.setText(writer.toString());
-				
-				}
-				catch (IOException ex2) {
-					// not sure why this would happen; display the unparsed message
-					detailsArea.setText(details);
-				}
-				catch (ParserConfigurationException ex2) {
-					// could not find an XML parser; display the error and the unparsed message
-					detailsArea.setText(ex2.getMessage() + "\n" + details);
-				}
-				catch (SAXException ex2) {
-					// not a valid XML document; assume the details are in plain text
-					detailsArea.setText(details);
-				}
-				catch (TransformerConfigurationException ex2) {
-					// could not an XML transformer; display the error and the unparsed message
-					detailsArea.setText(ex2.getMessage() + "\n" + details);
-				}
-				catch (TransformerException ex2) {
-					// transformation failed; display the error the unparsed message
-					detailsArea.setText(ex2.getMessage() + "\n" + details);
-				}
-				
-			} else {
-				
-				// display the details message
-				detailsArea.setText(details);
-				
-			}
 			
 		} else {
 			// show the stack trace
@@ -270,6 +252,136 @@ public class ErrorDialog extends JDialog implements ActionListener {
 			}
 		}
 		
+	}
+	
+	public String formatMessage(String message, boolean extract_message_only)
+	{
+		String formatted_msg = "";
+		
+		if (message != null && message.length() > 0 && message.charAt(0) == '<') {
+			
+			// the details message may contain an XML or HTML response from the web server; try to parse it
+			try {
+				// create a document factory with all validation disabled (http://stackoverflow.com/questions/6204827/xml-parsing-too-slow)
+				DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
+				documentFactory.setNamespaceAware(false);
+				documentFactory.setValidating(false);
+				documentFactory.setFeature("http://xml.org/sax/features/namespaces", false);
+				documentFactory.setFeature("http://xml.org/sax/features/validation", false);
+				documentFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+				documentFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+				// try to parse the document as XML
+				StringReader reader = new StringReader(message);
+				DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
+				Document document = documentBuilder.parse(new InputSource(reader));
+				reader.close();
+				
+				// now output it to a string with nice indenting
+				StringWriter writer = new StringWriter();
+				TransformerFactory transformerFactory = TransformerFactory.newInstance();
+				Transformer transformer = transformerFactory.newTransformer();
+				transformer.setOutputProperty(OutputKeys.METHOD, "html");
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+				transformer.transform(new DOMSource(document), new StreamResult(writer));
+				writer.close();
+				
+				// display it in the text area
+				if(extract_message_only)
+				{
+					formatted_msg = writer.toString(); // default unformatted value
+					// see: https://stackoverflow.com/questions/19932570/getelementsbytagname-searching-down-all-levels-of-xml-nodes
+		            
+		            XPathFactory xpathFactory = XPathFactory.newInstance();
+		            XPath xpath = xpathFactory.newXPath();
+		            try {
+						Element element = (Element) xpath.evaluate("//error_message/message", document, XPathConstants.NODE);
+						
+						if(element == null) // try HTML extraction
+						{
+							org.jsoup.nodes.Document html_document = Jsoup.parse(message);
+
+							
+							org.jsoup.nodes.Element body = html_document.select("body").first();
+							
+							Iterator<org.jsoup.nodes.Element> it = body.select("p").iterator();
+							
+							org.jsoup.nodes.Element description = null;
+							
+							while(it.hasNext())
+							{
+								org.jsoup.nodes.Element elem = it.next();
+								
+								Elements descr1 = elem.getElementsMatchingText("description");
+								
+								if(descr1.size() > 0)
+								{
+									description = descr1.get(0);
+								}
+								
+							}
+							
+							org.jsoup.nodes.Element descr2 = body.select("pre").first();
+							
+							String details = descr2.text();
+							org.jsoup.nodes.Node error_description = description.getAllElements().get(0).childNode(1);
+							String error = error_description.toString();
+							
+							formatted_msg = error + ": " + details;
+							
+							
+						}
+						else
+						{
+							formatted_msg = element.getTextContent();	
+						}
+							
+											
+					} catch (XPathExpressionException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+
+				}
+				else
+					formatted_msg = writer.toString();
+			
+			}
+			catch (IOException ex2) {
+				// not sure why this would happen; display the unparsed message
+				formatted_msg = message;
+			}
+			catch (ParserConfigurationException ex2) {
+				// could not find an XML parser; display the error and the unparsed message
+				formatted_msg = ex2.getMessage() + "\n" + message;
+			}
+			catch (SAXException ex2) {
+				// not a valid XML document; assume the details are in plain text
+				formatted_msg = message;
+			}
+			catch (java.lang.IndexOutOfBoundsException ex2) {
+				// parsing issue
+				formatted_msg = message;
+			}	
+			catch (TransformerConfigurationException ex2) {
+				// could not an XML transformer; display the error and the unparsed message
+				formatted_msg = ex2.getMessage() + "\n" + message;
+			}
+			catch (TransformerException ex2) {
+				// transformation failed; display the error the unparsed message
+				formatted_msg = ex2.getMessage() + "\n" + message;
+			}
+			
+		} else {
+			
+			// display the details message
+			formatted_msg = message;
+			
+		}		
+		
+		return formatted_msg;
 	}
 	
 	
