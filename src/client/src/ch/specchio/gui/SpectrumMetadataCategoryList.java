@@ -5,11 +5,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -47,17 +50,20 @@ public class SpectrumMetadataCategoryList extends JPanel implements ActionListen
 	/** the panel containing the "select all" and "select none" checkboxes */
 	private JPanel selectPanel;
 	
-	/** the "select all" checkbox */
-	private JCheckBox selectAll;
+	/** the "select all" button */
+	private JButton selectAll;
 	
-	/** the "select none" checkbox */
-	private JCheckBox selectNone;
+	/** the "select none" button */
+	private JButton selectNone;
 	
-	/** the text for the "select all" checkbox */
+	/** the text for the "select all" button */
 	private static final String SELECT_ALL = "Select All";
 	
-	/** the text for the "select none" checkbox */
+	/** the text for the "select none" button */
 	private static final String SELECT_NONE = "Select None";
+	
+	/** label to show application domain specific category selection */
+	private JLabel applicationDomainLabel;
 	
 	
 	/**
@@ -105,6 +111,7 @@ public class SpectrumMetadataCategoryList extends JPanel implements ActionListen
 			checkbox.setActionCommand(Integer.toString(category.category_id));
 			checkbox.addActionListener(this);
 			checkbox.setSelected(true);
+			checkbox.putClientProperty("category_id", category.category_id);
 			categoryPanel.add(checkbox, constraints);
 			
 			// update category identifier range
@@ -124,23 +131,38 @@ public class SpectrumMetadataCategoryList extends JPanel implements ActionListen
 			
 		}
 		
-		// create a panel with a flow layout for the "select all" and "select none" checkboxes
+		// create a panel with a grid layout for the "select all" and "select none" buttons
 		selectPanel = new JPanel();
 		add(selectPanel);
+
+		selectPanel.setLayout(new GridBagLayout());
+		constraints = new GridBagConstraints();
+		constraints.anchor = GridBagConstraints.WEST;
+		add(selectPanel);
+		constraints.gridx = 0;
+		constraints.gridy = 0;		
 		
-		// add the "select all" checkbox
-		selectAll = new JCheckBox(SELECT_ALL);
+		
+		// add the "select all" button
+		selectAll = new JButton(SELECT_ALL);
 		selectAll.setActionCommand(SELECT_ALL);
 		selectAll.addActionListener(this);
-		selectAll.setSelected(true);
-		selectPanel.add(selectAll);
+		selectPanel.add(selectAll, constraints);
+		constraints.gridy++;
 		
-		// add the "select none" checkbox
-		selectNone = new JCheckBox(SELECT_NONE);
+		// add the "select none" button
+		selectNone = new JButton(SELECT_NONE);
 		selectNone.setActionCommand(SELECT_NONE);
 		selectNone.addActionListener(this);
-		selectNone.setSelected(false);
-		selectPanel.add(selectNone);
+		selectPanel.add(selectNone, constraints);
+
+		constraints.gridy++;
+		// add an information box for application domain specific settings
+		applicationDomainLabel = new JLabel("App. Domain: ---");
+		applicationDomainLabel.setEnabled(false);
+		selectPanel.add(applicationDomainLabel, constraints);
+		applicationDomainLabel.setToolTipText("Add a 'Application Domain' parameter to your data to control the selected categories");
+
 		
 	}
 	
@@ -170,16 +192,7 @@ public class SpectrumMetadataCategoryList extends JPanel implements ActionListen
 			
 			// check all category checkboxes
 			setAllSelected(true);
-			
-			// add all of the categories to the form
-			for (Component c : categoryPanel.getComponents()) {
-				if (c instanceof JCheckBox) {
-					descriptor.addCategory(((JCheckBox)c).getText());
-				}
-			}
-			
-			// make sure that "select none" is uncheced
-			selectNone.setSelected(false);
+						
 			
 			// notify the list selection listeners
 			fireListSelectionChanged(minCategoryId, maxCategoryId);
@@ -191,9 +204,6 @@ public class SpectrumMetadataCategoryList extends JPanel implements ActionListen
 			
 			// remove all categories from the form
 			descriptor.clear();
-			
-			// make sure that "select all" is unchecked
-			selectAll.setSelected(false);
 			
 			// notify the list selection listeners
 			fireListSelectionChanged(minCategoryId, maxCategoryId);
@@ -287,9 +297,62 @@ public class SpectrumMetadataCategoryList extends JPanel implements ActionListen
 		for (Component c : categoryPanel.getComponents()) {
 			if (c instanceof JCheckBox) {
 				((JCheckBox)c).setSelected(selected);
+				descriptor.addCategory(((JCheckBox)c).getText());
+			}
+		}
+	
+		
+	}
+	
+	/**
+	 * Set the selected category checkboxes.
+	 * 
+	 * @param selected_categories	list of selected category ids
+	 */
+	public void setSelected(ArrayList<Integer> selected_categories) {	
+		
+		for (Component c : categoryPanel.getComponents()) {
+			if (c instanceof JCheckBox) {
+				if(selected_categories.contains(((JCheckBox) c).getClientProperty("category_id")))
+				{
+					((JCheckBox)c).setSelected(true);
+					descriptor.addCategory(((JCheckBox) c).getText());
+				}
+				else
+				{
+					((JCheckBox)c).setSelected(false);
+					descriptor.removeCategory(((JCheckBox) c).getText());
+				}
 			}
 		}
 		
+		
 	}
+	
+	/**
+	 * Set the selected application domain.
+	 * 
+	 * @param domain	Domain name or null if no domain is selected
+	 */
+	public void setApplicationDomain(String domain)
+	{
+		if(domain != null)
+		{
+			applicationDomainLabel.setText("App. Domain: " + domain);
+			applicationDomainLabel.setEnabled(true);
+		}
+		else
+		{
+			applicationDomainLabel.setText("App. Domain: ---");
+			applicationDomainLabel.setEnabled(false);
+		}
+	}
+	
+	public boolean isApplicationDomainEnabled()
+	{
+		return applicationDomainLabel.isEnabled();
+	}
+	
+	
 
 }
