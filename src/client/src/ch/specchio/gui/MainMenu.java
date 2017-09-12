@@ -51,6 +51,7 @@ class MainMenu implements ActionListener, ItemListener {
    String connect_to_db = "Connect to database";
    String edit_user_account = "Edit user information";
    String edit_db_config_file = "Edit db_config file";
+   String upgrade_db = "Upgrade database";
    String preferences = "Preferences";
    String metadata_editor = "Edit metadata";
    String metadata_from_xls = "Get metadata from XLS";
@@ -142,6 +143,13 @@ private JMenuItem dbConfigmenuItem;
       menu.add(menuItem);
       public_menu_items.put(preferences, menuItem);
 
+      menu.addSeparator();
+      
+      menuItem = new JMenuItem(upgrade_db);
+      menuItem.addActionListener(this);
+      menu.add(menuItem);
+      admin_menu_items.put(upgrade_db, menuItem);
+      
       
       menuBar.add(menu);
       
@@ -505,6 +513,23 @@ private JMenuItem dbConfigmenuItem;
     	  }
     	  
 
+      }
+      
+      if(upgrade_db.equals(e.getActionCommand()))
+      {
+    	  try {
+    		  DbUpgrade d = new DbUpgrade();
+    		  d.setVisible(true);
+    	  }
+    	  catch (SPECCHIOClientException ex) {
+    		  JOptionPane.showMessageDialog(
+    				  SPECCHIOApplication.getInstance().get_frame(),
+    				  ex.getMessage(),
+    				  "Error",
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
+    			);
+    	  }
+      
       }
       
 
