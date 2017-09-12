@@ -1,5 +1,5 @@
 /* Created by JReleaseInfo AntTask from Open Source Competence Group */
-/* Creation date Sun Apr 17 17:42:09 CEST 2016 */
+/* Creation date Tue Sep 12 09:46:13 CEST 2017 */
 package ch.specchio.gui;
 
 import java.util.Date;
@@ -343,11 +343,11 @@ class JReleaseInfoViewer {
 public class SPECCHIO_ReleaseInfo {
 
 
-   /** buildDate (set during build process to 1460907729911L). */
-   private static Date buildDate = new Date(1460907729911L);
+   /** buildDate (set during build process to 1505202373128L). */
+   private static Date buildDate = new Date(1505202373128L);
 
    /**
-    * Get buildDate (set during build process to Sun Apr 17 17:42:09 CEST 2016).
+    * Get buildDate (set during build process to Tue Sep 12 09:46:13 CEST 2017).
     * @return Date buildDate
     */
    public static final Date getBuildDate() { return buildDate; }
@@ -374,10 +374,10 @@ public class SPECCHIO_ReleaseInfo {
 
 
    /**
-    * Get buildNumber (set during build process to 123).
+    * Get buildNumber (set during build process to 273).
     * @return int buildNumber
     */
-   public static final int getBuildNumber() { return 123; }
+   public static final int getBuildNumber() { return 273; }
 
 
    /** company (set during build process to "${company}"). */
@@ -390,11 +390,11 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getCompany() { return company; }
 
 
-   /** buildTimeStamp (set during build process to "20160417-1742"). */
-   private static String buildTimeStamp = "20160417-1742";
+   /** buildTimeStamp (set during build process to "20170912-0946"). */
+   private static String buildTimeStamp = "20170912-0946";
 
    /**
-    * Get buildTimeStamp (set during build process to "20160417-1742").
+    * Get buildTimeStamp (set during build process to "20170912-0946").
     * @return String buildTimeStamp
     */
    public static final String getBuildTimeStamp() { return buildTimeStamp; }
@@ -420,11 +420,11 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getCopyright() { return copyright; }
 
 
-   /** version (set during build process to "3.2.1.3 Alpha"). */
-   private static String version = "3.2.1.3 Alpha";
+   /** version (set during build process to "3.3.0.0 Beta"). */
+   private static String version = "3.3.0.0 Beta";
 
    /**
-    * Get version (set during build process to "3.2.1.3 Alpha").
+    * Get version (set during build process to "3.3.0.0 Beta").
     * @return String version
     */
    public static final String getVersion() { return version; }
