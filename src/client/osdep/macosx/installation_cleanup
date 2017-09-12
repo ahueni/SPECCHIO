@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# Installation cleanup script for Mac OS X
+#
+
+# work out SPECCHIO's home directory
+if [[ -z $SPECCHIO_HOME ]]; then
+	SPECCHIO_HOME="%{INSTALL_PATH}"
+fi
+
+# go!
+#cd "$SPECCHIO_HOME"
+#rm db_config.txt
+
