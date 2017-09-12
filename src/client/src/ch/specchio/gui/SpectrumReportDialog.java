@@ -319,7 +319,7 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 		
 		try {
 			// change the form displayed by the metadata panel
-			mdec.set_form_descriptor(categoryList.getFormDescriptor());
+			mdec.set_form_descriptor(categoryList.getFormDescriptor(), true);
 			spectrumMetadataPanel.setForm(mdec.getForm());
 		}
 		catch (SPECCHIOClientException ex) {
