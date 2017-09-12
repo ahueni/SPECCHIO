@@ -1,13 +1,19 @@
 package ch.specchio.gui;
 
 import java.awt.*;
+import java.io.File;
 
 import javax.swing.*;
+
+import org.apache.commons.io.FilenameUtils;
+
+import net.iharder.dnd.FileDrop;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOClientFactory;
 import ch.specchio.client.SPECCHIOServerDescriptor;
+import ch.specchio.types.Capabilities;
 
 
 public class SPECCHIOApplication {
@@ -65,8 +71,36 @@ public class SPECCHIOApplication {
 		test.setHorizontalTextPosition(JLabel.CENTER);
 		test.setOpaque(true);
 		test.setBackground(Color.WHITE);
+		
+			
+		
 		  
 		JPanel mid_pane = new JPanel(new BorderLayout());
+		
+        new FileDrop(mid_pane, new FileDrop.Listener()
+        {   public void filesDropped( java.io.File[] files )
+            {   for( int i = 0; i < files.length; i++ )
+                {   try
+                    {   
+//                		files[i].getCanonicalPath()
+                	
+                	File file = files[i];
+                	String ext = FilenameUtils.getExtension(file.getCanonicalFile().toString());
+                	
+                	if(ext.equals("xml"))
+                	{
+                		CampaignImportDialog d = new CampaignImportDialog(files[i].getCanonicalPath());
+                		d.setVisible(true);               		
+                	}
+                	
+
+                	
+                    }   // end try
+                    catch( java.io.IOException e ) {}
+                }   // end for: through each dropped file
+            }   // end filesDropped
+        }); // end FileDrop.Listener
+		
 			
 		mid_pane.add(BorderLayout.CENTER, test);
 
@@ -151,10 +185,22 @@ public class SPECCHIOApplication {
 			   p_rep.set_operation("Connected as " + d.getDisplayUser() + " to '" + d.getDataSourceName() + "' on:");
 			   p_rep.set_component(d.getDisplayName(false, false));
 			   
+			   
+			   String spat_ext = "";
+			   if(client.getCapability(Capabilities.SPATIAL_EXTENSION) != null && client.getCapability(Capabilities.SPATIAL_EXTENSION).equals("true"))
+				   spat_ext = " - Spatial DB Support";
+			   
+			   String db_version = "";
+			   if(client.getCapability(Capabilities.DB_VERSION) != null)
+				   db_version = client.getCapability(Capabilities.DB_VERSION);
+			   
+			   String op_string = "Database Info " + (db_version.equals("") ? "" : "(V" + db_version + spat_ext + ")");
+			   
 			   if (db_rep == null) {
-				   db_rep = new ProgressReportTextPanel("Database Info","");				   
+				   db_rep = new ProgressReportTextPanel( op_string,"");				   
 	  		  		op.add_report(db_rep);	
 			   }
+			   db_rep.set_operation_description(op_string);
 			   db_rep.set_operation("Number of spectra in database: " + client.getSpectrumCountInDB());
 			   db_rep.setPreferredSize(p_rep.getSize());
 			   
