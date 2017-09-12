@@ -517,8 +517,6 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 			wvls[i] = starting_wvl + i;
 		}
 		
-		
-		// fill wvls for channels a and b
 		hdr.addWvls(wvls);		
 
 	}
@@ -813,6 +811,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		// read Number of Constituents
 		no_of_constituents = read_short(in);
+		//no_of_constituents = 0;
 
 		int x = 1;
 
@@ -894,6 +893,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 
 		// Number of dependent variables
 		dependent_variable_count = read_short(in);
+		
+		//dependent_variable_count = 0;
 
 		// skip(in, 1);
 
@@ -1113,7 +1114,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		}
 		if (data_format == 2) {
 			for (int i = 0; i < channels; i++) {
-				f[0][i] = read_double(in).floatValue();
+				Double tmp = read_double(in);
+				f[0][i] = tmp.floatValue();
 			}
 		}
 		if (data_format == 3) {
@@ -1181,7 +1183,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 			// pos.longitude = lon_deg + lon_min;
 			// pos.altitude = alt;
 			pos.latitude = spec_file.DDDmm2DDDdecimals(lat);
-			pos.longitude = spec_file.DDDmm2DDDdecimals(lon);
+			pos.longitude = spec_file.DDDmm2DDDdecimals(lon) * (-1); // correct to the standard definition of longitude: East of Greenwich is positive, West is negative
 			pos.altitude = alt;
 		}
 
