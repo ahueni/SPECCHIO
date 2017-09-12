@@ -280,10 +280,63 @@ alter table `specchio`.`spectrum` drop foreign key spectrum_ibfk_6;
 ALTER TABLE `specchio`.`spectrum` DROP COLUMN `landcover_id`;
 DROP TABLE `specchio`.`landcover`;
 
-
+alter table `specchio`.`environmental_condition` drop foreign key FK_environmental_condition_3;
+ALTER TABLE `specchio`.`environmental_condition` DROP COLUMN `cloud_cover_id`;
 DROP TABLE `specchio`.`cloud_cover`;
+
+alter table `specchio`.`environmental_condition` drop foreign key environmental_condition_ibfk_1;
+ALTER TABLE `specchio`.`environmental_condition` DROP COLUMN `wind_direction_id`;
+DROP TABLE `specchio`.`wind_direction`;
+
+alter table `specchio`.`environmental_condition` drop foreign key environmental_condition_ibfk_2;
+ALTER TABLE `specchio`.`environmental_condition` DROP COLUMN `wind_speed_id`;
+DROP TABLE `specchio`.`wind_speed`;
+
+alter table `specchio`.`spectrum` drop foreign key spectrum_ibfk_7;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `environmental_condition_id`;
+DROP TABLE `specchio`.`environmental_condition`;
+
+alter table `specchio`.`spectrum` drop foreign key spectrum_ibfk_13;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `foreoptic_id`;
+DROP TABLE `specchio`.`foreoptic`;
+
+alter table `specchio`.`spectrum` drop foreign key spectrum_ibfk_16;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `position_id`;
+DROP TABLE `specchio`.`position`;
+
+alter table `specchio`.`spectrum` drop foreign key spectrum_ibfk_8;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `sampling_geometry_id`;
+DROP TABLE `specchio`.`sampling_geometry`;
+
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `number`;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `file_comment`;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `date`;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `file_name`;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `internal_average_cnt`;
+ALTER TABLE `specchio`.`spectrum` DROP COLUMN `loading_date`;
+
+DROP TABLE `specchio`.`spectrum_x_target_type`;
+DROP TABLE `specchio`.`target_type`;
 DROP TABLE `specchio`.`target_category`;
 
+DROP TABLE `specchio`.`spectrum_x_assoc_measurement`;
+DROP TABLE `specchio`.`assoc_measurement`;
+
+DROP TABLE `specchio`.`spectrum_x_spectrum_name`;
+DROP TABLE `specchio`.`spectrum_name`;
+DROP TABLE `specchio`.`spectrum_name_type`;
+
+DROP TABLE `specchio`.`spectrum_x_instr_setting`;
+DROP TABLE `specchio`.`instrument_setting`;
+DROP TABLE `specchio`.`instr_setting_type`;
+
+DROP TABLE `specchio`.`hierarchy_datalink`;
+
+DROP TABLE `specchio`.`spectrum_x_picture`;
+DROP TABLE `specchio`.`picture`;
+
+DROP TABLE `specchio`.`spectrum_datalink`;
+DROP TABLE `specchio`.`datalink_type`;
 
 
 
