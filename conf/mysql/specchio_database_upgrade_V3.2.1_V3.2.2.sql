@@ -1,5 +1,8 @@
 -- Update Target Type Taxonomy
 
+INSERT INTO `specchio`.`attribute`(`name`, `description`, `category_id`, `default_storage_field`) VALUES ('Basic Target Type', 'Target classes', (select category_id from `specchio`.`category` where name = 'Generic Target Properties'), 'taxonomy_id');
+
+
 -- Level 1
 INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'Basic Target Type'), 'Urban and Built-up Area', '');
 INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'Basic Target Type'), 'Agricultural Land', '');
@@ -8,6 +11,7 @@ INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `description`) VALUES
 INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'Basic Target Type'), 'Barren Land', '');
 INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `description`) VALUES ((select `attribute_id` from `specchio`.`attribute` where name = 'Basic Target Type'), 'Reference Material', '');
 
+DROP TABLE IF EXISTS `specchio_temp`.`temp_tax_table`;
 CREATE TEMPORARY TABLE IF NOT EXISTS `specchio_temp`.`temp_tax_table` AS (SELECT * FROM `specchio`.`taxonomy`);
 
 -- Level 2
@@ -186,8 +190,16 @@ INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `default_unit_id`, `description`) VALUES ('Measurement Support Area', (select category_id from `specchio`.category where name = 'Sampling Geometry'), 'double_val', (select unit_id from `specchio`.unit where short_name = 'm2'),'Area of the measurement support, i.e. the areas of the projected field of view');
 
 
+-- longer campaign description
 
+ALTER TABLE `specchio`.`campaign` CHANGE COLUMN `description` `description` VARCHAR(2000);
 
+-- GPS approximating flags
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `default_unit_id`, `description`) VALUES ('Position Approximated', (select category_id from `specchio`.category where name = 'Location'), 'int_val', (select unit_id from `specchio`.unit where name = 'Boolean'),'Indicates if the spatial position was not properly recorded and had to be approximated by other means');
+
+-- Flight campaign support
+INSERT INTO `specchio`.`category` (`name`, `string_val`) VALUES ('Associated Campaigns', '');
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `default_unit_id`, `description`, `cardinality`) VALUES ('Airborne Mission ID', (select category_id from `specchio`.category where name = 'Associated Campaigns'), 'string_val', (select unit_id from `specchio`.unit where name = 'RAW'),'Mission ID of an airborne mission that is associated with this spectrum', null);
 
 
 
