@@ -376,6 +376,8 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 					
 					attribute attr = specchioClient.getAttributesNameHash().get("UTC Time Computation");
 					
+					specchioClient.removeEavMetadata(attr, updatedIds); // remove any existing UTC time computation entries
+					
 					// create a metaparameter noting that the time was shifted
 					MetaParameter mpShift = MetaParameter.newInstance(
 							attr,
