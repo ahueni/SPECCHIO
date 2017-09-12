@@ -75,7 +75,7 @@ import ch.specchio.types.Campaign;
 import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.Spectrum;
 
-public class QueryBuilder extends JFrame  implements ActionListener, TreeSelectionListener, ChangeListener, ClipboardOwner, QueryConditionChangeInterface, ListSelectionListener 
+public class QueryBuilder extends SpectralMetaDataBase  implements ActionListener, TreeSelectionListener, ChangeListener, ClipboardOwner, QueryConditionChangeInterface, ListSelectionListener 
 {
 
 	private static final long serialVersionUID = 1L;
@@ -99,17 +99,12 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	private JButton refl;
 	private JButton publish_collection;
 	
-	JRadioButton split_spaces_by_sensor_and_unit = new JRadioButton("Split spaces by sensor and unit");
-	JRadioButton split_spaces_by_sensor = new JRadioButton("Split spaces by sensor");
-	JRadioButton split_spaces_by_sensor_and_unit_and_instrument_and_cal = new JRadioButton("Split spaces by sensor, instrument, calibr_no and unit");
-	
-	ButtonGroup split_group = new ButtonGroup();
 
 	SPECCHIOClient specchio_client;
 	
-	public Query query;
+//	public Query query;
 	
-	private ArrayList<Integer> ids_matching_query;
+	
 
 
 	private JMenuBar menuBar;
@@ -119,9 +114,6 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	private JMenu test_menu;
 
 
-	private ArrayList<Integer> unsorted_spectrum_ids;
-	
-	private boolean sorted_ids_ready = false;
 
 
 	private SpectrumMetadataCategoryList category_list;
@@ -577,28 +569,6 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	}	
 	
 	
-	public ArrayList<Integer> get_ids_matching_query()
-	{
-		if(!this.sorted_ids_ready)
-		{
-			changed(true); // initiate loading of sorted ids
-		}
-		
-		return ids_matching_query;
-	}
-	
-	public void set_ids_matching_query(ArrayList<Integer> ids)
-	{
-		ids_matching_query = ids;
-	}
-	
-	public ArrayList<Integer> get_ids_matching_query_not_sorted()
-	{	
-		if (unsorted_spectrum_ids == null) // this is true for id selections not carried out in the spectral data browser
-			return this.ids_matching_query;
-		else
-			return this.unsorted_spectrum_ids;
-	}	
 	
 	
 	public void changed(boolean changed)
@@ -714,6 +684,19 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    	  thread.start();
 	    	  endOperation();
 	      }
+	      
+	      if("show_report_of_set_ids".equals(e.getActionCommand()))
+	      {
+	    	  startOperation();
+	    	  ReportThread thread = new ReportThread(
+	    			  this.ids_matching_query,
+    				  split_spaces_by_sensor.isSelected(),
+    				  split_spaces_by_sensor_and_unit.isSelected(),
+    				  sdb.get_order_by_field()
+	    			  );
+	    	  thread.start();
+	    	  endOperation();
+	      }	      
 	      
 	      if("file_export".equals(e.getActionCommand()))
 	      {
@@ -1033,6 +1016,19 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	    }
 		
 	}
+	
+	public ArrayList<Integer> get_ids_matching_query()
+	{
+		if(!this.sorted_ids_ready)
+		{
+			changed(true); // initiate loading of sorted ids
+		}
+		
+		return ids_matching_query;
+	}
+	
+
+	
 
 	public void stateChanged(ChangeEvent e) {
 		try {
@@ -1084,7 +1080,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	
 	
 	/**
-	 * Thread for builing reports.
+	 * Thread for building reports.
 	 */
 	private class ReportThread extends Thread {
 		
@@ -1160,116 +1156,7 @@ public class QueryBuilder extends JFrame  implements ActionListener, TreeSelecti
 	}
 	
 	
-	/**
-	 * Thread for building visualisations.
-	 */
-	private class VisualisationThread extends Thread {
-		
-		/** the plot type */
-		private String plotType;
-		
-		/** spectrum identifiers on which to report */
-		private ArrayList<Integer> ids;
-		
-		/** split spaces by sensor */
-		private boolean bySensor;
-		
-		/** split spaces by sensor and unit */
-		private boolean bySensorAndUnit;
-		
-		/** field to order by */
-		private String orderBy;
-		
-		
-		/**
-		 * Constructor.
-		 * 
-		 * @param plotTypeIn		the plot type
-		 * @param idsIn				the spectrum identifiers to be visualised
-		 * @param bySensor			split spaces by sensor
-		 * @param bySensorAndUnit	split spaces by sensor and unit
-		 * @param orderByIn			field to order by
-		 */
-		public VisualisationThread(String plotTypeIn, ArrayList<Integer> idsIn, boolean bySensorIn, boolean bySensorAndUnitIn, String orderByIn)
-		{
-			// save parameters for later
-			plotType = plotTypeIn;
-			ids = idsIn;
-			bySensor = bySensorIn;
-			bySensorAndUnit = bySensorAndUnitIn;
-			orderBy = orderByIn;
-		}
-		
-		
-		/**
-		 * Thread entry point.
-		 */
-		public void run()
-		{
-	  	    // create a progress report
-			ProgressReportDialog pr = new ProgressReportDialog(QueryBuilder.this, plotType, false, 20);
-			pr.set_operation("Opening " + plotType);
-			pr.set_progress(0);
-			pr.setVisible(true);
-			
-		  	try {
-		      	VisualisationModule VM;
-		      	
-		      	pr.set_operation("Identifying spaces");
-		      	Space[] spaces = specchio_client.getSpaces(
-		      			ids,
-		      			bySensor,
-		      			bySensorAndUnit,
-		      			orderBy
-		      		);
-		      	pr.set_progress(100);
-					
-		      	Integer i = 0;
-				for (Space space : spaces)
-				{
-					pr.set_operation("Loading space " + i);
-					pr.set_progress(0);
-					Space s = specchio_client.loadSpace(space);
-					pr.set_progress(50);
-					
-					//System.out.println(s.getNumberOfDataPoints()); // switch this on when debugging ; my machine got runtime issues in the debugger and not always plots the spectra ...
-					
-					pr.set_operation("Building plot");
-					VM = new VisualisationModule(QueryBuilder.this, specchio_client);
-					SpaceProcessingChainComponent c = new SpaceProcessingChainComponent(QueryBuilder.this, s);
-					c.setNumber(i);
-					VM.add_input_space(c, -1);
-					VM.set_vis_module_type(plotType);
-					VM.transform();
-					pr.set_progress(100);
-					
-					i++;
-				}
-		  	}
-			catch (SPECCHIOClientException ex) {
-		  		ErrorDialog error = new ErrorDialog(
-				    	QueryBuilder.this,
-			    		"Server error",
-			    		ex.getUserMessage(),
-			    		ex
-				    );
-			  		error.setVisible(true);
-		    }
-		  	catch (ModuleException ex) {
-		  		ErrorDialog error = new ErrorDialog(
-		  				QueryBuilder.this,
-		  				"Module error",
-		  				ex.getMessage(),
-		  				ex
-		  			);
-		  		error.setVisible(true);
-		  	}
-		  	
-		  	pr.setVisible(false);
-			
-		}
-		
-	}
+
 
 	@Override
 	public void valueChanged(ListSelectionEvent arg0) {
