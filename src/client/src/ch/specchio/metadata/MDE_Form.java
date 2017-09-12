@@ -57,7 +57,7 @@ public class MDE_Form {
 			MD_CategoryContainer cc = li.next();
 			if (cc.getCategoryName().equals(mp.getCategoryName())) {
 				
-				if(mp.getAttributeName().equals("Reference Data Link") || mp.getAttributeName().equals("Target Data Link") || mp.getAttributeName().equals("Provenance£ Data Link") )
+				if(mp.getAttributeName().equals("Reference Data Link") || mp.getAttributeName().equals("Target Data Link") || mp.getAttributeName().equals("Provenance Data Link") )
 				{
 					field = new MD_EAV_Link_Field(mp, info);
 				}					
@@ -72,6 +72,31 @@ public class MDE_Form {
 	
 	}
 	
+	
+	public MetaParameter getEavParameterFromContainer(String attribute_name, String category_name)
+	{	
+		MetaParameter mp = null;
+		boolean found = false;
+		
+		MD_EAV_Field field;
+		ListIterator<MD_CategoryContainer> li  = containers.listIterator();
+		while (li.hasNext() && !found) {
+			MD_CategoryContainer cc = li.next();
+			if (cc.getCategoryName().equals(category_name)) {
+
+				field = cc.getField(attribute_name);
+				
+				if(field != null && field.get_conflict_status() == ConflictInfo.no_conflict) // only returned for non-conflicting fields
+				{
+					mp = field.getMetaParameter();
+					found = true;
+				}
+
+			}
+		}
+		
+		return mp;
+	}
 	
 	public void addParametersIntoExistingContainers(Spectrum s,
 			String[] md_fields, ConflictTable spectrum_md_conflict_stati) {
