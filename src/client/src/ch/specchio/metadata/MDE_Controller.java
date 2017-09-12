@@ -9,12 +9,18 @@ import java.util.ListIterator;
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
+import ch.specchio.gui.MetaDataEditorView;
+import ch.specchio.gui.SpectrumMetadataCategoryList;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.MetaTaxonomy;
 import ch.specchio.types.Metadata;
+import ch.specchio.types.Point2D;
 import ch.specchio.types.Spectrum;
+import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.attribute;
 
 public class MDE_Controller {
@@ -28,14 +34,23 @@ public class MDE_Controller {
 	MD_FormDescriptor form_descriptor;
 	Hashtable<Integer, attribute> attributes;
 	Boolean do_conflict_detection = true;
-	
+	private Spectrum first_spectrum;
+	ConflictTable eav_conflict_stati;
+	ConflictTable spectrum_md_conflict_stati;
+	MetaDataEditorView mdev;
 	
 	public MDE_Controller(SPECCHIOClient specchio_client) throws SPECCHIOClientException
+	{
+		this(specchio_client, null);
+	}
+	
+	public MDE_Controller(SPECCHIOClient specchio_client, MetaDataEditorView metaDataEditorView) throws SPECCHIOClientException
 	{
 		this.form_factory = new MDE_FormFactory(specchio_client);
 		this.specchio_client = specchio_client;
 		this.attributes = specchio_client.getAttributesIdHash();
-		set_form_descriptor(this.form_factory.getDefaultFormDescriptor());
+		set_form_descriptor(this.form_factory.getDefaultFormDescriptor(), false);
+		this.mdev = metaDataEditorView;
 	}
 	
 	
@@ -74,33 +89,24 @@ public class MDE_Controller {
 	}
 
 
-	public void set_form_descriptor(MD_FormDescriptor form_descriptor) throws SPECCHIOClientException
+	public void set_form_descriptor(MD_FormDescriptor form_descriptor, boolean manual_category_selection) throws SPECCHIOClientException
 	{
 		this.form_descriptor = form_descriptor;	
-		update_form();
+		update_form(manual_category_selection);
 	}
 	
 	
 	public void set_spectrum_ids(ArrayList<Integer> ids) throws SPECCHIOClientException
 	{	
 		this.ids = ids;	
-		update_form();
-	}
-	
-	
-	private void update_form() throws SPECCHIOClientException
-	{
-		if (ids != null && ids.size() > 0)
+		
+		// get conflict info ...
+		
+		// need to get the first spectrum so that we can display non-conflicting values
+		if(ids.size() > 0)
 		{
-			ConflictTable eav_conflict_stati;
-			
-			// get form					
-			form = form_factory.getForm(form_descriptor);
-			form.set_spectrum_ids(ids);
-			
-			// need to get the first spectrum so that we can display non-conflicting values
-			Spectrum s = specchio_client.getSpectrum(ids.get(0), false);
-
+			first_spectrum = specchio_client.getSpectrum(ids.get(0), false);
+	
 			// add EAV parameters including their conflict status
 			if(do_conflict_detection)
 			{
@@ -112,14 +118,65 @@ public class MDE_Controller {
 				ArrayList<Integer> first_id = new ArrayList<Integer>();
 				first_id.add(ids.get(0));
 				eav_conflict_stati = specchio_client.getEavMetadataConflicts(first_id);
+			}		
+	
+			spectrum_md_conflict_stati = specchio_client.getMetadataConflicts(ids, Spectrum.METADATA_FIELDS);	
+		}
+		
+		update_form(false);
+	}
+	
+	
+	private void update_form(boolean manual_category_selection) throws SPECCHIOClientException
+	{
+		if (ids != null && ids.size() > 0)
+		{
+			
+			
+			// check if the category list of the container must be updated
+			if(this.mdev != null)
+			{
+				MetaTaxonomy ap_domain = (MetaTaxonomy) this.first_spectrum.getMetadata().get_first_entry("Application Domain");
+
+				if(ap_domain != null && !manual_category_selection) // avoid applying the application domain specific selection of categories if user manual interacted
+				{
+
+					// update the categories according to the application domain
+					ArrayList<Integer> selected_categories = null;
+					Long taxonomy_id =  (Long) ap_domain.getValue();
+
+					SpectrumMetadataCategoryList category_list = this.mdev.getCategory_list();
+
+					selected_categories = specchio_client.getMetadataCategoriesForApplicationDomain(taxonomy_id.intValue());
+					if(selected_categories.size()>0)
+					{
+						category_list.setSelected(selected_categories);
+						TaxonomyNodeObject tmp = specchio_client.getTaxonomyNode(taxonomy_id.intValue());
+						category_list.setApplicationDomain(tmp.getName());
+					}
+					else
+					{
+						category_list.setAllSelected(true);
+						category_list.setApplicationDomain(null);
+					}
+
+					this.form_descriptor = category_list.getFormDescriptor();	
+
+				}
 			}
+
+
+			// get form					
+			form = form_factory.getForm(form_descriptor);
+			form.set_spectrum_ids(ids);
 			
 			Enumeration<String> conflicts = eav_conflict_stati.conflicts();
 			while (conflicts.hasMoreElements()) {
 				try {
 					
 					int attribute_id = Integer.parseInt(conflicts.nextElement());
-					List<MetaParameter> mps = s.getMetadata().get_all_entries(attribute_id);
+					List<MetaParameter> mps = this.first_spectrum.getMetadata().get_all_entries(attribute_id);
+										
 					if (mps.size() > 0) {
 						
 						// add a field for every instance of this attribute
@@ -142,9 +199,7 @@ public class MDE_Controller {
 				}
 			}
 
-			ConflictTable spectrum_md_conflict_stati = specchio_client.getMetadataConflicts(ids, Spectrum.METADATA_FIELDS);
-
-			form.addParametersIntoExistingContainers(s, Spectrum.METADATA_FIELDS, spectrum_md_conflict_stati);
+			form.addParametersIntoExistingContainers(this.first_spectrum, Spectrum.METADATA_FIELDS, spectrum_md_conflict_stati);
 			
 		} else {
 			form = null;
