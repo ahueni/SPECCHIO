@@ -27,8 +27,7 @@ public class QueryCategoryContainer {
 		for (attribute attr : attrs)
 		{
 			
-			EAVQueryField eav_qc = new EAVQueryField(attr.getName(), attr.default_storage_field);
-			
+			EAVQueryField eav_qc = new EAVQueryField(attr.getName(), attr.default_storage_field);	
 			this.fields.add(eav_qc);
 			
 			// automatically add a further condition for the higher value and set the operations for both
@@ -43,13 +42,27 @@ public class QueryCategoryContainer {
 				upper_eav_qc.putClientProperty("lower_bounds_cond", eav_qc);
 				eav_qc.putClientProperty("upper_bounds_cond", upper_eav_qc);
 				
+				
 				this.fields.add(upper_eav_qc);
-			}
-			
-			
-			if("string_val".equals(eav_qc.get_fieldname()))
+			}		
+			else if("string_val".equals(eav_qc.get_fieldname()))
 			{
 				eav_qc.set_operator("like");
+			}
+			else if("spatial_val".equals(eav_qc.get_fieldname()))
+			{
+				eav_qc.set_operator("MBRContains");
+				
+
+				// Optionally create a single query interface for all geometries 
+				
+				
+			}
+			else
+			{
+				// unhandled data type for queries
+				boolean gotcha =true;
+				
 			}
 			
 		}
