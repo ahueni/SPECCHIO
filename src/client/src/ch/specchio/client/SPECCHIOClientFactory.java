@@ -100,15 +100,15 @@ public class SPECCHIOClientFactory {
 	
 	public static String getApplicationFilepath(String name)
 	{
-		File conf_file = null;
+		File file = null;
 		// check if the file is found in the current directory
 		
-		conf_file = new File(name);
+		file = new File(name);
 		
-		if(conf_file.isFile())
+		if(file.isFile())
 		{
 			//System.out.println(name + " found in current dir.");
-			return conf_file.getPath();
+			return file.getPath();
 		}
 		else
 		{
@@ -116,9 +116,9 @@ public class SPECCHIOClientFactory {
 			try {
 				File app_dir = new File(SPECCHIOApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 				
-				conf_file = new File(app_dir.getParent() + File.separator + name);
+				file = new File(app_dir.getParent() + File.separator + name);
 				
-				//System.out.println(name + " not found in current dir but here: " + conf_file);
+				//System.out.println(name + " not found in current dir but here: " + file);
 				
 			} catch (URISyntaxException e) {
 				// TODO Auto-generated catch block
@@ -127,7 +127,7 @@ public class SPECCHIOClientFactory {
 			
 		}
 		
-		return conf_file.getPath();
+		return file.getPath();
 	}
 	
 	/**
