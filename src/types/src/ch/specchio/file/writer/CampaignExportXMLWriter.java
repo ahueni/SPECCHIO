@@ -34,6 +34,7 @@ public class CampaignExportXMLWriter extends TableWriter {
 		write_end_tag("table");
 		write_nl();
 		
+		bw.flush(); // apparently, the writer does this automatically ...
 	}
 	
 	
