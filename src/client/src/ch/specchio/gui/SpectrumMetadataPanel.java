@@ -5,6 +5,8 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -17,8 +19,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Vector;
+
+import java.awt.datatransfer.*;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.swing.BorderFactory;
@@ -28,19 +34,31 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.text.JTextComponent;
 
+import net.iharder.dnd.FileDrop;
+
+import org.apache.commons.io.FilenameUtils;
 import org.freixas.jcalendar.DateEvent;
 import org.freixas.jcalendar.DateListener;
 import org.freixas.jcalendar.JCalendar;
@@ -55,8 +73,10 @@ import ch.specchio.metadata.MD_EAV_Field;
 import ch.specchio.metadata.MD_EAV_Link_Field;
 import ch.specchio.metadata.MD_Field;
 import ch.specchio.metadata.MD_Spectrum_Field;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Capabilities;
 import ch.specchio.types.CategoryTable;
+import ch.specchio.types.ConflictInfo;
 import ch.specchio.types.MetaBoolean;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaLink;
@@ -65,10 +85,23 @@ import ch.specchio.types.MetaFile;
 import ch.specchio.types.MetaImage;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.MetaSpatialGeometry;
+import ch.specchio.types.MetaSpatialPoint;
+import ch.specchio.types.MetaSpatialPolygon;
+import ch.specchio.types.MetaSpatialPolyline;
 import ch.specchio.types.MetaTaxonomy;
+import ch.specchio.types.Point2D;
 import ch.specchio.types.SerialisableBufferedImage;
 import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.attribute;
+import de.micromata.opengis.kml.v_2_2_0.Coordinate;
+import de.micromata.opengis.kml.v_2_2_0.Document;
+import de.micromata.opengis.kml.v_2_2_0.Feature;
+import de.micromata.opengis.kml.v_2_2_0.Geometry;
+import de.micromata.opengis.kml.v_2_2_0.Kml;
+import de.micromata.opengis.kml.v_2_2_0.LineString;
+import de.micromata.opengis.kml.v_2_2_0.Placemark;
+import de.micromata.opengis.kml.v_2_2_0.Polygon;
 
 /**
  * Spectrum metadata panel. This panel displays all of the metadata for a spectrum.
@@ -245,7 +278,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			
 			// create and add panels for each category container
 			for (MD_CategoryContainer mdcc : form.getContainers()) {
-				SpectrumMetadataCategoryContainer panel = new SpectrumMetadataCategoryContainer(mdcc);
+				SpectrumMetadataCategoryContainer panel = new SpectrumMetadataCategoryContainer(mdcc, this.specchioClient);
 				panel.setEditable(editable);
 				add(panel);
 			}
@@ -276,6 +309,9 @@ public class SpectrumMetadataPanel extends JPanel {
 		/** inner panel */
 		private JPanel fieldPanel;
 		
+		/** the client object */
+		private SPECCHIOClient specchioClient;
+				
 		/** component factory */
 		private SpectrumMetadataComponentFactory factory;
 		
@@ -296,15 +332,18 @@ public class SpectrumMetadataPanel extends JPanel {
 		 * Constructor.
 		 * 
 		 * @param mdcc	the category container to be displayed in this panel
+		 * @param specchioClient 
 		 * 
 		 * @throws SPECCHIOClientException	could not contact the server
 		 */
-		public SpectrumMetadataCategoryContainer(MD_CategoryContainer mdcc) throws SPECCHIOClientException {
+		public SpectrumMetadataCategoryContainer(MD_CategoryContainer mdcc, SPECCHIOClient specchioClient) throws SPECCHIOClientException {
 			
 			super();
 			
 			// save a reference to the parameters
 			this.mdcc = mdcc;
+			
+			this.specchioClient = specchioClient;
 			
 			// initialise member variables
 			editable = true;
@@ -320,7 +359,11 @@ public class SpectrumMetadataPanel extends JPanel {
 			add(fieldPanel);
 			
 			// add help string
-			this.setToolTipText("Click menu to add metadata field.");
+			String toolTipText = "Click menu to add metadata field.";
+			if(mdcc.getCategoryName().equals("Location"))
+				toolTipText = toolTipText + " Drag and drop KML files to auto-generate geometries.";
+				
+			this.setToolTipText(toolTipText);
 			
 			// set up popup menu
 			popupMenu = new JPopupMenu();
@@ -334,6 +377,108 @@ public class SpectrumMetadataPanel extends JPanel {
 			for (MD_Field field : mdcc.getFields()) {
 				addField(field);
 			}
+			
+			
+			
+	        new FileDrop(this, new FileDrop.Listener()
+	        {   public void filesDropped( java.io.File[] files )
+	            {   for( int i = 0; i < files.length; i++ )
+	                {   try
+	                    {   
+	                	
+	                	File file = files[i];
+	                	String ext = FilenameUtils.getExtension(file.getCanonicalFile().toString());
+	                	
+	                	if(ext.equals("kml") && SpectrumMetadataCategoryContainer.this.mdcc.getCategoryName().equals("Location"))
+	                	{
+	                		List<Coordinate> coords = null;
+	                		ArrayList<Point2D> coords_2d = null;
+	                		
+	                		final Kml kml = Kml.unmarshal(file);
+	                		Document document = (Document) kml.getFeature();
+	                		List<Feature> f = document.getFeature();
+
+	                		// get first entry
+	                		Placemark p = (Placemark) f.get(0);
+	                		Geometry g = p.getGeometry();
+	                		MD_EAV_Field field = null;
+	                		MetaSpatialGeometry mp = null;
+
+	                		// geometry type dependent
+	                		if (g instanceof Polygon)
+	                		{
+	                			coords = ((Polygon) g).getOuterBoundaryIs().getLinearRing().getCoordinates();
+	                			
+	                			// add new polygon parameter: MetaSpatialPolygon
+	        					attribute a = SpectrumMetadataCategoryContainer.this.specchioClient.getAttributesNameHash().get("Spatial Extent");
+	        					mp = (MetaSpatialGeometry) MetaParameter.newInstance(a);
+	        					mp.setUnits(SpectrumMetadataCategoryContainer.this.specchioClient.getAttributeUnits(a));	        				
+	                			
+	                		}
+	                		else if (g instanceof de.micromata.opengis.kml.v_2_2_0.Point)
+	                		{
+	                			
+	                			coords = ((de.micromata.opengis.kml.v_2_2_0.Point) g).getCoordinates();
+	                			
+	                			// add new polygon parameter: MetaSpatialPoint
+	        					attribute a = SpectrumMetadataCategoryContainer.this.specchioClient.getAttributesNameHash().get("Spatial Position");
+	        					mp = (MetaSpatialGeometry) MetaParameter.newInstance(a);
+	        					mp.setUnits(SpectrumMetadataCategoryContainer.this.specchioClient.getAttributeUnits(a));	        				
+	                			
+	                			
+	                		}
+	                		else if (g instanceof LineString)
+	                		{
+	                			
+	                			coords = ((LineString) g).getCoordinates();
+	                			
+	                			// add new polygon parameter: MetaSpatialPolyline
+	        					attribute a = SpectrumMetadataCategoryContainer.this.specchioClient.getAttributesNameHash().get("Spatial Transect");
+	        					mp = (MetaSpatialGeometry) MetaParameter.newInstance(a);
+	        					mp.setUnits(SpectrumMetadataCategoryContainer.this.specchioClient.getAttributeUnits(a));	        				
+	                			
+	                		}
+	                		else
+	                		{
+	                			// unknown geometry type or geometry type does not fit the selected metaparameter
+	                			String message = "KML Geometry type " + g.getClass().getSimpleName() + " does not fit any SPECCHIO spatial attribute ";
+	                			JOptionPane.showMessageDialog(SpectrumMetadataCategoryContainer.this, message, "Info", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
+	                		}
+	                		
+	                		if(mp != null)
+	                		{
+	                			coords_2d = new ArrayList<Point2D>();
+	                			
+	                			Iterator<Coordinate> it = coords.iterator();
+	                			while(it.hasNext())
+	                			{
+	                				Coordinate coord = it.next();
+	                				Point2D coord2d = new Point2D(coord.getLatitude(), coord.getLongitude());
+	                				coords_2d.add(coord2d);
+	                			}
+	                			
+	                			try {
+									mp.setValue(coords_2d);
+								} catch (MetaParameterFormatException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+	                			
+	        					field = getForm().createEAVField(mp);	                				        					   
+	                			SpectrumMetadataCategoryContainer.this.addFieldToPanel(field);
+	
+	                		}
+
+
+	                	}
+	                	
+
+	                	
+	                    }   // end try
+	                    catch( java.io.IOException e ) {}
+	                }   // end for: through each dropped file
+	            }   // end filesDropped
+	        }); // end FileDrop.Listener					
 			
 		}
 		
@@ -351,7 +496,6 @@ public class SpectrumMetadataPanel extends JPanel {
 				
 				try {
 				
-					SpectrumMetadataComponent smc = null;
 					// create a new field for this attribute
 					attribute a = (attribute)menuItem.getClientProperty(ATTRIBUTE);
 					MetaParameter mp = MetaParameter.newInstance(a);
@@ -362,7 +506,7 @@ public class SpectrumMetadataPanel extends JPanel {
 					if (mp instanceof MetaFile) {
 						// need to load the value from a file
 						mp = loadMetaFileValue((MetaFile)mp);
-						if (mp.getValue() != null) {
+						if (mp != null && mp.getValue() != null) {
 							// copy the value into the field
 							field.getMetaParameter().setValue(mp.getValue());
 							field.getMetaParameter().setAnnotation(mp.getAnnotation());
@@ -379,30 +523,8 @@ public class SpectrumMetadataPanel extends JPanel {
 //						value = mp.getValue();
 //					}
 				
-					if (field != null) {
-						
-						// add the new field to the category container
-						mdcc.addField(field);
-							
-						// add the new field to the panel
-						smc = addField(field);
-						smc.getInputComponent().requestFocusInWindow();
-						
-						// notify the metadata change listeners
-						fireMetadataFieldAdded(field);
-//						if (mp instanceof MetaFile || mp instanceof MetaBoolean) {
-//							// adding a file changes the value as well
-//							fireMetadataFieldChanged(field, value);
-//						}
-						
-						// always fire a change event
-						fireMetadataFieldChanged(field, mp.getValue());
-						
-					}
-				
-					// force re-draw
-					revalidate();
-					repaint();					
+					addFieldToPanel(field);
+		
 				
 				}
 				catch (SPECCHIOClientException ex) {
@@ -418,10 +540,49 @@ public class SpectrumMetadataPanel extends JPanel {
 			}
 			
 		}
+
+		/**
+		 * Add a field to the panel
+		 * 
+		 * @param field	the field
+		 * 
+		 * @return the component that represents the new field
+		 * 
+		 * @throws SPECCHIOClientException error contacting the server
+		 */
+
+		public void addFieldToPanel(MD_EAV_Field field)
+		{
+			if (field != null) {
+				
+				// add the new field to the category container
+				mdcc.addField(field);
+					
+				// add the new field to the panel
+				SpectrumMetadataComponent smc = null;
+				smc = addField(field);
+				smc.getInputComponent().requestFocusInWindow();
+				
+				// notify the metadata change listeners
+				fireMetadataFieldAdded(field);
+//				if (mp instanceof MetaFile || mp instanceof MetaBoolean) {
+//					// adding a file changes the value as well
+//					fireMetadataFieldChanged(field, value);
+//				}
+				
+				// always fire a change event
+				fireMetadataFieldChanged(field, field.getMetaParameter().getValue());
+				
+			}
+		
+			// force re-draw
+			revalidate();
+			repaint();						
+		}
 		
 		
 		/**
-		 * Add a field to the panel.
+		 * Add a field to the panel and modify popup menu according to cardinality.
 		 * 
 		 * @param field	the field
 		 * 
@@ -737,10 +898,13 @@ public class SpectrumMetadataPanel extends JPanel {
 				return new SpectrumFileEavMetadataComponent(container, field);
 			} else if (mp instanceof MetaBoolean) {
 				return new SpectrumBooleanEavMetadataComponent(container, field);
-			} 
+			} else if (mp instanceof MetaSpatialGeometry) {
+				return new SpectrumSpatialGeometryEavMetadataComponent(container, field);
+			}
 			else {
 				return new SpectrumSimpleEavMetadataComponent(container, field);
 			}
+			
 			
 		}
 		
@@ -778,6 +942,10 @@ public class SpectrumMetadataPanel extends JPanel {
 		/** the label of this component */
 		private JLabel label;
 		
+		/** the client object */
+		protected SPECCHIOClient specchioClient;
+		
+		
 		/**
 		 * Constructor.
 		 * 
@@ -789,6 +957,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			// save a reference to the parameters
 			this.container = container;
 			this.field = field;
+			this.specchioClient = container.specchioClient;
 						
 			// create a label for this component
 			label = new JLabel(field.getLabelWithUnit());
@@ -1009,7 +1178,7 @@ public class SpectrumMetadataPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 
 		/** pop-up menu for deleting the field */
-		private JPopupMenu popupMenu;
+		protected JPopupMenu popupMenu;
 		
 		/** is the component editable? */
 		private boolean editable;
@@ -1203,6 +1372,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			Date date = ((MetaDate)field.getMetaParameter()).valueAsDate();
 			
 			// build the calendar control
+			// Interestingly, when debugging this, the cal_combo shows times corrected from UTC to local time, but this disappears after compiling it and installing as regular java app ....
 			cal_combo = new JCalendarCombo(JCalendar.DISPLAY_DATE | JCalendar.DISPLAY_TIME,  false);			
 			cal_combo.setDateFormat(MetaDate.getDateFormat());
 			cal_combo.setDate(date);
@@ -1210,6 +1380,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			
 			// build the text field
 			text = new JTextField(((MetaDate) field.getMetaParameter()).valueAsString(), 20);
+//			String date_text = ((MetaDate) field.getMetaParameter()).valueAsString();
 			text.setEditable(false);
 			
 			// start with the combo box on display
@@ -1277,6 +1448,7 @@ public class SpectrumMetadataPanel extends JPanel {
 		
 	}
 	
+
 	
 	/**
 	 * Component for file-type metadata.
@@ -1328,38 +1500,99 @@ public class SpectrumMetadataPanel extends JPanel {
 		public void actionPerformed(ActionEvent event) {
 			
 			if (VIEW.equals(event.getActionCommand())) {
+				MetaFile mp_file = (MetaFile)getMetaParameter();
+
 				
-				try {
-					MetaFile mp_file = (MetaFile)getMetaParameter();
-						
-					// write the meta-parameter value to a temporary file
-					File temp = File.createTempFile("specchio", mp_file.getDefaultFilenameExtension());
-					temp.deleteOnExit();
-					FileOutputStream fos = new FileOutputStream(temp);
-					mp_file.writeValue(fos);
-					fos.close();
-						
-					// launch the external viewer
-					Desktop.getDesktop().open(temp);
-				}
-				catch (IllegalArgumentException ex) {
-					// something wrong with the temporary file
-					ErrorDialog error = new ErrorDialog(owner, "Could not start viewer", ex.getMessage(), ex);
-					error.setVisible(true);
-				}
-				catch (IOException ex) {
-					// no viewer found for this file type
-					ErrorDialog error = new ErrorDialog(owner, "Could not start viewer", ex.getMessage(), ex);
-					error.setVisible(true);
-				}
-			
+				
+				DocDisplayThread t = new DocDisplayThread(mp_file);
+				t.start();
+
+
 			} else {
-				
+
 				// pass pop-up menu actions to the super-class
 				super.actionPerformed(event);
 				
 			}
 		}
+		
+		// according to: https://stackoverflow.com/questions/15583900/unable-to-update-jdialog-gui-inside-a-thread
+		public class DocDisplayThread implements Runnable {
+		    
+			private MetaFile mp;
+			private ProgressReportDialog pr;
+		    
+
+		    public DocDisplayThread(MetaFile mp)
+			{
+				// save parameters for later
+				this.mp = mp;
+			
+
+				JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(SpectrumFileEavMetadataComponent.this);
+				pr = new ProgressReportDialog(topFrame, "Loading binary document", false, 20);
+		    	
+		    	
+		        //new Thread(this).start();
+		    }
+
+		    public void start() {
+		    	
+		    	new Thread(this).start();
+		    	
+		    }
+		    
+		    @Override
+		    public void run() {
+		    	if(mp.getBlob_lazy_loading())
+		    	{
+		    		// inform user about data loading and size of data ...
+
+
+		    		pr.set_operation("Loading " + mp.getBlob_size_in_MB() + " MB ...");
+		    		pr.set_progress(0);
+		    		pr.set_indeterminate(true);
+
+		    		pr.setVisible(true);
+		    		pr.validate();
+		    		pr.repaint();
+
+		    		mp=(MetaFile) specchioClient.loadMetaparameter(mp.getEavId());
+
+		    		pr.setVisible(false);
+
+		    	}
+
+		    	try {
+
+		    		// write the meta-parameter value to a temporary file
+		    		File temp = File.createTempFile("specchio", mp.getDefaultFilenameExtension());
+		    		temp.deleteOnExit();
+		    		FileOutputStream fos = new FileOutputStream(temp);
+		    		mp.writeValue(fos);
+		    		fos.close();
+
+		    		// launch the external viewer
+		    		Desktop.getDesktop().open(temp);
+		    	}
+		    	catch (IllegalArgumentException ex) {
+		    		// something wrong with the temporary file
+		    		ErrorDialog error = new ErrorDialog(owner, "Could not start viewer", ex.getMessage(), ex);
+		    		error.setVisible(true);
+		    	}
+		    	catch (IOException ex) {
+		    		// no viewer found for this file type
+		    		ErrorDialog error = new ErrorDialog(owner, "Could not start viewer", ex.getMessage(), ex);
+		    		error.setVisible(true);
+		    	} 
+
+
+		    }
+		}
+			
+
+		
+
 		
 		
 		/**
@@ -1432,6 +1665,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				try {
 					ip = new ImagePanel();
 					ip.image = (SerialisableBufferedImage)field.getMetaParameter().getValue();
+					ip.mp = (MetaImage) field.getMetaParameter();
 					BufferedImage image = ip.image.getImage();
 					if (image != null) {
 						int im_width = ip.image.getImage().getWidth();
@@ -1468,6 +1702,10 @@ public class SpectrumMetadataPanel extends JPanel {
 							text.getDocument().addDocumentListener(this);
 							
 						}
+						
+						
+						
+
 						
 					} else {
 						label = new JLabel("-- image data not available --");
@@ -1602,10 +1840,46 @@ public class SpectrumMetadataPanel extends JPanel {
 			return text;
 		}		
 		
-			
+
+		
 			
 		
 	}
+	
+	
+    static class ImageTransferable implements Transferable
+    {
+        private Image image;
+
+        public ImageTransferable (Image image)
+        {
+            this.image = image;
+        }
+
+        public Object getTransferData(DataFlavor flavor)
+            throws UnsupportedFlavorException
+        {
+            if (isDataFlavorSupported(flavor))
+            {
+                return image;
+            }
+            else
+            {
+                throw new UnsupportedFlavorException(flavor);
+            }
+        }
+
+        public boolean isDataFlavorSupported (DataFlavor flavor)
+        {
+            return flavor == DataFlavor.imageFlavor;
+        }
+
+        public DataFlavor[] getTransferDataFlavors ()
+        {
+            return new DataFlavor[] { DataFlavor.imageFlavor };
+        }
+    }
+	
 	
 	
 	/**
@@ -1658,7 +1932,17 @@ public class SpectrumMetadataPanel extends JPanel {
 			}
 			else
 			{
-				text.setText("-- multiple values --");
+				if(field.getMetaParameter().getDefaultStorageField().equals("int_val"))
+				{
+					text.setText("Range: " + field.getConflict().int_val_min + " to " + field.getConflict().int_val_max);
+				}
+				else if(field.getMetaParameter().getDefaultStorageField().equals("double_val"))
+				{
+					text.setText("Range: " + field.getConflict().double_val_min + " to " + field.getConflict().double_val_max);
+				}
+				
+				else
+					text.setText("-- multiple values --");
 			}
 			
 			// set up event handler
@@ -2072,6 +2356,428 @@ public class SpectrumMetadataPanel extends JPanel {
 		
 	}
 	
+	
+	/**
+	 * Component for manipulating spatial geometries.
+	 */
+	private class SpectrumSpatialGeometryEavMetadataComponent extends SpectrumEavMetadataComponent implements ActionListener, TableModelListener {
+		
+		/** serialisation version identifier */
+		private static final long serialVersionUID = 1L;
+		
+		/** table for lat and lon  */
+		private JTable table;
+		private EditableTableModel table_model;
+		
+		/** the text field for non-editable display */
+		private JTextField text;
+
+		private JScrollPane scrollPane;
+		
+		/** action command for the "select" button */
+		private static final String SELECT = "Select";
+		
+		
+		
+		
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param container	the category container panel to which this component belongs
+		 * @param field	the metadata field represented by this component
+		 * 
+		 * @throws SPECCHIOClientException	could not contact the server
+		 */
+		public SpectrumSpatialGeometryEavMetadataComponent(SpectrumMetadataCategoryContainer container, MD_EAV_Field field) throws SPECCHIOClientException {
+			
+			super(container, field);
+			
+			table_model = new EditableTableModel();
+			
+			// Create column
+			table_model.addColumn("Latitude");	
+			table_model.addColumn("Longitude");	
+			
+			
+
+			String displayString = "NIL";
+			if(!fieldHasMultipleValues()) {	
+
+				
+				@SuppressWarnings("unchecked")
+				List<Point2D> coords = ((ArrayListWrapper<Point2D>) field.getMetaParameter().getValue()).getList();
+
+				if(coords.size() > 0)
+				{
+					for(int r=0;r<coords.size();r++)
+					{
+						table_model.addRow(new Object[]{});
+
+						table_model.setValueAt(((Double)coords.get(r).getY()).toString(), r, 0);
+						table_model.setValueAt(((Double)coords.get(r).getX()).toString(), r, 1);
+					}	
+				}
+				else
+					table_model.addRow(new Object[]{});
+
+				table = new JTable(table_model);
+				table_model.addTableModelListener(this);		
+				
+				// add popup menu to add or delete rows
+				// see: https://stackoverflow.com/questions/16743427/jtable-right-click-popup-menu
+				final JPopupMenu popupMenu = new JPopupMenu();
+				JMenuItem deleteRow = new JMenuItem("Delete Row");
+
+				deleteRow.addActionListener(new ActionListener() {
+
+		            @Override
+		            public void actionPerformed(ActionEvent e) {		            			            	
+		            	table_model.removeRow(table.getSelectedRow());
+		            	Dimension size = table.getSize();
+		    			size.height = size.height - 10;
+		    			table.setPreferredScrollableViewportSize(size);		
+		    			scrollPane.getParent().validate();
+		    			scrollPane.getParent().repaint();
+		            }
+		        });
+		        
+				JMenuItem addRowAfter = new JMenuItem("Add Row After");
+				addRowAfter.addActionListener(new ActionListener() {
+
+		            @Override
+		            public void actionPerformed(ActionEvent e) {
+		            	
+		            	table_model.insertRow(table.getSelectedRow()+1, new Object[]{});
+		            	
+		            	// highlight newly inserted row
+		            	table.setRowSelectionInterval(table.getSelectedRow()+1, table.getSelectedRow()+1);
+		            	
+		    			Dimension size = table.getSize();
+		    			size.height = size.height + 10;
+		    			table.setPreferredScrollableViewportSize(size);		
+		    			scrollPane.getParent().validate();
+		    			scrollPane.getParent().repaint();
+		            }
+		        });
+				
+				JMenuItem addRowBefore = new JMenuItem("Add Row Before");
+				addRowBefore.addActionListener(new ActionListener() {
+
+		            @Override
+		            public void actionPerformed(ActionEvent e) {
+		            	
+		            	table_model.insertRow(table.getSelectedRow(), new Object[]{});
+		            	
+		            	// highlight newly inserted row
+		            	table.setRowSelectionInterval(table.getSelectedRow(), table.getSelectedRow());
+		            	
+		            	Dimension size = table.getSize();
+		    			size.height = size.height + 10;
+		    			table.setPreferredScrollableViewportSize(size);		
+		    			scrollPane.getParent().validate();
+		    			scrollPane.getParent().repaint();
+		            }
+		        });
+				
+				
+		        popupMenu.add(deleteRow);
+		        popupMenu.add(addRowBefore);
+		        popupMenu.add(addRowAfter);		
+		        
+		        // add popup menu if the geometry is not a point
+		        if(!(SpectrumSpatialGeometryEavMetadataComponent.this.getMetaParameter() instanceof MetaSpatialPoint))
+		        	table.setComponentPopupMenu(popupMenu);
+		        
+		        
+		        popupMenu.addPopupMenuListener(new PopupMenuListener() {
+
+		            @Override
+		            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+		                SwingUtilities.invokeLater(new Runnable() {
+		                    @Override
+		                    public void run() {
+		                        int rowAtPoint = table.rowAtPoint(SwingUtilities.convertPoint(popupMenu, new Point(0, 0), table));
+		                        if (rowAtPoint > -1) {
+		                            table.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+		                        }
+		                    }
+		                });
+		            }
+
+		            @Override
+		            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+		                // TODO Auto-generated method stub
+		            }
+
+		            @Override
+		            public void popupMenuCanceled(PopupMenuEvent e) {
+		                // TODO Auto-generated method stub
+		            }
+		        });
+
+
+			}
+			else
+			{
+				displayString = "-- multiple values --";
+				table_model.addRow(new Object[]{});
+				
+				if(field.getMetaParameter() instanceof MetaSpatialPoint)
+				{					
+					ConflictInfo conflict = field.getConflict();
+					
+					table_model.setValueAt("Range: " + conflict.spat_val_y_min + " to " + conflict.spat_val_y_max, 0, 0);
+					table_model.setValueAt("Range: " + conflict.spat_val_x_min + " to " + conflict.spat_val_x_max, 0, 1);					
+				}
+				else
+				{
+					table_model.setValueAt(displayString, 0, 0);
+					table_model.setValueAt(displayString, 0, 1);
+				}
+								
+				table = new JTable(table_model);
+				table.setEnabled(false);
+
+			}
+			
+			
+					
+			//int maxWidths = getMaximalRequiredColumnWidth(table, 0);
+			text = new JTextField(displayString, 30);
+			Dimension size = text.getPreferredSize();
+			
+			size.height = size.height + 10 * table_model.getRowCount();
+			
+			//size = table.getPreferredScrollableViewportSize();
+			table.setPreferredScrollableViewportSize(size);		
+			table.setFillsViewportHeight(true);			
+			
+			// renderer to shade uneditable tables (see: https://coderanch.com/t/346106/java/Graying-entire-table)
+			table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+				private static final long serialVersionUID = 1L;
+
+				public Component getTableCellRendererComponent(JTable tab, Object val, boolean isSelected, boolean hasFocus, int row, int col)
+				{
+					setEnabled( tab.isEnabled() );
+					return super.getTableCellRendererComponent(tab, val, isSelected, hasFocus, row, col);
+				}
+			});		
+			
+			// add help string
+			table.setToolTipText("Drag and drop KML files onto table to auto-populate.");
+
+
+			scrollPane = new JScrollPane(table);
+			
+			add(scrollPane);
+			
+			// create a text field but don't display it yet
+			text = new JTextField(displayString, 30);
+			text.setEditable(false);
+			
+			
+			
+			
+	        new FileDrop(table, new FileDrop.Listener()
+	        {   public void filesDropped( java.io.File[] files )
+	            {   for( int i = 0; i < files.length; i++ )
+	                {   try
+	                    {   
+//	                		files[i].getCanonicalPath()
+	                	
+	                	File file = files[i];
+	                	String ext = FilenameUtils.getExtension(file.getCanonicalFile().toString());
+	                	
+	                	if(ext.equals("kml"))
+	                	{
+	                		List<Coordinate> coords = null;
+	                		
+	                		final Kml kml = Kml.unmarshal(file);
+	                		Document document = (Document) kml.getFeature();
+	                		List<Feature> f = document.getFeature();
+
+	                		// get first entry
+	                		Placemark p = (Placemark) f.get(0);
+	                		Geometry g = p.getGeometry();
+
+	                		// geometry type dependent
+	                		if (g instanceof Polygon && SpectrumSpatialGeometryEavMetadataComponent.this.getMetaParameter() instanceof MetaSpatialPolygon)
+	                		{
+	                			coords = ((Polygon) g).getOuterBoundaryIs().getLinearRing().getCoordinates();
+	                		}
+	                		else if (g instanceof de.micromata.opengis.kml.v_2_2_0.Point && SpectrumSpatialGeometryEavMetadataComponent.this.getMetaParameter() instanceof MetaSpatialPoint)
+	                		{
+	                			coords = ((de.micromata.opengis.kml.v_2_2_0.Point) g).getCoordinates();
+	                		}
+	                		else if (g instanceof LineString && SpectrumSpatialGeometryEavMetadataComponent.this.getMetaParameter() instanceof MetaSpatialPolyline)
+	                		{
+	                			coords = ((LineString) g).getCoordinates();
+	                		}
+	                		else
+	                		{
+	                			// unknown geometry type or geometry type does not fit the selected metaparameter
+	                			String message = "KML Geometry type " + g.getClass().getSimpleName() + " does not fit selected parameter " + SpectrumSpatialGeometryEavMetadataComponent.this.getMetaParameter().getClass().getSimpleName();
+	                			JOptionPane.showMessageDialog(SpectrumSpatialGeometryEavMetadataComponent.this, message, "Info", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
+	                		}
+
+	                		// iterate
+	                		if (coords != null)
+	                		{
+	                			Iterator<Coordinate> it = coords.iterator();
+	                			
+	                			int r = 0; 
+	                			while(it.hasNext())
+	                			{
+	                				Coordinate coord = it.next();
+	                			
+	        						table_model.addRow(new Object[]{});
+
+	        						table_model.setValueAt(((Double)coord.getLatitude()).toString(), r, 0);
+	        						table_model.setValueAt(((Double)coord.getLongitude()).toString(), r, 1);
+	                				r++;
+	                			}
+	                				
+	                		}
+			            	
+	                		// resize table
+			            	Dimension size = table.getSize();
+			    			size.height = size.height + 10;
+			    			table.setPreferredScrollableViewportSize(size);		
+			    			scrollPane.getParent().validate();
+			    			scrollPane.getParent().repaint();
+	                	}
+	                	
+
+	                	
+	                    }   // end try
+	                    catch( java.io.IOException e ) {}
+	                }   // end for: through each dropped file
+	            }   // end filesDropped
+	        }); // end FileDrop.Listener			
+			
+			
+		}
+		
+		
+		/**
+		 * Button handler.
+		 * 
+		 * @param	the event
+		 */
+		public void actionPerformed(ActionEvent event) {
+			
+			if (SELECT.equals(event.getActionCommand())) {
+			
+				// notify listeners of the change
+//				fireMetadataFieldChanged(getField(), this.check.isSelected());
+
+				
+			} else {
+				
+				// pass pop-up menu actions to the super class
+				super.actionPerformed(event);
+				
+			}
+			
+		}
+		
+		
+		/**
+		 * Make the field editable or not.
+		 * 
+		 * @param editable true to make the field editable, false otherwise
+		 */
+		public void setEditable(boolean editable) {
+			
+			super.setEditable(editable);
+			
+			// force re-draw
+//			revalidate();
+//			repaint();
+			
+		}
+		
+		
+		/**
+		 * Enable or disable the field.
+		 *
+		 * @param enabled	true or false
+		 */
+		public void setEnabled(boolean enabled) {
+			
+			super.setEnabled(enabled);
+//			check.setEnabled(enabled && !fieldHasMultipleValues());
+			
+		}
+
+
+		@Override
+		public JComponent getInputComponent() {
+			return table;
+		}
+
+
+		@Override
+		public void tableChanged(TableModelEvent arg0) {
+			
+			// create 2D double array
+			ArrayListWrapper<Point2D> coords = new ArrayListWrapper<Point2D>();			
+			
+			@SuppressWarnings("unchecked")
+			Vector<Vector<String>> vector = this.table_model.getDataVector();
+			
+			for(int row=0;row<vector.size();row++)
+			{
+				Vector<String> entry = vector.get(row);
+				
+				String lat_str = (String) entry.get(0); 
+				String lon_str = (String) entry.get(1); 
+				
+				Point2D coord = new Point2D(0.0, 0.0);
+				
+				// convert to double
+				try
+				{
+					coord.setY(Double.valueOf(lat_str));
+				} catch(NullPointerException e)
+				{
+					
+				}
+				catch(NumberFormatException e)
+				{
+					
+					
+					// should show a warning to the user, e.g. colour the field red ...
+				}
+				
+				try
+				{
+					coord.setX(Double.valueOf(lon_str));
+				} catch(NullPointerException e)
+				{
+					
+				}
+				catch(NumberFormatException e)
+				{
+					
+					
+					// should show a warning to the user, e.g. colour the field red ...
+				}
+				
+				coords.getList().add(coord);
+				
+			}
+			
+			
+			
+			fireMetadataFieldChanged(getField(), coords);
+		}
+				
+		
+	}
+	
+		
 		
 	
 	/**
@@ -2192,7 +2898,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				QueryBuilder d = new QueryBuilder();
 				d.set_ids_matching_query(ids);
 				
-				ActionEvent e = new ActionEvent("Call from SpectrumLinkEavMetadataComponent", 0, "show_report");
+				ActionEvent e = new ActionEvent("Call from SpectrumLinkEavMetadataComponent", 0, "show_report_of_set_ids");
 				d.actionPerformed(e);
 				
 			}
