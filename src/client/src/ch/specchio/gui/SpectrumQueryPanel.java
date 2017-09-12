@@ -1,6 +1,7 @@
 package ch.specchio.gui;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -10,6 +11,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.ListIterator;
 import java.util.TimeZone;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -17,10 +19,16 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
 
 import org.freixas.jcalendar.DateEvent;
 import org.freixas.jcalendar.DateListener;
@@ -29,14 +37,19 @@ import org.freixas.jcalendar.JCalendarCombo;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.gui.EditableTableModel;
 import ch.specchio.query_builder.EAVQueryField;
 import ch.specchio.query_builder.QueryCategoryContainer;
 import ch.specchio.query_builder.QueryController;
 import ch.specchio.query_builder.QueryField;
 import ch.specchio.query_builder.QueryForm;
 import ch.specchio.query_builder.SpectrumQueryField;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.CategoryTable;
+import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.MetaSpatialPolygon;
 import ch.specchio.types.MetaTaxonomy;
+import ch.specchio.types.Point2D;
 import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.attribute;
 
@@ -285,9 +298,11 @@ public class SpectrumQueryPanel extends JPanel {
 			} else if ("datetime_val".equals(field.get_fieldname())) {
 				return new SpectrumDateEavQueryComponent(container, field);
 			} else if ("taxonomy_id".equals(field.get_fieldname())) {
-				return new SpectrumTaxonomyEavQueryComponent(container, field, specchioClient);				
+				return new SpectrumTaxonomyEavQueryComponent(container, field, specchioClient);			
+			} else if ("spatial_val".equals(field.get_fieldname())) {
+				return new SpectrumSpatialEavQueryComponent(container, field, specchioClient);								
 			} else {
-				// this should never happen
+				// this should never happen unless a new field is added to eav table
 				return null;
 			}
 			
@@ -1049,7 +1064,7 @@ public class SpectrumQueryPanel extends JPanel {
 	
 	
 	/**
-	 * class for date fields.
+	 * class for taxomony fields.
 	 */
 	private class SpectrumTaxonomyEavQueryComponent extends SpectrumEavQueryComponent implements ActionListener {
 		
@@ -1062,8 +1077,8 @@ public class SpectrumQueryPanel extends JPanel {
 		 * Constructor for a range query.
 		 * 
 		 * @param container	the category container panel to which this component belongs
-		 * @param lower		the lower bound query field
-		 * @param upper		the upper bound query field
+		 * @param field		query field
+		 * @param specchioClient		specchio client
 		 */
 		public SpectrumTaxonomyEavQueryComponent(SpectrumQueryCategoryContainer container, EAVQueryField field, SPECCHIOClient specchioClient) {
 			
@@ -1129,4 +1144,142 @@ public class SpectrumQueryPanel extends JPanel {
 		
 	}	
 
+	
+	/**
+	 * class for spatial fields.
+	 */
+	private class SpectrumSpatialEavQueryComponent extends SpectrumEavQueryComponent implements TableModelListener {
+		
+		/** serialisation version identifier */
+		private static final long serialVersionUID = 1L;
+		private ch.specchio.gui.EditableTableModel table_model;
+		private JTable table;
+		
+		
+		/**
+		 * Constructor for a range query.
+		 * @param container	the category container panel to which this component belongs
+		 * @param field		query field
+		 * @param specchioClient		specchio client
+		 */
+		public SpectrumSpatialEavQueryComponent(SpectrumQueryCategoryContainer container, EAVQueryField field, SPECCHIOClient specchioClient) {
+			
+			super(container, field, null);
+			this.specchioClient = specchioClient;
+			
+			// create a table with 4 fields for the corner coordinates of a rectangle (simple polygon version)
+			
+			table_model = new EditableTableModel();
+			table_model.setEditDisabledCell(0);
+			
+			// Create column
+			table_model.addColumn("Corners");
+			table_model.addColumn("Latitude");	
+			table_model.addColumn("Longitude");	
+			
+			table_model.addRow(new Object[]{"Upper Left", "90", "180"});
+			table_model.addRow(new Object[]{"Lower Right", "-90", "-180"});
+			
+//			table_model.setValueAt("Upper Left", 0, 0);
+//			table_model.setValueAt("Lower Right", 1, 0);
+			
+			table_model.addTableModelListener(this);	
+			table = new JTable(table_model);
+			
+			
+			String displayString = "";
+			JTextField text = new JTextField(displayString, 30);
+			Dimension size = text.getPreferredSize();
+			
+			size.height = size.height + 10 * table_model.getRowCount();
+			
+			table.setPreferredScrollableViewportSize(size);		
+			table.setFillsViewportHeight(true);			
+			
+			JScrollPane scrollPane = new JScrollPane(table);
+					
+			getControlPanel().add(scrollPane);
+		}
+
+
+
+		@Override
+		public void tableChanged(TableModelEvent arg0) {
+			// create 2D double array
+			ArrayListWrapper<Point2D> coords = new ArrayListWrapper<Point2D>();			
+			
+			Vector<Vector<String>> vector = this.table_model.getDataVector();
+			
+			for(int row=0;row<vector.size();row++)
+			{
+				Vector<String> entry = vector.get(row);
+				
+				String lat_str = (String) entry.get(1); 
+				String lon_str = (String) entry.get(2); 
+				
+				Point2D coord = new Point2D(0.0, 0.0);
+				
+				// convert to double
+				try
+				{
+					coord.setY(Double.valueOf(lat_str));
+				} catch(NullPointerException e)
+				{
+					
+				}
+				catch(NumberFormatException e)
+				{
+					
+					
+					// should show a warning to the user, e.g. colour the field red ...
+				}
+				
+				try
+				{
+					coord.setX(Double.valueOf(lon_str));
+				} catch(NullPointerException e)
+				{
+					
+				}
+				catch(NumberFormatException e)
+				{
+					
+					
+					// should show a warning to the user, e.g. colour the field red ...
+				}
+				
+				coords.getList().add(coord);
+				
+			}
+			
+			// build proper rectangle from UL and LR points
+			ArrayListWrapper<Point2D> rect_coords = new ArrayListWrapper<Point2D>();	
+			
+			Point2D UL = coords.getList().get(0);
+			Point2D LR = coords.getList().get(1);
+			Point2D UR = new Point2D(UL.getY(), LR.getX());
+			Point2D LL = new Point2D(LR.getY(), UL.getX());
+			
+			rect_coords.getList().add(UL);
+			rect_coords.getList().add(LR);
+			rect_coords.getList().add(UR);
+			rect_coords.getList().add(LL);
+			
+			MetaSpatialPolygon mp = new MetaSpatialPolygon();
+			try {
+				mp.setValue(rect_coords);
+			} catch (MetaParameterFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();		
+			}
+			
+			fireConditionChanged(this.getField(0), mp.getEAVValue());			
+			
+		}
+			
+			
+		
+	}	
+	
+	
 }
