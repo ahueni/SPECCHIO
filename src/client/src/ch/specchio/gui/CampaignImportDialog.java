@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
+import java.util.prefs.BackingStoreException;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -20,10 +21,13 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.client.SPECCHIOPreferencesStore;
 import ch.specchio.types.User;
 
 
@@ -35,11 +39,17 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 	GridbagLayouter l;
 	JTextField target_file;
 	JList user_list;
-	final JFileChooser fc;
+	JFileChooser fc;
 	JButton load;
 	SPECCHIOClient specchio_client;
+	private JTextField target_file_on_server;
 	
 	public CampaignImportDialog() throws SPECCHIOClientException
+	{
+		this(null);
+	}
+	
+	public CampaignImportDialog(String filepath) throws SPECCHIOClientException
 	{
 		
 		super("Campaign Import");
@@ -48,6 +58,21 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 		this.specchio_client = SPECCHIOApplication.getInstance().getClient();
 		
 		fc = new JFileChooser();
+		
+		SPECCHIOPreferencesStore prefs;
+		try {
+			prefs = new SPECCHIOPreferencesStore();
+			
+			fc = new JFileChooser(prefs.getStringPreference("INPUT_DIRECTORY"));
+			
+		} catch (BackingStoreException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
@@ -67,6 +92,12 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 		constraints.gridwidth = 1;
 		l.insertComponent(new JLabel("Import source file:"), constraints);
 		target_file = new JTextField(40);
+		
+		if(filepath != null)
+		{
+			target_file.setText(filepath);
+		}
+		
 		target_file.setEditable(false);
 		constraints.gridx = 1;		
 		l.insertComponent(target_file, constraints);
@@ -76,6 +107,30 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 		browse.addActionListener(this);
 		constraints.gridx = 2;
 		l.insertComponent(browse, constraints);
+		
+		constraints.gridy++;
+		constraints.gridx = 0;	
+		constraints.gridwidth = 1;
+		l.insertComponent(new JLabel("Import source file from server:"), constraints);
+		target_file_on_server = new JTextField(40);
+		target_file_on_server.setToolTipText("Specify a filepath for a source file stored on the SPECCHIO server. Use this option for large files (> 1GB).");
+		target_file_on_server.setEditable(true);
+		target_file_on_server.addActionListener(this);
+		constraints.gridx = 1;		
+		l.insertComponent(target_file_on_server, constraints);		
+		
+		
+		target_file_on_server.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				if(e.getDocument().getLength() > 0)	load.setEnabled(true); else load.setEnabled(false);
+			}
+			public void removeUpdate(DocumentEvent e) {
+				if(e.getDocument().getLength() > 0)	load.setEnabled(true); else load.setEnabled(false);
+			}
+			public void insertUpdate(DocumentEvent e) {
+				if(e.getDocument().getLength() > 0)	load.setEnabled(true); else load.setEnabled(false);
+			}		
+		});
 		
 		constraints.gridwidth = 1;
 		constraints.gridx = 0;
@@ -93,7 +148,10 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 		l.insertComponent(load, constraints);
 		load.setActionCommand("import");
 		load.addActionListener(this);
-		load.setEnabled(false);
+		if(filepath == null)
+		{
+			load.setEnabled(false);
+		}
 		
 		constraints.gridx = 1;
 		JButton cancel = new JButton("Cancel");
@@ -102,6 +160,7 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 		cancel.addActionListener(this);		
 		
 		pack();
+
 		
 	}
 	
@@ -118,7 +177,12 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 			if (u != null) {
 				
 				startOperation();
+				
+
 				try {
+					
+					if(this.target_file.getText().length() > 0)
+					{					
 					FileInputStream fis = new FileInputStream(this.target_file.getText());
 					specchio_client.importCampaign(u.getUserId(), fis);
 					fis.close();
@@ -130,7 +194,12 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 							"XML file has been imported.",
 							"Campaign Import has finished",
 							JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon
-						);			
+						);	
+					}
+					else
+					{
+						specchio_client.importCampaign(u.getUserId(), target_file_on_server.getText());
+					}
 					
 				}
 				catch (IOException ex) {
@@ -162,10 +231,13 @@ public class CampaignImportDialog  extends JFrame implements ActionListener
 			        return ".xml files";
 			    }
 			}
+			
 						
 			fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			FileFilter filter = new XMLFileFilter();
 			fc.setFileFilter(filter);
+			
+			
 			
 			int returnVal = fc.showOpenDialog(this);
 			
