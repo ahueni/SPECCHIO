@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -17,11 +18,14 @@ import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.types.MetaTaxonomy;
 import ch.specchio.types.TaxonomyNodeObject;
 
 public class TaxonomyBrowser extends JScrollPane implements ActionListener {
@@ -29,16 +33,18 @@ public class TaxonomyBrowser extends JScrollPane implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	public JTree tree;
 	int attribute_id;
+	MetaTaxonomy mp;
 	public TaxonomyNode root;
 
 	//JScrollPane tree_scroll_pane;
 	
 	private SPECCHIOClient specchio_client;
 	
-	public TaxonomyBrowser(SPECCHIOClient specchio_client, int attribute_id)
+	public TaxonomyBrowser(SPECCHIOClient specchio_client, MetaTaxonomy mp)
 	{
 		this.specchio_client = specchio_client;
-		this.attribute_id = attribute_id;		
+		this.attribute_id = mp.getAttributeId();		
+		this.mp = mp;
 				
 		// create panel for level selection and for tree
 		//tree_scroll_pane = new JScrollPane();				
@@ -76,6 +82,31 @@ public class TaxonomyBrowser extends JScrollPane implements ActionListener {
 		//tree_scroll_pane.getViewport().add(tree);
 		this.getViewport().add(tree);
 		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+		
+	    DefaultMutableTreeNode node = null; 
+	    
+	    Integer taxonomy_id = ((Long) mp.getValue()).intValue();
+
+	    @SuppressWarnings("unchecked")
+		Enumeration<TaxonomyNode> enumeration= root.breadthFirstEnumeration(); 
+	    while(enumeration.hasMoreElements()) {
+
+	        node = enumeration.nextElement(); 
+	        if(((TaxonomyNodeObject)node.getUserObject()).getId() == taxonomy_id) {
+	        	
+                
+                DefaultTreeModel m = (DefaultTreeModel) tree.getModel();
+                TreeNode[] nodes = m.getPathToRoot(node);
+
+                TreePath tpath = new TreePath(nodes);
+                tree.scrollPathToVisible(tpath);
+                tree.setSelectionPath(tpath);
+	        	
+                          
+	        } 
+	    } 
+
+
 
 	}
 	
@@ -179,6 +210,8 @@ public class TaxonomyBrowser extends JScrollPane implements ActionListener {
 		/** have this node's children been downloaded from the server? */
 		private boolean areChildrenDefined = false;
 		
+//		private int selected_taxonomy_id = 0;
+//		private TaxonomyNode selected_node = null; 
 		
 		/**
 		 * Constructor.
@@ -192,6 +225,21 @@ public class TaxonomyBrowser extends JScrollPane implements ActionListener {
 			super.setUserObject(tn);
 			
 		}
+		
+//		/**
+//		 * Constructor.
+//		 * 
+//		 * @param tn	the taxonomy node object for this tree node
+//		 */
+//		public TaxonomyNode(TaxonomyBrowser browser, TaxonomyNodeObject tn, int selected_taxonomy_id) {
+//		
+//			this.browser = browser;
+//			this.areChildrenDefined = false;
+//			this.selected_taxonomy_id = selected_taxonomy_id;
+//			super.setUserObject(tn);
+//			
+//		}
+		
 		
 		
 		/**
@@ -228,6 +276,11 @@ public class TaxonomyBrowser extends JScrollPane implements ActionListener {
 					for (int i = 0; i < children.size(); i++) {
 						TaxonomyNode treeChild = new TaxonomyNode(this.browser, children.get(i));
 						super.insert(treeChild, i);
+						
+//						if(((TaxonomyNodeObject)treeChild.getUserObject()).getId() == this.selected_taxonomy_id)
+//						{
+//							MultipleSelectionModel msm = treeView.getSelectionModel();
+//						}
 					}
 					
 					// set the flag that indicates that the children have been loaded
