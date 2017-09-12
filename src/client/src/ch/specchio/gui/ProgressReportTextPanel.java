@@ -96,6 +96,11 @@ public class ProgressReportTextPanel extends ProgressReportPanel {
 		// ignore
 	}
 	
+	public void set_operation_description(String op_string)
+	{	
+		operation_desc.setText(op_string);	
+	}
+	
 	
 	public void set_operation(String curr_op_string)
 	{	
