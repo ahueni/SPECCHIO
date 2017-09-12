@@ -2,8 +2,11 @@ package ch.specchio.metadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.TreeSet;
 
+import ch.specchio.types.MetaParameter;
 import ch.specchio.types.attribute;
 
 public class MD_CategoryContainer {
@@ -38,6 +41,32 @@ public class MD_CategoryContainer {
 	public Collection<MD_Field> getFields()
 	{
 		return fields;
+	}
+	
+	
+	public MD_EAV_Field getField(String attribute_name)
+	{
+		MD_EAV_Field field = null;
+		MD_Field tmp = null;
+		boolean found = false;
+		
+		Iterator<MD_Field> li  = fields.iterator();
+		while (li.hasNext() && !found) {
+			tmp = li.next();
+			if(tmp.getClass() == MD_EAV_Field.class)
+			{
+				
+				MetaParameter mp = ((MD_EAV_Field) tmp).getMetaParameter();
+	
+				if(mp.getAttributeName().equals(attribute_name))
+				{
+					found = true;
+					field = (MD_EAV_Field) tmp;
+				}
+			}
+		}
+		
+		return field;
 	}
 	
 	
