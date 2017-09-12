@@ -12,6 +12,7 @@
 	<property name="pkg.dir" value="${repo.home}/pkg" />
 	<property name="macos_pkg.dir" value="${repo.home}/macos_pkg" />
 	<property name="doc.dir" value="${repo.home}/doc" />
+	<property name="mysql.dir" value="${repo.home}/conf/mysql" />
 	
 	
 	<!-- IzPack configuration -->
@@ -58,7 +59,7 @@
 	   <!-- ========================================================================================== -->
 	   <target name="init">
 	   
-	      <property name="version"           value="3.2.1.6 Alpha"/>  
+	      <property name="version"           value="3.3.0.0 Beta"/>  
 	      <property name="packagename"       value="ch.specchio.gui" />
 	      <property name="jreleaseinfoname"  value="SPECCHIOReleaseInfo" />
 	      <property name="organization"      value="RSL, University of Zurich and University of Wollongong" />
@@ -150,6 +151,15 @@
     	<copy file="SPECCHIO_Icon_Mid_Res_small.jpg" todir="${dist.dir}" />
     	<copy file="SPECCHIO.icns" todir="${dist.dir}" />
     	
+    	<!-- copy mysql upgrade files -->
+    	<mkdir dir="${dist.dir}/mysql" />
+    	<copy todir="${dist.dir}/mysql">
+    	  <fileset dir="${mysql.dir}">
+    	    <include name="**/*upgrade*.sql"/>
+    	  </fileset>
+    	</copy>
+    	
+   	
     	<!-- build jar -->
     	<manifestclasspath property="manifest.classpath" jarfile="${dist.dir}/${jar.file}">
     		<classpath id="run.path">
@@ -216,9 +226,16 @@
     		</fileset>
     	</copy>   
     	
+    	<!-- copy mysql upgrade files -->
+    	<mkdir dir="${macos_pkg.dir}/SPECCHIO.app/Contents/Java/mysql" />
+    	<copy todir="${macos_pkg.dir}/SPECCHIO.app/Contents/Java/mysql">
+    	  <fileset dir="${mysql.dir}">
+    	    <include name="**/*upgrade*.sql"/>
+    	  </fileset>
+    	</copy>
   	
     	
-    	<!-- move db_config.txt outside of the application to allow overwrite check during installation -->		
+    	<!-- move db_config.txt outside of the application to allow overwrite check during installation: no longer included in package as Java preference store is used. -->		
     	<!-- <move file="${macos_pkg.dir}/SPECCHIO.app/Contents/Java/db_config.txt" todir="${macos_pkg.dir}"/> -->		
     	
     	<copy file="${osdep.dir}/macosx/installation_cleanup" todir="${macos_pkg.dir}"/>
