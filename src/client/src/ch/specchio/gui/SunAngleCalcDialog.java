@@ -25,11 +25,14 @@ import org.joda.time.DateTime;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.constants.UserRoles;
+import ch.specchio.types.Capabilities;
 import ch.specchio.types.CelestialAngle;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaSimple;
+import ch.specchio.types.MetaSpatialPoint;
 import ch.specchio.types.Metadata;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
@@ -104,7 +107,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 		getContentPane().add(rootPanel);
 		
 		// add a spectral data browser for selecting nodes
-		sdb = new SpectralDataBrowser(specchioClient, true);
+		sdb = new SpectralDataBrowser(specchioClient, !specchioClient.isLoggedInWithRole(UserRoles.ADMIN));
 		sdb.build_tree();
 		sdb.tree.addTreeSelectionListener(this);
 		rootPanel.add(sdb);
@@ -242,26 +245,52 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 			double tot = new Double(spectrumIds.length);
 			try {
 				
+				boolean spatial_extension = specchioClient.getCapability(Capabilities.SPATIAL_EXTENSION) != null && specchioClient.getCapability(Capabilities.SPATIAL_EXTENSION).equals("true");
+				
 				for (Integer id : spectrumIds) {
 					
 					// download spectrum metadata from server
 					Spectrum s = specchioClient.getSpectrum(id, true);
 					Metadata md = s.getMetadata();
 					
+					boolean spat_pos_available = false;
+					double lat = 0, lon = 0;
+					
 					// get latitude and longitude
-					MetaSimple latitude = (MetaSimple)md.get_first_entry("Latitude");
-					MetaSimple longitude = (MetaSimple)md.get_first_entry("Longitude");
+					if(spatial_extension)
+					{
+						MetaSpatialPoint pos = (MetaSpatialPoint)md.get_first_entry("Spatial Position");
+						
+						if(pos != null)
+						{
+							lat = pos.getPoint2D().getY();
+							lon = pos.getPoint2D().getX();
+							spat_pos_available = true;
+						}
+					}
+					else
+					{
+						MetaSimple latitude = (MetaSimple)md.get_first_entry("Latitude");
+						MetaSimple longitude = (MetaSimple)md.get_first_entry("Longitude");
+						
+						if (latitude != null && longitude != null)
+						{
+							lat = (Double)latitude.getValue();
+							lon = (Double)longitude.getValue(); // longitude east of Greenwich is positive, west is negative
+							spat_pos_available = true;
+						}
+					}
 					
 					// get acquisition time
 					MetaDate acquisitionTime = (MetaDate)md.get_first_entry("Acquisition Time (UTC)");
 					
 					// calculate angles only if we have a position and acquisition time
-					if (latitude != null && longitude != null && acquisitionTime != null) {
+					if (spat_pos_available && acquisitionTime != null) {
 						
 						// calculate the angle of the sun at the position and acquistion time
 						CelestialAngle angle = calculateSunAngle(
-								(Double)latitude.getValue(),
-								(Double)longitude.getValue(),
+								lat,
+								lon,
 								(DateTime)acquisitionTime.getValue()
 							);
 						
@@ -321,7 +350,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 					message.append("\nSun angles cannot be computed for these spectra.");
 				}
 			} else {
-				message.append("No longitude, latitude or acquisition time data found. No sun angles could be computed.");
+				message.append("No longitude, latitude or UTC acquisition time data found. No sun angles could be computed.");
 			}
 			JOptionPane.showMessageDialog(SunAngleCalcDialog.this, message, "Calculation complete", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
 			
