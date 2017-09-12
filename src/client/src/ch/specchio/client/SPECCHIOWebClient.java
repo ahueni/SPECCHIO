@@ -1,6 +1,7 @@
 package ch.specchio.client;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
@@ -32,6 +33,7 @@ import ch.specchio.spaces.SpaceQueryDescriptor;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.AVMatchingList;
 import ch.specchio.types.AVMatchingListCollection;
+import ch.specchio.types.ApplicationDomainCategories;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.Campaign;
@@ -54,6 +56,7 @@ import ch.specchio.types.Reference;
 import ch.specchio.types.ReferenceBrand;
 import ch.specchio.types.ReferenceDescriptor;
 import ch.specchio.types.Sensor;
+import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.SpectraMetadataUpdateDescriptor;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
@@ -277,6 +280,19 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		getString("instrumentation", "insertReference", name);
 		
 	}
+	
+	/**
+	 * Database upgrade
+	 * 
+	 * @param version	DB version to be upgraded to
+	 * @param fis	File input stream with SQL upgrade statements
+	 * @throws SPECCHIOClientException 
+	 */	
+	public void dbUpgrade(double version, FileInputStream fis)  throws SPECCHIOClientException {
+
+		postInputStream(fis, "campaign", "dbUpgrade", Double.toString(version));
+	}
+	
 	
 	
 	/**
@@ -975,6 +991,32 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Get the metadata categories for application domain
+	 * 
+	 * @param field	the field name
+	 * 
+	 * @return a ArrayList<Integer> object, or null if the field does not exist
+	 */
+	public ArrayList<Integer> getMetadataCategoriesForApplicationDomain(int taxonomy_id) throws SPECCHIOClientException {
+		
+		return null; // this should never be called as always caught by the cache
+	}	
+	
+	/**
+	 * Get the metadata categories per application domain
+	 * 
+	 * @return a ApplicationDomainCategories object, or null if the information does not exist
+	 */
+	
+	public ApplicationDomainCategories[] getMetadataCategoriesForApplicationDomains() throws SPECCHIOClientException {
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor();
+		
+		return postForArray(ApplicationDomainCategories.class, "metadata", "application_domain_categories", mds);
+				
+	}	
+	
 	
 	/**
 	 * Get the metadata categories for a metadata field.
@@ -1579,6 +1621,24 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Import a campaign from a file that is on the Glassfish server (used for bigger files to prevent timeouts)
+	 * 
+	 * @param user_id	the identifier of the user to whom the campaign will belong
+	 * @param server_filepath		the server filepath from which to read the campaign
+	 */
+	public void importCampaign(int user_id, String server_filepath) throws SPECCHIOWebClientException {
+		
+		SpecchioCampaign c = new SpecchioCampaign();
+		user = new User();
+		user.setUserId(user_id);
+		c.setUser(user);
+		c.setPath(server_filepath);
+		
+		postForInteger("campaign", "import_from_server_file", c);
+	}
+	
+	
 	
 	/**
 	 * Get a list of all of the users in the database.
@@ -1770,6 +1830,22 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return (user != null)? user.isInRole(roleName) : false;
 		
 	}
+	
+	
+	/**
+	 * Get the meta-parameter of the given metaparameter identifier.
+	 * 
+	 * @param id		the metaparameter identifier for which to retrieve metadata
+	 * 
+	 * @return the meta-parameter object corresponding to the desired id
+	 *
+	 * @throws SPECCHIOClientException
+	 */
+	public MetaParameter loadMetaparameter(int metaparameter_id) throws SPECCHIOClientException {		
+		
+		return getObject(MetaParameter.class, "metadata", "load_metaparameter", Integer.toString(metaparameter_id));	
+	}
+	
 	
 	
 	/**

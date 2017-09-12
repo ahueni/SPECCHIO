@@ -1,5 +1,6 @@
 package ch.specchio.client;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -16,6 +17,7 @@ import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.AVMatchingListCollection;
+import ch.specchio.types.ApplicationDomainCategories;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.Campaign;
@@ -110,6 +112,14 @@ public interface SPECCHIOClient {
 	 */
 	public void createReference(String name) throws SPECCHIOClientException;
 	
+	/**
+	 * Database upgrade
+	 * 
+	 * @param version	DB version to be upgraded to
+	 * @param fis	File input stream with SQL upgrade statements
+	 * @throws SPECCHIOClientException 
+	 */	
+	public void dbUpgrade(double version, FileInputStream fis) throws SPECCHIOClientException;
 	
 	/**
 	 * Delete calibration data from the database
@@ -201,6 +211,14 @@ public interface SPECCHIOClient {
 	 */
 	
 	public ArrayList<Integer> filterSpectrumIdsByHavingAttributeValue(ArrayList<Integer> spectrum_ids, String attribute_name, Object value) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Get the metadata categories per application domain
+	 * 
+	 * @return an array of ApplicationDomainCategories object, or null if the information does not exist
+	 */
+	public ApplicationDomainCategories[] getMetadataCategoriesForApplicationDomains();
 	
 	
 	/**
@@ -518,6 +536,16 @@ public interface SPECCHIOClient {
 	 * @return a reference to a user object, or null if the client is not connected
 	 */
 	public User getLoggedInUser();
+	
+	
+	/**
+	 * Get the metadata categories for application domain
+	 * 
+	 * @param field	the field name
+	 * 
+	 * @return a ArrayList<Integer> object, or null if the field does not exist
+	 */
+	public ArrayList<Integer> getMetadataCategoriesForApplicationDomain(int taxonomy_id) throws SPECCHIOClientException;
 	
 	
 	/**
@@ -868,7 +896,7 @@ public interface SPECCHIOClient {
 
 	
 	/**
-	 * Get the taxonomy hash fora given taxonomy
+	 * Get the taxonomy hash for a given taxonomy
 	 * 
 	 * @param attribute_id	attribute_id that defines the taxonomy
 	 * 
@@ -894,6 +922,14 @@ public interface SPECCHIOClient {
 	 * @param is	the input stream from which to read the campaign
 	 */
 	public void importCampaign(int user_id, InputStream is) throws SPECCHIOClientException;
+
+	/**
+	 * Import a campaign from a file that is on the Glassfish server (used for bigger files to prevent timeouts)
+	 * 
+	 * @param user_id	the identifier of the user to whom the campaign will belong
+	 * @param server_filepath		the server filepath from which to read the campaign
+	 */
+	public void importCampaign(int user_id, String server_filepath) throws SPECCHIOWebClientException;
 
 
 	/**
@@ -1014,7 +1050,19 @@ public interface SPECCHIOClient {
 	 * @return "true" if the client is logged in as a user with role roleIn, "false" otherwise
 	 */
 	public boolean isLoggedInWithRole(String roleName) throws SPECCHIOClientException;
+
 	
+	/**
+	 * Get the meta-parameter of the given metaparameter identifier.
+	 * 
+	 * @param id		the metaparameter identifier for which to retrieve metadata
+	 * 
+	 * @return the meta-parameter object corresponding to the desired id
+	 *
+	 * @throws SPECCHIOClientException
+	 */
+	public MetaParameter loadMetaparameter(int metaparameter_id) throws SPECCHIOClientException;
+
 	
 	/**
 	 * Load a sensor definition into the database from an input stream.
@@ -1264,6 +1312,11 @@ public interface SPECCHIOClient {
 	 * @throws SPECCHIOClientException
 	 */
 	public void updateUser(User user) throws SPECCHIOClientException;
+
+
+
+
+
 
 
 	

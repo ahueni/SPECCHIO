@@ -1,5 +1,6 @@
 package ch.specchio.client;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -18,6 +19,7 @@ import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.AVMatchingListCollection;
+import ch.specchio.types.ApplicationDomainCategories;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.Campaign;
@@ -77,6 +79,7 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	
 	/** taxonomies */
 	private Hashtable<Integer, Hashtable<String, Integer>> taxonomiesHash; // key is set to attribute id
+	private Hashtable<Integer, Integer[]> applicationDomainCategories;
 	
 	/** the progress report with which to indicate progress */
 	private ProgressReportInterface pr;
@@ -136,6 +139,7 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 					categories.add(attr.cat_name);
 				}
 			}
+			applicationDomainCategories = null; // ensure that they re-cached when required
 			if (pr != null) {
 				pr.set_progress(75);
 			}
@@ -220,6 +224,19 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		realClient.createReference(name);
 		
 	}
+	
+	/**
+	 * Database upgrade
+	 * 
+	 * @param version	DB version to be upgraded to
+	 * @param fis	File input stream with SQL upgrade statements
+	 * @throws SPECCHIOClientException 
+	 */	
+	public void dbUpgrade(double version, FileInputStream fis)  throws SPECCHIOClientException {
+
+		realClient.dbUpgrade(version, fis);
+	}
+	
 	
 	
 	/**
@@ -812,6 +829,56 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get the metadata categories for application domain
+	 * 
+	 * @param field	the field name
+	 * 
+	 * @return a ArrayList<Integer> object, or null if the field does not exist
+	 */
+	public ArrayList<Integer> getMetadataCategoriesForApplicationDomain(int taxonomy_id) throws SPECCHIOClientException {
+		
+		ArrayList<Integer> categories = new ArrayList<Integer>();
+		
+		if(applicationDomainCategories == null)
+		{
+			ApplicationDomainCategories[] tmp = realClient.getMetadataCategoriesForApplicationDomains();
+			
+			// store in hash table
+			applicationDomainCategories = new Hashtable<Integer, Integer[]>();
+			
+			for(int i=0;i<tmp.length;i++)
+			{
+				applicationDomainCategories.put(tmp[i].getTaxonomy_id(), tmp[i].getCategory_ids());
+			}
+			
+		}
+		
+		Integer[] id_arr = applicationDomainCategories.get(taxonomy_id);
+		
+		if(id_arr != null)
+		{
+				for (int i = 0; i < id_arr.length; i++) {
+					categories.add((Integer) id_arr[i]);
+				}
+		}
+
+		return categories;
+	}
+
+	/**
+	 * Get the metadata categories per application domain
+	 * 
+	 * @return an array of ApplicationDomainCategories object, or null if the information does not exist
+	 */
+	public ApplicationDomainCategories[] getMetadataCategoriesForApplicationDomains() throws SPECCHIOClientException {
+		
+		return realClient.getMetadataCategoriesForApplicationDomains();
+
+	}
+	
+	
+	
+	/**
 	 * Get the metadata categories for a metadata field.
 	 * 
 	 * @param field	the field name
@@ -1365,6 +1432,19 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		realClient.importCampaign(user_id, is);
 		
 	}
+	
+	/**
+	 * Import a campaign from a file that is on the Glassfish server (used for bigger files to prevent timeouts)
+	 * 
+	 * @param user_id	the identifier of the user to whom the campaign will belong
+	 * @param server_filepath		the server filepath from which to read the campaign
+	 */
+	public void importCampaign(int user_id, String server_filepath) throws SPECCHIOWebClientException {
+		
+		realClient.importCampaign(user_id, server_filepath);
+		
+	}
+
 
 
 	/**
@@ -1535,6 +1615,22 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 		
 	}
 	
+	
+	/**
+	 * Get the meta-parameter of the given metaparameter identifier.
+	 * 
+	 * @param id		the metaparameter identifier for which to retrieve metadata
+	 * 
+	 * @return the meta-parameter object corresponding to the desired id
+	 *
+	 * @throws SPECCHIOClientException
+	 */
+	public MetaParameter loadMetaparameter(int metaparameter_id) throws SPECCHIOClientException {		
+		return realClient.loadMetaparameter(metaparameter_id);
+
+	}
+
+
 	
 	/**
 	 * Load a sensor definition into the database from an input stream.
