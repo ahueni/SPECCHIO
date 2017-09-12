@@ -52,14 +52,19 @@ public class MetaDataFromTabController  {
 			
 			setProgress(progress);
 			
+			
 				// insert data
 				// insert each meta element separately
 				ArrayList<Integer> assigned_cols = model.getColumnNumbersOfAssignedColumns();
+				
+				progressMonitor.setMaximum( assigned_cols.size());
+				progressMonitor.setMillisToDecideToPopup(0);
+				progressMonitor.setMillisToPopup(0);
 
 				Hashtable<Integer, Integer> LUT = model.getMatchingLUT();				
 
 				int col_index = 0;
-				int delta_progress = 100 / assigned_cols.size();
+				int delta_progress = 1;
 				int attr_count = 0;
 				
 
