@@ -40,6 +40,24 @@ public class SPECCHIOPreferencesStore {
 		
 	}	
 	
+
+	public String getStringPreference(String name) throws IOException {
+		
+		Preferences node = specchioConfigurationPreferences.node("SPECCHIO_CLIENT_PREFERENCES");
+
+		return (node.get(name, System.getProperty("user.dir")));
+
+	
+	}
+	
+	
+	public void setStringPreference(String setting, String name) throws IOException {
+
+		Preferences node = specchioConfigurationPreferences.node("SPECCHIO_CLIENT_PREFERENCES");
+
+		node.put(name, setting);
+		
+	}	
 	
 
 }
