@@ -128,6 +128,13 @@ WHERE NOT EXISTS (
     SELECT name FROM `specchio`.`unit` WHERE name = 'Metres / second'
 ) LIMIT 1;
 
+
+
+update specchio.eav set unit_id = (select unit_id from unit where name = 'String') where unit_id = (select unit_id from unit where name is null and short_name = 'String');
+delete from specchio.unit where unit_id = (select unit_id from unit where name is null and short_name = 'String');
+
+
+
 --INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Percent', null, '%'); -- apparently already exists in V2.2 schema ...
 
 
@@ -683,16 +690,8 @@ ALTER TABLE `specchio`.`campaign`
 ALTER TABLE `specchio`.`hierarchy_level`
 	DROP FOREIGN KEY `FK_hierarchy_level_user_id`,
 	DROP COLUMN `user_id`;
-ALTER TABLE `specchio`.`hierarchy_level_x_spectrum`
-	DROP FOREIGN KEY `hierarchy_level_x_spectrum_fk3`,
-	DROP COLUMN `user_id`,
-	ADD COLUMN `campaign_id` INT(11),
-	ADD CONSTRAINT `FK_hierarchy_level_x_spectrum_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `specchio`.`campaign`(`campaign_id`);
-ALTER TABLE `specchio`.`spectrum_datalink`
-	DROP FOREIGN KEY `FK_spectrum_datalink_user_id`,
-	DROP COLUMN `user_id`,
-	ADD COLUMN `campaign_id` INT(11),
-	ADD CONSTRAINT `spectrum_datalink_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `specchio`.`campaign`(`campaign_id`);
+	
+	
 ALTER TABLE `specchio`.`spectrum`
 	DROP FOREIGN KEY `FK_spectrum_user_id`,
 	DROP COLUMN `user_id`;
@@ -759,32 +758,7 @@ CREATE VIEW `specchio`.`hierarchy_level_view` AS
 			AND
 			`specchio_user`.`user` = SUBSTRING_INDEX((select user()), '@', 1)
 	);
-CREATE VIEW `specchio`.`hierarchy_level_x_spectrum_view` AS
-	SELECT `hierarchy_level_x_spectrum`.*
-	FROM `specchio`.`hierarchy_level_x_spectrum`
-	WHERE `hierarchy_level_x_spectrum`.`campaign_id` IN (
-		SELECT `campaign`.`campaign_id`
-		FROM `specchio`.`campaign`, `specchio`.`research_group_members`, `specchio`.`specchio_user`
-		WHERE
-			`campaign`.`research_group_id` = `research_group_members`.`research_group_id`
-			AND
-			`research_group_members`.`member_id` = `specchio_user`.`user_id`
-			AND
-			`specchio_user`.`user` = SUBSTRING_INDEX((select user()), '@', 1)
-	);
-CREATE VIEW `specchio`.`spectrum_datalink_view` AS
-	SELECT `spectrum_datalink`.*
-	FROM `specchio`.`spectrum_datalink`
-	WHERE `spectrum_datalink`.`campaign_id` IN (
-		SELECT `campaign`.`campaign_id`
-		FROM `specchio`.`campaign`, `specchio`.`research_group_members`, `specchio`.`specchio_user`
-		WHERE
-			`campaign`.`research_group_id` = `research_group_members`.`research_group_id`
-			AND
-			`research_group_members`.`member_id` = `specchio_user`.`user_id`
-			AND
-			`specchio_user`.`user` = SUBSTRING_INDEX((select user()), '@', 1)
-	);
+
 CREATE VIEW `specchio`.`spectrum_view` AS
 	SELECT `spectrum`.*
 	FROM `specchio`.`spectrum`
@@ -827,16 +801,6 @@ CREATE VIEW `specchio`.`eav_view` AS
 
 
 -- re-define triggers to fill the campaign_id instead of user_id
-CREATE TRIGGER `specchio`.`hierarchy_level_x_spectrum_tr`
-	BEFORE INSERT ON `specchio`.`hierarchy_level_x_spectrum`
-	FOR EACH ROW SET new.`campaign_id` = (
-		SELECT `campaign_id` FROM `specchio`.`spectrum` WHERE `spectrum`.`spectrum_id` = new.`spectrum_id`
-	);
-CREATE TRIGGER `specchio`.`spectrum_datalink_tr`
-	BEFORE INSERT ON `specchio`.`spectrum_datalink`
-	FOR EACH ROW SET new.`campaign_id` = (
-		SELECT `campaign_id` FROM `specchio`.`spectrum` WHERE `spectrum`.`spectrum_id` = new.`spectrum_id`
-	);
 CREATE TRIGGER `specchio`.`spectrum_x_eav_tr`
 	BEFORE INSERT ON `specchio`.`spectrum_x_eav`
 	FOR EACH ROW SET new.`campaign_id` = (
