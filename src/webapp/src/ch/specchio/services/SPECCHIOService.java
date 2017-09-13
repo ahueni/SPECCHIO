@@ -1,17 +1,34 @@
 package ch.specchio.services;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+
+import com.sun.jersey.api.client.ClientResponse;
 
 import au.ands.org.researchdata.ResearchDataAustralia;
 
+import ch.specchio.constants.UserRoles;
+import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.factories.SPECCHIOFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
+import ch.specchio.factories.SpecchioCampaignFactory;
+import ch.specchio.jaxb.XmlInteger;
+import ch.specchio.types.Campaign;
 import ch.specchio.types.Capabilities;
 
 
@@ -111,6 +128,15 @@ public class SPECCHIOService {
 
 		Long maxObjectSize = factory.getMaximumQuerySize() - 1024;
 		capabilities.setCapability(Capabilities.MAX_OBJECT_SIZE, maxObjectSize.toString());
+		
+		Double db_version = factory.getDatabaseVersion();
+		capabilities.setCapability(Capabilities.DB_VERSION, db_version.toString());
+		
+		EAVDBServices eav = factory.getEavServices();
+		Boolean spatially_enabled = eav.isSpatially_enabled();
+		capabilities.setCapability(Capabilities.SPATIAL_EXTENSION, spatially_enabled.toString());
+
+		
 		factory.dispose();
 		
 	}
@@ -247,5 +273,46 @@ public class SPECCHIOService {
 		return getServerCapabilities().getCapability(capability);
 		
 	}
+	
+	
+	
+	/**
+	 * Upgrade the DB.
+	 * 
+	 * @param campaign_type	the type of campaign to be import
+	 * 
+	 * @throws SecurityException		a non-admin user tried to upgrade the database
+	 * @throws SPECCHIOFactoryException	the request body is not in the correct format
+	 */
+	@POST
+	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
+	@Path("dbUpgrade/{version: [0-9.]+}")
+	public Response dbUpgrade(
+			@PathParam("version") double version
+		) throws SPECCHIOFactoryException {
+		
+		Response response;
+		
+		if (!getSecurityContext().isUserInRole(UserRoles.ADMIN)) {
+			response = Response.status(ClientResponse.Status.FORBIDDEN).build();
+		} else {
+		
+			SPECCHIOFactory factory = new SPECCHIOFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			try {
+								
+				factory.dbUpgrade(version, getRequest().getInputStream());
+				response = Response.ok().build();
+			}
+			catch (IOException ex) {
+				// malformed input
+				response = Response.status(ClientResponse.Status.BAD_REQUEST).build();
+			}
+			factory.dispose();
+			
+		}
+		
+		return response;
+		
+	}	
 
 }
