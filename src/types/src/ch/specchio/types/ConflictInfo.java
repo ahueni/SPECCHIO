@@ -16,7 +16,16 @@ public class ConflictInfo {
 	public static final int no_conflict = 1;
 	public static final int conflict = 2;
 	
+	public int int_val_max;
+	public int int_val_min;
+	public double double_val_max;
+	public double double_val_min;	
+	
 	private Hashtable<Integer, ConflictStruct> conflict_structs = new Hashtable<Integer, ConflictStruct>();
+	public Double spat_val_x_max;
+	public Double spat_val_y_max;
+	public Double spat_val_x_min;
+	public Double spat_val_y_min;
 	
 	public ConflictInfo()
 	{
