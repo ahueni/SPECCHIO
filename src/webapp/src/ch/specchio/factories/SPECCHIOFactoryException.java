@@ -16,7 +16,7 @@ public class SPECCHIOFactoryException extends WebApplicationException {
 		
 		super(ex);
 		setStackTrace(ex.getStackTrace());
-		
+		this.setMessage(ex.getMessage());
 	}
 	
 	
@@ -28,8 +28,18 @@ public class SPECCHIOFactoryException extends WebApplicationException {
 	public SPECCHIOFactoryException(String message) {
 		
 		super();
-		this.message = message;
+		this.setMessage(message);
 		
+	}
+
+	
+	public String getMessage() {
+		return message;
+	}
+
+
+	public void setMessage(String message) {
+		this.message = message;
 	}
 
 }
