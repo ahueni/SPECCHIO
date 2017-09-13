@@ -16,12 +16,15 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import ch.specchio.spaces.MeasurementUnit;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.MetaSpatialGeometry;
 import ch.specchio.types.Metadata;
+import ch.specchio.types.Point2D;
 import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectralFileInsertResult;
@@ -1021,13 +1024,29 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				// record
 				if (spec_file.getPos().size() > spec_no && spec_file.getPos(spec_no) != null) {
 		
-					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Longitude", "Location"));
-					mp.setValue(spec_file.getPos(spec_no).longitude, "Degrees");
-					md.addEntry(mp);			
+					MetaParameter mp;
 					
-					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Latitude", "Location"));
-					mp.setValue(spec_file.getPos(spec_no).latitude, "Degrees");
-					md.addEntry(mp);	
+					if(getEavServices().isSpatially_enabled())
+					{
+						mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Spatial Position", "Location"));
+						ArrayList<Point2D> value = new ArrayList<Point2D>();
+						Point2D coord = new Point2D(spec_file.getPos(spec_no).latitude, spec_file.getPos(spec_no).longitude);
+						value.add(coord);						
+						((MetaSpatialGeometry) mp).setValue(value);						
+						md.addEntry(mp);	
+					}
+					else
+					{
+						mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Longitude", "Location"));
+						mp.setValue(spec_file.getPos(spec_no).longitude, "Degrees");
+						md.addEntry(mp);			
+						
+						mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Latitude", "Location"));
+						mp.setValue(spec_file.getPos(spec_no).latitude, "Degrees");
+						md.addEntry(mp);						
+					}
+					
+	
 					
 					if(spec_file.getPos(spec_no).altitude != null)
 					{
