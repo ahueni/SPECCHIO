@@ -1,5 +1,6 @@
 package ch.specchio.services;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -10,7 +11,6 @@ import javax.annotation.security.*;
 import com.sun.jersey.api.client.ClientResponse;
 
 import ch.specchio.constants.UserRoles;
-import ch.specchio.factories.CampaignFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpecchioCampaignFactory;
 import ch.specchio.factories.SpectralFileFactory;
@@ -177,6 +177,10 @@ public class CampaignService extends SPECCHIOService {
 				// malformed input
 				response = Response.status(ClientResponse.Status.BAD_REQUEST).build();
 			}
+			// somehow we always get an IOException at the client end, no matter what exception we throw or response is returned.
+//			catch (SPECCHIOFactoryException ex) {
+//				response = Response.status(ClientResponse.Status.BAD_REQUEST).tag(ex.getMessage()).build();
+//			}
 			factory.dispose();
 			
 		}
@@ -184,6 +188,49 @@ public class CampaignService extends SPECCHIOService {
 		return response;
 		
 	}
+	
+	
+	/**
+	 * Import a campaign.
+	 * 
+	 * @param campaign_type	the type of campaign to be import
+	 * 
+	 * @throws SecurityException		a non-admin user tried to import a campaign
+	 * @throws SPECCHIOFactoryException	the request body is not in the correct format
+	 */
+	@POST
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	@Path("import_from_server_file")
+	public XmlInteger import_from_server_file(Campaign c) throws SPECCHIOFactoryException {
+		
+		Response response;
+		
+		if (!getSecurityContext().isUserInRole(UserRoles.ADMIN)) {
+			response = Response.status(ClientResponse.Status.FORBIDDEN).build();
+		} else {
+		
+			SpecchioCampaignFactory factory = new SpecchioCampaignFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			try {
+				
+				FileInputStream fis = new FileInputStream(c.getPath());
+				
+				
+				factory.importCampaign(c.getUser().getUserId(), fis);
+
+			}
+			catch (IOException ex) {
+				// malformed input
+				response = Response.status(ClientResponse.Status.BAD_REQUEST).build();
+			}
+			factory.dispose();
+			
+		}
+		
+		return new XmlInteger(1);
+		
+	}
+	
 
 
 	/**
