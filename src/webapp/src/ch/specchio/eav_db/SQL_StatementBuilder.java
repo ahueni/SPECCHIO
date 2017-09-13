@@ -228,7 +228,7 @@ public class SQL_StatementBuilder {
 	   } else if (value instanceof List<?>) {
 		   return quote_list((List<?>)value);
 	   } else if (value instanceof String) {
-		   return quote_string((String)value);
+		   return quote_string((String) value);
 	   } else if (value instanceof Integer || value instanceof Long) {
 		   return value.toString();
 	   } else if (value instanceof Double || value instanceof Float) {
@@ -241,6 +241,30 @@ public class SQL_StatementBuilder {
 		   throw new SQLException("Cannot represent object of type " + value.getClass() + " as an SQL value.");
 	   }   
    }
+   
+   public synchronized String get_pstatement_value(Object value) throws SQLException
+   {
+	   if (value == null) {
+		   return "null";
+	   } else if (value.getClass().isArray()) {
+		   return quote_array((Object[])value);
+	   } else if (value instanceof List<?>) {
+		   return quote_list((List<?>)value);
+	   } else if (value instanceof String) {
+		   return (String)value;
+	   } else if (value instanceof Integer || value instanceof Long) {
+		   return value.toString();
+	   } else if (value instanceof Double || value instanceof Float) {
+		   return value.toString();
+	   } else if (value instanceof Date) {
+		   return DateAsString((Date)value);
+	   } else if (value instanceof DateTime) {
+		   return JodaDateAsString((DateTime)value);		   
+	   } else {
+		   throw new SQLException("Cannot represent object of type " + value.getClass() + " as an SQL value.");
+	   }   
+   }
+   
    
    public synchronized String quote_array(Object[] values) throws SQLException
    {
