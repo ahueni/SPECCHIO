@@ -198,6 +198,47 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Get the campaign id for a given spectrum identifier.
+	 * 
+	 * @param int spectrum_id	the identifier of the desired campaign
+	 * 
+	 * @return id of the campaign
+	 */
+	public Integer getCampaignIdForSpectrum(int spectrum_id) throws SPECCHIOFactoryException {
+		
+		try {
+			
+			Integer campaign_id = 0;
+			
+			// create SQL-building objects
+			Statement stmt = getConnection().createStatement();
+			String query;
+			ResultSet rs;
+			
+			// load campaign data from the database
+			query = "SELECT campaign_id FROM spectrum WHERE spectrum_id=" + spectrum_id; 
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				campaign_id = rs.getInt(1);
+			}
+			rs.close();
+
+			
+			// clean up
+			stmt.close();
+
+			return campaign_id;
+			
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+	}	
+	
+	
+	/**
 	 * Get the list of campaigns in the database.
 	 * 
 	 * @param is_admin	is the user an administrator?
@@ -408,15 +449,22 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 	 * @throws IOException				the stream could not be read
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public void importCampaign(int userId, InputStream is) throws IOException, SPECCHIOFactoryException {
+	public void importCampaign(int userId, InputStream is) throws SPECCHIOFactoryException {
 		
 		try {
 			CampaignImport cim = new CampaignImport(getStatementBuilder(), getDatabaseName(), userId);
 			cim.read_input_stream(is);
+			
+			// reload system table caches to pick up any new entries
+			this.reloadCaches();
 		}
 		catch (SQLException ex) {
 			// database error
+			System.out.print(ex.getMessage());
 			throw new SPECCHIOFactoryException(ex);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			throw new SPECCHIOFactoryException(e);
 		}
 		
 	}
