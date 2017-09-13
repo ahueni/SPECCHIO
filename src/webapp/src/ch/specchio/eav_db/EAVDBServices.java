@@ -21,6 +21,8 @@ import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.MetaSpatialGeometry;
+import ch.specchio.types.PdfDocument;
 import ch.specchio.types.attribute;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.Metadata;
@@ -39,6 +41,7 @@ public class EAVDBServices extends Thread {
 	private String primary_x_eav_viewname = "frame_x_eav_view";
 	private String primary_id_name = "frame_id";
 	private String eav_view_name = "eav"; //required for SPECCHIO as inserts work on the view
+	private boolean spatially_enabled= false;
 	
 	private String databaseUserName;
 	
@@ -47,6 +50,23 @@ public class EAVDBServices extends Thread {
 		this.SQL = SQL;
 		this.ATR = ATR;
 		this.databaseUserName = databaseUserName;
+		
+		String query = "SELECT count(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = (select schema()) AND TABLE_NAME = 'eav' AND COLUMN_NAME = 'spatial_val'";
+		
+		Statement stmt;
+		try {
+			stmt = SQL.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				this.spatially_enabled = rs.getBoolean(1);
+			}
+			rs.close();
+			stmt.close();			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 	
 	
@@ -61,7 +81,7 @@ public class EAVDBServices extends Thread {
 	public ArrayList<Integer> insert_metadata_into_db(int campaign_id, Metadata md) throws SQLException, IOException {
 		
 		// prepare insert statement
-		String query = "insert into eav_view (campaign_id, attribute_id, int_val, double_val, string_val, binary_val, datetime_val, taxonomy_id, unit_id) values";
+		String query = "insert into eav_view (campaign_id, attribute_id, int_val, double_val, string_val, binary_val, datetime_val, taxonomy_id, spatial_val, unit_id) values";
 		ArrayList<String> value_strings = new ArrayList<String>();
 		double reduction_count = 0;
 		
@@ -87,7 +107,7 @@ public class EAVDBServices extends Thread {
 					}
 					else
 					{
-						int id = insert_metaparameter_into_db(campaign_id, e);
+						int id = insert_metaparameter_into_db(campaign_id, e, false); // redundancy is already reduced
 						eav_ids.add(id);
 					}
 				}
@@ -131,12 +151,27 @@ public class EAVDBServices extends Thread {
 	}	
 	
 	
-	public int insert_metaparameter_into_db(int campaign_id, MetaParameter mp) throws SQLException, IOException
+	public int insert_metaparameter_into_db(int campaign_id, MetaParameter mp, boolean reduce_redundancy) throws SQLException, IOException
 	{
+		if(reduce_redundancy)
+		{
+			mp = this.reduce_redundancy(mp);
+		}
+		
+		
 		if (mp.getEavId() == 0) // only insert if not yet existing
 		{		
+			int eav_id = 0;
 			get_metaparameter_attribute_and_unit_ids(mp);
-			int eav_id = insert_eav(campaign_id, mp.getDefaultStorageField(), mp.getEAVValue(), mp.getAttributeId(), mp.getUnitId());
+			
+			if(mp instanceof MetaSpatialGeometry)
+			{
+				eav_id = insert_eav(campaign_id, (MetaSpatialGeometry) mp);
+			}
+			else
+			{
+				eav_id = insert_eav(campaign_id, mp.getDefaultStorageField(), mp.getEAVValue(), mp.getAttributeId(), mp.getUnitId());
+			}
 			mp.setEavId(eav_id);
 		}
 		return mp.getEavId();
@@ -172,7 +207,7 @@ public class EAVDBServices extends Thread {
 			
 		
 			PreparedStatement stmt = SQL.prepareStatement(query);
-			stmt.setString(1, SQL.quote_value(value));
+			stmt.setString(1, SQL.get_pstatement_value(value));
 			stmt.executeUpdate();
 				
 			ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
@@ -187,6 +222,36 @@ public class EAVDBServices extends Thread {
 		}
 
 	}	
+	
+	
+	private int insert_eav(int campaign_id, MetaSpatialGeometry mp) throws SQLException, IOException
+	{
+
+		int eav_id = 0;
+
+		String query = "insert into " + this.eav_view_name + " (campaign_id, attribute_id, " + mp.getDefaultStorageField() + ", unit_id) " +
+				"values(" +
+				String.valueOf(campaign_id) + "," +
+				String.valueOf(mp.getAttributeId()) + "," +
+				mp.getEAVValue() + "," +
+				Integer.toString(mp.getUnitId()) +
+				")";
+
+		Statement stmt = SQL.createStatement();
+		stmt.executeUpdate(query);
+
+		ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+
+		while (rs.next())
+			eav_id = rs.getInt(1);
+
+		rs.close();
+		stmt.close();
+
+		return eav_id;
+
+	}	
+	
 	
 	private int insert_eav_binary(int campaign_id, String field, Serializable value, int attribute_id, int unit_id) throws SQLException, IOException {
 		
@@ -311,8 +376,17 @@ public class EAVDBServices extends Thread {
 			// fields: campaign_id, attribute_id, int_val, double_val, string_val, binary_val, datetime_val, taxonomy_id, unit_id
 			
 			String fieldname = e.getDefaultStorageField();
-			String value = SQL.quote_value(e.getValue());
-			
+			String value;
+
+			if(fieldname.equals("spatial_val"))
+			{
+				value = (String) e.getEAVValue();
+			}
+			else
+			{
+				value = SQL.quote_value(e.getValue());
+			}
+
 			StringBuffer query = new StringBuffer("(");
 			query.append(Integer.toString(campaign_id));
 			query.append(",");
@@ -330,6 +404,8 @@ public class EAVDBServices extends Thread {
 			query.append(",");
 			query.append("taxonomy_id".equals(fieldname) ? value : "null");
 			query.append(",");
+			query.append("spatial_val".equals(fieldname) ? value : "null");
+			query.append(",");			
 			query.append(e.getUnitId().toString() + ")");
 			
 			return query.toString();
@@ -1081,6 +1157,7 @@ public class EAVDBServices extends Thread {
 		ArrayList<FrameMetaparameterStructure> fmps_list = new ArrayList<FrameMetaparameterStructure>();
 		
 		ArrayList<Integer> attr_id_list = new ArrayList<Integer>();
+		ArrayList<Integer> attr_ids_for_lazyloading = new ArrayList<Integer>();
 		
 		for (int i=0; i < attribute_ids.length; i++)
 		{
@@ -1145,13 +1222,13 @@ public class EAVDBServices extends Thread {
 	 */
 	 public MetaParameter load_metaparameter(int eav_id) throws SQLException {
 		 
-		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, eav.spectrum_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
+		String query = "select eav.int_val, eav.double_val, eav.string_val, eav.binary_val, datetime_val, eav.taxonomy_id, eav.spectrum_id," + (this.spatially_enabled==true ? "ST_AsText(spatial_val)," : "") + " unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
 		"eav.eav_id = " + Integer.toString(eav_id) + " and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
 
 		Statement stmt = SQL.createStatement();
 		ResultSet rs = stmt.executeQuery(query);
 			
-		Object int_val, double_val, string_val;
+		Object int_val, double_val, string_val, spatial_val = null;
 		Long taxonomy_id, spectrum_id;
 		Object datetime_val;
 		Blob binary_val;
@@ -1166,6 +1243,7 @@ public class EAVDBServices extends Thread {
 			datetime_val =  rs.getString(ind++);
 			taxonomy_id = rs.getLong(ind++);
 			spectrum_id = rs.getLong(ind++);
+			if(spatially_enabled) spatial_val = rs.getString(ind++);
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
 			if(spectrum_id == 0) spectrum_id = null;
@@ -1219,7 +1297,11 @@ public class EAVDBServices extends Thread {
 				else if (spectrum_id != null)
 				{
 					mp = MetaParameter.newInstance(attr, spectrum_id);
-				}							
+				}		
+				else if (spatial_val != null)
+				{
+					mp = MetaParameter.newInstance(attr, spatial_val);
+				}											
 				else
 				{
 					mp = MetaParameter.newInstance(attr, null);
@@ -1252,15 +1334,50 @@ public class EAVDBServices extends Thread {
 	
 	public void metadata_bulk_loader(Metadata md, ArrayList<Integer> metaparameter_ids) throws SQLException
 	{
-
-		String query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, eav.binary_val, eav.datetime_val, eav.taxonomy_id, eav.spectrum_id, unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
-		"eav.eav_id in (" + SQL.conc_ids(metaparameter_ids) + ") and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
 		
-
+		int blob_lazy_loading_limit = 1000*1024; 
+		//boolean blob_lazy_loading = false;
+		
+		// step 1: figure which rows will have big blobs that need lazy loading
+		String query = "select eav.eav_id, OCTET_LENGTH(eav.binary_val) from eav eav where " +
+				"eav.eav_id in (" + SQL.conc_ids(metaparameter_ids) + ")";
+		
 		Statement stmt = SQL.createStatement();
-		ResultSet rs = stmt.executeQuery(query);
+		ResultSet rs = stmt.executeQuery(query);		
 		
-		Object int_val, double_val, string_val, datetime_val;
+		ArrayList<Integer> standard_metaparameter_ids = new ArrayList<Integer>();
+		ArrayList<Integer> lazy_metaparameter_ids = new ArrayList<Integer>();
+		
+		while (rs.next()) {	
+			
+			int eav_id = rs.getInt(1);
+			int size = rs.getInt(2);
+			
+			if(size > blob_lazy_loading_limit)
+			{
+				lazy_metaparameter_ids.add(eav_id);
+			}
+			else
+			{
+				standard_metaparameter_ids.add(eav_id);
+			}
+			
+		}
+
+		rs.close();
+		stmt.close();
+		
+		
+		// non-lazy loading first ...
+		query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, OCTET_LENGTH(eav.binary_val), eav.binary_val, eav.datetime_val, eav.taxonomy_id, eav.spectrum_id, " + (this.spatially_enabled==true ? "ST_AsText(spatial_val)," : "") + " unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
+		"eav.eav_id in (" + SQL.conc_ids(standard_metaparameter_ids) + ") and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
+		
+
+		stmt = SQL.createStatement();
+		rs = stmt.executeQuery(query);
+		
+		Object int_val, double_val, string_val, datetime_val, spatial_val = null;
+		int binary_val_size;
 		Long taxonomy_id, spectrum_id;
 		Blob binary_val;
 		
@@ -1273,10 +1390,28 @@ public class EAVDBServices extends Thread {
 			int_val = rs.getObject(ind++);
 			double_val = rs.getObject(ind++);
 			string_val = rs.getObject(ind++);
-			binary_val = rs.getBlob(ind++);
+			binary_val_size = rs.getInt(ind++);
+			
+//			if (binary_val_size> blob_lazy_loading_limit)
+//			{
+//				blob_lazy_loading = true;
+//				binary_val= null;
+////				binary_val = SQL.createBlob();
+////				binary_val.setBytes(1, new byte[1]);
+//				ind++; // skip binary val
+//			}
+//			else
+//			{
+//				blob_lazy_loading = false;
+//				binary_val = rs.getBlob(ind++);			
+//			}
+			
+			binary_val = rs.getBlob(ind++);		
+			
 			datetime_val = rs.getString(ind++);
 			taxonomy_id = rs.getLong(ind++);
 			spectrum_id = rs.getLong(ind++);
+			if(spatially_enabled) spatial_val = rs.getString(ind++);
 			
 			if(taxonomy_id == 0) taxonomy_id = null;
 			if(spectrum_id == 0) spectrum_id = null;
@@ -1371,10 +1506,21 @@ public class EAVDBServices extends Thread {
 					}
 					
 				}
+//				else if(blob_lazy_loading)
+//				{
+//					mp = MetaParameter.newInstance(attr, new PdfDocument()); // trick to ensure a PDF document metaparameter is created; the actual type of the document will defined upon actual loading
+//					mp.setBlob_lazy_loading(true);
+//				}
+				else if (spatial_val != null)
+				{
+					mp = MetaParameter.newInstance(attr, spatial_val);
+				}											
+
 				else
 				{
 					mp = MetaParameter.newInstance(attr, null);					
 				}
+				
 				
 				mp.setEavId(eav_id);
 				mp.setAttributeName(attr.getName());
@@ -1402,6 +1548,61 @@ public class EAVDBServices extends Thread {
 		rs.close();
 		stmt.close();
 		
+		
+		
+		// lazy loading
+		query = "select eav.eav_id, OCTET_LENGTH(eav.binary_val), unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
+		"eav.eav_id in (" + SQL.conc_ids(lazy_metaparameter_ids) + ") and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
+		
+
+		stmt = SQL.createStatement();
+		rs = stmt.executeQuery(query);
+
+			while (rs.next()) {	
+
+				MetaParameter mp;
+
+				int ind = 1;
+				int eav_id = rs.getInt(ind++);
+				binary_val_size = rs.getInt(ind++);
+
+				String unit_name = rs.getString(ind++);
+				int unit_id = rs.getInt(ind++);
+				int attribute_id = rs.getInt(ind++);
+
+				attribute attr = this.ATR.get_attribute_info(attribute_id);
+
+				try {
+
+
+					mp = MetaParameter.newInstance(attr, new PdfDocument()); // trick to ensure a PDF document metaparameter is created; the actual type of the document will defined upon actual loading
+					mp.setBlob_lazy_loading(true);
+					mp.setBlob_size(binary_val_size);
+
+					mp.setEavId(eav_id);
+					mp.setAttributeName(attr.getName());
+					mp.setUnitName(unit_name);
+					mp.setAttributeId(attribute_id);
+					mp.setUnitId(unit_id);
+					mp.setDescription(attr.description);
+
+					md.addEntry(mp);
+					md.addEntryId(mp.getEavId());								
+
+
+				}
+				catch (java.lang.NullPointerException e) {
+
+					System.out.println("EAV Null value read from DB for field " + attr.getName() + "!");
+				}			
+				catch (MetaParameterFormatException e) {
+					// should never happen but let's re-throw it as an SQL exception just in case.
+					throw new SQLException(e);
+				}
+
+			}
+
+
 		
 	}
 	
@@ -1582,30 +1783,54 @@ public class EAVDBServices extends Thread {
 		
 		String field = ATR.get_default_storage_field(mp.getAttributeId());
 
-//		String query = "update " + get_eav_view_name() +
-//				" set attribute_id = " + mp.getAttributeId() +
-//				", " + field +" = " + SQL.quote_string(mp.valueAsString()) +
-//				", unit_id = " + mp.getUnitId() +
-//				" where eav_id = " + mp.getEavId();
-		
-		String query = "update " + get_eav_view_name() +
-				" set attribute_id = " + mp.getAttributeId() +
-				", " + field +" = " + "?" +
-				", unit_id = " + mp.getUnitId() +
-				" where eav_id = " + mp.getEavId();
-		
-		
-		try {
-			PreparedStatement stmt = SQL.prepareStatement(query);
-			stmt.setString(1, mp.valueAsString());
-			stmt.executeUpdate();
-			stmt.close();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(mp instanceof MetaSpatialGeometry)
+		{
+			
+			
+			String query = "update " + get_eav_view_name() +
+					" set attribute_id = " + mp.getAttributeId() +
+					", " + field +" = " + (String) mp.getEAVValue() +
+					", unit_id = " + mp.getUnitId() +
+					" where eav_id = " + mp.getEavId();
+			
+			Statement stmt;
+			try {
+				stmt = SQL.createStatement();
+				stmt.executeUpdate(query);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+		}
+		else
+		{
+			String query = "update " + get_eav_view_name() +
+					" set attribute_id = " + mp.getAttributeId() +
+					", " + field +" = " + "?" +
+					", unit_id = " + mp.getUnitId() +
+					" where eav_id = " + mp.getEavId();
+
+			try {
+				PreparedStatement stmt = SQL.prepareStatement(query);
+				stmt.setString(1, mp.valueAsString());
+				stmt.executeUpdate();
+				stmt.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			
 		}
 		
 		
+	}
+
+
+	public boolean isSpatially_enabled() {
+		return spatially_enabled;
 	}
 	
 
