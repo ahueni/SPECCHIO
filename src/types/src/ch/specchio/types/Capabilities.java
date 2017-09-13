@@ -16,11 +16,17 @@ public class Capabilities {
 	/** mapping of capability names to values */
 	private Hashtable<String, String> table;
 	
-	/** capability name for version number */
+	/** capability name for version number of server WAR file */
 	public static final String VERSION = "version";
+	
+	/** capability name for version number of server WAR file */
+	public static final String DB_VERSION = "db_version";
 	
 	/** capability name for the maximum object size */
 	public static final String MAX_OBJECT_SIZE = "max_object_size";
+	
+	/** capability name for the spatial extension */
+	public static final String SPATIAL_EXTENSION = "spatial_extension";
 	
 	
 	/**
