@@ -9,9 +9,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.ListIterator;
 
 import ch.specchio.eav_db.SQL_StatementBuilder;
@@ -164,7 +167,7 @@ class BlobFieldValue extends FieldValue
 		}
 		else
 		{
-			
+			value = null;
 		}
 	}
 
@@ -178,6 +181,8 @@ class BlobFieldValue extends FieldValue
 		int i = 0;
 		int j = 0;
  
+		try
+		{
 		while(i < value.length)
 		{		
 			/*
@@ -231,6 +236,11 @@ class BlobFieldValue extends FieldValue
 		}
 
         out += String.valueOf(chararr);
+        
+		} catch (java.lang.OutOfMemoryError e)
+		{
+			int x = 1;
+		}
 
 		return out;
 	}
@@ -438,6 +448,46 @@ class DecimalFieldValue extends FieldValue
 	}	
 }
 
+class GeometryFieldValue extends FieldValue
+{
+	//String value;
+	
+	@Override
+	void read_value(ResultSet rs, String name)  throws SQLException
+	{
+		value = rs.getString(name);
+		
+	}
+
+	@Override
+	public boolean isNull()
+	{
+		if(value == null)
+			return true;
+		else
+			return false;
+	}
+
+	@Override
+	public void fromString(String str) {
+		if(str == "")
+			value = null;
+		else
+			value = str;
+	}
+
+
+	@Override
+	public String insertable_string() {
+		if(isNull())
+			return "null";
+		else		
+			return "ST_GeomFromText('" +toString()+"')";
+	}
+	
+}
+
+
 
 
 class FieldValueFactory
@@ -523,6 +573,10 @@ class FieldValueFactory
 			v = new DateTimeFieldValue();
 		}		
 		
+		if(type.equals("geometry"))
+		{
+			v = new GeometryFieldValue();
+		}		
 		
 		
 		if(v == null)
@@ -549,8 +603,11 @@ class TableField implements DbField
 	String name;
 	String type_name;
 	FieldValue value;
+	Boolean not_null_varchar = false;
 	
 	
+
+
 	public TableField(String name, String type_name)
 	{
 		this.name = name;
@@ -562,10 +619,22 @@ class TableField implements DbField
 	}
 	
 	
+	public TableField(String column_name, String data_type, String is_nullable) {
+		
+		this(column_name, data_type);
+		
+		if(this.type_name.equals("varchar") && is_nullable.equals("NO")) not_null_varchar = true;
+		
+	}
+
+	public Boolean isNot_null_varchar() {
+		return not_null_varchar;
+	}
+
 	void get_value(ResultSet rs) throws SQLException
 	{
 		//String name_ = this.get_name();
-		value.read_value(rs, this.name);
+		value.read_value(rs, this.get_resultset_field_name());
 	}
 	
 	public void setValueFromString(String str) {
@@ -610,6 +679,24 @@ class TableField implements DbField
 	public String get_name() {
 		return name;
 	}
+	
+	public String get_select_field_name() {
+		if(this.type_name.equals("geometry"))
+		{
+			return("ST_AsText(" + name + ")");
+		}
+		else			
+			return name;
+	}	
+	
+	public String get_resultset_field_name() {
+		if(this.type_name.equals("geometry"))
+		{
+			return(".ST_AsText(" + name + ")");
+		}
+		else			
+			return name;
+	}		
 
 }
 
@@ -704,7 +791,7 @@ public class DbTable
 	SQL_StatementBuilder SQL;
 	String schema;
 	String name;
-	String col_names, all_col_names, fk_col_names, col_names_without_blobs, pk_col_names; // comma separated column names of this table
+	String col_names, all_col_names, fk_col_names, col_names_without_blobs, pk_col_names, select_col_names; // comma separated column names of this table
 	boolean system_table = false;
 	boolean system_table_end_node = false;
 	boolean recursive_table = false;
@@ -724,6 +811,8 @@ public class DbTable
 	ArrayList<KeyLookup> key_lookup = new ArrayList<KeyLookup>();
 	
 	DbStructure cex;
+	private ArrayList<TableField> string_cols = new ArrayList<TableField>();
+	private boolean do_info_print = false;
 	
 	
 	public DbTable(SQL_StatementBuilder SQL, String schema, String name, DbStructure cex)
@@ -760,7 +849,7 @@ public class DbTable
 	
 			// get fields of this table
 			Statement stmt = SQL.createStatement();
-			query = "select column_name, data_type, column_key from information_schema.columns where table_name = '" + name + "' AND table_schema = '" + this.schema + "'";
+			query = "select column_name, data_type, column_key, is_nullable from information_schema.columns where table_name = '" + name + "' AND table_schema = '" + this.schema + "'";
 			rs = stmt.executeQuery(query);
 		
 			while (rs.next()) {
@@ -768,6 +857,7 @@ public class DbTable
 				String column_name = rs.getString(1);
 				String data_type = rs.getString(2);
 				String column_key = rs.getString(3);
+				String is_nullable = rs.getString(4);
 				
 				// x-rel key check:
 				// check for x-relation table feature: primary key fields exist as FK fields as well 
@@ -832,10 +922,10 @@ public class DbTable
 				if(column_key.equals(""))
 				{
 					//System.out.println("  : " + column_name);
-					tf = new TableField(column_name, data_type);
+					tf = new TableField(column_name, data_type, is_nullable);
 					this.cols.add(tf);
 					
-					if(!(data_type.equals("blob") || data_type.equals("longblob")))
+					if(!(data_type.equals("blob") || data_type.equals("mediumblob") || data_type.equals("longblob")))
 					{
 						this.non_blob_cols.add(tf);
 					}
@@ -843,6 +933,12 @@ public class DbTable
 					{
 						blob_cols.add(tf);
 					}
+					
+					if(data_type.equals("varchar"))
+					{
+						string_cols.add(tf);
+					}
+					
 				}
 				
 				all_cols.put(column_name, tf);
@@ -1094,6 +1190,11 @@ public class DbTable
 		pk_col_names = conc_names(PK);
 		fk_col_names = conc_names(FKs);
 		col_names_without_blobs = conc_names(this.non_blob_cols);
+		
+		select_col_names = conc_select_names(all_cols.values());
+		
+		
+		
 	}
 	
 	String conc_names(Collection<? extends TableField> fields)
@@ -1109,15 +1210,31 @@ public class DbTable
 		return res.toString();		
 	}
 	
+	String conc_select_names(Collection<? extends TableField> fields)
+	{
+		StringBuffer res = new StringBuffer();
+		for (TableField field : fields) {
+			if (res.length() > 0) {
+				res.append(", ");
+			}
+			res.append(field.get_select_field_name());
+		}
+				
+		return res.toString();		
+	}	
+	
 	
 	void info_print(String str, String table)
 	{
-		for(int i = 0; i < cex.level;i++)
+		if(this.do_info_print)
 		{
-			//System.out.print(" ");
-			str = " " + str; 
+			for(int i = 0; i < cex.level;i++)
+			{
+				//System.out.print(" ");
+				str = " " + str; 
+			}
+			if(!table.equals("sensor_element")) System.out.println(str);
 		}
-		if(!table.equals("sensor_element")) System.out.println(str);
 	}
 	
 	
@@ -1196,8 +1313,8 @@ public class DbTable
 		
 		String PK_field_name = this.get_PK_field_name(caller);
 
-		if(this.name.equals("spectrum_x_eav"))
-		System.out.println("gotcha");
+//		if(this.name.equals("spectrum_x_eav"))
+//		System.out.println("gotcha");
 		
 		// check if this row is already exported (avoid multiple exports) 
 		// Note: for xrel tables, the column name must also be checked, i.e. one 
@@ -1208,12 +1325,12 @@ public class DbTable
 		}
 		else
 		{
-			try {
-				stmt = SQL.createStatement();
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+//			try {
+//				stmt = SQL.createStatement();
+//			} catch (SQLException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
 			
 			
 			// Step 1: export all tables that are referenced by this table via foreign keys
@@ -1222,6 +1339,11 @@ public class DbTable
 			FkTableField fk;
 			ListIterator<FkTableField> li = FKs.listIterator();
 			
+			
+			if(this.name.equals("eav") && id == 64947)
+			{
+				int x = 1;
+			}
 			
 			// li = FKs.listIterator();
 	
@@ -1237,7 +1359,7 @@ public class DbTable
 				{
 									
 					try {
-						//stmt = db_conn.createStatement();
+						stmt = SQL.createStatement();
 						String query;
 						ResultSet rs;
 				
@@ -1252,9 +1374,22 @@ public class DbTable
 							
 						rs = stmt.executeQuery(query);
 					
+						ArrayList<Integer> referenced_ids = new ArrayList<Integer>();
+						
 						while (rs.next()) {
 				
 							int referenced_id = rs.getInt(1);
+							referenced_ids.add(referenced_id);
+						}
+						
+						rs.close();		
+						stmt.close();
+						
+						Iterator<Integer> it = referenced_ids.iterator();
+						
+						while(it.hasNext())
+						{
+							int referenced_id = it.next();
 							
 							// only export non null references
 							if(referenced_id != 0)
@@ -1275,11 +1410,9 @@ public class DbTable
 										ref_table.export(referenced_id, this);
 									}
 								}
-							}
-		
+							}							
 						}
 						
-						rs.close();		
 					
 					} catch (SQLException e) {
 						// TODO Auto-generated catch block
@@ -1319,7 +1452,7 @@ public class DbTable
 							String query = SQL.assemble_sql_select_query(pk.name, name, PK_field_name + " = " + Integer.toString(id));
 
 							try {
-								//stmt = db_conn.createStatement();
+								stmt = SQL.createStatement();
 
 								ResultSet rs;	
 								rs = stmt.executeQuery(query);
@@ -1331,6 +1464,7 @@ public class DbTable
 								}
 
 								rs.close();		
+								stmt.close();
 
 							} catch (SQLException e) {
 								// TODO Auto-generated catch block
@@ -1374,8 +1508,12 @@ public class DbTable
 						export_allowed = true;
 					}
 					
-//					if(this.name.equals("sensor") && tmp_table.name.equals("spectrum"))
+//					if(this.name.equals("attribute") && tmp_table.name.equals("spectrum"))
 //					System.out.println("gotcha");
+					
+//					if(this.name.equals("attribute"))
+//						System.out.println("gotcha");
+					
 					
 					// check the special iref exceptions
 					if(this.st.isIRefException(this.name, tmp_table.name))
@@ -1389,7 +1527,7 @@ public class DbTable
 					{					
 						
 						try {
-							//stmt = db_conn.createStatement();
+							stmt = SQL.createStatement();
 							String query;
 							ResultSet rs;
 					
@@ -1397,16 +1535,27 @@ public class DbTable
 							query = tmp_table.get_search_referencing_table_query(name, id);
 								
 							rs = stmt.executeQuery(query);
+							
+							ArrayList<Integer> referencing_ids = new ArrayList<Integer>();
 						
 							while (rs.next()) {
 					
-								int referencing_id = rs.getInt(1);
-		
+								int referencing_id = rs.getInt(1);		
+								referencing_ids.add(referencing_id);								
+							}
+							
+							rs.close();
+							stmt.close();
+							
+							Iterator<Integer> it = referencing_ids.iterator();
+							
+							while(it.hasNext())
+							{
+								int referencing_id = it.next();
 								// export
 								tmp_table.export(referencing_id, this);		
 							}
 							
-							rs.close();		
 						
 						} catch (SQLException e) {
 							// TODO Auto-generated catch block
@@ -1422,12 +1571,12 @@ public class DbTable
 			}	
 			
 			
-			try {
-				stmt.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+//			try {
+//				stmt.close();
+//			} catch (SQLException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 			
 		}
 		
@@ -1490,7 +1639,7 @@ public class DbTable
 		}
 		else // normal tables (not crossrelation tables)
 		{
-			query = SQL.assemble_sql_select_query(PK.get(0).name, name, fk.name + " = " + Integer.toString(referenced_id));
+			query = SQL.assemble_sql_select_query(PK.get(0).name, name, fk.name + " = " + Integer.toString(referenced_id)); //, " and " `+ PK.get(0).name + "=" + this.PK.get(0));
 		}
 		
 		return query;
@@ -1511,24 +1660,26 @@ public class DbTable
 	void export_this(Integer id, DbTable caller)
 	{
 		String query;
-		//Statement stmt;
 		
 		// build SQL query
 		if(this.x_rel_table)
 		{
 			FkTableField fk = get_referencing_fk(caller.name);
-			query = SQL.assemble_sql_select_query(this.all_col_names, name, fk.name + " = " + id.toString());			
+			query = SQL.assemble_sql_select_query(this.select_col_names, name, fk.name + " = " + id.toString());			
 		}
 		else // normal tables (not crossrelation tables)
 		{
-			query = SQL.assemble_sql_select_query(this.all_col_names, name, PK.get(0).name + " = " + id.toString());
+			query = SQL.assemble_sql_select_query(this.select_col_names, name, PK.get(0).name + " = " + id.toString());
 		}	
 		
+//		if(id == 281509)
+//		{
+//			int x = 0;
+//		}
 		
 		// read and write data
 		try {
-			//stmt = db_conn.createStatement();
-
+			
 			Statement stmt = SQL.createStatement();	
 			ResultSet rs = stmt.executeQuery(query);
 		
@@ -1575,7 +1726,10 @@ public class DbTable
 	
 	void read_table_data(BufferedReader d) throws IOException
 	{
+		try
+		{
 		String line = d.readLine();
+		System.out.println(line);
 		if (line == null) {
 			throw new IOException("Unexpected end of input.");
 		}
@@ -1585,7 +1739,7 @@ public class DbTable
 			// keep reading while the line does not end with </field>
 			while (line.indexOf("</field>") == -1)
 			{
-				String extra = d.readLine();
+		 		String extra = d.readLine();
 				if (extra ==  null) {
 					throw new IOException("Unexpected end of input.");
 				}
@@ -1613,6 +1767,10 @@ public class DbTable
 			line = d.readLine();
 			
 		}	
+		} catch(IOException e)
+		{
+			System.err.println("Error while reading table data: " + e.getMessage());
+		}
 	}
 	
 	
@@ -1655,7 +1813,7 @@ public class DbTable
 				
 			query = "insert into " + name + " (" + col_str + ") values (" + get_values_str() + ")";
 			
-			System.out.println(query);
+			System.out.println(new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + query);
 			
 			Statement stmt = SQL.createStatement();
 			stmt.executeUpdate(query);
@@ -1682,6 +1840,29 @@ public class DbTable
 
 			}
 			
+			stmt.close();
+			
+			// deal with problematic string content by updating the string rows again (not the smoothest way to do it, better would be to do it in the insert statement)
+			if(this.string_cols.size() > 0)
+			{
+				
+				ListIterator<TableField> li = string_cols.listIterator();
+
+				while(li.hasNext())
+				{
+					TableField tf = li.next();
+					if(!tf.value.isNull())
+					{
+						update_row(row_id, tf);
+					}
+				}
+								
+				
+			}
+			
+			
+			
+			
 			// update blobs if needed
 			// note: this only works for non-x-rel tables (however, the current db schema has no x-rel tables with blobs anyway)
 			if(contains_blobs())
@@ -1696,12 +1877,13 @@ public class DbTable
 					{
 						update_row(row_id, tf);
 					}
-				}
+				}				
 				
-				stmt.close();
 				
 			}	
-		}
+			
+		}		
+		
 		
 		return row_id;
 		
@@ -1730,26 +1912,45 @@ public class DbTable
 			}
 			
 			statement.executeUpdate();
+			
+			statement.close();
 		}
+		
+		
 	}
 	
 	
 	String get_values_str() throws SQLException
 	{
 		String values = "";
+		FkTableField f;
 		
+		try
+		{
+			
+
 		// non blob values
 		ListIterator<TableField> li = this.non_blob_cols.listIterator();	
 		while(li.hasNext())
 		{
-			values = SQL.comma_conc_strings(values,li.next().value.insertable_string());
+			TableField tf = li.next();
+			if(tf.type_name.equals("varchar") && (tf.not_null_varchar || tf.value.value != null))
+			{
+				// strings are updated later to deal with problematic content, insert here as dummy in case a non-null constraint exists
+				values = SQL.comma_conc_strings(values,"''");
+			}
+			else
+			{
+				values = SQL.comma_conc_strings(values,tf.value.insertable_string());
+			}			
+			
 		}
 		
 		// FK's 		
 		ListIterator<FkTableField> fkli = FKs.listIterator();
 		while(fkli.hasNext())
 		{
-			FkTableField f = fkli.next();
+			f = fkli.next();
 			// get the referenced table
 			DbTable ref = cex.get_table(f.referenced_table);
 				
@@ -1762,7 +1963,10 @@ public class DbTable
 			
 			values = SQL.comma_conc_strings(values, info.id);		
 		}
-		
+		}		
+		catch(java.util.NoSuchElementException e) {
+			System.out.println(e);
+		}
 		return values;
 	}
 	
