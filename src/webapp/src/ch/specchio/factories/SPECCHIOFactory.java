@@ -1,20 +1,31 @@
 package ch.specchio.factories;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.ListIterator;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.ServletInputStream;
 import javax.sql.DataSource;
-import javax.swing.JMenuItem;
 
 import ch.specchio.eav_db.Attributes;
 import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.eav_db.SQL_StatementBuilder;
+import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaParameterFormatException;
+import ch.specchio.types.MetaSpatialPoint;
+import ch.specchio.types.attribute;
 
 
 /**
@@ -55,6 +66,9 @@ public class SPECCHIOFactory {
 	
 	/** user part of the database user string */
 	private String databaseUserName = null;
+	
+	/** database version */
+	private Double databaseVersion = null;
 	
 	/** host part of the database user string */
 	private String databaseUserHost = null;
@@ -399,6 +413,35 @@ public class SPECCHIOFactory {
 	
 	
 	/**
+	 * Get the version of the database schema in use.
+	 * 
+	 * @return the name of the database
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public Double getDatabaseVersion() throws SPECCHIOFactoryException {
+		
+		if (databaseVersion == null) {
+			try {
+				Statement stmt = sql.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT version FROM schema_info order by version desc limit 1");
+				while (rs.next()) {
+					this.databaseVersion = rs.getDouble(1);
+				}
+				rs.close();
+				stmt.close();
+			}
+			catch (SQLException ex) {
+				// database error
+				throw new SPECCHIOFactoryException(ex);
+			}
+		}
+		
+		return databaseVersion;
+		
+	}	
+	
+	/**
 	 * Get the datasource name of the current source identifying the database to be used.
 	 * 
 	 * @return datasource name
@@ -465,5 +508,326 @@ public class SPECCHIOFactory {
 		return getDatabaseName() + TEMP_DATABASE_SUFFIX;
 		
 	}
+	
+	/**
+	 * Reloads the caches.
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public synchronized void reloadCaches() throws SPECCHIOFactoryException {
+
+		caches = new Hashtable<String, DataCache>();
+		configureCaches();
+		
+	}
+
+
+	public void dbUpgrade(double version, ServletInputStream inputStream) {
+		
+		
+		boolean not_eof = true;
+		String line;	
+		String temp = "";		
+		
+		MetadataFactory mf = new MetadataFactory(this);
+		
+		// read statements from upgrade script file		
+		try {
+		
+		DataInputStream data_in = new DataInputStream(inputStream);			
+			
+		BufferedReader d = new BufferedReader(new InputStreamReader(data_in));
+
+		while(not_eof)
+		{
+			not_eof = skip_comments_and_empty_lines(d);
+				
+			if(not_eof)
+			{
+				line = d.readLine();					
+				
+				// keep concatenating lines while no semicolon is found and not end of file
+				while(line !=null && !line.contains(";") && temp != null)
+				{
+					temp = d.readLine();	
+					if (temp != null)
+						line = line + " " + temp;
+				}
+				temp = "";	
+				
+				if(line == null || temp == null)
+					break;
+
+				// remove tabs
+				line.replace("\t", "");				
+					
+				// process line
+					process_line(line);	
+			}
+		}
+			
+		d.close();						
+		data_in.close ();		
+		
+		
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+		
+		// -----------------
+		// -----------------
+		// Version dependent
+		// Java upgrade part
+		// -----------------
+		// -----------------
+		
+		if (version == 3.3) {
+			
+			// store existing point data in new Spatial Position
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt;
+			try {
+				stmt = SQL.createStatement();
+				
+				String query = "select campaign_id, name, user_id from campaign";
+				
+				ArrayList<Integer> campaign_ids = new ArrayList<Integer>();
+				ArrayList<Integer> user_ids = new ArrayList<Integer>();
+				ArrayList<String> campaign_names = new ArrayList<String>();
+
+				ResultSet rs = stmt.executeQuery(query);
+
+
+				while (rs.next()) {
+
+					campaign_ids.add(rs.getInt(1));
+					campaign_names.add(rs.getString(2));
+					user_ids.add(rs.getInt(3));
+				}
+
+				rs.close();
+				stmt.close();
+				
+				
+				// loop over all campaigns
+				ListIterator<Integer> li = campaign_ids.listIterator();
+				ListIterator<String> namli = campaign_names.listIterator();
+				
+				int lat_attr_id = mf.getAttributes().get_attribute_id("Latitude");
+				int lon_attr_id = mf.getAttributes().get_attribute_id("Longitude");
+				
+				attribute point_attr = mf.getAttributes().get_attribute_info(mf.getAttributes().get_attribute_id("Spatial Position"));
+				
+				class lat_lon_container
+				{
+					double lat;
+					double lon;
+					int spectrum_id;
+				}
+				
+				ArrayList<lat_lon_container> coords = new ArrayList<lat_lon_container>();
+				
+				while(li.hasNext())
+				{
+					coords.clear();
+					int campaign_id = li.next();
+					String cname = namli.next();
+					
+					System.out.println("===================================");
+					System.out.println("Upgrading Campaign spatial metadata: " + cname);
+					System.out.println("===================================");
+					
+					getEavServices().clear_redundancy_list();
+					
+					stmt = SQL.createStatement();
+					
+					
+					// get spatial data
+					query = "select double_val, sxe.spectrum_id, attribute_id from eav, spectrum_x_eav sxe where eav.eav_id = sxe.eav_id and attribute_id in " +
+							"(select attribute_id from attribute where name = 'Latitude' OR name = 'Longitude') " + "and eav.campaign_id = " + campaign_id +
+							" order by spectrum_id";
+					
+					
+					rs = stmt.executeQuery(query);
+
+					int i=1;
+					
+					while (rs.next()) {
+
+						lat_lon_container coord = new lat_lon_container();
+						i=1;
+						double val = rs.getDouble(i++);
+						coord.spectrum_id = rs.getInt(i++);
+						int attribute_id = rs.getInt(i++);						
+
+						if(attribute_id == lat_attr_id) coord.lat = val; else coord.lon = val;
+						
+						rs.next();
+						i=1;
+						val = rs.getDouble(i++);
+						int spectrum_id = rs.getInt(i++);
+						attribute_id = rs.getInt(i++);	
+						
+						if(attribute_id == lat_attr_id) coord.lat = val; else coord.lon = val;
+
+						if(coord.spectrum_id == spectrum_id)
+						{
+							coords.add(coord);
+						}
+						else
+						{
+							System.out.println("Lat/Lon not available consistenly for spectrum_id = " + coord.spectrum_id);
+						}	
+
+
+					}
+					
+					
+					rs.close();
+					stmt.close();
+					
+					// create point entries for the coords
+					ListIterator<lat_lon_container> it = coords.listIterator();
+					
+					System.out.println("Updating " + coords.size() + " coordinates.");
+					
+					while(it.hasNext())
+					{
+						lat_lon_container coord = it.next();
+						
+						MetaSpatialPoint mp = (MetaSpatialPoint) MetaParameter.newInstance(point_attr, coord.lat + " " + coord.lon);
+						
+						// insert into eav and link with spectrum
+						int eav_id = getEavServices().insert_metaparameter_into_db(campaign_id, mp, true);
+						getEavServices().insert_primary_x_eav(coord.spectrum_id, eav_id);
+
+					}
+
+				}
+				
+
+				stmt = SQL.createStatement();
+				// remove old lat and lon attributes
+				query = "delete from spectrum_x_eav where eav_id in (select eav_id from eav where attribute_id in (select attribute_id from attribute where name = 'Latitude' OR name = 'Longitude'))";
+				stmt.executeUpdate(query);
+				
+				query = "delete from eav where attribute_id in (select attribute_id from attribute where name = 'Latitude' OR name = 'Longitude')";
+				stmt.executeUpdate(query);
+				
+				stmt.close();
+				
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MetaParameterFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+		
+		// reload system table caches to pick up any new entries
+		this.reloadCaches();
+		
+	}
+
+	private void process_line(String line) 
+	{
+		if(line.length() > 0)
+		{
+
+			// change to current schema if schema is coded in current statement
+			if (line.contains("`specchio`"))
+			{
+				line = line.replaceAll("`specchio`", "`" + getDatabaseName() +"`");
+			}
+
+			//	System.out.println(line);
+
+			String[] statements = 
+				{
+					line
+				};
+
+			execute_statements(statements);
+
+		}
+	}
+	
+	void execute_statements(String[] statements)
+	{
+		try {		
+			Statement stmt = getStatementBuilder().createStatement();
+			for (int i= 0; i < statements.length; i++)
+			{
+				System.out.println(statements[i]);
+				stmt.executeUpdate(statements[i]);
+			}
+			stmt.close();
+		} catch (SQLException e) {
+
+			int err = e.getErrorCode();
+			//error_cnt++;
+
+			if(err == 0)
+			{
+				// data truncation due to float to decimal conversion
+				System.out.println(e.getMessage());
+			}
+			else
+			{
+				e.printStackTrace();
+			}
+		}	
+
+	}	
+	
+
+	private boolean skip_comments_and_empty_lines(BufferedReader d) throws IOException
+	{
+		int ret;
+		boolean marked = false;
+		d.mark(150);
+		ret = d.read();
+
+		if (ret == 10)
+		{
+			d.mark(150);
+			marked = true;
+		}
+		else
+		{
+			while(ret != -1 && (char)ret == '-')
+			{
+				d.readLine(); // read whole line
+				d.mark(150);
+				marked = true;
+				ret = d.read(); // read next char (new line)
+			}
+		}
+
+		// return to last mark (start of the next valid line)
+		d.reset();	 
+
+		if (marked)
+		{
+			skip_comments_and_empty_lines(d); // recursion
+		}
+
+		if(ret == -1)
+			return false; // eof
+		else
+			return true; // not eof
+	}	
+
+	
 
 }
