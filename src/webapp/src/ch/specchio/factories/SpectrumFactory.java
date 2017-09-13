@@ -485,11 +485,23 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				
 				String curr_cond;
 				
-				curr_cond = SB.prefix(eav_table_name, "attribute_id") + " = " + getAttributes().get_attribute_id(co.getAttributeName()) +
-						" and " + SB.prefix(eav_table_name, co.getFieldName()) + " " + co.getOperator() + " " + SB.quote_string(co.getStringValue()) +
-						" and " + eav_table_name + ".eav_id = " + spectrum_x_eav_table_name + ".eav_id" +
-						" and " + SB.prefix(query.getTableName(), primary_key_name) + " = " + spectrum_x_eav_table_name + "." + primary_key_name
-						;
+				if(co.getFieldName().equals("spatial_val"))
+				{
+					curr_cond = SB.prefix(eav_table_name, "attribute_id") + " = " + getAttributes().get_attribute_id(co.getAttributeName()) +
+							" and " + co.getOperator() + "( " + co.getStringValue() + ", " + SB.prefix(eav_table_name, co.getFieldName()) + ") = 1" +
+							" and " + eav_table_name + ".eav_id = " + spectrum_x_eav_table_name + ".eav_id" +
+							" and " + SB.prefix(query.getTableName(), primary_key_name) + " = " + spectrum_x_eav_table_name + "." + primary_key_name
+							;
+					
+				}
+				else
+				{
+					curr_cond = SB.prefix(eav_table_name, "attribute_id") + " = " + getAttributes().get_attribute_id(co.getAttributeName()) +
+							" and " + SB.prefix(eav_table_name, co.getFieldName()) + " " + co.getOperator() + " " + SB.quote_string(co.getStringValue()) +
+							" and " + eav_table_name + ".eav_id = " + spectrum_x_eav_table_name + ".eav_id" +
+							" and " + SB.prefix(query.getTableName(), primary_key_name) + " = " + spectrum_x_eav_table_name + "." + primary_key_name
+							;
+				}
 
 				if(iteration_result_exists)
 				{
