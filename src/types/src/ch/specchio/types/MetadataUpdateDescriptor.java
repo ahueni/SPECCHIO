@@ -10,7 +10,7 @@ import javax.xml.bind.annotation.*;
  * This class describes an update to metadata, for use with the metadata services.
  */
 @XmlRootElement(name="metadata_update")
-@XmlSeeAlso(SerialisableBufferedImage.class)
+@XmlSeeAlso({SerialisableBufferedImage.class, ArrayListWrapper.class})
 public class MetadataUpdateDescriptor {
 	
 	/** the new metadata */
