@@ -127,6 +127,13 @@ public class SystemTables {
 		if(table.equals("institute"))
 			iref_exc = true;
 		
+		if(table.equals("research_group"))
+			iref_exc = true;	
+		
+		if(table.equals("eav"))
+			iref_exc = true;		
+		
+		
 		if(table.equals("sensor") && (referencing_table.equals("foreoptic") || referencing_table.equals("instrument") || referencing_table.equals("instrumentation_factors")))
 			iref_exc = true;
 		
@@ -141,8 +148,8 @@ public class SystemTables {
 		if(table.equals("spectrum_x_eav"))
 			iref_exc = true;
 		
-//		if(table.equals("spectrum") && (referencing_table.equals("spectrum_x_eav")))
-//			iref_exc = true;			
+		if(table.equals("campaign") && (referencing_table.equals("eav")))
+			iref_exc = true;			
 		
 		if(table.equals("campaign") && (referencing_table.equals("spectrum_x_eav")))
 			iref_exc = true;	
@@ -162,8 +169,11 @@ public class SystemTables {
 		if(table.equals("sampling_geometry"))
 			iref_exc = true;		
 		
-		if(table.equals("attribute"))
-			iref_exc = true;				
+//		if(table.equals("attribute"))
+//			iref_exc = true;		
+//		
+//		if(table.equals("attribute") && (referencing_table.equals("taxonomy")))
+//			iref_exc = false;						
 		
 		return iref_exc;
 	}
