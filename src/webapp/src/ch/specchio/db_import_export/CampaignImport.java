@@ -31,6 +31,10 @@ public class CampaignImport extends DbStructure {
 	
 	public void read_input_stream(InputStream input_stream) throws IOException, SQLException
 	{
+		
+		try {
+			
+		
 		String line;
 		
 		DataInputStream data_in = new DataInputStream(input_stream);
@@ -68,49 +72,74 @@ public class CampaignImport extends DbStructure {
 				}
 				
 			} else {
-				
-				// insert the new row into the target table
-				int row_id = t.insert_as_new_row();
-				
-				// tidy up tables that refer to the importing user
-				if ("campaign".equals(t.name)) {
-					
-					// change the owner of the campaign to the importing user
-					TableField user_id_field = t.all_cols.get("user_id");
-					if (user_id_field != null) {
-						user_id_field.setValueFromString(Integer.toString(user_id));
-						t.update_row(row_id, user_id_field);
-					} else {
-						throw new SQLException("The user_id column is missing from the campaign table.");
+
+				boolean do_insert = true;
+
+				if (do_insert) // debugging feature ...
+				{
+
+					// insert the new row into the target table
+					int row_id = t.insert_as_new_row();
+
+					// tidy up tables that refer to the importing user
+					if ("campaign".equals(t.name)) {
+
+						// change the owner of the campaign to the importing user
+						TableField user_id_field = t.all_cols.get("user_id");
+						if (user_id_field != null) {
+							user_id_field.setValueFromString(Integer.toString(user_id));
+							t.update_row(row_id, user_id_field);
+						} else {
+							throw new SQLException("The user_id column is missing from the campaign table.");
+						}
+
+					} else if ("research_group".equals(t.name) && row_id != 0) {
+
+						// add the importing user to the campaign's research group
+						Statement stmt = SQL.createStatement();
+						String query = "insert into research_group_members(research_group_id, member_id) " +
+								"values(" + Integer.toString(row_id) + "," + Integer.toString(user_id) + ")";
+						stmt.executeUpdate(query);
+						stmt.close();
+
 					}
-					
-				} else if ("research_group".equals(t.name) && row_id != 0) {
-					
-					// add the importing user to the campaign's research group
-					Statement stmt = SQL.createStatement();
-					String query = "insert into research_group_members(research_group_id, member_id) " +
-							"values(" + Integer.toString(row_id) + "," + Integer.toString(user_id) + ")";
-					stmt.executeUpdate(query);
-					stmt.close();
-					
+
 				}
-				
 			}
 			
 			line = d.readLine();
 			tokens = line.split(" ");
 		}
+		}
+		catch (NullPointerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
 				
 	}
 	
-	DbTable read_table(String tablename) throws IOException
+	DbTable read_table(String tablename) 
 	{
 		
 		// get table object
 		DbTable t = this.get_table(tablename);
 		
+		if(t == null)
+		{
+			System.err.println("Unknown table encountered: " + tablename);
+		}
+		
 		// let table read the data from the file
-		t.read_table_data(d);
+		try {
+			t.read_table_data(d);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch (NullPointerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		
 		return t;
 	}
