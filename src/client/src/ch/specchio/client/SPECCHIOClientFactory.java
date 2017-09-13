@@ -42,10 +42,12 @@ public class SPECCHIOClientFactory {
 		// load server descriptors from the legacy db_config.txt file
 		if (legacyConfigFile.exists()) {
 			try {
+				System.out.println("Loading server descriptors from the legacy db_config.txt file");
 				SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorLegacyStore(legacyConfigFile);
 				Iterator<SPECCHIOServerDescriptor> iter = s.getIterator();
 				while (iter.hasNext()) {
 					apps.add(iter.next());
+					System.out.print(".");
 				}
 			}
 			catch (IOException ex) {
@@ -184,10 +186,12 @@ public class SPECCHIOClientFactory {
 		// load server descriptors from the legacy db_config.txt file
 		if (legacyConfigFile.exists()) {
 			try {
+				System.out.println("Reoading server descriptors from the legacy db_config.txt file");
 				SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorLegacyStore(legacyConfigFile);
 				Iterator<SPECCHIOServerDescriptor> iter = s.getIterator();
 				while (iter.hasNext()) {
 					apps.add(iter.next());
+					System.out.print(".");
 				}
 			}
 			catch (IOException ex) {
