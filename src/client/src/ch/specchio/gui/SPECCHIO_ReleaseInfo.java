@@ -1,5 +1,5 @@
 /* Created by JReleaseInfo AntTask from Open Source Competence Group */
-/* Creation date Tue Sep 12 09:46:13 CEST 2017 */
+/* Creation date Wed Sep 13 13:52:47 CEST 2017 */
 package ch.specchio.gui;
 
 import java.util.Date;
@@ -343,11 +343,11 @@ class JReleaseInfoViewer {
 public class SPECCHIO_ReleaseInfo {
 
 
-   /** buildDate (set during build process to 1505202373128L). */
-   private static Date buildDate = new Date(1505202373128L);
+   /** buildDate (set during build process to 1505303567699L). */
+   private static Date buildDate = new Date(1505303567699L);
 
    /**
-    * Get buildDate (set during build process to Tue Sep 12 09:46:13 CEST 2017).
+    * Get buildDate (set during build process to Wed Sep 13 13:52:47 CEST 2017).
     * @return Date buildDate
     */
    public static final Date getBuildDate() { return buildDate; }
@@ -374,10 +374,10 @@ public class SPECCHIO_ReleaseInfo {
 
 
    /**
-    * Get buildNumber (set during build process to 273).
+    * Get buildNumber (set during build process to 277).
     * @return int buildNumber
     */
-   public static final int getBuildNumber() { return 273; }
+   public static final int getBuildNumber() { return 277; }
 
 
    /** company (set during build process to "${company}"). */
@@ -390,11 +390,11 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getCompany() { return company; }
 
 
-   /** buildTimeStamp (set during build process to "20170912-0946"). */
-   private static String buildTimeStamp = "20170912-0946";
+   /** buildTimeStamp (set during build process to "20170913-1352"). */
+   private static String buildTimeStamp = "20170913-1352";
 
    /**
-    * Get buildTimeStamp (set during build process to "20170912-0946").
+    * Get buildTimeStamp (set during build process to "20170913-1352").
     * @return String buildTimeStamp
     */
    public static final String getBuildTimeStamp() { return buildTimeStamp; }
