@@ -9,7 +9,6 @@ import javax.annotation.security.*;
 
 import ch.specchio.constants.UserRoles;
 import ch.specchio.factories.MetadataFactory;
-import ch.specchio.factories.SPECCHIOFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.jaxb.XmlIntegerAdapter;
@@ -17,6 +16,7 @@ import ch.specchio.jaxb.XmlString;
 import ch.specchio.jaxb.XmlStringAdapter;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.Space;
+import ch.specchio.types.ApplicationDomainCategories;
 import ch.specchio.types.Category;
 import ch.specchio.types.CategoryTable;
 import ch.specchio.types.ConflictDetectionDescriptor;
@@ -80,6 +80,30 @@ public class MetadataService extends SPECCHIOService {
 		return attrs.toArray(new attribute[0]);
 		
 	}	
+	
+	/**
+	 * Get the metadata categories per application domain
+	 * 
+	 * @return a ApplicationDomainCategories object, or null if the information does not exist
+	 *
+	 * @throws SPECCHIOFactoryException
+	 */
+//	@GET
+//	@Path("")
+//	@Produces(MediaType.APPLICATION_XML)
+	@POST
+	@Path("application_domain_categories")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)	
+	public ApplicationDomainCategories[] application_domain_categories(MetadataSelectionDescriptor dummy) throws SPECCHIOFactoryException {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		ApplicationDomainCategories[] adcs = factory.getMetadataCategoriesForApplicationDomains();
+		factory.dispose();
+		
+		return adcs;
+		
+	}		
 	
 	/**
 	 * Get the list of all known categories.
@@ -350,6 +374,32 @@ public class MetadataService extends SPECCHIOService {
 		return adapter.marshalArray(policies);
 		
 	}
+	
+	
+	/**
+	 * Get the meta-parameter of the given metaparameter identifier.
+	 * 
+	 * @param id		the metaparameter identifier for which to retrieve metadata
+	 * 
+	 * @return the meta-parameter object corresponding to the desired id
+	 *
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@GET
+	@Path("load_metaparameter/{metaparameter_id: [0-9]+}")
+	@Produces(MediaType.APPLICATION_XML)
+	public MetaParameter load_metaparameter(@PathParam("metaparameter_id")	int metaparameter_id) throws SPECCHIOFactoryException {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		
+		MetaParameter mp = factory.loadMetaParameter(metaparameter_id);
+
+		factory.dispose();
+		
+		return mp;
+		
+	}	
+	
 	
 	
 	/**
