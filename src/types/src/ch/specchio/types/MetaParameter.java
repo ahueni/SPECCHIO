@@ -10,7 +10,7 @@ import ch.specchio.jaxb.XmlMetaParameterValueAdapter;
  * This class represents a metadata parameter.
  */
 @XmlRootElement(name="meta_parameter")
-@XmlSeeAlso({MetaDate.class,MetaDocument.class,MetaFile.class,MetaImage.class,MetaMatrix.class,MetaSimple.class,MetaTaxonomy.class,MetaLink.class,MetaBoolean.class})
+@XmlSeeAlso({MetaDate.class,MetaDocument.class,MetaFile.class,MetaImage.class,MetaMatrix.class,MetaSimple.class,MetaTaxonomy.class,MetaLink.class,MetaBoolean.class,MetaSpatialGeometry.class,MetaSpatialPoint.class,MetaSpatialPolygon.class,MetaSpatialPolyline.class})
 public abstract class MetaParameter {
 
 	private String default_storage_field = null;
@@ -26,6 +26,8 @@ public abstract class MetaParameter {
 	private String description; // help string
 	private String annotation;
 	private Boolean is_boolean_value = false; // setting for integer values acting as booleans
+	private Boolean blob_lazy_loading = false;
+	private Integer blob_size = 0; // size in bytes
 	
 	protected MetaParameter() {
 		
@@ -226,6 +228,16 @@ public abstract class MetaParameter {
 			mp = new MetaTaxonomy(attr);
 		else if (attr.is_boolean_value)
 			mp = new MetaBoolean(attr);		
+		else if (attr.default_storage_field.equals("spatial_val"))
+		{
+			if(attr.name.equals("Spatial Position"))
+				mp = new MetaSpatialPoint(attr);
+			else if (attr.name.equals("Spatial Transect"))
+				mp = new MetaSpatialPolyline(attr);
+			else 
+				mp = new MetaSpatialPolygon(attr);
+				
+		}
 		else
 			mp = new MetaSimple(attr);
 		
@@ -253,7 +265,14 @@ public abstract class MetaParameter {
 		} else if (attr.getDefaultStorageField().equals("taxonomy_id") && MetaTaxonomy.supportsValue(meta_value)) {
 			mp = new MetaTaxonomy(attr, meta_value);
 		} else if (attr.is_boolean_value) {
-			mp = new MetaBoolean(attr, meta_value);				
+			mp = new MetaBoolean(attr, meta_value);	
+		} else if (attr.getDefaultStorageField().equals("spatial_val")) {
+			if(attr.name.equals("Spatial Position"))
+				mp = new MetaSpatialPoint(attr, meta_value);
+			else if (attr.name.equals("Spatial Transect"))
+				mp = new MetaSpatialPolyline(attr, meta_value);
+			else 
+				mp = new MetaSpatialPolygon(attr, meta_value);						
 		} else {
 			mp = new MetaSimple(attr, meta_value);
 		}
@@ -274,6 +293,31 @@ public abstract class MetaParameter {
 	public abstract void setEmptyValue();
 	
 	public abstract String valueAsString();
+
+
+	public Boolean getBlob_lazy_loading() {
+		return blob_lazy_loading;
+	}
+
+
+	public void setBlob_lazy_loading(Boolean blob_lazy_loading) {
+		this.blob_lazy_loading = blob_lazy_loading;
+	}
+
+
+	public Integer getBlob_size() {
+		return blob_size;
+	}
+	
+	public Integer getBlob_size_in_MB() {
+		return blob_size / 1024 / 1024;
+	}
+	
+
+
+	public void setBlob_size(Integer blob_size) {
+		this.blob_size = blob_size;
+	}
 
 
 
