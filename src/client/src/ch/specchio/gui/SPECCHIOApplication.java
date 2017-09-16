@@ -194,14 +194,21 @@ public class SPECCHIOApplication {
 			   if(client.getCapability(Capabilities.DB_VERSION) != null)
 				   db_version = client.getCapability(Capabilities.DB_VERSION);
 			   
-			   String op_string = "Database Info " + (db_version.equals("") ? "" : "(V" + db_version + spat_ext + ")");
+			   String op_string = "Database Info: " + (db_version.equals("") ? "" : "V" + db_version + spat_ext + "");
 			   
 			   if (db_rep == null) {
 				   db_rep = new ProgressReportTextPanel( op_string,"");				   
 	  		  		op.add_report(db_rep);	
 			   }
+			   
 			   db_rep.set_operation_description(op_string);
-			   db_rep.set_operation("Number of spectra in database: " + client.getSpectrumCountInDB());
+			   db_rep.set_component("Number of spectra in database: " + client.getSpectrumCountInDB());
+			   
+			   if(client.getCapability(Capabilities.SERVER_VERSION) != null)
+			   {
+				   
+				   db_rep.set_operation("Server version: " + client.getCapability(Capabilities.SERVER_VERSION) + " - Build " + client.getCapability(Capabilities.SERVER_BUILD_NUMBER));
+			   }
 			   db_rep.setPreferredSize(p_rep.getSize());
 			   
 			   
