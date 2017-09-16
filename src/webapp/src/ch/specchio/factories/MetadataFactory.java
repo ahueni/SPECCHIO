@@ -433,7 +433,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 						getStatementBuilder().conc_ids(ids) +
 					") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
 					getStatementBuilder().conc_ids(conflicting_int_and_double_attribute_ids) + ") " +
-					"group by attribute_id, ST_GeometryType(spatial_val) order by attribute_id";
+					"group by attribute_id" + (getEavServices().isSpatially_enabled()==true ?", ST_GeometryType(spatial_val)" : "") + " order by attribute_id";
 				
 				rs = stmt.executeQuery(query);
 				
