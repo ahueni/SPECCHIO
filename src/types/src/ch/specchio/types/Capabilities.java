@@ -27,6 +27,12 @@ public class Capabilities {
 	
 	/** capability name for the spatial extension */
 	public static final String SPATIAL_EXTENSION = "spatial_extension";
+
+	/** capability name for the server version */
+	public static final String SERVER_VERSION = "server_version";
+
+	/** capability name for the server build number */
+	public static final String SERVER_BUILD_NUMBER = "server_build_number";
 	
 	
 	/**
