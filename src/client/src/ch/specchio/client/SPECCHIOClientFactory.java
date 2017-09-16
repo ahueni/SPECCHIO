@@ -186,7 +186,7 @@ public class SPECCHIOClientFactory {
 		// load server descriptors from the legacy db_config.txt file
 		if (legacyConfigFile.exists()) {
 			try {
-				System.out.println("Reoading server descriptors from the legacy db_config.txt file");
+				System.out.println("Reolading server descriptors from the legacy db_config.txt file");
 				SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorLegacyStore(legacyConfigFile);
 				Iterator<SPECCHIOServerDescriptor> iter = s.getIterator();
 				while (iter.hasNext()) {
