@@ -1,6 +1,5 @@
 package ch.specchio.services;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import javax.servlet.ServletConfig;
@@ -12,7 +11,6 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -26,9 +24,6 @@ import ch.specchio.constants.UserRoles;
 import ch.specchio.eav_db.EAVDBServices;
 import ch.specchio.factories.SPECCHIOFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
-import ch.specchio.factories.SpecchioCampaignFactory;
-import ch.specchio.jaxb.XmlInteger;
-import ch.specchio.types.Campaign;
 import ch.specchio.types.Capabilities;
 
 
@@ -39,7 +34,7 @@ import ch.specchio.types.Capabilities;
 public class SPECCHIOService {
 	
 	/** service version number */
-	private static final String VERSION = "3.0.2";
+	private static String VERSION = "";
 	
 	/** server capabilities */
 	private Capabilities capabilities = null;
@@ -136,6 +131,8 @@ public class SPECCHIOService {
 		Boolean spatially_enabled = eav.isSpatially_enabled();
 		capabilities.setCapability(Capabilities.SPATIAL_EXTENSION, spatially_enabled.toString());
 
+		capabilities.setCapability(Capabilities.SERVER_VERSION, SPECCHIO_ReleaseInfo.getVersion());
+		capabilities.setCapability(Capabilities.SERVER_BUILD_NUMBER, Integer.toString(SPECCHIO_ReleaseInfo.getBuildNumber()));
 		
 		factory.dispose();
 		
