@@ -81,7 +81,7 @@ public class EAVDBServices extends Thread {
 	public ArrayList<Integer> insert_metadata_into_db(int campaign_id, Metadata md) throws SQLException, IOException {
 		
 		// prepare insert statement
-		String query = "insert into eav_view (campaign_id, attribute_id, int_val, double_val, string_val, binary_val, datetime_val, taxonomy_id, spatial_val, unit_id) values";
+		String query = "insert into eav_view (campaign_id, attribute_id, int_val, double_val, string_val, binary_val, datetime_val, taxonomy_id, " + (isSpatially_enabled() ? "spatial_val," : "") + " unit_id) values";
 		ArrayList<String> value_strings = new ArrayList<String>();
 		double reduction_count = 0;
 		
@@ -404,8 +404,11 @@ public class EAVDBServices extends Thread {
 			query.append(",");
 			query.append("taxonomy_id".equals(fieldname) ? value : "null");
 			query.append(",");
-			query.append("spatial_val".equals(fieldname) ? value : "null");
-			query.append(",");			
+			if(this.isSpatially_enabled())
+			{
+				query.append("spatial_val".equals(fieldname) ? value : "null");
+				query.append(",");	
+			}
 			query.append(e.getUnitId().toString() + ")");
 			
 			return query.toString();
