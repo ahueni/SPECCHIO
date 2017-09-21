@@ -1,6 +1,8 @@
 package ch.specchio.types;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
@@ -110,8 +112,22 @@ public  class MetaSpatialGeometry extends MetaParameter {
 
 	@Override
 	public String valueAsString() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		String spatial_string = "";
+		@SuppressWarnings("unchecked")
+		ArrayListWrapper<Point2D> value = (ArrayListWrapper<Point2D>) this.getValue();
+		List<Point2D> coords = value.getList();
+		
+		
+		ListIterator<Point2D> iter = coords.listIterator();
+		while(iter.hasNext())
+		{
+			Point2D coord = iter.next();
+			spatial_string = spatial_string + coord.getY() + " " + coord.getX() + (iter.hasNext() ? ";":"");
+		}
+
+		
+		return spatial_string;
 	}
 	
 

@@ -264,7 +264,7 @@ class CsvHdrWriter extends CsvWriter {
 					} else {
 						
 						// convert the value to its string form
-						writeField(mp.getValue().toString());
+						writeField(mp.valueAsString());
 					}
 				}
 				
