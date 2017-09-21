@@ -462,7 +462,7 @@ public class Spectrum
 	/**
 	 * Generic metadata value getter.
 	 * 
-	 * @param field	a field anme from Spectrum.METADATA_FIELDS
+	 * @param field	a field name from Spectrum.METADATA_FIELDS
 	 * 
 	 * @return the value of this field, or null if it is not set
 	 * 
