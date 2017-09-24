@@ -9,6 +9,9 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import ch.specchio.constants.Limits;
 import ch.specchio.constants.UserRoles;
@@ -29,6 +32,9 @@ public class UserFactory extends SPECCHIOFactory {
 	
 	/** default password strength */
 	public static int DEFAULT_PASSWORD_STRENGTH = 2;
+	
+	private String db_user;
+	private String db_password;	
 	
 	
 	/**
@@ -68,6 +74,8 @@ public class UserFactory extends SPECCHIOFactory {
 	public UserFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
 
 		super(db_user, db_password, ds_name);
+		this.db_user = db_user;
+		this.db_password = db_password;
 		
 	}
 	
@@ -99,6 +107,8 @@ public class UserFactory extends SPECCHIOFactory {
 			user.setExternalId(rs.getString("external_id"));
 			user.setDescription(rs.getString("description"));
 			user.setRole(rs.getString("group_name"));
+			
+			user.setPassword(db_password);
 			
 			return user;
 		}
@@ -153,19 +163,22 @@ public class UserFactory extends SPECCHIOFactory {
 	private String generatePassword(int length, int strength) {
 		
 		// set up the characters to choose from
-		StringBuffer vowels = new StringBuffer("aeuy");
+		String numbers = "123456789";
+		String special = "@#$%_";
+		String uppercase_consonants = "YBDGHJLMNPQRSTVWXZ";
+		String uppercase_vowels = "AEIU";
+		String all_uppercase = uppercase_consonants + uppercase_vowels;
+		StringBuffer vowels = new StringBuffer("aeiuy");
 		StringBuffer consonants = new StringBuffer("bdghjmnpqrstvz");
-		if ((strength & 1) == 1) {
-			consonants.append("BDGHJLMNPQRSTVWXZ");
+		if (strength >= 1) {
+			consonants.append(uppercase_consonants);
+			vowels.append(uppercase_vowels);
 		}
-		if ((strength & 2) == 2) {
-	        vowels.append("AEUY");
+	    if (strength >= 4) {
+	        consonants.append(numbers);
 	    }
-	    if ((strength & 4) == 4) {
-	        consonants.append("23456789");
-	    }
-	    if ((strength & 8) == 8) {
-	        consonants.append("@#$%");
+	    if (strength >= 8) {
+	        consonants.append(special);
 	    }
 
 	    // build the password
@@ -184,6 +197,85 @@ public class UserFactory extends SPECCHIOFactory {
 	            alt = true;
 	        }
 	    }
+	    
+	    // ensure that the strength is compliant
+	    int mixed_replacement_pos = 0, number_replacement_pos = 0, special_replacement_pos = 0;
+	    
+	    if(strength >= 1) {
+	    	
+	    	Pattern p = Pattern.compile("[A-Z]");
+	    	Matcher m = p.matcher(password);
+	    	boolean contains = m.find();
+	    	
+	    	if(!contains)
+	    	{
+	    		// add one number
+	    		Random rn = new Random();
+	    		int n = length -1;
+	    		int i = Math.abs(rn.nextInt() % n);
+	    		mixed_replacement_pos =  0 + i;	    		
+	    		
+	    		rand.nextBytes(b);
+	    		
+	    		password.setCharAt(mixed_replacement_pos, all_uppercase.charAt(Math.abs(b[0]) % all_uppercase.length()));
+	    		
+	    	}
+	    	
+	    }	    
+	    
+	    if(strength >= 4) {
+	    	
+	    	Pattern p = Pattern.compile("[0-9]", Pattern.CASE_INSENSITIVE);
+	    	Matcher m = p.matcher(password);
+	    	boolean contains = m.find();
+	    	
+	    	if(!contains)
+	    	{
+	    		number_replacement_pos = mixed_replacement_pos;
+	    		// add one number
+	    		while(number_replacement_pos == mixed_replacement_pos)
+	    		{
+		    		Random rn = new Random();
+		    		int n = length -1;
+		    		int i = Math.abs(rn.nextInt() % n);
+		    		number_replacement_pos =  0 + i;	
+	    		
+	    		}	    		
+	    		rand.nextBytes(b);
+	    		
+	    		password.setCharAt(number_replacement_pos, numbers.charAt(Math.abs(b[0]) % numbers.length()));
+	    		
+	    	}
+	    	
+	    }
+	    
+	    if(strength >= 8) {
+	    	
+	    	Pattern p = Pattern.compile(special, Pattern.CASE_INSENSITIVE);
+	    	Matcher m = p.matcher(password);
+	    	boolean contains = m.find();
+	    	
+	    	if(!contains)
+	    	{
+	    		special_replacement_pos = number_replacement_pos;
+	    		// add one number
+	    		while(special_replacement_pos == number_replacement_pos || special_replacement_pos == mixed_replacement_pos)
+	    		{
+		    		Random rn = new Random();
+		    		int n = length -1;
+		    		int i = Math.abs(rn.nextInt() % n);
+		    		special_replacement_pos =  0 + i;	
+	    		
+	    		}
+	    		
+	    		rand.nextBytes(b);
+	    		
+	    		password.setCharAt(special_replacement_pos, special.charAt(Math.abs(b[0]) % special.length()));
+
+	    	
+	    	}
+	    }
+	    
 	    
 	    return password.toString();
 	    
@@ -259,7 +351,7 @@ public class UserFactory extends SPECCHIOFactory {
 	 */
 	public String generatePassword() {
 		
-		return generatePassword(DEFAULT_PASSWORD_LENGTH, DEFAULT_PASSWORD_LENGTH);
+		return generatePassword(DEFAULT_PASSWORD_LENGTH, DEFAULT_PASSWORD_STRENGTH);
 		
 	}
 	
@@ -642,14 +734,71 @@ public class UserFactory extends SPECCHIOFactory {
 		}
 		
 		try {
-			// generate a username and password for the user
-			user.setUsername(generateUsername(user.getFirstName(), user.getLastName()));
-			user.setPassword(generatePassword());
+			// get password length required by server 
+			int pw_length = DEFAULT_PASSWORD_LENGTH;
+			int pw_strength = DEFAULT_PASSWORD_STRENGTH;
 			
 			// initialise SQL-building objects
+			String query;
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
-			String query;
+
+			ResultSet rs = stmt.executeQuery("SHOW VARIABLES LIKE 'validate_password_length'");
+			while (rs.next()) {
+				pw_length = rs.getInt(2);
+				System.out.println("Getting validate_password_length from server");
+			}
+			rs.close();
+			
+			
+			
+			int pw_mixed_case_query = 0;			
+			rs = stmt.executeQuery("SHOW VARIABLES LIKE 'validate_password_mixed_case_count'");
+			while (rs.next()) {
+				pw_mixed_case_query = rs.getInt(2);
+				System.out.println("Getting validate_password_mixed_case_count from server");
+				
+				if(pw_mixed_case_query >= 1)
+				{
+					pw_strength = 2; 
+				}
+			}
+			rs.close();			
+			
+			
+			int pw_number_query = 0;			
+			rs = stmt.executeQuery("SHOW VARIABLES LIKE 'validate_password_number_count'");
+			while (rs.next()) {
+				pw_number_query = rs.getInt(2);
+				System.out.println("Getting validate_password_number_count from server");
+				
+				if(pw_number_query >= 1)
+				{
+					pw_strength = 4; 
+				}
+			}
+			rs.close();
+			
+			
+			int pw_special_char_query = 0;			
+			rs = stmt.executeQuery("SHOW VARIABLES LIKE 'validate_password_special_char_count'");
+			while (rs.next()) {
+				pw_special_char_query = rs.getInt(2);
+				System.out.println("Getting validate_password_special_char_count from server");
+				
+				if(pw_special_char_query >= 1)
+				{
+					pw_strength = 8; 
+				}
+			}
+			rs.close();
+			
+			
+			// generate a username and password for the user
+			user.setUsername(generateUsername(user.getFirstName(), user.getLastName()));
+			user.setPassword(generatePassword(pw_length, pw_strength));
+
+			//System.out.println("Password: " + user.getPassword());
 			
 			// create database user
 			String userString = SQL.quote_string(user.getUsername()) + "@" + SQL.quote_string(getDatabaseUserHost());
@@ -685,7 +834,7 @@ public class UserFactory extends SPECCHIOFactory {
 			
 			// get the new user's identifier
 			query = "select last_insert_id()";
-			ResultSet rs = stmt.executeQuery(query);
+			rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				user.setUserId(rs.getInt(1));
 			}
@@ -824,6 +973,15 @@ public class UserFactory extends SPECCHIOFactory {
 					" set group_name=" + SQL.quote_string(user.getRole()) +
 					" where " + userCondition;
 			stmt.executeUpdate(query);
+			
+			// update password
+			query = "ALTER USER " + SQL.quote_string(user.getUsername()) + " IDENTIFIED BY " + SQL.quote_string(user.getPassword());
+
+			stmt.executeUpdate(query);			
+			
+			query = "Update specchio_user set password = " + "MD5(" + SQL.quote_string(user.getPassword()) + ") where " + userCondition;
+			stmt.executeUpdate(query);
+			
 			
 			// clean up
 			stmt.close();
