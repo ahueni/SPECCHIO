@@ -84,6 +84,9 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	/** the progress report with which to indicate progress */
 	private ProgressReportInterface pr;
 	
+	/** the server descriptor of the current connection */
+	private SPECCHIOServerDescriptor serverDescriptor;	
+	
 	/**
 	 * Constructor.
 	 * 
@@ -1129,11 +1132,16 @@ public class SPECCHIOClientCache implements SPECCHIOClient {
 	 */
 	public SPECCHIOServerDescriptor getServerDescriptor() {
 		
-		return realClient.getServerDescriptor();
+		return serverDescriptor;
 		
 	}
 	
 	
+	public void setServerDescriptor(SPECCHIOServerDescriptor serverDescriptor) {
+		this.serverDescriptor = serverDescriptor;
+	}
+
+
 	/**
 	 * Get all of the sensors in the database.
 	 * 
