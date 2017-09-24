@@ -38,7 +38,14 @@ public class SPECCHIOClientFactory {
 		System.setProperty("javax.net.ssl.trustStore", SPECCHIOClientFactory.getApplicationFilepath("specchio.keystore"));
 		System.setProperty("javax.net.ssl.trustStorePassword", "specchio");
 		
+		loadServerDescriptors();
 		
+	}
+	
+	
+	private void loadServerDescriptors() throws SPECCHIOClientException
+	{
+				
 		// load server descriptors from the legacy db_config.txt file
 		if (legacyConfigFile.exists()) {
 			try {
@@ -68,8 +75,7 @@ public class SPECCHIOClientFactory {
 				// the backing store failed; re-throw as a SPECCHIO client exception
 				throw new SPECCHIOClientException(ex);
 			}	
-		}
-		
+		}				
 		
 	}
 	
@@ -88,6 +94,11 @@ public class SPECCHIOClientFactory {
 			// all new accounts are saved to the Java preferences store
 			SPECCHIOServerDescriptorStore store = new SPECCHIOServerDescriptorPreferencesStore();
 			store.addServerDescriptor(d);
+			
+			if (legacyConfigFile.exists()) {
+				SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorLegacyStore(legacyConfigFile);
+				s.addServerDescriptor(d);
+			}
 		}
 		catch (BackingStoreException ex) {
 			// the backing store failed; re-throw as an IOException
@@ -98,6 +109,38 @@ public class SPECCHIOClientFactory {
 		apps.add(d);
 		
 	}
+	
+	
+	/**
+	 * update the configuration of an existing account.
+	 * 
+	 * @param d		the descriptor of the server on which the new account exists
+	 * 
+	 * @throws IOException file error
+	 * @throws SPECCHIOClientException invalid configuration data
+	 */
+	public void updateAccountConfiguration(SPECCHIOServerDescriptor d) throws IOException, SPECCHIOClientException {
+		
+		try {
+			// all new accounts are saved to the Java preferences store
+			SPECCHIOServerDescriptorStore store = new SPECCHIOServerDescriptorPreferencesStore();			
+			store.updateServerDescriptor(d);		
+			
+			if (legacyConfigFile.exists()) {
+				SPECCHIOServerDescriptorStore s = new SPECCHIOServerDescriptorLegacyStore(legacyConfigFile);
+				s.updateServerDescriptor(d);
+			}			
+			
+		}
+		catch (BackingStoreException ex) {
+			// the backing store failed; re-throw as an IOException
+			throw new IOException(ex);
+		}
+		
+		// update the internal list of server descriptors
+		apps.add(d);
+		
+	}	
 	
 	
 	public static String getApplicationFilepath(String name)
@@ -144,6 +187,7 @@ public class SPECCHIOClientFactory {
 	public SPECCHIOClient createClient(SPECCHIOServerDescriptor app) throws SPECCHIOClientException {
 		
 		current_client = new SPECCHIOClientCache(app.createClient());
+		((SPECCHIOClientCache) current_client).setServerDescriptor(app);
 		return current_client;
 	
 	}

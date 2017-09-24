@@ -33,6 +33,10 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	/** name of the data source on the glassfish server (JNDI) */
 	private String dataSourceName;
 	
+	/** node name in preferences or line number in legacy file */
+	private String preferenceNodeName;
+	
+	
 	/**
 	 * Constructor.
 	 * 
@@ -43,7 +47,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 * @param user		the username
 	 * @param password	the password
 	 */
-	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String user, String password, String dataSourceName) {
+	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String user, String password, String dataSourceName, String preferenceNodeName) {
 		   
 		this.protocol = protocol;
 		this.server = server;
@@ -52,6 +56,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		this.user = user;
 		this.password = password;
 		this.dataSourceName = dataSourceName;
+		this.preferenceNodeName = preferenceNodeName;
 	}
 	
 	
@@ -65,7 +70,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 */
 	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String dataSourceName) {
 		
-		this(protocol, server, port, path, null, null, dataSourceName);
+		this(protocol, server, port, path, null, null, dataSourceName, "");
 		
 	}
 	
@@ -81,7 +86,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		
 		// check that we have the correct number of tokens
 		if (tokens.length < 6) {
-			throw new SPECCHIOWebClientException("Insufficient configuration informaton provided for a SPECCHIO web application server.");
+			throw new SPECCHIOWebClientException("Insufficient configuration information provided for a SPECCHIO web application server.");
 		}
 		
 		try {
@@ -293,6 +298,16 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		
 		return getDisplayName(true, true);
 		
+	}
+
+
+	public String getPreferenceNodeName() {
+		return preferenceNodeName;
+	}
+
+
+	public void setPreferenceNodeName(String preferenceNodeName) {
+		this.preferenceNodeName = preferenceNodeName;
 	}
 
 }

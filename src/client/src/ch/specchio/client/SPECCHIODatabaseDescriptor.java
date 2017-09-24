@@ -232,4 +232,11 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 		this.dataSourceName = dataSourceName;
 	}
 
+
+	@Override
+	public String getPreferenceNodeName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

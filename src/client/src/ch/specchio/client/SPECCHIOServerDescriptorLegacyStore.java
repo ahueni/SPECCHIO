@@ -8,9 +8,11 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.prefs.BackingStoreException;
 
 
 /**
@@ -246,7 +248,7 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 				String password = tokens[5];
 				String dataSourceName = tokens[6];
 				
-				return new SPECCHIOWebAppDescriptor(protocol, server, port, path, user, password, dataSourceName);
+				return new SPECCHIOWebAppDescriptor(protocol, server, port, path, user, password, dataSourceName, Integer.toString(line_no));
 			}
 			catch (NumberFormatException ex) {
 				// invalid port number
@@ -277,6 +279,50 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 			
 		}
 		
+	}
+
+
+	@Override
+	public void updateServerDescriptor(SPECCHIOServerDescriptor d)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+		// change the descriptor
+		ArrayList<SPECCHIOServerDescriptor> descriptor_list = new ArrayList<SPECCHIOServerDescriptor>();
+		Iterator<SPECCHIOServerDescriptor> it = this.descriptors.iterator();
+		
+		while(it.hasNext())
+		{
+			SPECCHIOServerDescriptor d_ = it.next();
+
+			if(d_.getPreferenceNodeName().equals(d.getPreferenceNodeName()))
+			{
+				d_ = d;
+			}
+			
+			descriptor_list.add(d_);
+			
+		}
+		
+		// write descriptors to config file
+		File temp = new File(SPECCHIOClientFactory.getApplicationFilepath("db_config.txt"));
+		
+		temp.createNewFile();
+		
+		// write existing configuration data into the file
+		SPECCHIOServerDescriptorLegacyStore legacy_prefs = new SPECCHIOServerDescriptorLegacyStore(temp);
+
+		it = descriptor_list.iterator();
+
+		while(it.hasNext())
+		{
+			legacy_prefs.addServerDescriptor(it.next());
+		}
+		
+		
+		// update the descriptor list of this object: reload the file
+		this.read_config_file(temp);
+
 	}
 	
 }

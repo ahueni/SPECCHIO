@@ -322,8 +322,20 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 	/** connection protocol */
 	private String protocol;
 
+	private SPECCHIOWebAppDescriptor app;
+
 	
-   /**
+   public SPECCHIOWebAppDescriptor getApp() {
+		return app;
+	}
+
+
+	public void setApp(SPECCHIOWebAppDescriptor app) {
+		this.app = app;
+	}
+
+
+/**
     * Constructor.
     * 
     * @param app		the web application descriptor with which to initialise the panel (may be null)
@@ -362,7 +374,8 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 				getPath(),
 				getUsername(),
 				getPassword(),
-				getDataSourceName()
+				getDataSourceName(),
+				(this.app != null ? app.getPreferenceNodeName() : "")
 			);
 		} else {
 			return new SPECCHIOWebAppDescriptor(
@@ -385,7 +398,7 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 	public void setServerDescriptor(SPECCHIOServerDescriptor d) {
 
 	   if (d != null && d instanceof SPECCHIOWebAppDescriptor) {
-		   SPECCHIOWebAppDescriptor app = (SPECCHIOWebAppDescriptor)d;
+		   app = (SPECCHIOWebAppDescriptor)d;
 		   protocol = app.getProtocol();
 		   setServerName(app.getServer());
 		   setPath(app.getPath());

@@ -34,6 +34,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOClientFactory;
 import ch.specchio.client.SPECCHIOServerDescriptor;
+import ch.specchio.client.SPECCHIOWebAppDescriptor;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.types.Institute;
 import ch.specchio.types.User;
@@ -420,10 +421,18 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 				User newUser = userAccountPanel.getUser();
 				newUser.setUserId(oldUser.getUserId());
 				newUser.setUsername(oldUser.getUsername());
-				newUser.setPassword(oldUser.getPassword());
 				
 				// ask the server to update the user
 				specchio_client.updateUser(newUser);
+				
+				// update password
+				if(!newUser.getPassword().equals(oldUser.getPassword()))
+				{
+					SPECCHIOClientFactory cf = SPECCHIOClientFactory.getInstance();
+					SPECCHIOServerDescriptor d = specchio_client.getServerDescriptor();
+					d.setUser(newUser);
+					cf.updateAccountConfiguration(d);
+				}
 				
 				// dismiss the dialogue
 				setVisible(false);
@@ -439,6 +448,15 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			}
 			catch (SPECCHIOClientException ex) {
 				// the server failed to update the user
+				ErrorDialog error = new ErrorDialog(
+						(Frame)getOwner(),
+						"User update failed",
+						ex.getMessage(),
+						ex
+					);
+				error.setVisible(true);
+			} catch (IOException ex) {
+				// TODO Auto-generated catch block
 				ErrorDialog error = new ErrorDialog(
 						(Frame)getOwner(),
 						"User update failed",
@@ -556,6 +574,14 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		
 		/** is the ANDS information panel displayed? */
 		private boolean andsInformationDisplayed = true;
+
+		private JLabel usernameLabel;
+
+		private JTextField userNameField;
+
+		private JLabel userpasswordLabel;
+
+		private JTextField userpasswordField;
 		
 		
 		/**
@@ -573,6 +599,32 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			constraints.gridy = 0;
 			constraints.insets = new Insets(4, 4, 4, 4);
 			constraints.anchor = GridBagConstraints.WEST;
+			
+			if(user != null)
+			{
+				constraints.gridx = 0;
+				usernameLabel = new JLabel("User name:");
+				add(usernameLabel, constraints);
+				constraints.gridx = 1;
+				userNameField = new JTextField(user.getUsername() ,30);
+				userNameField.setMinimumSize(getPreferredSize());
+				add(userNameField, constraints);
+				userNameField.setEnabled(false); // not editable, just displayed for info
+				String toolTipText = "User name cannot be edited";				
+				userNameField.setToolTipText(toolTipText);				
+				constraints.gridy++;
+				
+				constraints.gridx = 0;
+				userpasswordLabel = new JLabel("Password:");
+				add(userpasswordLabel, constraints);
+				constraints.gridx = 1;
+				userpasswordField = new JTextField(user.getPassword(), 30);
+				userpasswordField.setMinimumSize(getPreferredSize());
+				add(userpasswordField, constraints);
+				constraints.gridy++;
+				
+			}
+			
 			
 			// add title combo box
 			constraints.gridx = 0;
@@ -709,7 +761,7 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 		 */
 		public User getUser() throws SPECCHIOUserInterfaceException {
 			
-			// chec that the required fields have been filled
+			// check that the required fields have been filled
 			if (firstNameField.getText().length() == 0) {
 				throw new SPECCHIOUserInterfaceException("You must provide a first name.");
 			}
@@ -736,6 +788,9 @@ public class UserAccountDialog extends JDialog implements ActionListener {
 			if (andsInformationPanel != null) {
 				user.setExternalId(andsInformationPanel.getPartyId());
 			}
+			
+			if(this.userpasswordField != null)
+				user.setPassword(this.userpasswordField.getText());
 		
 			return user;
 			

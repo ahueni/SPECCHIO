@@ -72,6 +72,7 @@ public class SPECCHIOFactory {
 	
 	/** host part of the database user string */
 	private String databaseUserHost = null;
+
 	
 	
 	/**
@@ -107,7 +108,7 @@ public class SPECCHIOFactory {
 		
 		try {
 			// set up database connection
-			datasource_name = ds_name;
+			datasource_name = ds_name;			
 			init(getDataSource(ds_name).getConnection(db_user, db_password));
 			this.my_conn = true;
 		}

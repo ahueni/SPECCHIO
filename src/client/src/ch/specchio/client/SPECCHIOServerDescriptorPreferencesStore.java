@@ -105,6 +105,8 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 	}
 	
 	
+
+	
 	/**
 	 * Get an iterator through all of the descriptors in the store.
 	 * 
@@ -115,6 +117,41 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 		return descriptors.iterator();
 		
 	}
+	
+	
+	/**
+	 * Update the configuration for an account in the configuration file. 
+	 * 
+	 * @param d		the descriptor of the server on which the new account exists
+	 * 
+	 * @throws IOException	the backing store failed
+	 * 
+	 */
+	public void updateServerDescriptor(SPECCHIOServerDescriptor d) throws IOException {
+		
+		// get the root node of the account configuration data
+		accountConfigurationPreferences = Preferences.userRoot().node(ACCOUNT_CONFIGURATION_PATH);
+		
+		// load account configuration data for all accounts
+		descriptors = new LinkedList<SPECCHIOServerDescriptor>();
+		try {
+			for (String childName : accountConfigurationPreferences.childrenNames()) {
+				Preferences childNode = accountConfigurationPreferences.node(childName);
+				
+				// check if names match
+				if(d.getPreferenceNodeName().equals(childName))
+				{
+					// update this preference 
+					SPECCHIOWebAppDescriptorFactory f = new SPECCHIOWebAppDescriptorFactory();
+					f.fillPreferencesNode(childNode, (SPECCHIOWebAppDescriptor)d);
+				}
+			}
+		} catch (BackingStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+	}	
 	
 	
 	/**
@@ -167,7 +204,8 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 				node.get(PREFS_KEY_WEBAPP_PATH, ""),
 				node.get(PREFS_KEY_WEBAPP_USERNAME, ""),
 				node.get(PREFS_KEY_WEBAPP_PASSWORD, ""),
-				node.get(PREFS_KEY_WEBAPP_DATASOURCE, "")
+				node.get(PREFS_KEY_WEBAPP_DATASOURCE, ""),
+				node.name()
 			);
 			
 		}
@@ -193,5 +231,7 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 		}
 		
 	}
+	
+	
 
 }

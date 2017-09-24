@@ -51,5 +51,13 @@ public interface SPECCHIOServerDescriptor {
 	 * @param user	the user information
 	 */
 	public void setUser(User user);
+	
+	/**
+	 * Get the node name in preferences or line number in legacy file
+	 * 
+	 * @return a string with the name or line number
+	 */
+	
+	public String getPreferenceNodeName();	
 
 }

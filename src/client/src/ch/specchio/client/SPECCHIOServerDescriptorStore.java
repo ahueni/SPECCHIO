@@ -23,5 +23,15 @@ public abstract class SPECCHIOServerDescriptorStore {
 	 * @return an iterator
 	 */
 	public abstract Iterator<SPECCHIOServerDescriptor> getIterator();
+	
+	/**
+	 * Update the configuration for an account in the configuration file. 
+	 * 
+	 * @param d		the descriptor of the server on which the new account exists
+	 * 
+	 * @throws IOException	the backing store failed
+	 * 
+	 */
+	public abstract void updateServerDescriptor(SPECCHIOServerDescriptor d) throws IOException;	
 
 }
