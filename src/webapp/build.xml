@@ -62,7 +62,7 @@
 	   <!-- ========================================================================================== -->
 	   <target name="init">
 	   
-	      <property name="version"           value="3.3.0.0 Beta"/>  
+	      <property name="version"           value="3.3.0.1"/>  
 	      <property name="packagename"       value="ch.specchio.services" />
 	      <property name="jreleaseinfoname"  value="SPECCHIOReleaseInfo" />
 	      <property name="organization"      value="RSL, University of Zurich and University of Wollongong" />
