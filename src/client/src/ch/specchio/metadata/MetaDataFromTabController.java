@@ -130,7 +130,7 @@ public class MetaDataFromTabController  {
 
 
 							// create new metaparameter for attribute
-							if(!table_value.equals(""))
+							if(table_value != null && !table_value.equals(""))
 							{
 								try {
 									MetaParameter mp = MetaParameter.newInstance(attr);
