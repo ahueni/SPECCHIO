@@ -31,14 +31,20 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	ArrayList<String> file_errors = new ArrayList<String>();
 	private int successful_file_counter;
 	private int parsed_file_counter;
+	
+
+
 	private ArrayList<SpectralFileLoader> loaders_of_new_instruments = new ArrayList<SpectralFileLoader>();
 
 	public SpecchioCampaignDataLoader(CampaignDataLoaderListener listener, SPECCHIOClient specchio_client) {
-		super(listener);
-		
+		super(listener);		
 		this.specchio_client = specchio_client;
-
 	}
+	
+	public SpecchioCampaignDataLoader(SPECCHIOClient specchio_client) {
+		super(null);		
+		this.specchio_client = specchio_client;
+	}	
 
 	// the actual code for loading a campaign
 	public void run() {
@@ -48,7 +54,8 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			specchio_client.clearMetaparameterRedundancyList();
 
 			// tell the listener that we're about to begin
-			listener.campaignDataLoading();
+			if(listener != null)
+				listener.campaignDataLoading();
 			
 			// update the campaign data on the server
 			specchio_client.updateCampaign(campaign);
@@ -67,14 +74,21 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			specchio_client.refreshMetadataCategory("calibration");
 			
 			// tell the listener that we're finished
-			listener.campaignDataLoaded(parsed_file_counter, successful_file_counter, spectrum_counter, this.file_errors);
+			if(listener != null)
+				listener.campaignDataLoaded(parsed_file_counter, successful_file_counter, spectrum_counter, this.file_errors);
 
 		}
 		catch (SPECCHIOClientException ex) {
-			listener.campaignDataLoadException(ex.getMessage() + "\n" + ex.getDetails(), ex);
+			if(listener != null)
+				listener.campaignDataLoadException(ex.getMessage() + "\n" + ex.getDetails(), ex);
+			else
+				System.out.println(ex.getMessage() + "\n" + ex.getDetails());
 		}
 		catch (IOException ex) {
-			listener.campaignDataLoadException(ex.getMessage(), ex);
+			if(listener != null)
+				listener.campaignDataLoadException(ex.getMessage(), ex);
+			else
+				System.out.println(ex.getMessage());
 		}
 		
 		// tell the listener that we're finished
@@ -155,7 +169,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 			// use the names of the first hierarchy (the one below
 			// the root) to show in progress report
-			if (parent_id == root_hierarchy_id) {
+			if (parent_id == root_hierarchy_id && listener != null) {
 				listener.campaignDataLoadOperation(curr_dir.getName());
 			}
 
@@ -249,13 +263,21 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 						parsed_file_counter++;
 
-						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
+						if(listener != null)
+							listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
 					}
 					catch (IOException ex) {
-						listener.campaignDataLoadError(file + ": " + ex.getMessage());
+						if(listener != null)
+							listener.campaignDataLoadError(file + ": " + ex.getMessage());
+						else
+							System.out.println(ex.getMessage());
+						
 					}
 					catch (MetaParameterFormatException ex) {
-						listener.campaignDataLoadError(file + ": " + ex.getMessage());
+						if(listener != null)
+							listener.campaignDataLoadError(file + ": " + ex.getMessage());
+						else
+							System.out.println(ex.getMessage());						
 					}
 				}
 			}
@@ -343,7 +365,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 						}	
 
-						listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
+						
+						if(listener != null)
+							listener.campaignDataLoadFileCount(file_counter, spectrum_counter);
 
 
 
@@ -610,44 +634,44 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 //			if (exts.contains("hdr")
 //					&& (exts.contains("slb") || exts.contains("sli")))
 			if (exts.contains("hdr") || exts.contains("slb") || exts.contains("sli"))			
-				loader = new ENVI_SLB_FileLoader();
+				loader = new ENVI_SLB_FileLoader(specchio_client);
 
 			// cx for APOGEE files
 			else if (exts.contains("TRM"))
-				loader = new APOGEE_FileLoader();
+				loader = new APOGEE_FileLoader(specchio_client);
 			
 			else if (exts.contains("xls"))
-				loader = new XLS_FileLoader();		
+				loader = new XLS_FileLoader(specchio_client);		
 			
 			// cx for Spectral Evolution files
 			else if (exts.contains("sed"))
-				loader = new Spectral_Evolution_FileLoader();		
+				loader = new Spectral_Evolution_FileLoader(specchio_client);		
 			
 			
 			// cx for UNISPEC SPT files
 			else if (exts.contains("SPT"))
-				loader = new UniSpec_FileLoader();		
+				loader = new UniSpec_FileLoader(specchio_client);		
 			
 			
 			// cx for UNISPEC SPU files
 			else if (exts.contains("spu") || exts.contains("SPU"))
-				loader = new UniSpec_SPU_FileLoader();			
+				loader = new UniSpec_SPU_FileLoader(specchio_client);			
 			
 			// cx for Bruker FTIR dpt files
 			else if (exts.contains("dpt"))
-				loader = new BrukerDPT_FileLoader();						
+				loader = new BrukerDPT_FileLoader(specchio_client);						
 
 			// cx for MFR out files
 			else if (exts.contains("OUT"))
-				loader = new MFR_FileLoader();
+				loader = new MFR_FileLoader(specchio_client);
 
 			// cx for HDF FGI out files
 			else if (exts.contains("h5"))
-				loader = new HDF_FGI_FileLoader();
+				loader = new HDF_FGI_FileLoader(specchio_client);
 			
 			// cx for MODTRAN albedo input dat files
 			else if (exts.contains("dat"))
-				loader = new ModtranAlbedoFileLoader();	
+				loader = new ModtranAlbedoFileLoader(specchio_client);	
 			
 			else {
 	
@@ -671,14 +695,14 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
 				// cx for JAZ (Ocean Optics files)
 				if (exts.contains("txt") && "SpectraSuite Data File".equals(line)) {
-					loader = new JAZ_FileLoader();
+					loader = new JAZ_FileLoader(specchio_client);
 				}
 	
 				// cx for SpectraSuite OO (Ocean Optics files)
 				else if (exts.contains("csv")
 						&& ("SpectraSuite Data File".equals(line) ||
 								"SpectraSuite Data File\t".equals(line))) {
-					loader = new OO_FileLoader();
+					loader = new OO_FileLoader(specchio_client);
 	
 				}
 				
@@ -688,7 +712,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						&& line.substring(0, 4).equals("REC#")
 						&& line2.equals("FIELDS:")
 						) {
-					loader = new Microtops_FileLoader();
+					loader = new Microtops_FileLoader(specchio_client);
 	
 				}
 								
@@ -697,7 +721,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				else if (exts.contains("txt")
 						&& (line.contains("Data from")) 
 						&& (line.contains("Node"))) {
-					loader = new OceanView_FileLoader();
+					loader = new OceanView_FileLoader(specchio_client);
 	
 				}				
 	
@@ -706,7 +730,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						&& ("Wl; WR; S; Ref; Info;wl; mri_counts;gains;mri_irradiance".equals(line)
 								|| "Wl; WR; S; Ref; Info".equals(line) ||
 									"Sample;solar_local;DOY.dayfraction;SZA (deg);SAA (deg);COS(SZA);Qs quality_WR_stability;Ql quality_WR_level;Qd quality_WR_S_difference;Qh quality_WR;Qsat quality_WR;totalQ;Qwl_cal;wl of min L(Ha);wl of min L(O2B);wl of min L(O2A);Lin@400nm;Lin@500nm;Lin@600nm;Lin@680nm;Lin@O2-B;Lin@700nm;Lin@747.5 same as CF;Lin@753_broad;Lin@O2-A;Lin@800nm;Lin@890nm;Lin@990nm;PRI;R531;R570;Lin@643;CF@F656;NF@F656;Lin@680;CF@F687;NF@F687;Lin@753;CF@F760;NF@F760;R680;R800;SR(800,680);ND(800,680);ND(750,705);ND(858.5,645);ND(531,555);ND(531,551);ND(531,645);ND(800,550);SIPI(800,680,445);PSRI(680,500,750);NPQI(415,435);TVI(800,550,680);SR(740,720);GRI;SAVI;MSAVI;OSAVI;MTCI;RVI;WDVI;EVI;GEMI;BI;MODIS_PRI4;MODIS_PRI12;MODIS_PRI1;MODIS_NDVI;MODIS_EVI;R_blu_MODIS;R_green_MODIS;R_nir_MODIS;R_rep_MERIS;R_nir_MERIS;WI(900,970);ND(410,710);ND(530,570);ND(550,410);ND(720,420);ND(542,550);WC_R/(R+G+B);WC_G/(R+G+B);WC_B/(R+G+B);WC_GEI=2*G-(R+B);PPFDsum(umol m-2s-1);PPFDinteg(umol m-2s-1);fAPAR+fTPAR sum;fAPAR+fTPAR^2*Rsoil integ;n of Nan in Wr;perc. of Nan in Wr;n of Nan in S;perc. of Nan in S".equals(line))) {
-					loader = new COST_OO_FileLoader();
+					loader = new COST_OO_FileLoader(specchio_client);
 	
 				}
 				
@@ -714,30 +738,30 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	
 				// cx for TXT (ENVI format) files
 				else if (exts.contains("txt") || exts.contains("TXT")) {
-					loader = new TXT_FileLoader();
+					loader = new TXT_FileLoader(specchio_client);
 				}
 	
 				// cx for Spectra Vista HR-1024 files
 				else if (exts.contains("sig")
 						&& ("/*** Spectra Vista HR-1024 ***/".equals(line) ||
 								"/*** Spectra Vista SIG Data ***/".equals(line))) {
-					loader = new Spectra_Vista_HR_1024_FileLoader();
+					loader = new Spectra_Vista_HR_1024_FileLoader(specchio_client);
 				}
 	
 				// cx if we got GER files
 				else if ("///GER SIGNATUR FILE///".equals(line)) {
-				loader = new GER_FileLoader();
+				loader = new GER_FileLoader(specchio_client);
 				}
 	
 				// cx if we got ASD files with the new file format (Indico Version
 				// 7)
 				else if (exts.contains("asd")) {
-					loader = new ASD_FileFormat_V7_FileLoader();
+					loader = new ASD_FileFormat_V7_FileLoader(specchio_client);
 				}
 	
 				// cx for SPECPR files (no extensions)
 				else if (line != null && line.contains("SPECPR")) {
-					loader = new SPECPR_FileLoader();
+					loader = new SPECPR_FileLoader(specchio_client);
 				}
 	
 				d.close();
@@ -749,14 +773,14 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 					// to do this we open randomly the first file and read an ASD header
 					file_input = new FileInputStream(files.get(0));
 					data_in = new DataInputStream(file_input);
-					ASD_FileLoader asd_loader = new ASD_FileLoader();
+					ASD_FileLoader asd_loader = new ASD_FileLoader(specchio_client);
 					SpectralFile sf = asd_loader.asd_file;
 					sf.setFilename(files.get(0).getName());
 		
 					asd_loader.read_ASD_header(data_in, sf);
 		
 					if (sf.getCompany().equals("ASD")) {
-						loader = new ASD_FileLoader();
+						loader = new ASD_FileLoader(specchio_client);
 					}
 		
 					file_input.close();
@@ -767,12 +791,12 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 					// cx if we got new ASD files without the proper ending: the case for calibration files
 					// to do this we open randomly the first file and read an ASD header
 					try {
-					ASD_FileFormat_V7_FileLoader asd_loader = new ASD_FileFormat_V7_FileLoader();
+					ASD_FileFormat_V7_FileLoader asd_loader = new ASD_FileFormat_V7_FileLoader(specchio_client);
 		
 					SpectralFile sf = asd_loader.load(files.get(0));
 		
 					if (sf.getCompany().equals("ASD")) {
-						loader = new ASD_FileFormat_V7_FileLoader();
+						loader = new ASD_FileFormat_V7_FileLoader(specchio_client);
 					}
 		
 					file_input.close();
@@ -804,6 +828,33 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 		return loader;
 	}
+	
+	
+	
+	public int getSuccessful_file_counter() {
+		return successful_file_counter;
+	}
+
+	public void setSuccessful_file_counter(int successful_file_counter) {
+		this.successful_file_counter = successful_file_counter;
+	}
+
+	
+	public ArrayList<String> getFile_errors() {
+		return file_errors;
+	}
+
+	public void setFile_errors(ArrayList<String> file_errors) {
+		this.file_errors = file_errors;
+	}
+
+	public int getParsed_file_counter() {
+		return parsed_file_counter;
+	}
+
+	public void setParsed_file_counter(int parsed_file_counter) {
+		this.parsed_file_counter = parsed_file_counter;
+	}	
 
 
 }
