@@ -26,6 +26,7 @@ import org.joda.time.DateTime;
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.constants.UserRoles;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Capabilities;
 import ch.specchio.types.CelestialAngle;
 import ch.specchio.types.MetaDate;
@@ -33,7 +34,9 @@ import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaSimple;
 import ch.specchio.types.MetaSpatialPoint;
+import ch.specchio.types.MetaSpatialPolyline;
 import ch.specchio.types.Metadata;
+import ch.specchio.types.Point2D;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
 
@@ -267,6 +270,25 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 							lon = pos.getPoint2D().getX();
 							spat_pos_available = true;
 						}
+						
+						if(!spat_pos_available)
+						{
+							MetaSpatialPolyline t = (MetaSpatialPolyline)md.get_first_entry("Spatial Transect");
+							
+							ArrayListWrapper wrapper = (ArrayListWrapper) t.getValue();
+							List coords = wrapper.getList();
+							
+							Point2D coord1 = (Point2D) coords.get(0);
+							Point2D coord_end = (Point2D) coords.get(coords.size()-1);
+							
+							lat = (coord1.getY() + coord_end.getY()) / 2;
+							lon = (coord1.getX() + coord_end.getX()) / 2;
+							spat_pos_available = true;
+							
+							
+						}
+						
+						
 					}
 					else
 					{
@@ -294,6 +316,10 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 								(DateTime)acquisitionTime.getValue()
 							);
 						
+						// round sun angle to 4 digits
+						double azimuth = MetaDataEditorView.round(angle.azimuth, 6);
+						double zenith = MetaDataEditorView.round(angle.zenith, 6);
+						
 						// build the list of identifiers to be updated
 						ArrayList<Integer> updateIds = new ArrayList<Integer>();
 						updateIds.add(id);
@@ -303,7 +329,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						if (azimuthParameter == null) {
 							azimuthParameter = MetaParameter.newInstance(azimuthAttribute);
 						}
-						azimuthParameter.setValue(new Double(angle.azimuth));
+						azimuthParameter.setValue(new Double(azimuth));
 						specchioClient.updateEavMetadata(azimuthParameter, updateIds);
 						
 						// update zenith
@@ -311,7 +337,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						if (zenithParameter == null) {
 							zenithParameter = MetaParameter.newInstance(zenithAttribute);
 						}
-						zenithParameter.setValue(new Double(angle.zenith));
+						zenithParameter.setValue(new Double(zenith));
 						specchioClient.updateEavMetadata(zenithParameter, updateIds);
 						
 						// udpate counter
