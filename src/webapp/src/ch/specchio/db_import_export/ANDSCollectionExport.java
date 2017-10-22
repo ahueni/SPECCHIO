@@ -95,15 +95,17 @@ public class ANDSCollectionExport {
 	 * 
 	 * @param dbUser				the database username
 	 * @param dbPassword			the database password
+	 * @param ds_name		data source name
+	 * @param is_admin		is the user an administrator? 
 	 * @param _andsXMLFileLocation	the location of the output file
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public ANDSCollectionExport( String dbUser, String dbPassword, String _andsXMLFileLocation)
+	public ANDSCollectionExport( String dbUser, String dbPassword, String ds_name, boolean is_admin, String _andsXMLFileLocation)
 		throws SPECCHIOFactoryException {
 
 		// create factories, using the same database connection for each
-		userFactory = new UserFactory(dbUser, dbPassword, _andsXMLFileLocation);
+		userFactory = new UserFactory(dbUser, dbPassword, _andsXMLFileLocation, is_admin);
 		metadataFactory = new MetadataFactory(userFactory);
 		
 		// initialise EAV services
