@@ -237,6 +237,16 @@ public class SPECCHIOService {
 		
 	}
 	
+	/**
+	 * Returns true if current user is admin
+	 * 
+	 * @return Returns true if current user is admin
+	 */
+	public boolean isAdmin() {
+		
+		return security.isUserInRole(UserRoles.ADMIN);		
+	}	
+	
 	
 	/**
 	 * Get the server capabilities.
@@ -294,7 +304,7 @@ public class SPECCHIOService {
 			response = Response.status(ClientResponse.Status.FORBIDDEN).build();
 		} else {
 		
-			SPECCHIOFactory factory = new SPECCHIOFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			SPECCHIOFactory factory = new SPECCHIOFactory(getClientUsername(), getClientPassword(), getDataSourceName(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 			try {
 								
 				factory.dbUpgrade(version, getRequest().getInputStream());

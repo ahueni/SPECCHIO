@@ -16,7 +16,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import ch.specchio.spaces.MeasurementUnit;
-import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.MetaDate;
@@ -50,12 +49,13 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 * 
 	 * @param db_user		database account user name
 	 * @param db_password	database account password
+	 * @param is_admin	is the user an administrator? 
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SpectralFileFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
+	public SpectralFileFactory(String db_user, String db_password, String ds_name, boolean is_admin) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password, ds_name);
+		super(db_user, db_password, ds_name, is_admin);
 		
 	}
 	
@@ -81,7 +81,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 	 */
 	public SpectralFileFactory(String db_user, String db_password, boolean is_admin, String ds_name, int campaign_id) throws SPECCHIOFactoryException {
 		
-		this(db_user, db_password, ds_name);
+		this(db_user, db_password, ds_name, is_admin);
 		
 		// save campaign information for later
 		campaign_factory = new SpecchioCampaignFactory(this);

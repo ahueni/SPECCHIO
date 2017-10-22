@@ -68,12 +68,13 @@ public class UserFactory extends SPECCHIOFactory {
 	 * 
 	 * @param db_user		database account user name
 	 * @param db_password	database account password
+	 * @param is_admin	is the user an administrator? 
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public UserFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
+	public UserFactory(String db_user, String db_password, String ds_name, boolean is_admin) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password, ds_name);
+		super(db_user, db_password, ds_name, is_admin);
 		this.db_user = db_user;
 		this.db_password = db_password;
 		

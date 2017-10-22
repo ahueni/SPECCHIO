@@ -41,12 +41,13 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 * 
 	 * @param db_user		database account user name
 	 * @param db_password	database account password
+	 * @param is_admin	is the user an administrator? 
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public MetadataFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
+	public MetadataFactory(String db_user, String db_password, String ds_name, boolean is_admin) throws SPECCHIOFactoryException {
 
-		super(db_user, db_password, ds_name);
+		super(db_user, db_password, ds_name, is_admin);
 		
 	}
 	
@@ -1405,7 +1406,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 */
 	public void removeMetadata(MetaParameter mp, Integer[] ids) {
 		
-		getEavServices().delete_primary_x_eav(ids, mp.getEavId());
+		getEavServices().delete_primary_x_eav(ids, mp.getEavId(), this.Is_admin());
 		
 	}
 	
@@ -1422,7 +1423,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 		
 		for(int eav_id : eav_ids)
 		{
-			getEavServices().delete_primary_x_eav(ids, eav_id);
+			getEavServices().delete_primary_x_eav(ids, eav_id, this.Is_admin());
 		}
 		
 	}
@@ -1441,8 +1442,8 @@ public class MetadataFactory extends SPECCHIOFactory {
 		try {
 			EAVDBServices eav = getEavServices();
 			ArrayList<Integer> spectrum_ids = eav.getPrimaryIds(mp.getEavId());
-			eav.delete_primary_x_eav(spectrum_ids, mp.getEavId());
-			eav.delete_eav(mp.getEavId());
+			eav.delete_primary_x_eav(spectrum_ids, mp.getEavId(), this.Is_admin());
+			eav.delete_eav(mp.getEavId(), this.Is_admin());
 		}
 		catch (SQLException ex) {
 			// database error
@@ -1488,7 +1489,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			}
 			else
 			{
-				eav.update_metaparameter(mp);
+				eav.update_metaparameter(mp, this.Is_admin());
 				eav_id = mp.getEavId();
 			}
 		}
@@ -1533,7 +1534,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			
 			// insert the new id and remove the old one
 			eav.insert_primary_x_eav(ids, mp.getEavId());			
-			eav.delete_primary_x_eav(ids, old_eav_id);
+			eav.delete_primary_x_eav(ids, old_eav_id, this.Is_admin());
 		}
 		catch (IOException ex) {
 			// database error

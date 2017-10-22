@@ -37,7 +37,7 @@ public class ANDSService extends SPECCHIOService {
 		String andsXMLFileLocation = getRequest().getServletContext().getInitParameter("ANDSXMLFileLocation");
 		
 		// create and export the collection
-		andsCollectionExport = new ANDSCollectionExport(getClientUsername(), getClientPassword(), andsXMLFileLocation);
+		andsCollectionExport = new ANDSCollectionExport(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin(), andsXMLFileLocation);
 		collectionId = andsCollectionExport.exportCollectionXML(collection_d);
 		if (collectionId == null) {
 			// build a string containing all of the error messages

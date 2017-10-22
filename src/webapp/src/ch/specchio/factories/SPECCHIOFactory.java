@@ -73,8 +73,15 @@ public class SPECCHIOFactory {
 	/** host part of the database user string */
 	private String databaseUserHost = null;
 
+	/** is the user an administrator? */
+	private boolean is_admin;
 	
 	
+	public boolean Is_admin() {
+		return is_admin;
+	}
+
+
 	/**
 	 * Construct a factory using the default connection to the database.
 	 * 
@@ -101,16 +108,18 @@ public class SPECCHIOFactory {
 	 * 
 	 * @param db_user		database account user name
 	 * @param db_password	database account password
+	 * @param is_admin	is the user an administrator? 
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public SPECCHIOFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
+	public SPECCHIOFactory(String db_user, String db_password, String ds_name, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		try {
 			// set up database connection
 			datasource_name = ds_name;			
 			init(getDataSource(ds_name).getConnection(db_user, db_password));
 			this.my_conn = true;
+			this.is_admin = is_admin;
 		}
 		catch (SQLException ex) {
 			// bad username or password
@@ -519,6 +528,12 @@ public class SPECCHIOFactory {
 
 		caches = new Hashtable<String, DataCache>();
 		configureCaches();
+				
+		// set up EAV services to ensure they have new attribute etc info
+		this.eav = new EAVDBServices(getStatementBuilder(), getAttributes(), getDatabaseUserName());
+		this.eav.set_primary_x_eav_tablename("spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
+		this.eav.set_eav_view_name("eav_view");
+		
 		
 	}
 
@@ -587,6 +602,8 @@ public class SPECCHIOFactory {
 		// -----------------
 		
 		if (version == 3.3) {
+			
+			this.reloadCaches();
 			
 			// store existing point data in new Spatial Position
 			SQL_StatementBuilder SQL = getStatementBuilder();

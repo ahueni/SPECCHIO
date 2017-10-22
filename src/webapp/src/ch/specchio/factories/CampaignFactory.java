@@ -19,12 +19,15 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 * 
 	 * @param db_user		database account user name
 	 * @param db_password	database account password
+	 * @param db_password	database account password
+	 * @param ds_name		data source name
+	 * @param is_admin		is the user an administrator? 
 	 * 
 	 * @throws SPECCHIOFactoryException	could not establish initial context
 	 */
-	public CampaignFactory(String db_user, String db_password, String ds_name) throws SPECCHIOFactoryException {
+	public CampaignFactory(String db_user, String db_password, String ds_name, boolean is_admin) throws SPECCHIOFactoryException {
 		
-		super(db_user, db_password, ds_name);
+		super(db_user, db_password, ds_name, is_admin);
 		
 	}
 	
@@ -84,13 +87,14 @@ public abstract class CampaignFactory extends SPECCHIOFactory {
 	 * @param db_password	database account password
 	 * @param type	a string identifying the campaign type
 	 * @param datasource_name	a string identifying the datasource
+	 * @param is_admin		is the user an administrator? 
 	 * 
 	 * @throws SPECCHIOFactoryException	invalid campaign type
 	 */
-	public static SpecchioCampaignFactory getInstance(String db_user, String db_password, String type, String datasource_name) throws SPECCHIOFactoryException {
+	public static SpecchioCampaignFactory getInstance(String db_user, String db_password, String type, String datasource_name, boolean is_admin) throws SPECCHIOFactoryException {
 		
 		if ("specchio".equals(type)) {
-			return new SpecchioCampaignFactory(db_user, db_password, datasource_name);
+			return new SpecchioCampaignFactory(db_user, db_password, datasource_name, is_admin);
 		} else {
 			throw new SPECCHIOFactoryException("Unknown campaign type \"" + type + "\".");
 		}

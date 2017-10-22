@@ -58,7 +58,7 @@ public class SpectrumService extends SPECCHIOService {
 			@PathParam("target_hierarchy_id") int target_hierarchy_id
 		) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		int new_spectrum_id = factory.copySpectrum(spectrum_id, target_hierarchy_id);
 		factory.dispose();
 		
@@ -81,7 +81,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger countInDB() throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		int count = factory.getSpectrumCountInDB();
 		factory.dispose();
 		
@@ -104,7 +104,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger deleteTargetReferenceLinks(@PathParam("eav_id") int eav_id)throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		int n = factory.deleteTargetReferenceLinks(eav_id);
 		factory.dispose();
 		
@@ -130,11 +130,11 @@ public class SpectrumService extends SPECCHIOService {
 		
 		if(mds.getAttribute_id() == 0)
 		{
-			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 			mds.setAttribute_id(factory.getAttributes().get_attribute_id(mds.getAttributeName()));			
 		}			
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<Integer> ids = factory.filterSpectrumIdsByHavingAttribute(mds);
 		factory.dispose();
 		
@@ -162,11 +162,11 @@ public class SpectrumService extends SPECCHIOService {
 		
 		if(mds.getAttribute_id() == 0)
 		{
-			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 			mds.setAttribute_id(factory.getAttributes().get_attribute_id(mds.getAttributeName()));			
 		}			
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<Integer> ids = factory.filterSpectrumIdsByNotHavingAttribute(mds);
 		factory.dispose();
 		
@@ -194,11 +194,11 @@ public class SpectrumService extends SPECCHIOService {
 		
 		if(mds.getAttribute_id() == 0)
 		{
-			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 			mds.setAttribute_id(factory.getAttributes().get_attribute_id(mds.getAttributeName()));			
 		}			
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<Integer> ids = factory.filterSpectrumIdsByHavingAttributeValue(mds);
 		factory.dispose();
 		
@@ -227,7 +227,7 @@ public class SpectrumService extends SPECCHIOService {
 			@PathParam("prepare_metadata") String prepare_metadata
 		) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		Spectrum s = factory.getSpectrum(spectrum_id, Boolean.valueOf(prepare_metadata));
 		factory.dispose();
 		
@@ -250,7 +250,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public Space[] getCalibrationSpaces(SpaceQueryDescriptor query_d) throws SPECCHIOFactoryException {
 		
-		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		ArrayList<Space> spaces = factory.getCalibrationSpaces(query_d.spectrum_ids);
 		factory.dispose();
 		
@@ -273,7 +273,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public GonioSamplingPoints getGonioSamplingPoints(SpectralSpace space) throws SPECCHIOFactoryException {
 		
-		SpaceFactory factory =  new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpaceFactory factory =  new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		GonioSamplingPoints sampling_points = factory.getGonioSamplingPoints(space);
 		factory.dispose();
 		
@@ -297,7 +297,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public ReferenceSpaceStruct getReferenceSpace(SpectrumIdsDescriptor query_d) throws SPECCHIOFactoryException {
 		
-		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		ReferenceSpaceStruct ref_space_struct = factory.getReferenceSpace(query_d.getSpectrumIds(1));
 		factory.dispose();
 		
@@ -321,7 +321,7 @@ public class SpectrumService extends SPECCHIOService {
 		
 		//System.out.println("spectrum ids to get space for:" + query_d.spectrum_ids);
 		
-		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		factory.setMatchOnlySensor(query_d.split_spaces_by_sensor);
 		factory.setMatchOnlySensorAndUnit(query_d.split_spaces_by_sensor_and_unit);
 		factory.setOrderByAttribute(query_d.order_by);
@@ -347,7 +347,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public SpectrumFactorTable getSpectrumFactorTable(SpectrumIdsDescriptor factor_d) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		SpectrumFactorTable table = factory.getSpectrumFactorTable(factor_d.getSpectrumIds(1), factor_d.getSpectrumIds(2));
 		factory.dispose();
 		
@@ -372,7 +372,7 @@ public class SpectrumService extends SPECCHIOService {
 		
 		
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<Integer> ids = factory.getSpectrumIdsMatchingFullTextSearch(search_str.getString());
 		factory.dispose();
 		
@@ -397,7 +397,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public SpectrumDataLink[] getTargetReferenceLinks(SpectrumIdsDescriptor ids_d) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		SpectrumDataLink datalinks[] = factory.getTargetReferenceLinks(ids_d.getSpectrumIds(1), ids_d.getSpectrumIds(2), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
@@ -424,7 +424,7 @@ public class SpectrumService extends SPECCHIOService {
 		
 		int num = 0;
 		if (id_d.getSpectrumIds1().size() > 0) {
-			SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 			try {
 				num = factory.insertTargetReferenceLinks(id_d.getSpectrumId(1, 0), id_d.getSpectrumIds2(), true);
 			}
@@ -456,7 +456,7 @@ public class SpectrumService extends SPECCHIOService {
 		
 		int num = 0;
 		if (id_d.getSpectrumIds1().size() > 0) {
-			SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+			SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 			try {
 				num = factory.insertTargetReferenceLinks(id_d.getSpectrumId(1, 0), id_d.getSpectrumIds2(), false);
 			}
@@ -487,7 +487,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public Space loadSpace(Space space) throws SPECCHIOFactoryException {
 		
-		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpaceFactory factory = new SpaceFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		factory.loadSpace(space);
 		factory.dispose();
 		
@@ -510,7 +510,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Path("remove/{spectrum_id: [0-9]+}")
 	public XmlInteger remove(@PathParam("spectrum_id") int spectrum_id) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		ArrayList<Integer> spectrum_ids = new ArrayList<Integer>();
 		spectrum_ids.add(spectrum_id);
 		factory.removeSpectra(spectrum_ids, getSecurityContext().isUserInRole(UserRoles.ADMIN));
@@ -543,7 +543,7 @@ public class SpectrumService extends SPECCHIOService {
 //				@PathParam("campaign_id") int campaign_id
 //			) throws SPECCHIOFactoryException {
 			
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 			factory.removeSpectra(d.getSpectrumIds1(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 			factory.dispose();
 		
@@ -566,7 +566,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public PictureTable pictures(@PathParam("spectrum_id") int spectrum_id) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		PictureTable pictures = factory.getPictures(spectrum_id);
 		factory.dispose();
 		
@@ -590,7 +590,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger[] query(Query query) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<Integer> ids = factory.getIdsMatchingQuery(query);
 		factory.dispose();
 		
@@ -615,7 +615,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger queryCount(Query query) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		int count = factory.countIdsMatchingQuery(query);
 		factory.dispose();
 		
@@ -638,7 +638,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public AVMatchingListCollection sortByAttributes(AVMatchingList av_list)throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		return factory.sortByAttributes(av_list);
 		
 	}	
@@ -660,7 +660,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger update_metadata(SpectraMetadataUpdateDescriptor update_d) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		factory.updateMetadata(update_d.getIds(), update_d.getField(), update_d.getValue(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
 		factory.dispose();
 		
@@ -681,7 +681,7 @@ public class SpectrumService extends SPECCHIOService {
 	@Produces(MediaType.APPLICATION_XML)
 	public XmlInteger update_vector(Spectrum spectrum) throws SPECCHIOFactoryException {
 		
-		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName());
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		factory.updateSpectrumVector(spectrum);
 		factory.dispose();
 		
