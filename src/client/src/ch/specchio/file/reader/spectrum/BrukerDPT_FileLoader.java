@@ -8,14 +8,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
 
 public class BrukerDPT_FileLoader extends SpectralFileLoader {
 
-	public BrukerDPT_FileLoader() {
-		super("Bruker_FTIR_DPT");
+	public BrukerDPT_FileLoader(SPECCHIOClient specchio_client) {
+		super("Bruker_FTIR_DPT", specchio_client);
 	}
 
 	@Override

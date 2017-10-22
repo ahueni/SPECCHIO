@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -21,8 +22,8 @@ public class COST_OO_FileLoader extends SpectralFileLoader {
 	
 	SpectralFile spec_file;
 
-	public COST_OO_FileLoader() {
-		super("COST_OO_CSV");
+	public COST_OO_FileLoader(SPECCHIOClient specchio_client) {
+		super("COST_OO_CSV", specchio_client);
 
 
 	}

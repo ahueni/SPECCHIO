@@ -6,14 +6,15 @@ import java.text.DateFormatSymbols;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
 
 public class OceanView_FileLoader extends JAZ_FileLoader{
 	
-	public OceanView_FileLoader() {
-		super("OceanViewTXT");
+	public OceanView_FileLoader(SPECCHIOClient specchio_client) {
+		super("OceanViewTXT", specchio_client);
 		start_of_spectral_data = ">>>>>Begin Spectral Data<<<<<";
 	}	
 	

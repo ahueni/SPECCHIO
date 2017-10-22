@@ -33,13 +33,12 @@ public abstract class SpectralFileLoader {
 	protected SpectralFile spec_file;
 	public SpectralFileInsertResult insert_result; // field to store the insert result (used for instrument calibration updates)
 	
-	public SpectralFileLoader(String file_format_name)
+	public SpectralFileLoader(String file_format_name, SPECCHIOClient specchio_client)
 	{
 		this.file_format_name = file_format_name;
-//		SPECCHIOClientFactory cf;
+
 		try {
-			//cf = SPECCHIOClientFactory.getInstance();
-			specchio_client = SPECCHIOApplication.getInstance().getClient();
+			this.specchio_client = specchio_client;
 			attributes_name_hash = specchio_client.getAttributesNameHash();
 		} catch (SPECCHIOClientException e) {
 			// TODO Auto-generated catch block

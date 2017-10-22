@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.SpectralFile;
 
 
@@ -18,9 +19,9 @@ public class ENVI_SLB_FileLoader extends SpectralFileLoader {
 	
 	ArrayList<Float> wvls = new ArrayList<Float>();
 	
-	public ENVI_SLB_FileLoader()
+	public ENVI_SLB_FileLoader(SPECCHIOClient specchio_client)
 	{
-		super("ENVI SLB");
+		super("ENVI SLB", specchio_client);
 	}
 	
 	public SpectralFile load(File file) throws IOException

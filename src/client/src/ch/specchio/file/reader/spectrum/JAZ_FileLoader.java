@@ -16,6 +16,7 @@ import java.text.DateFormatSymbols;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -28,13 +29,13 @@ public class JAZ_FileLoader extends SpectralFileLoader {
 	protected Metadata smd;
 	String start_of_spectral_data;
 
-	public JAZ_FileLoader() {
-		super("JAZ");
+	public JAZ_FileLoader(SPECCHIOClient specchio_client) {
+		super("JAZ", specchio_client);
 		start_of_spectral_data = ">>>>>Begin Processed Spectral Data<<<<<";
 	}
 	
-	public JAZ_FileLoader(String file_format_name) {
-		super(file_format_name);
+	public JAZ_FileLoader(String file_format_name, SPECCHIOClient specchio_client) {
+		super(file_format_name, specchio_client);
 	}	
 
 	public SpectralFile load(File file) throws IOException

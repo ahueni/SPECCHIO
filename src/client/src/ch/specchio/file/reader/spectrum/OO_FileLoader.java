@@ -15,14 +15,15 @@ import java.text.DateFormatSymbols;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.SpectralFile;
 
 public class OO_FileLoader extends SpectralFileLoader {
 	
 	SpectralFile spec_file;
 
-	public OO_FileLoader() {
-		super("OOSpectraSuite");
+	public OO_FileLoader(SPECCHIOClient specchio_client) {
+		super("OOSpectraSuite", specchio_client);
 	}
 
 	public SpectralFile load(File file) throws IOException

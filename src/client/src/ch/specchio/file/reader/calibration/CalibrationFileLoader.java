@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.file.reader.spectrum.Spectra_Vista_HR_1024_FileLoader;
 import ch.specchio.file.reader.spectrum.TXT_FileLoader;
 import ch.specchio.file.reader.spectrum.UniSpec_SPU_FileLoader;
@@ -17,8 +18,10 @@ import ch.specchio.types.SpectralFile;
 
 public class CalibrationFileLoader {
 	
-	public CalibrationFileLoader() {
-		
+	private SPECCHIOClient specchio_client;
+	
+	public CalibrationFileLoader(SPECCHIOClient specchio_client) {
+		this.specchio_client = specchio_client;
 	}
 	
 	
@@ -38,7 +41,7 @@ public class CalibrationFileLoader {
 		{
 			file_loaded = true;
 			TXT_FileLoader l;
-			l = new TXT_FileLoader();
+			l = new TXT_FileLoader(specchio_client);
 			SpectralFile spec_file = l.load(file);
 				
 			// these measurements are actually reflectances (in ways)
@@ -53,7 +56,7 @@ public class CalibrationFileLoader {
 		{
 			file_loaded = true;
 			UniSpec_SPU_FileLoader l;
-			l = new UniSpec_SPU_FileLoader();
+			l = new UniSpec_SPU_FileLoader(specchio_client);
 			SpectralFile spec_file = l.load(file);
 				
 			//spec_file.addMeasurementUnits(MeasurementUnit.Wavelength);
@@ -92,7 +95,7 @@ public class CalibrationFileLoader {
 				d.close();
 				data_in.close();
 
-				Spectra_Vista_HR_1024_FileLoader l = new Spectra_Vista_HR_1024_FileLoader();
+				Spectra_Vista_HR_1024_FileLoader l = new Spectra_Vista_HR_1024_FileLoader(specchio_client);
 				SpectralFile spec_file = l.load(file);
 				
 				spec_file.setNumberOfSpectra(1); // override the setting (there are actually 3 spectra)

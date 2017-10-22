@@ -13,6 +13,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -22,8 +23,8 @@ import ch.specchio.types.spatial_pos;
 
 public class Microtops_FileLoader  extends SpectralFileLoader {
 	
-	public Microtops_FileLoader() {
-		super("MicrotopsTXT");
+	public Microtops_FileLoader(SPECCHIOClient specchio_client) {
+		super("MicrotopsTXT", specchio_client);
 	}
 
 	@Override

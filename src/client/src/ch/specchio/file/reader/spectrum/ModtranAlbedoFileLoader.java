@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.SpectralFile;
 
 public class ModtranAlbedoFileLoader extends SpectralFileLoader {
@@ -18,9 +19,9 @@ public class ModtranAlbedoFileLoader extends SpectralFileLoader {
 	boolean not_eof = true;
 	boolean spectral_interpolation = false;
 	
-	public ModtranAlbedoFileLoader()
+	public ModtranAlbedoFileLoader(SPECCHIOClient specchio_client)
 	{
-		super("MODTRAN_Albedo_File");
+		super("MODTRAN_Albedo_File", specchio_client);
 	}
 	
 	

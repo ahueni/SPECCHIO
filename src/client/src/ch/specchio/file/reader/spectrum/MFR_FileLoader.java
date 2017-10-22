@@ -16,6 +16,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.SpectralFile;
 
@@ -23,9 +24,9 @@ public class MFR_FileLoader extends SpectralFileLoader {
 	
 	int no_of_channels = 7; // could read this from sensor definition in database!!!
 	
-	public MFR_FileLoader()
+	public MFR_FileLoader(SPECCHIOClient specchio_client)
 	{
-		super("MFR Out File");
+		super("MFR Out File", specchio_client);
 	}
 
 

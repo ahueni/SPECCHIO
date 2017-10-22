@@ -12,6 +12,7 @@ import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -24,8 +25,8 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 	int no_of_wvls_records = 0;
 
 
-	public SPECPR_FileLoader() {
-		super("SPECPR");
+	public SPECPR_FileLoader(SPECCHIOClient specchio_client) {
+		super("SPECPR", specchio_client);
 
 	}
 

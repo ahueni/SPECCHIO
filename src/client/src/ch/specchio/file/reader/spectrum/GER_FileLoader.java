@@ -13,6 +13,7 @@ import java.util.ListIterator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -22,9 +23,9 @@ public class GER_FileLoader extends SpectralFileLoader {
 	
 	Metadata smd;
 	
-	public GER_FileLoader()
+	public GER_FileLoader(SPECCHIOClient specchio_client)
 	{
-		super("GER Signature File");
+		super("GER Signature File", specchio_client);
 	}
 
 
