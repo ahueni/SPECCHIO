@@ -1610,17 +1610,17 @@ public class EAVDBServices extends Thread {
 	}
 	
 	
-	public void delete_eav(Integer eav_id) throws SQLException {
+	public void delete_eav(Integer eav_id, boolean is_admin) throws SQLException {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
-		delete_eavs(eav_ids);
+		delete_eavs(eav_ids, is_admin);
 		
 	}
 	
 	
 	
-	public void delete_eavs(ArrayList<Integer> eav_ids) throws SQLException {
+	public void delete_eavs(ArrayList<Integer> eav_ids, boolean is_admin) throws SQLException {
 		
 		//pr.set_operation("Deleting frame_x_eav's ...");
 		
@@ -1663,15 +1663,15 @@ public class EAVDBServices extends Thread {
 		
 	}
 	
-	public void delete_primary_x_eav(Integer frame_id, Integer eav_id) {
+	public void delete_primary_x_eav(Integer frame_id, Integer eav_id, boolean is_admin) {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
-		delete_primary_x_eav(frame_id, eav_ids);
+		delete_primary_x_eav(frame_id, eav_ids, is_admin);
 		
 	}
 	
-	public void delete_primary_x_eav(Integer[] frame_ids, Integer eav_id) {
+	public void delete_primary_x_eav(Integer[] frame_ids, Integer eav_id, boolean is_admin) {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
@@ -1681,22 +1681,23 @@ public class EAVDBServices extends Thread {
 			frame_ids_list.add(frame_id);
 		}
 		
-		delete_primary_x_eav(frame_ids_list, eav_ids);
+		delete_primary_x_eav(frame_ids_list, eav_ids, is_admin);
 		
 	}
 	
-	public void delete_primary_x_eav(ArrayList<Integer> frame_ids, Integer eav_id) {
+	public void delete_primary_x_eav(ArrayList<Integer> frame_ids, Integer eav_id, boolean is_admin) {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
-		delete_primary_x_eav(frame_ids, eav_ids);
+		delete_primary_x_eav(frame_ids, eav_ids, is_admin);
 		
 	}
 	
-	public void delete_primary_x_eav(Integer frame_id, ArrayList<Integer> eav_ids) {
+	public void delete_primary_x_eav(Integer frame_id, ArrayList<Integer> eav_ids, boolean is_admin) {
 		
-		//String cmd = "delete from frame_x_eav where frame_id = " + frame_id + " or eav_id in (" + SQL.conc_ids(eav_ids) + ")";
-		String cmd = "delete from " + this.primary_x_eav_viewname + " where " + this.primary_id_name + " = " + frame_id + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
+		String table_name = (is_admin)? this.primary_x_eav_tablename : this.primary_x_eav_viewname;
+		
+		String cmd = "delete from " + table_name + " where " + this.primary_id_name + " = " + frame_id + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
 		
 		try {
 			Statement stmt = SQL.createStatement();
@@ -1709,10 +1710,10 @@ public class EAVDBServices extends Thread {
 		
 	}
 	
-	public void delete_primary_x_eav(ArrayList<Integer> frame_ids, ArrayList<Integer> eav_ids) {
+	public void delete_primary_x_eav(ArrayList<Integer> frame_ids, ArrayList<Integer> eav_ids, boolean is_admin) {
 		
-		//String cmd = "delete from frame_x_eav where frame_id = " + frame_id + " or eav_id in (" + SQL.conc_ids(eav_ids) + ")";
-		String cmd = "delete from " + this.primary_x_eav_viewname + " where " + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids) +")" + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
+		String table_name = (is_admin)? this.primary_x_eav_tablename : this.primary_x_eav_viewname;
+		String cmd = "delete from " + table_name + " where " + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids) +")" + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
 		
 		try {
 			Statement stmt = SQL.createStatement();
@@ -1782,15 +1783,15 @@ public class EAVDBServices extends Thread {
 
 	}
 
-	public void update_metaparameter(MetaParameter mp) {
+	public void update_metaparameter(MetaParameter mp, boolean is_admin) {
 		
 		String field = ATR.get_default_storage_field(mp.getAttributeId());
+		String table_name = (is_admin)? "eav" : "eav_view";
 
 		if(mp instanceof MetaSpatialGeometry)
 		{
-			
-			
-			String query = "update " + get_eav_view_name() +
+	
+			String query = "update " + table_name +
 					" set attribute_id = " + mp.getAttributeId() +
 					", " + field +" = " + (String) mp.getEAVValue() +
 					", unit_id = " + mp.getUnitId() +
@@ -1809,7 +1810,7 @@ public class EAVDBServices extends Thread {
 		}
 		else
 		{
-			String query = "update " + get_eav_view_name() +
+			String query = "update " + table_name +
 					" set attribute_id = " + mp.getAttributeId() +
 					", " + field +" = " + "?" +
 					", unit_id = " + mp.getUnitId() +
