@@ -250,7 +250,7 @@ class CalibrationListMetadataPanel extends InstrumentationMetadataPanel implemen
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				
 				try {
-					CalibrationFileLoader cfl = new CalibrationFileLoader();
+					CalibrationFileLoader cfl = new CalibrationFileLoader(specchio_client);
 					Calibration c = cfl.loadFile(fc.getSelectedFile());
 					c.setReferenceId(this.object_id);
 					if ("instrument".equals(object_type)) {
