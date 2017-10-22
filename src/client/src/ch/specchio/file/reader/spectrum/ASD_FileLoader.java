@@ -5,6 +5,7 @@
 
 package ch.specchio.file.reader.spectrum;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,7 +13,9 @@ import java.util.prefs.BackingStoreException;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Seconds;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOPreferencesStore;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
@@ -24,10 +27,11 @@ public class ASD_FileLoader extends SpectralFileLoader {
 	
 	public SpectralFile asd_file;
 	Metadata smd = new Metadata();
+	private DateTime capture_date;
 	
-	public ASD_FileLoader()
+	public ASD_FileLoader(SPECCHIOClient specchio_client)
 	{
-		super("ASD Binary");
+		super("ASD Binary", specchio_client);
 		
 		asd_file = new SpectralFile(); // requires this when determining the file type by reading the header
 		asd_file.setNumberOfSpectra(1);	
@@ -119,7 +123,8 @@ public class ASD_FileLoader extends SpectralFileLoader {
 //		
 		
 		// date
-		hdr.setCaptureDate(0, read_asd_time(in));
+		capture_date = read_asd_time(in);
+		hdr.setCaptureDate(0, capture_date);
 		
 		// skip till dc_corr
 		skip(in, 4);
@@ -127,37 +132,21 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		// read dc_time: Time of last dc, seconds since 1/1/1970
 		// -> getting the delta time appears not possible, due to this timestamp being in UTC and the recording time being in local time!!!!!
 		
-		long dc_time = this.read_long(in);	// long dc_time = 
-//		TimeZone tz = TimeZone.getTimeZone("UTC");
-//		Calendar cal = Calendar.getInstance(tz);
-//		cal.setTimeInMillis(dc_time*1000);
-//		//cal.setTimeInMillis(0);
+		long dc_time = this.read_long(in);	
+
+		if(dc_time > 0)
+		{
+//			DateTime dt_dc_tmp = new DateTime(dc_time * 1000); // applying the UTC time zone here leads to a time shift
 //
-//		//SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
-//		//formatter.setTimeZone(tz);
-//		
-//		//String out=formatter.format(cal.getTime());
-//		
-//		//String timezone = tz.getDisplayName();
-//		
-//		tz = TimeZone.getDefault();
-//		long offset = tz.getOffset(cal.getTimeInMillis());
-//		
-//		tz = TimeZone.getTimeZone("UTC");
-//		
-//		cal.setTime(hdr.capture_dates[0]);
-//		//String out2=formatter.format(cal.getTime());
-//		
-//		long measurement_time =  cal.getTimeInMillis();
-//		
-//		int delta_seconds = (int) (measurement_time - (dc_time - offset/1000))/1000;
-//		//hdr.instr_set.add_setting("Time_since_last_dc", delta_seconds);
+//			// trick to force UTC
+//			DateTime dt_dc = new DateTime(dt_dc_tmp.getYear(), dt_dc_tmp.getMonthOfYear(), dt_dc_tmp.getDayOfMonth(), dt_dc_tmp.getHourOfDay(), dt_dc_tmp.getMinuteOfHour(), dt_dc_tmp.getSecondOfMinute(), DateTimeZone.UTC); 
 //
-////		MetaParameter mp = new MetaParameter("Instrument Settings", "");
-////		mp.setAttribute_name("Time since last DC");
-////		mp.setValue(delta_seconds, "s");
-////		smd.add_entry(mp);		
-		
+//			Seconds seconds = Seconds.secondsBetween(dt_dc, this.capture_date);
+//
+//			MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("Time since last DC"));
+//			mp.setValue(seconds.getSeconds());
+//			smd.add_entry(mp);			
+		}		
 		
 		// read data type
 		hdr.addMeasurementUnits((int) in.readByte());
@@ -378,9 +367,17 @@ public class ASD_FileLoader extends SpectralFileLoader {
 			pos.altitude = alt;						
 		}
 		
+		skip(in, 2);
+		skip(in, 1); // hardware mode
+		
+		// get GPS time: this time needs verifying; it is currently not inserted into the database
+		long gps_time_stamp = read_long(in); // 4 bytes
+		DateTime gps_time = new DateTime(gps_time_stamp * 1000, DateTimeZone.UTC);
 		
 		// skip rest
-		skip(in, 16);
+		//skip(in, 16);
+		
+		skip(in, 9);
 				
 		return pos;
 	}
