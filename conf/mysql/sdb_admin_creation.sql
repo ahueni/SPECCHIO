@@ -16,8 +16,8 @@ INSERT INTO `specchio`.`specchio_user` (`user`, `first_name`, `last_name`, `emai
 
 
 -- Grant administrator privileges
-GRANT SELECT, DELETE, INSERT, UPDATE, ALTER, DROP, CREATE, CREATE VIEW, GRANT OPTION, TRIGGER ON `specchio`.* TO 'sdb_admin'@'localhost';
-GRANT SELECT, DELETE, INSERT, UPDATE, CREATE TEMPORARY TABLES, GRANT OPTION ON `specchio_temp`.* TO 'sdb_admin'@'localhost';
+GRANT SELECT, DELETE, INSERT, UPDATE, ALTER, DROP, CREATE, CREATE VIEW, GRANT OPTION, TRIGGER, REFERENCES ON `specchio`.* TO 'sdb_admin'@'localhost';
+GRANT SELECT, DELETE, INSERT, UPDATE, DROP, CREATE TEMPORARY TABLES, GRANT OPTION ON `specchio_temp`.* TO 'sdb_admin'@'localhost';
 GRANT SUPER, CREATE USER ON *.* TO 'sdb_admin'@'localhost';
 GRANT INSERT ON `mysql`.`user` TO 'sdb_admin'@'localhost';
 UPDATE `mysql`.`user`
