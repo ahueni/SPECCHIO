@@ -75,8 +75,20 @@ public class Attributes {
 		
 		rs.close();			
 		
-		query = "select a.attribute_id, a.name, c.category_id, c.name, c.string_val, a.default_unit_id, a.default_storage_field, a.description, a.cardinality from attribute a, category c where a.category_id = c.category_id order by a.name";
-						
+		
+		query = "select * from information_schema.tables where table_schema = database() and table_name = 'blob_data_type'";
+		boolean blob_data_type_exists = false;
+		rs = stmt.executeQuery(query);
+		while (rs.next()) 
+		{
+			blob_data_type_exists = true;
+		}
+		
+		
+		//query = "select a.attribute_id, a.name, c.category_id, c.name, c.string_val, a.default_unit_id, a.default_storage_field, a.description, a.cardinality" + (blob_data_type_exists ? ", b.data_type_name" : "") + " from attribute a, category c" + (blob_data_type_exists ? ", blob_data_type b" : "") + " where a.category_id = c.category_id" + (blob_data_type_exists ? " and a.blob_data_type_id = c.blob_data_type_id" : "") + " order by a.name";
+		
+		query = "select a.attribute_id, a.name, c.category_id, c.name, c.string_val, a.default_unit_id, a.default_storage_field, a.description, a.cardinality" + (blob_data_type_exists ? ", b.data_type_name" : "") + " from category c,  attribute a " + (blob_data_type_exists ? "left join blob_data_type b on b.blob_data_type_id = a.blob_data_type_id" : "") + " where a.category_id = c.category_id order by a.name";
+		
 		rs = stmt.executeQuery(query);
 		
 		while (rs.next()) 
@@ -92,7 +104,13 @@ public class Attributes {
 			a.default_storage_field = rs.getString(7);
 			a.description = rs.getString(8);
 			a.cardinality = rs.getInt(9);
-			
+			if(blob_data_type_exists) 
+			{
+				String blob_data_type = rs.getString(10);
+				if(blob_data_type != null)
+					a.blob_data_type = blob_data_type;
+			}
+
 			// special case: handling of boolean values stored in int_val fields
 			if(a.default_unit_id == this.boolean_unit_id) 
 				a.is_boolean_value = true;

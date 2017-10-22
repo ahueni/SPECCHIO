@@ -24,6 +24,7 @@ public class attribute {
 	@XmlElement public String description;
 	@XmlElement public int cardinality;
 	@XmlElement public boolean is_boolean_value = false;
+	@XmlElement public String blob_data_type = "";
 	
 	public String getName()
 	{

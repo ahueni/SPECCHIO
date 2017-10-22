@@ -220,9 +220,9 @@ public abstract class MetaParameter {
 		// construct a meta-parameter of the type appropriate to the attribute
 		if (attr.default_storage_field.equals("datetime_val"))
 			mp = new MetaDate(attr);
-		else if (attr.cat_name.equals("Pictures"))
+		else if (attr.blob_data_type.equals("Image") || attr.cat_name.equals("Pictures"))
 			mp = new MetaImage(attr);
-		else if (attr.cat_name.equals("PDFs"))
+		else if (attr.blob_data_type.equals("PDF") || attr.cat_name.equals("PDFs"))
 			mp = new MetaDocument(attr);
 		else if (attr.default_storage_field.equals("taxonomy_id"))
 			mp = new MetaTaxonomy(attr);
