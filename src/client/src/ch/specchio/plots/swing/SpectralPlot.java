@@ -108,21 +108,15 @@ public abstract class SpectralPlot extends JPanel
 			int end_ind = space.get_index_of_band(vis_nir_end);
 			
 			if (start_ind >= 0 & end_ind > 0)
-			{
-			
-				VectorStatistics stats = new VectorStatistics();
-			
-				stats.calc_stats(vectors, start_ind, end_ind);	
-				
-				if (stats.standardDeviation() > 0)
-					plot.setYRange(0, stats.mean()+1*stats.standardDeviation());
-			
+			{			
+				VectorStatistics stats = new VectorStatistics();			
+				stats.calc_stats(vectors, start_ind, end_ind);					
+				plot.setYRange(0, stats.mean()+3*stats.standardDeviation());			
 			}
 			
 		}
 
 		plot.setYLabel(this.space.getMeasurementUnit().getUnitName());
-
 		set_wvl_indicator(wavelength); // make sure the wavelength indicator is updated ...
 
 	}

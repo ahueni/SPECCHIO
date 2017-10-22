@@ -12,6 +12,7 @@ public class VectorStatistics {
 	private double min;
 	private double var;
 	
+	// non-spectral statistics
 	public void calc_stats(double[] vector, int start_ind, int end_ind)
 	{
 		// init min and max with first vector element
@@ -40,7 +41,8 @@ public class VectorStatistics {
 		mean = sum/N;
 		
 		
-		// get standard deviation			
+		// get standard deviation	
+		sum = 0;
 		for(band = start_ind; band <= end_ind;band++)
 		{
 			if(!Double.isNaN(vector[band])) // filter NaNs
@@ -53,7 +55,7 @@ public class VectorStatistics {
 		
 	}
 
-	
+	// non-spectral statistics
 	public void calc_stats(ArrayList<double[]> vectors, int start_ind, int end_ind)
 	{
 		// init min and max with first vector element
@@ -88,7 +90,8 @@ public class VectorStatistics {
 		mean = sum/N;
 		
 		
-		// get standard deviation			
+		// get standard deviation	
+		sum = 0;
 		if (N > 1)
 		{
 			for(int i = 0; i < vectors.size();i++)
@@ -103,7 +106,7 @@ public class VectorStatistics {
 					}
 				}
 			}
-			var = sum/(N-1);
+			var = sum/(N);
 			std_dev = sqrt(var);
 			
 			
