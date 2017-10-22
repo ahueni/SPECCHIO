@@ -6,15 +6,13 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+
 import java.util.prefs.BackingStoreException;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOPreferencesStore;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
@@ -99,9 +97,12 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	//SpectralFile spec_file;
 	
 	Metadata smd;
+	private DateTime capture_date;
+	private DateTime gps_date_time;
+	private int file_version_number;
 
-	public ASD_FileFormat_V7_FileLoader() {
-		super("ASD Binary");
+	public ASD_FileFormat_V7_FileLoader(SPECCHIOClient specchio_client) {
+		super("ASD Binary", specchio_client);
 
 
 	}
@@ -320,6 +321,12 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		return spec_file;
 	}
 
+	/**
+	 * @param in
+	 * @param hdr
+	 * @throws IOException
+	 * @throws MetaParameterFormatException
+	 */
 	public void read_ASD_spectrum_file_header(DataInputStream in,
 			SpectralFile hdr) throws IOException, MetaParameterFormatException {
 
@@ -336,6 +343,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		{
 			throw new IOException("Corrupted ASD file: File format string = " + file_version + ".\n Expecting 'asN' where N is a file version number.");			
 		}
+		
+		file_version_number = Integer.parseInt(file_version.substring(2, 3));
 		
 		MetaParameter mp = MetaParameter.newInstance(attributes_name_hash.get("File Version"));
 		mp.setValue( file_version, "String");
@@ -357,7 +366,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		}
 
 		// date
-		DateTime capture_date = read_asd_time(in);
+		capture_date = read_asd_time(in);
 		hdr.setCaptureDate(0, capture_date);
 		hdr.setCaptureDate(1, capture_date);
 		// skip till dc_corr flag
@@ -379,44 +388,29 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		}
 
 		// read dc_time: Time of last dc, seconds since 1/1/1970
-		long dc_time = this.read_long(in);
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		Calendar cal = Calendar.getInstance(tz);
-		cal.setTimeInMillis(dc_time * 1000);
-//		// cal.setTimeInMillis(0);
+		// -> getting the delta time appears not possible, due to this timestamp being in UTC and the recording time being in local time!!!!!
+		long dc_time = this.read_long(in);		
+		
+		if(dc_time > 0)
+		{
+//			DateTime dt_dc_tmp = new DateTime(dc_time * 1000); // applying the UTC time zone here leads to a time shift
 //
-//		// SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
-//		// formatter.setTimeZone(tz);
+//			// trick to force UTC
+//			DateTime dt_dc = new DateTime(dt_dc_tmp.getYear(), dt_dc_tmp.getMonthOfYear(), dt_dc_tmp.getDayOfMonth(), dt_dc_tmp.getHourOfDay(), dt_dc_tmp.getMinuteOfHour(), dt_dc_tmp.getSecondOfMinute(), DateTimeZone.UTC); 
 //
-//		// String out=formatter.format(cal.getTime());
+//			Seconds seconds = Seconds.secondsBetween(dt_dc, this.capture_date);
 //
-//		// String timezone = tz.getDisplayName();
-//
-//		tz = TimeZone.getDefault();
-//		long offset = tz.getOffset(cal.getTimeInMillis());
-//
-//		// tz = TimeZone.getTimeZone("UTC");
-//
-//		cal.setTime(hdr.capture_dates[0]);
-//		// String out2=formatter.format(cal.getTime());
-//
-//		long measurement_time = cal.getTimeInMillis() / 1000;
-//
-//		int delta_seconds = (int) (measurement_time - (dc_time + offset / 1000));
-//		//hdr.instr_set.add_setting("Time_since_last_dc", delta_seconds);
-//		
-//		MetaParameter mp = new MetaParameter("Instrument Settings", "");
-//		mp.setAttributeName("Time since last DC");
-//		mp.setValue(delta_seconds, "s");
-//		smd.add_entry(mp);			
+//			mp = MetaParameter.newInstance(attributes_name_hash.get("Time since last DC"));
+//			mp.setValue(seconds.getSeconds());
+//			smd.add_entry(mp);			
+		}
 
 		// read data type
 		hdr.addMeasurementUnits((int) in.readByte());
 		//
 
 		long ref_time = this.read_long(in);
-		cal.setTimeInMillis(ref_time * 1000);
-		Date wr_time = cal.getTime();
+		DateTime dt_wr = new DateTime(ref_time * 1000, DateTimeZone.UTC);
 
 		// skip till data format of spectrum
 		//skip(in, 8);
@@ -441,6 +435,13 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		spatial_pos p = read_gps_data(in);
 		hdr.addPos(p);
 		hdr.addPos(p);
+		
+		if(p != null)
+		{
+			mp = MetaParameter.newInstance(attributes_name_hash.get("Acquisition Time (UTC)"));
+			mp.setValue(this.gps_date_time);
+			smd.addEntry(mp);						
+		}
 
 		// integration time in ms
 		//int_time = this.read_int(in);
@@ -1162,8 +1163,10 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	spatial_pos read_gps_data(DataInputStream in) throws IOException {
 		spatial_pos pos = null;
 
-		// skip true heading and speed
-		skip(in, 16);
+		// true heading and speed
+		double true_heading = read_double(in);
+		double speed = read_double(in);
+		
 
 		double lat = read_double(in);
 		double lon = read_double(in);
@@ -1186,9 +1189,44 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 			pos.longitude = spec_file.DDDmm2DDDdecimals(lon) * (-1); // correct to the standard definition of longitude: East of Greenwich is positive, West is negative
 			pos.altitude = alt;
 		}
+		
+		// skip till UTC time
+		byte[] flags = new byte[2];
+		in.read(flags);
+		byte hardware_mode = in.readByte();
+		
 
+		// GPS time stamp: seconds since 1/1/1970		
+		if(this.file_version_number >= 7)
+		{
+			byte ss = in.readByte();
+			byte mm = in.readByte();
+			byte hh = in.readByte();
+			gps_date_time = new DateTime(capture_date.getYear(), capture_date.getMonthOfYear(), capture_date.getDayOfMonth(), hh, mm, ss, DateTimeZone.UTC); // joda months start at 1
+			
+			// skip flags1&2
+			skip(in, 3);
+			
+		}
+		else
+		{
+			// untested as no version 6 file is available for testing ...
+			long time = this.read_long(in);	
+			gps_date_time = new DateTime(time * 1000);
+			
+			// skip flags2
+			skip(in, 2);
+		}
+		
+		
+		
+		
+			
+		String satellites = this.read_string(in, 5);
+		
 		// skip rest
-		skip(in, 16);
+		skip(in, 2);
+	
 
 		return pos;
 	}
@@ -1224,6 +1262,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 									// work (uint not existing in Java???)
 		return n;
 	}
+	
 
 	protected Integer read_uint(DataInputStream in) throws IOException {
 		byte[] b = new byte[4];
@@ -1370,8 +1409,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	public static int arr4int(byte[] arr, int start) {
 		int b1 = arr[start] & 0xff;
 		int b2 = arr[start + 1] & 0xff;
-		int b3 = arr[start + 1] & 0xff;
-		int b4 = arr[start + 1] & 0xff;
+		int b3 = arr[start + 2] & 0xff;
+		int b4 = arr[start + 3] & 0xff;
 		return (int) (b4 << 24 | b3 << 16 | b2 << 8 | b1);
 	}
 
