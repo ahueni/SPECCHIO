@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -238,40 +239,60 @@ class CsvHdrWriter extends CsvWriter {
 		// write one row for every attribute
 		for (String attributeName : attributeNames) {
 			
-			// write the name of the attribute
-			writeField(attributeName);
-			
-			// write the attribute's value for each spectrum
+			ArrayList<Integer> number_of_entries_list = new ArrayList<Integer>();
+			int max_number_of_entries = 0;
+			// get number of entries 
 			for (Spectrum s : spectra) {
+				int number_of_entries = s.getMetadata().get_all_entries(attributeName).size();
+				number_of_entries_list.add(number_of_entries);
 				
-				// write a field separator
-				writeFieldSeparator();
-				
-				// write the attribute's value
-				MetaParameter mp = s.getMetadata().get_first_entry(attributeName);
-				if (mp != null && mp.getValue() != null) {
-					
-					if (mp instanceof MetaDate) {
-						
-						// output date according to the time format setting
-						DateTime date = (DateTime) mp.getValue();
-						if (getTimeFormat() == TimeFormats.Seconds) {
-							writeField(Long.toString(date.getMillis()));
-						} else {
-							//writeField(df.format(date));
-							writeField(mp.valueAsString());
-						}
-					} else {
-						
-						// convert the value to its string form
-						writeField(mp.valueAsString());
-					}
-				}
-				
+				if(number_of_entries > max_number_of_entries)
+					max_number_of_entries = number_of_entries;
 			}
 			
-			// write the end of the record
-			writeRecordSeparator();
+			// write the name of the attribute
+			for(int entry_index =0;entry_index < max_number_of_entries; entry_index++)
+			{
+				writeField(attributeName);
+				
+				// write the attribute's value for each spectrum
+				int i = 0;
+				for (Spectrum s : spectra) {
+					
+					// write a field separator
+					writeFieldSeparator();
+					
+					// write the attribute's value if it exists
+					if(number_of_entries_list.get(i) > entry_index)
+					{
+						MetaParameter mp = s.getMetadata().get_all_entries(attributeName).get(entry_index);
+						if (mp != null && mp.getValue() != null) {
+
+							if (mp instanceof MetaDate) {
+
+								// output date according to the time format setting
+								DateTime date = (DateTime) mp.getValue();
+								if (getTimeFormat() == TimeFormats.Seconds) {
+									writeField(Long.toString(date.getMillis()));
+								} else {
+									//writeField(df.format(date));
+									writeField(mp.valueAsString());
+								}
+							} else {
+
+								// convert the value to its string form
+								writeField(mp.valueAsString());
+							}
+						}
+					}
+					
+					i++;
+					
+				}
+				
+				// write the end of the record
+				writeRecordSeparator();
+			}
 			
 		}
 		
