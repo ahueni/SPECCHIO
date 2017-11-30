@@ -57,6 +57,11 @@ public class MetaDate extends MetaParameter {
 		return true;
 	}
 	
+	@Override
+	public boolean hasEqualValue(MetaParameter mp)
+	{
+		return mp.getValue().equals(getValue());
+	}		
 	
 	@Override
 	public void setValue(Object value) throws MetaParameterFormatException

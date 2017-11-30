@@ -53,6 +53,11 @@ public class MetaImage extends MetaFile {
 		return true;
 	}
 
+	@Override
+	public boolean hasEqualValue(MetaParameter mp)
+	{
+		return mp.getValue().equals(getValue());
+	}		
 
 	/** returns ".jpg" because we only write JPEG files */
 	@Override

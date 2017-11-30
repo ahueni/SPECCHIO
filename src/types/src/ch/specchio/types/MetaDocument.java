@@ -62,6 +62,12 @@ public class MetaDocument extends MetaFile {
 	}
 	
 	
+	@Override
+	public boolean hasEqualValue(MetaParameter mp)
+	{
+		return mp.getValue().equals(getValue());
+	}			
+	
 	/** returns ".pdf" since this is the only type of file we support */
 	@Override
 	public String getDefaultFilenameExtension() {

@@ -50,6 +50,12 @@ public class MetaLink extends MetaParameter {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	
+	@Override
+	public boolean hasEqualValue(MetaParameter mp)
+	{
+		return mp.getValue().equals(getValue());
+	}		
 
 	@Override
 	public void setEmptyValue() {
