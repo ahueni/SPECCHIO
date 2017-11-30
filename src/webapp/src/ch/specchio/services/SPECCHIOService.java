@@ -16,8 +16,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
-import com.sun.jersey.api.client.ClientResponse;
-
 import au.ands.org.researchdata.ResearchDataAustralia;
 
 import ch.specchio.constants.UserRoles;
@@ -301,7 +299,7 @@ public class SPECCHIOService {
 		Response response;
 		
 		if (!getSecurityContext().isUserInRole(UserRoles.ADMIN)) {
-			response = Response.status(ClientResponse.Status.FORBIDDEN).build();
+			response = Response.status(Response.Status.FORBIDDEN).build();
 		} else {
 		
 			SPECCHIOFactory factory = new SPECCHIOFactory(getClientUsername(), getClientPassword(), getDataSourceName(), getSecurityContext().isUserInRole(UserRoles.ADMIN));
@@ -312,7 +310,7 @@ public class SPECCHIOService {
 			}
 			catch (IOException ex) {
 				// malformed input
-				response = Response.status(ClientResponse.Status.BAD_REQUEST).build();
+				response = Response.status(Response.Status.BAD_REQUEST).build();
 			}
 			factory.dispose();
 			
