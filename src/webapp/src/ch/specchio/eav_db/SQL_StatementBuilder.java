@@ -128,6 +128,11 @@ public class SQL_StatementBuilder {
    
    synchronized public String conc_values(ArrayList<String> vals)
    {
+	   return conc_values(vals, true); 
+   }
+   
+   synchronized public String conc_values(ArrayList<String> vals, boolean do_quote)
+   {
 	   
 	   String res;
 	   if(vals.size() == 0)
@@ -136,12 +141,12 @@ public class SQL_StatementBuilder {
 	   }
 	   else
 	   {
-		   res = quote_string(vals.get(0));
+		  res = (do_quote ? quote_string(vals.get(0)) : vals.get(0));
 	   }
 	   
 	   
 	   for(int i=1; i < vals.size(); i++)
-		   res = res.concat(", "+quote_string(vals.get(i)));
+		   res = res.concat(", "+ (do_quote ? quote_string(vals.get(i)) : vals.get(i)));
 	   return res;	    
    }
    
