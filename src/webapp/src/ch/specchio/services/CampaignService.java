@@ -6,9 +6,12 @@ import java.io.OutputStream;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+
+import org.glassfish.jersey.client.ClientResponse;
+
 import javax.annotation.security.*;
 
-import com.sun.jersey.api.client.ClientResponse;
+//import com.sun.jersey.api.client.ClientResponse;
 
 import ch.specchio.constants.UserRoles;
 import ch.specchio.factories.SPECCHIOFactoryException;
@@ -16,6 +19,7 @@ import ch.specchio.factories.SpecchioCampaignFactory;
 import ch.specchio.factories.SpectralFileFactory;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.types.Campaign;
+import ch.specchio.types.Hierarchy;
 import ch.specchio.types.SpectrumIdsDescriptor;
 
 /**
@@ -53,7 +57,7 @@ public class CampaignService extends SPECCHIOService {
 		}
 		catch (IOException ex) {
 			// not sure what might cause this
-			response = Response.status(ClientResponse.Status.INTERNAL_SERVER_ERROR).build();
+			response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 		factory.dispose();
 		
@@ -87,6 +91,32 @@ public class CampaignService extends SPECCHIOService {
 		return campaign;
 		
 	}
+	
+	/**
+	 * Get the hierarchy object for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return the hierarchy object, or -1 if the node does not exist
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */	
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("getHierarchy/{hierarchy_id: [0-9]+}")
+	public Hierarchy getHierarchy(
+			@PathParam("hierarchy_id") int hierarchy_id
+		) throws SPECCHIOFactoryException {
+		
+		SpecchioCampaignFactory factory = new SpecchioCampaignFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		Hierarchy h = factory.getHierarchy(hierarchy_id, getSecurityContext().isUserInRole(UserRoles.ADMIN));
+		factory.dispose();
+		
+		return h;
+		
+	}
+		
+	
 	
 	
 	/**
@@ -165,7 +195,7 @@ public class CampaignService extends SPECCHIOService {
 		Response response;
 		
 		if (!getSecurityContext().isUserInRole(UserRoles.ADMIN)) {
-			response = Response.status(ClientResponse.Status.FORBIDDEN).build();
+			response = Response.status(Response.Status.FORBIDDEN).build();
 		} else {
 		
 			SpecchioCampaignFactory factory = new SpecchioCampaignFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
@@ -175,7 +205,7 @@ public class CampaignService extends SPECCHIOService {
 			}
 			catch (IOException ex) {
 				// malformed input
-				response = Response.status(ClientResponse.Status.BAD_REQUEST).build();
+				response = Response.status(Response.Status.BAD_REQUEST).build();
 			}
 			// somehow we always get an IOException at the client end, no matter what exception we throw or response is returned.
 //			catch (SPECCHIOFactoryException ex) {
@@ -207,7 +237,7 @@ public class CampaignService extends SPECCHIOService {
 		Response response;
 		
 		if (!getSecurityContext().isUserInRole(UserRoles.ADMIN)) {
-			response = Response.status(ClientResponse.Status.FORBIDDEN).build();
+			response = Response.status(Response.Status.FORBIDDEN).build();
 		} else {
 		
 			SpecchioCampaignFactory factory = new SpecchioCampaignFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
@@ -221,7 +251,7 @@ public class CampaignService extends SPECCHIOService {
 			}
 			catch (IOException ex) {
 				// malformed input
-				response = Response.status(ClientResponse.Status.BAD_REQUEST).build();
+				response = Response.status(Response.Status.BAD_REQUEST).build();
 			}
 			factory.dispose();
 			
