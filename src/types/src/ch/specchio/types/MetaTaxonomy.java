@@ -43,6 +43,12 @@ public class MetaTaxonomy extends MetaParameter {
 		
 	}
 	
+	@Override
+	public boolean hasEqualValue(MetaParameter mp)
+	{
+		return mp.getValue().equals(getValue());
+	}		
+	
 	
 	@Override
 	public void setEmptyValue() {
