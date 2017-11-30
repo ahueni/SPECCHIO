@@ -17,10 +17,12 @@ public class MetadataUpdateDescriptor {
 	private MetaParameter mp;
 	
 	/** the identifiers of the objects to be updated */
-	private Integer[] ids;
+	private ArrayListWrapper<Integer> ids;
 	
 	/** the metadata to be replaced (if any) */
 	private MetaParameter mp_old;
+	
+	private int level = MetaParameter.SPECTRUM_LEVEL; // default value
 	
 	
 	/**
@@ -30,9 +32,9 @@ public class MetadataUpdateDescriptor {
 	 * @param ids		the identifiers to be updated
 	 * @param mp_old	the metadata to be replaced
 	 */
-	public MetadataUpdateDescriptor(MetaParameter mp, Integer ids[], MetaParameter mp_old) {
+	public MetadataUpdateDescriptor(MetaParameter mp, ArrayList<Integer> ids, MetaParameter mp_old) {
 		
-		this.ids = ids;
+		this.ids = new ArrayListWrapper<Integer>(ids);
 		this.mp = mp;
 		this.mp_old = mp_old;
 		
@@ -44,7 +46,7 @@ public class MetadataUpdateDescriptor {
 	 */
 	public MetadataUpdateDescriptor() {
 		
-		this(null, new Integer[0], null);
+		this(null, new ArrayList<Integer>(), null);
 	}
 	
 	
@@ -55,7 +57,7 @@ public class MetadataUpdateDescriptor {
 	 */
 	public MetadataUpdateDescriptor(MetaParameter mp) {
 		
-		this(mp, new Integer[0], null);
+		this(mp, new ArrayList<Integer>(), null);
 		
 	}
 	
@@ -67,11 +69,11 @@ public class MetadataUpdateDescriptor {
 	 * @params ids	the identifiers to be updated
 	 * @param mp_old	the metadata to be replaced
 	 */
-	public MetadataUpdateDescriptor(MetaParameter mp, List<Integer> ids, MetaParameter mp_old) {
-		
-		this(mp, ids.toArray(new Integer[1]), mp_old);
-		
-	}
+//	public MetadataUpdateDescriptor(MetaParameter mp, List<Integer> ids, MetaParameter mp_old) {
+//		
+//		this(mp, ids.toArray(new Integer[1]), mp_old);
+//		
+//	}
 	
 	
 	/**
@@ -80,7 +82,7 @@ public class MetadataUpdateDescriptor {
 	 * @param mp	the new metadata
 	 * @params ids	the identifiers to be updated
 	 */
-	public MetadataUpdateDescriptor(MetaParameter mp, List<Integer> ids) {
+	public MetadataUpdateDescriptor(MetaParameter mp, ArrayList<Integer> ids) {
 		
 		this(mp, ids, null);
 		
@@ -92,20 +94,30 @@ public class MetadataUpdateDescriptor {
 	public void setMetaParameter(MetaParameter mp) { this.mp = mp; }
 	
 	@XmlElement(name="ids")
-	public Integer[] getIds() { return this.ids; }
-	public void setIds(Integer[] ids) { this.ids = ids; }
-	public ArrayList<Integer> getIdsAsList()
-	{
-		ArrayList<Integer> id_list = new ArrayList<Integer>(ids.length);
-		for (Integer frame_id : ids) {
-			id_list.add(frame_id);
-		}	
-		return id_list;
-	}
+	public ArrayList<Integer> getIds() { return (ArrayList<Integer>) ids.getList(); }
+	public void setIds(ArrayList<Integer> ids) { this.ids.setList(ids); }
+//	public ArrayList<Integer> getIdsAsList()
+//	{
+//		ArrayList<Integer> id_list = new ArrayList<Integer>(ids.length);
+//		for (Integer frame_id : ids) {
+//			id_list.add(frame_id);
+//		}	
+//		return id_list;
+//	}
 	
 	@XmlElement(name="mp_old")
 	public MetaParameter getOldMetaParameter() { return this.mp_old; }
 	public void setOldMetaParameter(MetaParameter mp_old) { this.mp_old = mp_old; }
 	public boolean hasOldMetaParameter() { return mp_old != null; }
+	
+	@XmlElement(name="level")
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}			
+	
 	
 }

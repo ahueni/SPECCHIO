@@ -18,6 +18,7 @@ public class MetadataSelectionDescriptor {
 	private Object value;
 	private ArrayList<Integer> attribute_ids;
 	private Boolean distinct = true;
+	private int level = MetaParameter.SPECTRUM_LEVEL; // default value
 	
 	/**
 	 * Default Constructor.
@@ -86,6 +87,15 @@ public class MetadataSelectionDescriptor {
 	public void setAttribute_ids(ArrayList<Integer> attribute_ids) {
 		this.attribute_ids = attribute_ids;
 	}	
+	
+	@XmlElement(name="level")
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}		
 	
 	@XmlElement(name="value")
 	public Object getValue() {
