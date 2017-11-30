@@ -50,7 +50,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("attributes/{category_name}")
 	@Produces(MediaType.APPLICATION_XML)
-	public attribute[] attributes(@PathParam("category_name") String category_name) throws SPECCHIOFactoryException {
+	public attribute[] attributes(@PathParam("category_name") String category_name) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<attribute> attrs = factory.getAttributesForCategory(category_name);
@@ -71,7 +71,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("all_attributes")
 	@Produces(MediaType.APPLICATION_XML)
-	public attribute[] all_attributes() throws SPECCHIOFactoryException {
+	public attribute[] all_attributes() {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		ArrayList<attribute> attrs = factory.getAttributes().getAttributes();
@@ -95,7 +95,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("application_domain_categories")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)	
-	public ApplicationDomainCategories[] application_domain_categories(MetadataSelectionDescriptor dummy) throws SPECCHIOFactoryException {
+	public ApplicationDomainCategories[] application_domain_categories(MetadataSelectionDescriptor dummy) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		ApplicationDomainCategories[] adcs = factory.getMetadataCategoriesForApplicationDomains();
@@ -115,7 +115,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("categories_info")
 	@Produces(MediaType.APPLICATION_XML)
-	public Category[] categories_info() throws SPECCHIOFactoryException {
+	public Category[] categories_info() {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<Category> categories = factory.getAttributes().getCategories();
@@ -138,7 +138,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("categories/{category}")
 	@Produces(MediaType.APPLICATION_XML)
-	public CategoryTable categories(@PathParam("category") String category) throws SPECCHIOFactoryException {
+	public CategoryTable categories(@PathParam("category") String category) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		CategoryTable table = factory.getCategoryTable(category);
@@ -159,7 +159,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("clear_redundancy_list")
 	@Produces(MediaType.APPLICATION_XML)
-	public String clear_redundancy_list() throws SPECCHIOFactoryException {
+	public String clear_redundancy_list() {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -186,7 +186,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("count_existing_metaparameters")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public XmlInteger count_existing_metaparameters(MetadataSelectionDescriptor ms_d) throws SPECCHIOFactoryException {
+	public XmlInteger count_existing_metaparameters(MetadataSelectionDescriptor ms_d)  {
 
 		// TODO : a count query would be more efficient than reading all values ...
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
@@ -197,7 +197,7 @@ public class MetadataService extends SPECCHIOService {
 		}
 		
 		
-		List<MetaParameter> mp_list =  factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), false);
+		List<MetaParameter> mp_list =  factory.getMetaParameters(ms_d.getLevel(), ms_d.getIds(), ms_d.getAttribute_id(), false);
 		factory.dispose();
 
 		// only count non-null entries
@@ -224,7 +224,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("getCalibrationIds")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public XmlInteger[] getCalibrationIds(MetadataSelectionDescriptor msd) throws SPECCHIOFactoryException {
+	public XmlInteger[] getCalibrationIds(MetadataSelectionDescriptor msd) {
 
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -251,7 +251,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("get_list_of_metaparameter_vals")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public MetaParameter[] get_list_of_metaparameter_vals(MetadataSelectionDescriptor ms_d) throws SPECCHIOFactoryException {
+	public MetaParameter[] get_list_of_metaparameter_vals(MetadataSelectionDescriptor ms_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -260,7 +260,7 @@ public class MetadataService extends SPECCHIOService {
 			ms_d.setAttribute_id(factory.getAttributes().get_attribute_id(ms_d.getAttributeName()));			
 		}		
 		
-		List<MetaParameter> mp_list = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), ms_d.getDistinct());
+		List<MetaParameter> mp_list = factory.getMetaParameters(ms_d.getLevel(), ms_d.getIds(), ms_d.getAttribute_id(), ms_d.getDistinct());
 		factory.dispose();
 		
 		return mp_list.toArray(new MetaParameter[mp_list.size()]);
@@ -280,11 +280,11 @@ public class MetadataService extends SPECCHIOService {
 	@Path("get_list_of_multiple_metaparameter_vals")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public MetaParameter[] get_list_of_multiple_metaparameter_vals(MetadataSelectionDescriptor ms_d) throws SPECCHIOFactoryException {
+	public MetaParameter[] get_list_of_multiple_metaparameter_vals(MetadataSelectionDescriptor ms_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 				
-		ArrayList<ArrayList<MetaParameter>> mp_lists = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_ids());
+		ArrayList<ArrayList<MetaParameter>> mp_lists = factory.getMetaParameters(ms_d.getLevel(), ms_d.getIds(), ms_d.getAttribute_ids());
 		factory.dispose();
 		
 		
@@ -316,7 +316,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("conflicts")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public ConflictTable conflicts(ConflictDetectionDescriptor cd_d) throws SPECCHIOFactoryException {
+	public ConflictTable conflicts(ConflictDetectionDescriptor cd_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		ConflictTable conflicts = factory.detectConflicts(cd_d.getIds(), cd_d.getMetadataFields());
@@ -340,10 +340,10 @@ public class MetadataService extends SPECCHIOService {
 	@Path("conflicts_eav")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public ConflictTable conflicts_eav(ConflictDetectionDescriptor cd_d) throws SPECCHIOFactoryException {
+	public ConflictTable conflicts_eav(ConflictDetectionDescriptor cd_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
-		ConflictTable conflicts = factory.detectEavConflicts(cd_d.getIds());
+		ConflictTable conflicts = factory.detectEavConflicts(cd_d.getLevel(), (ArrayList<Integer>) cd_d.getIds());
 		factory.dispose();
 		
 		return conflicts;
@@ -364,7 +364,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("getPoliciesForSpace")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public XmlString[] getPoliciesForSpace(Space space) throws SPECCHIOFactoryException {
+	public XmlString[] getPoliciesForSpace(Space space) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		List<String> policies = factory.getPoliciesForSpace(space);
@@ -388,7 +388,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("load_metaparameter/{metaparameter_id: [0-9]+}")
 	@Produces(MediaType.APPLICATION_XML)
-	public MetaParameter load_metaparameter(@PathParam("metaparameter_id")	int metaparameter_id) throws SPECCHIOFactoryException {
+	public MetaParameter load_metaparameter(@PathParam("metaparameter_id")	int metaparameter_id) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -414,7 +414,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("get_taxonomy_root/{attribute_id: [0-9]+}")
 	@Produces(MediaType.APPLICATION_XML)
-	public TaxonomyNodeObject get_taxonomy_root(@PathParam("attribute_id")	int attribute_id) throws SPECCHIOFactoryException {
+	public TaxonomyNodeObject get_taxonomy_root(@PathParam("attribute_id")	int attribute_id) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -438,7 +438,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("get_taxonomy/{attribute_id: [0-9]+}")
 	@Produces(MediaType.APPLICATION_XML)
-	public Taxonomy get_taxonomy(@PathParam("attribute_id")	int attribute_id) throws SPECCHIOFactoryException {
+	public Taxonomy get_taxonomy(@PathParam("attribute_id")	int attribute_id) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -466,7 +466,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("get_taxonomy_object/{taxonomy_id: [0-9]+}")
 	@Produces(MediaType.APPLICATION_XML)
-	public TaxonomyNodeObject get_taxonomy_object(@PathParam("taxonomy_id")	int taxonomy_id) throws SPECCHIOFactoryException {
+	public TaxonomyNodeObject get_taxonomy_object(@PathParam("taxonomy_id")	int taxonomy_id) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -494,7 +494,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("getChildrenOfTaxonomyNode")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public TaxonomyNodeObject[] getChildrenOfTaxonomyNode(TaxonomyNodeObject parent) throws SPECCHIOFactoryException {
+	public TaxonomyNodeObject[] getChildrenOfTaxonomyNode(TaxonomyNodeObject parent) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -519,7 +519,7 @@ public class MetadataService extends SPECCHIOService {
 	@GET
 	@Path("get_measurement_unit_from_coding/{coding: [0-9]+}")
 	@Produces(MediaType.APPLICATION_XML)
-	public MeasurementUnit get_measurement_unit_from_coding(@PathParam("coding") int coding) throws SPECCHIOFactoryException {
+	public MeasurementUnit get_measurement_unit_from_coding(@PathParam("coding") int coding) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		MeasurementUnit mu = factory.getDataCache().get_measurement_unit(coding);
@@ -538,7 +538,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("getInstrumentIds")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public XmlInteger[] getInstrumentIds(MetadataSelectionDescriptor msd) throws SPECCHIOFactoryException {
+	public XmlInteger[] getInstrumentIds(MetadataSelectionDescriptor msd) {
 
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
@@ -564,12 +564,12 @@ public class MetadataService extends SPECCHIOService {
 	@Path("remove")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public XmlInteger remove(MetadataUpdateDescriptor update_d) throws SPECCHIOFactoryException {
+	public XmlInteger remove(MetadataUpdateDescriptor update_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
-		Integer[] ids = update_d.getIds();
-		if (ids != null && ids.length > 0) {
+		ArrayList<Integer> ids = update_d.getIds();
+		if (ids != null && ids.size() > 0) {
 			// delete metadata from selected spectra
 			factory.removeMetadata(update_d.getMetaParameter(), ids);
 		} else {
@@ -597,12 +597,12 @@ public class MetadataService extends SPECCHIOService {
 	@Path("remove_metaparameters_of_given_attribute")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public XmlInteger remove_metaparameters_of_given_attribute(MetadataUpdateDescriptor update_d) throws SPECCHIOFactoryException {
+	public XmlInteger remove_metaparameters_of_given_attribute(MetadataUpdateDescriptor update_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 
 		// delete metadata from selected spectra
-		factory.removeMetadata(update_d.getMetaParameter().getAttributeId(), update_d.getIdsAsList());
+		factory.removeMetadata(update_d.getLevel(), update_d.getMetaParameter().getAttributeId(), update_d.getIds());
 
 		
 		factory.dispose();
@@ -625,7 +625,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("units")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public Units units(attribute attr) throws SPECCHIOFactoryException {
+	public Units units(attribute attr) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		Units u = factory.getAttributeUnits(attr);
@@ -650,15 +650,15 @@ public class MetadataService extends SPECCHIOService {
 	@Path("update")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public XmlInteger update(MetadataUpdateDescriptor update_d) throws SPECCHIOFactoryException {
+	public XmlInteger update(MetadataUpdateDescriptor update_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
 		int eavId = 0;
 		if (update_d.hasOldMetaParameter()) {
-			eavId = factory.updateMetadataWithNewId(update_d.getMetaParameter(), update_d.getIds());
+			eavId = factory.updateMetadataWithNewId(update_d.getMetaParameter(), (ArrayList<Integer>) update_d.getIds());
 		} else {
-			eavId = factory.updateMetadata(update_d.getMetaParameter(), update_d.getIds());
+			eavId = factory.updateMetadata(update_d.getMetaParameter(), (ArrayList<Integer>) update_d.getIds());
 		}
 		
 		factory.dispose();
@@ -681,7 +681,7 @@ public class MetadataService extends SPECCHIOService {
 	@Path("update_annotation")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public XmlInteger update_annotation(MetadataUpdateDescriptor update_d) throws SPECCHIOFactoryException {
+	public XmlInteger update_annotation(MetadataUpdateDescriptor update_d) {
 		
 		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
 		
