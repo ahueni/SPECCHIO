@@ -15,7 +15,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.ListIterator;
 import java.util.Scanner;
 
 import javax.swing.JButton;
@@ -28,8 +27,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
@@ -37,7 +34,8 @@ import javax.swing.event.TreeSelectionListener;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.metadata.MDE_Controller;
-import ch.specchio.metadata.MDE_Form;
+import ch.specchio.metadata.MDE_Hierarchy_Controller;
+import ch.specchio.metadata.MDE_Spectrum_Controller;
 import ch.specchio.metadata.MD_ChangeListener;
 import ch.specchio.metadata.MD_Field;
 import ch.specchio.proc_modules.VisualisationSelectionDialog;
@@ -47,29 +45,27 @@ import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaSpatialGeometry;
-import ch.specchio.types.MetaTaxonomy;
 import ch.specchio.types.Point2D;
 
-public class MetaDataEditorView extends MetaDataEditorBase implements ListSelectionListener, MD_ChangeListener, TreeSelectionListener {
+public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeListener, TreeSelectionListener {
 	
-	MDE_Controller mdec;
+	MDE_Spectrum_Controller mdec_s;
+	MDE_Hierarchy_Controller mdec_h;
+	ArrayList<MDE_Controller> MDE_Controllers;
 	JTabbedPane metadata_tabs;
 	CampaignMetadataPanel campaign_panel;
-	SpectrumMetadataPanel metadata_panel;
+	HierarchyMetadataPanel hierarchy_panel;
+	SpectrumMetadataPanel spectrum_panel;
 	SpectrumMetadataCategoryList category_list;
-	int metadata_tab_index;
+	int spectrum_tab_index;
+	int hierarchy_tab_index;
 	int campaign_tab_index;
-	MDE_Form form;
 	ArrayList<JPanel> category_panels;
 	GridBagConstraints constraints;
 	GridBagConstraints category_container_constraints;
 	JButton update, reset;
 	Boolean update_reset_state = false;
 	
-	ArrayList<MD_Field> changed_fields = new ArrayList<MD_Field>();
-	ArrayList<MD_Field> removed_fields = new ArrayList<MD_Field>();
-	ArrayList<MD_Field> added_fields = new ArrayList<MD_Field>();
-	ArrayList<MD_Field> changed_annotations = new ArrayList<MD_Field>();
 	private JCheckBox conflict_detection_checkbox;
 
 	String measurement_support = "Compute measurement support";
@@ -80,12 +76,16 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	private ArrayList<MD_Field> shared_fields;
 	private int shared_field_opt;
 
-	public MetaDataEditorView() throws SPECCHIOClientException {
+	public MetaDataEditorView(JFrame jFrame) throws SPECCHIOClientException {
 		super("Metadata Editor V3");
 		
-		// set up controller
-		mdec = new MDE_Controller(specchio_client, this);
-		form = mdec.getForm();
+		// set up controllers
+		mdec_s = new MDE_Spectrum_Controller(specchio_client, this);		
+		mdec_h = new MDE_Hierarchy_Controller(specchio_client, this);
+		
+		MDE_Controllers = new ArrayList<MDE_Controller>();
+		MDE_Controllers.add(mdec_s);
+		MDE_Controllers.add(mdec_h);
 		
 		// create menu
 		JMenu menu;
@@ -133,10 +133,14 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	    
 	    menuItem = new JMenuItem(VisualisationSelectionDialog.sampling_points_plot);
 	    menuItem.addActionListener(this);
+	    menuItem.setEnabled(false);
+	    menuItem.setToolTipText("Disabled - this feature will reappear in future versions");	    
 	    menu.add(menuItem);	
 	    
 	    menuItem = new JMenuItem(VisualisationSelectionDialog.gonio_hem_expl);
 	    menuItem.addActionListener(this);
+	    menuItem.setEnabled(false);
+	    menuItem.setToolTipText("Disabled - this feature will reappear in future versions");	    
 	    menu.add(menuItem);		    
 	    
 	    menuBar.add(menu);		
@@ -144,12 +148,11 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		this.setJMenuBar(menuBar);
 		
 		// create panels
-		metadata_panel = new SpectrumMetadataPanel(this, specchio_client);
+		spectrum_panel = new SpectrumMetadataPanel(this, specchio_client, mdec_s);
+		hierarchy_panel  = new HierarchyMetadataPanel(this, specchio_client, mdec_h);
 		campaign_panel = new CampaignMetadataPanel(this, specchio_client);
-		metadata_panel.addMetadataChangeListener(this);
-		
-		category_list = new SpectrumMetadataCategoryList(mdec.getFormFactory());
-		category_list.addListSelectionListener(this);
+		spectrum_panel.addMetadataChangeListener(this);
+		hierarchy_panel.addMetadataChangeListener(this);		
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
@@ -165,22 +168,16 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			
 		// set border layout for this dialog
 		setLayout(new BorderLayout());
-		this.setLayout(new BorderLayout());
 			
 		// create scroll panes to hold metadata and category panel
 		JScrollPane campaign_scroll_pane = new JScrollPane();
 		campaign_scroll_pane.getViewport().add(campaign_panel);
 		campaign_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
-		JScrollPane metadata_scroll_pane = new JScrollPane();
-		metadata_scroll_pane.getViewport().add(metadata_panel);
-		metadata_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
-					
-		JScrollPane category_scroll_pane = new JScrollPane();
-		category_scroll_pane.getViewport().add(category_list);
-		category_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
+		JScrollPane hierarchy_scroll_pane = new JScrollPane();
+		hierarchy_scroll_pane.getViewport().add(hierarchy_panel);
+		hierarchy_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);		
 			
 		JPanel control_panel = new JPanel();
-		//GridbagLayouter control_panel_l = new GridbagLayouter(control_panel);	
 			
 		// create tabbed pane
 		metadata_tabs = new JTabbedPane();
@@ -188,8 +185,10 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		int tab = 0;
 		metadata_tabs.addTab("Campaign", campaign_scroll_pane);
 		campaign_tab_index = tab++;
-		metadata_tabs.addTab("Metadata", metadata_scroll_pane);
-		metadata_tab_index = tab++;
+		metadata_tabs.addTab("Hierarchy", hierarchy_scroll_pane);
+		hierarchy_tab_index = tab++;		
+		metadata_tabs.addTab("Spectrum", spectrum_panel);
+		spectrum_tab_index = tab++;
 			
 		// create browser and add to control panel			
 		sdb = new SpectralDataBrowser(specchio_client, true);
@@ -204,13 +203,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 		control_panel.setLayout(new BorderLayout());
 		control_panel.add("Center", sdb);
-					
-		//JPanel sdb_panel = new JPanel();
-		//sdb_panel.add(sdb);
-//		constraints.gridy = 0;
-//		constraints.gridx = 0;
-//		constraints.gridwidth = 2;
-//		control_panel_l.insertComponent(sdb, constraints);
+
 
 		// add tree listener
 		sdb.tree.addTreeSelectionListener(this);
@@ -243,15 +236,11 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		
 		add("West", new JScrollPane(control_panel));
 		add("Center", metadata_tabs);
-		add("East", category_scroll_pane);
 		pack();
 		
-
+		setLocationRelativeTo(jFrame);
 		
 		setVisible(true);
-		
-		
-		
 		
 	}
 
@@ -266,7 +255,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		constraints.gridy = 0;
 		
 		// set up campaign panel
-		Campaign campaign = mdec.getCampaign();
+		Campaign campaign = mdec_s.getCampaign();
 		if (campaign != null) {
 			campaign_panel.setCampaign(campaign);
 		} else {
@@ -275,50 +264,54 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		campaign_panel.revalidate();
 		campaign_panel.repaint();
 		
-		if(!manual_interaction && form != null)
-		{
-
-			MetaTaxonomy ap_domain = (MetaTaxonomy) form.getEavParameterFromContainer("Application Domain", "General");
-
-			if(ap_domain != null)
-			{
-				// control of application domain has moved to MDE_Controller
-
-//				// update the categories according to the application domain
-//				ArrayList<Integer> selected_categories = null;
-//				Long taxonomy_id =  (Long) ap_domain.getValue();
+		spectrum_panel.updateForm();
+		hierarchy_panel.updateForm();
+		
+		
+//		if(!manual_interaction && form != null)
+//		{
 //
+//			MetaTaxonomy ap_domain = (MetaTaxonomy) form.getEavParameterFromContainer("Application Domain", "General");
 //
-//				selected_categories = specchio_client.getMetadataCategoriesForApplicationDomain(taxonomy_id.intValue());
-//				if(selected_categories.size()>0)
-//				{
-//					category_list.setSelected(selected_categories);
-//					TaxonomyNodeObject tmp = specchio_client.getTaxonomyNode(taxonomy_id.intValue());
-//					category_list.setApplicationDomain(tmp.getName());
-//				}
-//				else
+//			if(ap_domain != null)
+//			{
+//				// control of application domain has moved to MDE_Controller
+//
+////				// update the categories according to the application domain
+////				ArrayList<Integer> selected_categories = null;
+////				Long taxonomy_id =  (Long) ap_domain.getValue();
+////
+////
+////				selected_categories = specchio_client.getMetadataCategoriesForApplicationDomain(taxonomy_id.intValue());
+////				if(selected_categories.size()>0)
+////				{
+////					category_list.setSelected(selected_categories);
+////					TaxonomyNodeObject tmp = specchio_client.getTaxonomyNode(taxonomy_id.intValue());
+////					category_list.setApplicationDomain(tmp.getName());
+////				}
+////				else
+////				{
+////					category_list.setAllSelected(true);
+////					category_list.setApplicationDomain(null);
+////				}
+//			}
+//			else
+//			{
+//				// enable all categories
+//				if(category_list.isApplicationDomainEnabled())
 //				{
 //					category_list.setAllSelected(true);
 //					category_list.setApplicationDomain(null);
+//					mdec_s.set_form_descriptor(category_list.getFormDescriptor(), false);
 //				}
-			}
-			else
-			{
-				// enable all categories
-				if(category_list.isApplicationDomainEnabled())
-				{
-					category_list.setAllSelected(true);
-					category_list.setApplicationDomain(null);
-					mdec.set_form_descriptor(category_list.getFormDescriptor(), false);
-				}
-			}
-		}
+//			}
+//		}
+//		
 		
-		
-		form = mdec.getForm();	
-		
-		// set up metadata panel
-		metadata_panel.setForm(form);
+//		form = mdec_s.getForm();	
+//		
+//		// set up metadata panel
+//		spectrum_panel.setForm(form);
 		
 		
 		
@@ -328,10 +321,10 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	private void updateCampaign() throws SPECCHIOClientException
 	{
 		// update the campaign on the server
-		mdec.updateCampaign(campaign_panel.getCampaign());
+		mdec_s.updateCampaign(campaign_panel.getCampaign());
 		
 		// reset the "changed" state of the campaign panel
-		campaign_panel.setCampaign(mdec.getCampaign());
+		campaign_panel.setCampaign(mdec_s.getCampaign());
 		
 		// update button states
 		setUpdateResetButtonsState();
@@ -342,66 +335,69 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	private void updateChangedFields() throws SPECCHIOClientException
 	{
 		
-		// see if any of the metadata to be changed is shared between record
-		shared_fields = new ArrayList<MD_Field>();
-		for (MD_Field field : changed_fields) {
-			if (field.getNoOfSharingRecords() != 1 && field.getNoOfSharingRecords() != field.getSelectedRecords()) {
-				shared_fields.add(field);
+		for (MDE_Controller mdec : MDE_Controllers)
+		{
+
+			// see if any of the metadata to be changed is shared between record
+			shared_fields = new ArrayList<MD_Field>();
+			for (MD_Field field : mdec.getChanged_fields()) {
+				if (field.getNoOfSharingRecords() != 1 && field.getNoOfSharingRecords() != field.getSelectedRecords()) {
+					shared_fields.add(field);
+				}
 			}
-		}
-		
-		shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
-		if (shared_fields.size() > 0) {
-			// ask the user what to do with the shared fields
-			SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.UPDATE, shared_fields);
-			shared_decision_dialog.setVisible(true);
-			shared_field_opt = shared_decision_dialog.getSelectedAction();
-		}
-		
-		if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
-			
-			// Exception handling from a thread and GUI update of dialog box using swing worker
-			final UpdateThread thread = new UpdateThread(this);
-			
-			Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
-				
-				public void uncaughtException(Thread th, Throwable ex) {
 
-					final SPECCHIOClientException e = (SPECCHIOClientException) ex;
-					
-					Runnable r = new Runnable() {
+			shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
+			if (shared_fields.size() > 0) {
+				// ask the user what to do with the shared fields
+				SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.UPDATE, shared_fields);
+				shared_decision_dialog.setVisible(true);
+				shared_field_opt = shared_decision_dialog.getSelectedAction();
+			}
 
-						@Override
-						public void run() {
-							ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Error");
-							error.init(e.getUserMessage(),e);							
-							error.setVisible(true);	
-						}
+			if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
+
+				// Exception handling from a thread and GUI update of dialog box using swing worker
+				final UpdateThread thread = new UpdateThread(this, mdec);
+
+				Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+
+					public void uncaughtException(Thread th, Throwable ex) {
+
+						final SPECCHIOClientException e = (SPECCHIOClientException) ex;
+
+						Runnable r = new Runnable() {
+
+							@Override
+							public void run() {
+								ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Error");
+								error.init(e.getUserMessage(),e);							
+								error.setVisible(true);	
+							}
+
+						};
+
+						javax.swing.SwingUtilities.invokeLater(r) ; // execute r's run method on the swing thread
+
 
 					};
 
-					javax.swing.SwingUtilities.invokeLater(r) ; // execute r's run method on the swing thread
-					
-					
-				};
+				};					
 
-			};					
 
-			    	
 
-			
-			
-			thread.setUncaughtExceptionHandler(h);
-			thread.start();
-			try {
-				thread.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+
+				thread.setUncaughtExceptionHandler(h);
+				thread.start();
+				try {
+					thread.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 			}
-			
 		}
-		
 		// update button states
 		setUpdateResetButtonsState();
 		
@@ -409,14 +405,18 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	
 	
 	private void updateChangedAnnotations() throws SPECCHIOWebClientException {
+		for (MDE_Controller mdec : MDE_Controllers)
+		{
 		
-		for (MD_Field field : changed_annotations) {
+			for (MD_Field field : mdec.getChanged_annotations()) {
+			
+				mdec.updateAnnotation(field);
+			}
+			
+			// reset changed lists
+			mdec.getChanged_annotations().clear();		
 		
-			mdec.updateAnnotation(field);
 		}
-		
-		// reset changed lists
-		changed_annotations.clear();		
 		
 		// update button states
 		setUpdateResetButtonsState();		
@@ -425,53 +425,57 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	// check all fields for multiple updates and ask user if it should be applied
 	private void removeFields() throws SPECCHIOClientException
 	{
-		
-		// see if any of the metadata to be changed is shared between record
-		ArrayList<MD_Field> shared_fields = new ArrayList<MD_Field>();
-		for (MD_Field field : removed_fields) {
-			if (field.getNoOfSharingRecords() > 1) {
-				shared_fields.add(field);
+		for (MDE_Controller mdec : MDE_Controllers)
+		{
+
+			// see if any of the metadata to be changed is shared between record
+			ArrayList<MD_Field> shared_fields = new ArrayList<MD_Field>();
+			for (MD_Field field : mdec.getRemoved_fields()) {
+				if (field.getNoOfSharingRecords() > 1) {
+					shared_fields.add(field);
+				}
 			}
-		}
-		
-		int shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
-		if (shared_fields.size() > 0) {
-			// ask the user what to do with the shared fields
-			SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.DELETE, shared_fields);
-			shared_decision_dialog.setVisible(true);
-			shared_field_opt = shared_decision_dialog.getSelectedAction();
-		}
-		
-		
-		if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
-			for (MD_Field field : removed_fields) {
-				
-				if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() == 1)
-				{
-					mdec.remove(field);
-				}
-				else if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() > 1)
-				{
-					// multiple metaparameters need removing (different parameters per spectrums)
-					mdec.remove_all_mps_of_attribute(field);				
-				}
-				else
-				{
-					if(shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL)
+
+			int shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
+			if (shared_fields.size() > 0) {
+				// ask the user what to do with the shared fields
+				SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.DELETE, shared_fields);
+				shared_decision_dialog.setVisible(true);
+				shared_field_opt = shared_decision_dialog.getSelectedAction();
+			}
+
+
+			if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
+				for (MD_Field field : mdec.getRemoved_fields()) {
+
+					if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() == 1)
 					{
 						mdec.remove(field);
 					}
-					else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION)
+					else if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() > 1)
 					{
-						mdec.remove_selection(field);
+						// multiple metaparameters need removing (different parameters per spectrums)
+						mdec.remove_all_mps_of_attribute(field);				
 					}
-					
+					else
+					{
+						if(shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL)
+						{
+							mdec.remove(field);
+						}
+						else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION)
+						{
+							mdec.remove_selection(field);
+						}
+
+					}
+
 				}
-				
-			}
-			
-			// reset the list of deleted fields
-			removed_fields.clear();
+
+				// reset the list of deleted fields
+				mdec.getRemoved_fields().clear();
+
+		}
 			
 			// reset the redundancy buffer to avoid linking to deleted parameters.
 			// ideally, this should only include the reset for the fields that were removed and not the whole buffer ...
@@ -618,7 +622,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			try {
 				if (metadata_tabs.getSelectedIndex() == campaign_tab_index) {
 					updateCampaign();
-				} else if (metadata_tabs.getSelectedIndex() == metadata_tab_index) {
+				} else if (metadata_tabs.getSelectedIndex() >= hierarchy_tab_index) {
 					updateChangedFields();
 					updateChangedAnnotations();
 					removeFields();
@@ -636,25 +640,18 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			if (metadata_tabs.getSelectedIndex() == campaign_tab_index) {
 				
 				// reset the campaign panel with the original campaign object
-				campaign_panel.setCampaign(mdec.getCampaign());
+				campaign_panel.setCampaign(mdec_s.getCampaign());
 			
-			} else if (metadata_tabs.getSelectedIndex() == metadata_tab_index) {
+			} else if (metadata_tabs.getSelectedIndex() >= hierarchy_tab_index) {
 				
 				try {
 			
-					// remove all new fields from the form
-					ListIterator<MD_Field> li = added_fields.listIterator();
-					
-					while(li.hasNext())
-					{
-						MD_Field field = li.next();
-						form.removeField(field);
+					for (MDE_Controller mdec : MDE_Controllers)
+					{					
+						// remove all new fields from the form
+						mdec.remove_all_added_fields();
+						mdec.clear_changed_field_lists();					
 					}
-					
-					changed_fields.clear();
-					removed_fields.clear();
-					added_fields.clear();
-					changed_annotations.clear();
 					
 					buildGUI(false);
 					
@@ -672,7 +669,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		}
 		else if(c == this.conflict_detection_checkbox)
 		{
-			mdec.setDo_conflict_detection(conflict_detection_checkbox.isSelected());			
+			mdec_s.setDo_conflict_detection(conflict_detection_checkbox.isSelected());			
 		}
 		
 	}
@@ -682,7 +679,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 
 	private void switch_ew_lon() {
 		
-		ArrayList<Integer> ids_with_lon = specchio_client.filterSpectrumIdsByHavingAttribute(mdec.getIds(), "Longitude");
+		ArrayList<Integer> ids_with_lon = specchio_client.filterSpectrumIdsByHavingAttribute(mdec_s.getIds(), "Longitude");
 		
 		if(ids_with_lon.size() > 0)
 		{
@@ -729,7 +726,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		while(attr_it.hasNext())
 		{
 			String attr_name = attr_it.next();
-			ids_with_lon = specchio_client.filterSpectrumIdsByHavingAttribute(mdec.getIds(),attr_name);
+			ids_with_lon = specchio_client.filterSpectrumIdsByHavingAttribute(mdec_s.getIds(),attr_name);
 			
 			if(ids_with_lon.size() > 0)
 			{
@@ -778,7 +775,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 
 	private void augment_altitude() {
 		
-		ArrayList<Integer> ids_with_lat = specchio_client.filterSpectrumIdsByHavingAttribute(mdec.getIds(), "Latitude");
+		ArrayList<Integer> ids_with_lat = specchio_client.filterSpectrumIdsByHavingAttribute(mdec_s.getIds(), "Latitude");
 		ArrayList<Integer> ids_with_lat_lon = specchio_client.filterSpectrumIdsByHavingAttribute(ids_with_lat, "Longitude");
 		
 		if(ids_with_lat_lon.size() > 0)
@@ -869,7 +866,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		// sensor zenith
 		// sensor fov
 		
-		ArrayList<Integer> ids_with_dist = specchio_client.filterSpectrumIdsByHavingAttribute(mdec.getIds(), "Sensor Distance");
+		ArrayList<Integer> ids_with_dist = specchio_client.filterSpectrumIdsByHavingAttribute(mdec_s.getIds(), "Sensor Distance");
 		ArrayList<Integer> ids_with_dist_and_zenith = specchio_client.filterSpectrumIdsByHavingAttribute(ids_with_dist, "Sensor Zenith");
 		ArrayList<Integer> ids_with_dist_and_zenith_and_fov = specchio_client.filterSpectrumIdsByHavingAttribute(ids_with_dist_and_zenith, "FOV");
 		
@@ -1006,9 +1003,9 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			
 			String message = "Measurement support of " + Integer.toString(ids_with_dist_and_zenith_and_fov.size()) + " spectra successfully computed.";
 			
-			if(ids_with_dist_and_zenith_and_fov.size() != mdec.getIds().size())
+			if(ids_with_dist_and_zenith_and_fov.size() != mdec_s.getIds().size())
 			{
-				message = message + "\nMeasurement support of " + (mdec.getIds().size() - ids_with_dist_and_zenith_and_fov.size()) + " spectra could not be computed due to missing metadata.";
+				message = message + "\nMeasurement support of " + (mdec_s.getIds().size() - ids_with_dist_and_zenith_and_fov.size()) + " spectra could not be computed due to missing metadata.";
 			}
 
 			JOptionPane.showMessageDialog(this, message, "Info", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
@@ -1026,23 +1023,23 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		return rounded;
 	}	
 
-	public void valueChanged(ListSelectionEvent arg0) {
-		
-		startOperation();
-		try {
-			mdec.set_form_descriptor(category_list.getFormDescriptor(), true);
-			form = mdec.getForm();
-			
-			buildGUI(true);
-		}
-  		catch (SPECCHIOClientException ex) {
-			ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
-			error.setVisible(true);
-
-	    }
-		endOperation();
-		
-	}
+//	public void valueChanged(ListSelectionEvent arg0) {
+//		
+//		startOperation();
+//		try {
+//			mdec_s.set_form_descriptor(category_list.getFormDescriptor(), true);
+//			form = mdec_s.getForm();
+//			
+//			buildGUI(true);
+//		}
+//  		catch (SPECCHIOClientException ex) {
+//			ErrorDialog error = new ErrorDialog(this, "Error", ex.getUserMessage(), ex);
+//			error.setVisible(true);
+//
+//	    }
+//		endOperation();
+//		
+//	}
 
 	public void valueChanged(TreeSelectionEvent arg0) {
 		
@@ -1057,17 +1054,22 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 		startOperation();
 		try {
 			ArrayList<Integer> spectrum_ids = sdb.get_selected_spectrum_ids();
+			ArrayList<Integer> hierarchy_ids = sdb.get_selected_hierarchy_ids();
 			Campaign campaign = sdb.get_selected_campaign();
 	
 			ids_matching_query = spectrum_ids;
 			sorted_ids_ready = true;
-			mdec.set_campaign(campaign);
-			mdec.set_spectrum_ids(spectrum_ids);		
-			form = mdec.getForm();
-	
-			changed_fields.clear();
-			removed_fields.clear();
-			added_fields.clear();
+			mdec_s.set_campaign(campaign);
+			mdec_h.set_hierarchy_ids(hierarchy_ids);
+			mdec_s.set_spectrum_ids(spectrum_ids);		
+			mdec_s.set_hierarchy_ids(hierarchy_ids);
+			mdec_s.setOnlyHierarchiesAreSelected(sdb.onlyHierarchiesAreSelected());
+			
+			for (MDE_Controller mdec : MDE_Controllers)
+			{
+				mdec.clear_changed_field_lists();
+			}
+			
 			campaign_panel.setCampaign(campaign);
 			this.setUpdateResetButtonsState();		
 				
@@ -1093,8 +1095,8 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	{
 		if (metadata_tabs.getSelectedIndex() == campaign_tab_index) {
 			update_reset_state = campaign_panel.hasUnsavedChanges();
-		} else if (metadata_tabs.getSelectedIndex() == metadata_tab_index) {
-			update_reset_state = this.changed_fields.size()>0 || this.removed_fields.size()>0 || this.changed_annotations.size()>0;
+		} else if (metadata_tabs.getSelectedIndex() >= hierarchy_tab_index) {
+			update_reset_state = mdec_s.hasChanges() || mdec_h.hasChanges();
 		}
 		
 		update.setEnabled(update_reset_state);
@@ -1112,47 +1114,25 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	
 	public void metadataFieldAdded(MD_Field field)
 	{
-		this.added_fields.add(field);
 		setUpdateResetButtonsState();
 	}
 	
 	
 	public void metadataFieldChanged(MD_Field field, Object new_value)
 	{	
-		field.setNewValue(new_value);
-		
-		if(!changed_fields.contains(field))
-		{
-			changed_fields.add(field);
-		}	
-		
 		setUpdateResetButtonsState();
 	}
 	
 	public void metadataFieldRemoved(MD_Field field)
 	{
-				
-		if(!removed_fields.contains(field))
-		{
-			removed_fields.add(field);
-		}	
-		
 		setUpdateResetButtonsState();
 	}
 	
 	
 	@Override
-	public void metadataFieldAnnotationChanged(MD_Field field, String annotation) {
-		
-		field.setAnnotation(annotation);
-		
-		if(!changed_annotations.contains(field))
-		{
-			changed_annotations.add(field);
-		}	
-		
-		setUpdateResetButtonsState();
-		
+	public void metadataFieldAnnotationChanged(MD_Field field, String annotation) 
+	{	
+		setUpdateResetButtonsState();		
 	}	
 	
 	
@@ -1183,17 +1163,18 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 	private class UpdateThread extends Thread {
 		
 		MetaDataEditorView mde;
+		MDE_Controller mdec;
 		
 		/**
 		 * Constructor.
 		 * 
 		 * @param spectrumIdsIn	the list of spectrum identifiers to be processed
 		 */
-		public UpdateThread(MetaDataEditorView mde) {
+		public UpdateThread(MetaDataEditorView mde, MDE_Controller mdec) {
 						
 			super();
 			this.mde = mde;
-			
+			this.mdec = mdec;
 		}
 		
 		
@@ -1213,15 +1194,15 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			int progress = 0;
 			
 			// perform updates
-			for (MD_Field field : mde.changed_fields) {
+			for (MD_Field field : mdec.getChanged_fields()) {
 				pr.set_component(field.getLabel());
 				
 				if (shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL) {
-						mdec.update(field);
+					mdec.update(field);
 				} else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION) {
 					mdec.update_selection(field);
 				}
-				pr.set_progress(++progress/changed_fields.size()*100);
+				pr.set_progress(++progress/mdec.getChanged_fields().size()*100);
 			}
 			
 			pr.setVisible(false);
@@ -1229,8 +1210,9 @@ public class MetaDataEditorView extends MetaDataEditorBase implements ListSelect
 			sdb.tree.addTreeSelectionListener(mde); 
 			
 			// reset changed lists
-			mde.changed_fields.clear();
-			mde.added_fields.clear();			
+			mdec.getChanged_fields().clear();
+			mdec.getAdded_fields().clear();	
+			
 			
 		}
 		
