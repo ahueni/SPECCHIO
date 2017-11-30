@@ -88,7 +88,56 @@ public  class MetaSpatialGeometry extends MetaParameter {
 		// TODO Auto-generated method stub
 		return true;
 	}
+	
+	
+	public List<Point2D> getCoords()
+	{
+		@SuppressWarnings("unchecked")
+		ArrayListWrapper<Point2D> value = (ArrayListWrapper<Point2D>) this.getValue();	
+		return value.getList();
+	}
 
+	public boolean hasEqualValue(MetaParameter mp)
+	{
+		
+		// check that class matches: must of of type Geometry
+		if(mp instanceof MetaSpatialGeometry)
+		{
+			List<Point2D> mp_coords = ((MetaSpatialGeometry) mp).getCoords();
+			
+			if(this.getCoords().size() == mp_coords.size())
+			{
+				ListIterator<Point2D> iter = this.getCoords().listIterator();
+				ListIterator<Point2D> mp_iter = mp_coords.listIterator();
+				
+				while(iter.hasNext())
+				{			
+					Point2D this_p = iter.next();
+					Point2D mp_p = mp_iter.next();
+					
+					if(this_p.getX() != mp_p.getX() || this_p.getY() != mp_p.getY())
+					{
+						return false;
+					}
+
+				}
+				
+				// coordinates match
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+
+	}	
+	
+	
 	
 	public void setValue(ArrayList<Point2D> coords) throws MetaParameterFormatException {
 
@@ -114,10 +163,7 @@ public  class MetaSpatialGeometry extends MetaParameter {
 	public String valueAsString() {
 		
 		String spatial_string = "";
-		@SuppressWarnings("unchecked")
-		ArrayListWrapper<Point2D> value = (ArrayListWrapper<Point2D>) this.getValue();
-		List<Point2D> coords = value.getList();
-		
+		List<Point2D> coords = getCoords();		
 		
 		ListIterator<Point2D> iter = coords.listIterator();
 		while(iter.hasNext())
@@ -131,6 +177,5 @@ public  class MetaSpatialGeometry extends MetaParameter {
 	}
 	
 
-	
 
 }
