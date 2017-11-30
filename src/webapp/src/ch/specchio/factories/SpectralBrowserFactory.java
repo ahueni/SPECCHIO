@@ -306,7 +306,7 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 						ms_d.setIds(ids);
 						ms_d.setAttribute_id(getAttributes().get_attribute_id("File Name"));
 						
-						List<MetaParameter> mp_list = factory.getMetaParameters(ms_d.getIds(), ms_d.getAttribute_id(), false);
+						List<MetaParameter> mp_list = factory.getMetaParameters(MetaParameter.SPECTRUM_LEVEL, ms_d.getIds(), ms_d.getAttribute_id(), false);
 						factory.dispose();
 						
 						for(int i=0;i<ids.size();i++)
