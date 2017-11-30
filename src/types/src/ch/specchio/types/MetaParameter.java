@@ -12,6 +12,12 @@ import ch.specchio.jaxb.XmlMetaParameterValueAdapter;
 @XmlRootElement(name="meta_parameter")
 @XmlSeeAlso({MetaDate.class,MetaDocument.class,MetaFile.class,MetaImage.class,MetaMatrix.class,MetaSimple.class,MetaTaxonomy.class,MetaLink.class,MetaBoolean.class,MetaSpatialGeometry.class,MetaSpatialPoint.class,MetaSpatialPolygon.class,MetaSpatialPolyline.class})
 public abstract class MetaParameter {
+	
+	public static final int SPECTRUM_LEVEL = 0;
+	public static final int HIERARCHY_LEVEL = 1;
+	//public static final int HIERARCHY_INHERITANCE_LEVEL = 2;
+
+	private int level = SPECTRUM_LEVEL;
 
 	private String default_storage_field = null;
 	private Integer attribute_id = null;
@@ -172,6 +178,14 @@ public abstract class MetaParameter {
 		
 	}	
 	
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}	
+	
 	public void setValue(Object value) throws MetaParameterFormatException {
 		
 			this.value = value;
@@ -280,6 +294,9 @@ public abstract class MetaParameter {
 		 return mp;
 		 
 	}
+	
+	abstract public boolean hasEqualValue(MetaParameter mp);
+
 	
 	
 //	public static MetaParameter newInstance(String category_name, String category_value) throws MetaParameterFormatException
