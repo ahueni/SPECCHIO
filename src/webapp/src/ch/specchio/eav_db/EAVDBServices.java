@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.ListIterator;
 
@@ -19,6 +20,8 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import ch.specchio.factories.SPECCHIOFactoryException;
+import ch.specchio.types.EAVTableAndRelationsInfoStructure;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaSpatialGeometry;
@@ -37,9 +40,10 @@ public class EAVDBServices extends Thread {
 	//ArrayList<MetaParameter> known_metaparameters = new ArrayList<MetaParameter>();
 	private static Hashtable<String, ArrayList<MetaParameter>> known_metaparameters_hash = new Hashtable<String, ArrayList<MetaParameter>>();
 	
-	private String primary_x_eav_tablename = "frame_x_eav";
-	private String primary_x_eav_viewname = "frame_x_eav_view";
-	private String primary_id_name = "frame_id";
+//	private String primary_x_eav_tablename = "frame_x_eav";
+//	private String primary_x_eav_viewname = "frame_x_eav_view";
+//	private String primary_id_name = "frame_id";
+	EAVTableAndRelationsInfoStructure[] eav_table_infos;
 	private String eav_view_name = "eav"; //required for SPECCHIO as inserts work on the view
 	private boolean spatially_enabled= false;
 	
@@ -50,6 +54,7 @@ public class EAVDBServices extends Thread {
 		this.SQL = SQL;
 		this.ATR = ATR;
 		this.databaseUserName = databaseUserName;
+		eav_table_infos = new EAVTableAndRelationsInfoStructure[2];
 		
 		String query = "SELECT count(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = (select schema()) AND TABLE_NAME = 'eav' AND COLUMN_NAME = 'spatial_val'";
 		
@@ -417,16 +422,16 @@ public class EAVDBServices extends Thread {
 		
 	}
 	
-	public String get_primary_id_name() {
-		
-		return primary_id_name;
-		
+	public String get_primary_id_name(int metadata_level) {		
+		return this.eav_table_infos[metadata_level].primary_id_name;		
 	}
 	
-	public String get_primary_x_eav_tablename() {
-		
-		return primary_x_eav_tablename;
-		
+	public String get_primary_x_eav_viewname(int metadata_level) {		
+		return this.eav_table_infos[metadata_level].primary_x_eav_viewname;		
+	}	
+	
+	public String get_primary_x_eav_tablename(int metadata_level) {		
+		return this.eav_table_infos[metadata_level].primary_x_eav_tablename;
 	}
 	
 	synchronized public int get_campaign_id_for_eav(int eav_id)
@@ -461,6 +466,26 @@ public class EAVDBServices extends Thread {
 		}
 	}
 	
+	synchronized public int count_metaparameters(int metadata_level, ArrayList<Integer> primary_ids)
+	{
+		int count = 0;
+		try {
+			Statement stmt = SQL.createStatement();
+			String query = "select count(" + this.get_primary_id_name(metadata_level) + ") from " + this.get_primary_x_eav_tablename(metadata_level) + " where " + this.get_primary_id_name(metadata_level) + " in (" + SQL.conc_ids(primary_ids) + ")";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				count = rs.getInt(1);
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			ex.printStackTrace();
+		}		
+		return count;
+		
+	}
+	
 	
 	synchronized public MetaParameter reduce_redundancy(MetaParameter mp) throws SQLException {
 		
@@ -484,14 +509,19 @@ public class EAVDBServices extends Thread {
 		{
 			curr_mp = li.next();
 			
-			boolean equalValues = (mp.getValue() == null && curr_mp.getValue() == null) || (mp.getValue() != null && mp.getValue().equals(curr_mp.getValue()));
-			if(mp.getUnitId() == 0) // catches the case where the unit was not set by the user or program (it is later enforced as RAW during insert)
+			// attribute must be matching
+			if(mp.getAttributeId().equals(curr_mp.getAttributeId()))
 			{
-				matches = mp.getAttributeId().equals(curr_mp.getAttributeId()) && equalValues;
-			}
-			else
-			{
-				matches = mp.getAttributeId().equals(curr_mp.getAttributeId()) && mp.getUnitId().equals(curr_mp.getUnitId()) && equalValues;
+		
+				boolean equalValues = (mp.getValue() == null && curr_mp.getValue() == null) || (mp.getValue() != null && mp.hasEqualValue(curr_mp)); // mp.getValue().equals(curr_mp.getValue())
+				if(mp.getUnitId() == 0) // catches the case where the unit was not set by the user or program (it is later enforced as RAW during insert)
+				{
+					matches = equalValues;
+				}
+				else
+				{
+					matches = mp.getUnitId().equals(curr_mp.getUnitId()) && equalValues;
+				}
 			}
 
 		}
@@ -523,13 +553,226 @@ public class EAVDBServices extends Thread {
 		
 		stmt.close();
 	}
+	
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these hierarchies
+	 * 
+	 * @param ids		the identifier of the desired hierarchy
+	 * 
+	 * @return a list  of hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getParentHierarchyIds(ArrayList<Integer> ids)
+	{
+		ArrayList<Integer> out_ids = new ArrayList<Integer>();
+		
+		for(int id : ids)
+		{
+			out_ids.addAll(getParentHierarchyIds(id));
+		}
+		
+		return out_ids;
+	}
+	
+	
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these hierarchies
+	 * 
+	 * @param ids		the identifier of the desired hierarchy
+	 * 
+	 * @return a list  of hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public HashMap<Integer, ArrayList<Integer>> getGroupedParentHierarchyIds(ArrayList<Integer> ids)
+	{
+		HashMap<Integer, ArrayList<Integer>> hm = new HashMap<Integer, ArrayList<Integer>>();
+		
+		for(int id : ids)
+		{
+			hm.put(id, getParentHierarchyIds(id));
+		}
+		
+		return hm;
+	}	
 		
 	
-	public void set_primary_x_eav_tablename(String primary_x_eav_tablename, String primary_x_eav_viewname, String primary_id_name, String primary_table_name)
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above this hierarchy
+	 * 
+	 * @param hierarchy_id		the identifier of the desired hierarchy
+	 * 
+	 * @return a list  of hierarchy ids, sorted ascending
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getParentHierarchyIds(Integer hierarchy_id)
 	{
-		this.primary_x_eav_tablename = primary_x_eav_tablename;
-		this.primary_x_eav_viewname = primary_x_eav_viewname;
-		this.primary_id_name = primary_id_name;
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		int parent_id = 0;
+		try {
+			Statement stmt = SQL.createStatement();
+			do
+			{
+				String query = "select parent_level_id from hierarchy_level where hierarchy_level_id = " + hierarchy_id;
+				ResultSet rs = stmt.executeQuery(query);
+				while (rs.next()) {
+					parent_id = rs.getInt(1);
+					if(parent_id != 0)
+					{
+						ids.add(parent_id);
+						hierarchy_id = parent_id;
+					}
+				}
+				rs.close();
+			} while (parent_id != 0);			
+			
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			ex.printStackTrace();
+		}				
+		
+		return ids;
+	}
+
+
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above this spectrum
+	 * 
+	 * @param spectrum_id		the identifier of the desired spectrum
+	 * 
+	 * @return a list  of hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getHierarchyIds(Integer spectrum_id)
+	{
+		return getHierarchyIds(spectrum_id.toString());
+	}
+	
+	
+	/**
+	 * Get a hierarchy id, above this spectrum
+	 * 
+	 * @param spectrum_id		the identifiers of the desired spectrum
+	 * 
+	 * @return hierarchy id
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public Integer getDirectHierarchyId(Integer spectrum_id)
+	{
+		int id = 0;
+		try {
+			Statement stmt = SQL.createStatement();
+			String query = "select hierarchy_level_id from spectrum where spectrum_id = " + spectrum_id;
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				id = rs.getInt(1);
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			ex.printStackTrace();
+		}				
+		return id;
+	}		
+	
+	
+	/**
+	 * Get hierarchy ids, above above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ida
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getDirectHierarchyIds(ArrayList<Integer> spectrum_ids)
+	{
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		try {
+			Statement stmt = SQL.createStatement();
+			String query = "select distinct hierarchy_level_id from spectrum where spectrum_id in (" + SQL.conc_ids(spectrum_ids) + ")";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				ids.add(rs.getInt(1));
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			ex.printStackTrace();
+		}				
+		return ids;
+	}			
+	
+	
+	
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return a list  of hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getHierarchyIds(ArrayList<Integer> spectrum_ids)
+	{
+		return getHierarchyIds(SQL.conc_ids(spectrum_ids));
+	}	
+	
+	
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return a list  of hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	private ArrayList<Integer> getHierarchyIds(String spectrum_ids)
+	{
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		try {
+			Statement stmt = SQL.createStatement();
+			String query = "select distinct hierarchy_level_id from hierarchy_level_x_spectrum where spectrum_id in (" + spectrum_ids + ")";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				ids.add(rs.getInt(1));
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			ex.printStackTrace();
+		}				
+		
+		return ids;
+	}		
+		
+	
+	public void set_primary_x_eav_tablename(int metadata_level, String primary_x_eav_tablename, String primary_x_eav_viewname, String primary_id_name, String primary_table_name)
+	{
+		EAVTableAndRelationsInfoStructure info = new EAVTableAndRelationsInfoStructure();
+		
+		info.primary_x_eav_tablename = primary_x_eav_tablename;
+		info.primary_x_eav_viewname = primary_x_eav_viewname;
+		info.primary_id_name = primary_id_name;	
+		info.primary_table_name = primary_table_name;
+		
+		eav_table_infos[metadata_level] = info;
+
+	}
+	
+	public EAVTableAndRelationsInfoStructure getEAVTableAndRelationsInfoStructure(int metadata_level)
+	{
+		return eav_table_infos[metadata_level];
 	}
 	
 	public void set_eav_view_name(String eav_view_name)
@@ -542,37 +785,40 @@ public class EAVDBServices extends Thread {
 		return this.eav_view_name;
 	}
 	
-	synchronized public void insert_primary_x_eav(int frame_id, int eav_id)
+	synchronized public void insert_primary_x_eav(int metadata_level, ArrayList<Integer> primary_ids, int eav_id) throws SQLException
 	{
 		Integer[] eav_ids = new Integer[1];
 		eav_ids[0] = eav_id;
 		
-		insert_primary_x_eav(frame_id, eav_ids);
+		insert_primary_x_eav(metadata_level, primary_ids, eav_ids);
 	}
 	
-	synchronized public void insert_primary_x_eav(Integer[] frame_ids, int eav_id) throws SQLException
+	synchronized public void insert_primary_x_eav(int metadata_level, Integer primary_id, int eav_id) throws SQLException
 	{
 		Integer[] eav_ids = new Integer[1];
 		eav_ids[0] = eav_id;
 		
-		insert_primary_x_eav(frame_ids, eav_ids);
+		 ArrayList<Integer> primary_ids = new ArrayList<Integer>();
+		 primary_ids.add(primary_id);
+		
+		insert_primary_x_eav(metadata_level, primary_ids, eav_ids);
 	}
 	
-	synchronized public void insert_primary_x_eav(int frame_id, ArrayList<Integer> eav_ids) {
+	synchronized public void insert_primary_x_eav(int metadata_level, int primary_id, ArrayList<Integer> eav_ids) {
 		
-		insert_primary_x_eav(frame_id, eav_ids.toArray(new Integer[1]));
+		insert_primary_x_eav(metadata_level, primary_id, eav_ids.toArray(new Integer[1]));
 		
 	}
 	
 	
-	synchronized public void insert_primary_x_eav(int frame_id, Integer[] eav_ids)
+	synchronized public void insert_primary_x_eav(int metadata_level, int primary_id, Integer[] eav_ids)
 	{	
-		String query = "insert into " + primary_x_eav_viewname + " (" + primary_id_name + ", eav_id) values ";
+		String query = "insert into " + get_primary_x_eav_viewname(metadata_level) + " (" + get_primary_id_name(metadata_level) + ", eav_id) values ";
 		ArrayList<String> value_strings = new ArrayList<String>();
 		
 		// build multi insert string
 		for (int eav_id : eav_ids) {
-			value_strings.add("(" + String.valueOf(frame_id) + ", " + String.valueOf(eav_id) +")");
+			value_strings.add("(" + String.valueOf(primary_id) + ", " + String.valueOf(eav_id) +")");
 		}	
 		
 		// carry out the multi insert statement
@@ -592,14 +838,14 @@ public class EAVDBServices extends Thread {
 	}
 	
 	// this function expects that the eav_ids apply to each frame_id entry
-	synchronized public void insert_primary_x_eav(Integer[] frame_ids, Integer[] eav_ids) throws SQLException
+	synchronized public void insert_primary_x_eav(int metadata_level, ArrayList<Integer> primary_ids, Integer[] eav_ids) throws SQLException
 	{			
 
-		String query = "insert into " + primary_x_eav_viewname + " (" + primary_id_name + ", eav_id) values ";
+		String query = "insert into " + get_primary_x_eav_viewname(metadata_level) + " (" + get_primary_id_name(metadata_level) + ", eav_id) values ";
 		ArrayList<String> value_strings = new ArrayList<String>();
 		
 		// build multi insert string
-		for (int primary_id : frame_ids) {
+		for (int primary_id : primary_ids) {
 			for (int eav_id : eav_ids) {
 				value_strings.add("(" + String.valueOf(primary_id) + ", " + String.valueOf(eav_id) +")");
 			}	
@@ -712,18 +958,18 @@ public class EAVDBServices extends Thread {
 	
 	
 	// return all eav_ids of this frame
-	synchronized public ArrayList<Integer> get_eav_ids(int frame_id)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id)
 	{
-		return get_exclusive_eav_ids(frame_id, new ArrayList<Integer>());	
+		return get_exclusive_eav_ids(metadata_level, primary_id, new ArrayList<Integer>());	
 	}
 	
 	
-	synchronized public ArrayList<Integer> get_exclusive_eav_ids(Integer frame_id, ArrayList<Integer> exclusive_attribute_ids)
+	synchronized public ArrayList<Integer> get_exclusive_eav_ids(int metadata_level, Integer primary_id, ArrayList<Integer> exclusive_attribute_ids)
 	{
 		
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		
-		String query = "select " + primary_x_eav_tablename + ".eav_id from " + this.primary_x_eav_tablename + " " + primary_x_eav_tablename + ", eav eav where " + SQL.prefix(primary_x_eav_tablename, this.primary_id_name) + "= " + frame_id + " and eav.eav_id = " + primary_x_eav_tablename + ".eav_id"; 
+		String query = "select " + this.get_primary_x_eav_tablename(metadata_level) + ".eav_id from " + get_primary_x_eav_tablename(metadata_level) + " " + get_primary_x_eav_tablename(metadata_level) + ", eav eav where " + SQL.prefix(get_primary_x_eav_tablename(metadata_level), get_primary_id_name(metadata_level)) + "= " + primary_id + " and eav.eav_id = " + get_primary_x_eav_tablename(metadata_level) + ".eav_id"; 
 		
 		if(exclusive_attribute_ids.size() > 0)
 			query = query + " and attribute_id not in (" + SQL.conc_ids(exclusive_attribute_ids) + ")";
@@ -738,6 +984,29 @@ public class EAVDBServices extends Thread {
 				list.add(rs.getInt(1));
 			}			
 			rs.close();	
+			
+			
+			// if this is at spectrum level then also search all eav_ids that are stored at all parent hierarchies
+			if(metadata_level == MetaParameter.SPECTRUM_LEVEL)
+			{
+				ArrayList<Integer> hierarchy_ids = getHierarchyIds(primary_id);
+				
+				ArrayList<Integer> hierarchy_eav_ids = get_eav_ids(MetaParameter.HIERARCHY_LEVEL, hierarchy_ids);
+				
+				list.addAll(hierarchy_eav_ids);
+				
+			}
+			
+			
+			// if this is at hierarchy level then also search all eav_ids that are stored at all parent hierarchies
+			if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+			{
+				ArrayList<Integer> hierarchy_ids = getParentHierarchyIds(primary_id);
+				ArrayList<Integer> hierarchy_eav_ids = get_eav_ids(MetaParameter.HIERARCHY_LEVEL, hierarchy_ids);
+				list.addAll(hierarchy_eav_ids);
+			}
+			
+			
 			stmt.close();
 			
 			
@@ -752,7 +1021,7 @@ public class EAVDBServices extends Thread {
 	}
 	
 
-	synchronized public ArrayList<Integer> get_exclusive_eav_ids(Integer frame_id, int ... exclusive_attribute_ids) 
+	synchronized public ArrayList<Integer> get_exclusive_eav_ids(int metadata_level, Integer primary_id, int ... exclusive_attribute_ids) 
 	{
 		ArrayList<Integer> attr_id_list = new ArrayList<Integer>();
 		
@@ -761,11 +1030,11 @@ public class EAVDBServices extends Thread {
 			attr_id_list.add(exclusive_attribute_ids[i]);		
 		}			
 
-		return get_exclusive_eav_ids(frame_id, attr_id_list);
+		return get_exclusive_eav_ids(metadata_level, primary_id, attr_id_list);
 	}	
 	
 	
-	synchronized public ArrayList<Integer> get_eav_ids(int frame_id, boolean distinct, String ... attribute_names)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id, boolean distinct, String ... attribute_names)
 	{
 		ArrayList<Integer> attr_id_list = new ArrayList<Integer>();
 		
@@ -774,15 +1043,15 @@ public class EAVDBServices extends Thread {
 			attr_id_list.addAll(ATR.get_attribute_ids(attribute_names[i]));		
 		}			
 		
-		return get_eav_ids(Integer.toString(frame_id), distinct, SQL.conc_ids(attr_id_list));
+		return get_eav_ids(metadata_level, Integer.toString(primary_id), distinct, SQL.conc_ids(attr_id_list));
 	}	
 	
-	synchronized public ArrayList<Integer> get_eav_ids(int frame_id, String ... attribute_names)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id, String ... attribute_names)
 	{
-		return get_eav_ids(frame_id, false, attribute_names);
+		return get_eav_ids(metadata_level, primary_id, false, attribute_names);
 	}		
 	
-	synchronized public ArrayList<Integer> get_eav_ids(int frame_id, boolean distinct, int ... attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id, boolean distinct, int ... attribute_ids)
 	{
 		ArrayList<Integer> attr_id_list = new ArrayList<Integer>();
 		
@@ -791,26 +1060,26 @@ public class EAVDBServices extends Thread {
 			attr_id_list.add(attribute_ids[i]);		
 		}			
 		
-		return get_eav_ids(Integer.toString(frame_id), distinct, SQL.conc_ids(attr_id_list));
+		return get_eav_ids(metadata_level, Integer.toString(primary_id), distinct, SQL.conc_ids(attr_id_list));
 	}
 	
-	synchronized public ArrayList<Integer> get_eav_ids(int frame_id, ArrayList<Integer> attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id, ArrayList<Integer> attribute_ids)
 	{		
-		return get_eav_ids(Integer.toString(frame_id), false, SQL.conc_ids(attribute_ids));
+		return get_eav_ids(metadata_level, Integer.toString(primary_id), false, SQL.conc_ids(attribute_ids));
 	}		
 	
-	synchronized public ArrayList<Integer> get_eav_ids(int frame_id, boolean distinct, ArrayList<Integer> attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id, boolean distinct, ArrayList<Integer> attribute_ids)
 	{		
-		return get_eav_ids(Integer.toString(frame_id), distinct, SQL.conc_ids(attribute_ids));
+		return get_eav_ids(metadata_level, Integer.toString(primary_id), distinct, SQL.conc_ids(attribute_ids));
 	}	
 	
 	
-	synchronized public ArrayList<Integer> get_eav_ids(int frame_id, int ... attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id, int ... attribute_ids)
 	{
-		return get_eav_ids(frame_id, false, attribute_ids);
+		return get_eav_ids(metadata_level, primary_id, false, attribute_ids);
 	}
 	
-	synchronized public ArrayList<Integer> get_eav_ids(ArrayList<Integer> frame_ids, boolean distinct, int ... attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, ArrayList<Integer> primary_ids, boolean distinct, int ... attribute_ids)
 	{
 		ArrayList<Integer> attr_id_list = new ArrayList<Integer>();
 		
@@ -819,27 +1088,27 @@ public class EAVDBServices extends Thread {
 			attr_id_list.add(attribute_ids[i]);		
 		}			
 		
-		return get_eav_ids(SQL.conc_ids(frame_ids), distinct, SQL.conc_ids(attr_id_list));	
+		return get_eav_ids(metadata_level, SQL.conc_ids(primary_ids), distinct, SQL.conc_ids(attr_id_list));	
 	}
 	
-	synchronized public ArrayList<Integer> get_eav_ids(ArrayList<Integer> frame_ids, int ... attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, ArrayList<Integer> primary_ids, int ... attribute_ids)
 	{
-		return get_eav_ids(frame_ids, false, attribute_ids);
+		return get_eav_ids(metadata_level, primary_ids, false, attribute_ids);
 	}	
 
 	
-	synchronized public ArrayList<Integer> get_eav_ids(ArrayList<Integer> frame_ids, boolean distinct, ArrayList<Integer> attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, ArrayList<Integer> primary_ids, boolean distinct, ArrayList<Integer> attribute_ids)
 	{		
-		return get_eav_ids(SQL.conc_ids(frame_ids), distinct, SQL.conc_ids(attribute_ids));
+		return get_eav_ids(metadata_level, SQL.conc_ids(primary_ids), distinct, SQL.conc_ids(attribute_ids));
 	}
 	
-	synchronized public ArrayList<Integer> get_eav_ids(ArrayList<Integer> frame_ids, ArrayList<Integer> attribute_ids)
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, ArrayList<Integer> primary_ids, ArrayList<Integer> attribute_ids)
 	{		
-		return get_eav_ids(SQL.conc_ids(frame_ids), false, SQL.conc_ids(attribute_ids));
+		return get_eav_ids(metadata_level, SQL.conc_ids(primary_ids), false, SQL.conc_ids(attribute_ids));
 	}	
 
 	
-	synchronized ArrayList<Integer> get_eav_ids(String frame_ids, boolean distinct, String attribute_ids)
+	synchronized ArrayList<Integer> get_eav_ids(int metadata_level, String primary_ids, boolean distinct, String attribute_ids)
 	{
 		
 		ArrayList<Integer> list = new ArrayList<Integer>();
@@ -848,8 +1117,8 @@ public class EAVDBServices extends Thread {
 		
 		if (distinct) distinct_str = " distinct ";		
 				
-		String query = "select" + distinct_str +"eav.eav_id from eav eav, " + this.primary_x_eav_tablename + " " + primary_x_eav_tablename + 
-		" where attribute_id in (" + attribute_ids + ") and " + primary_x_eav_tablename + ".eav_id = eav.eav_id and " + primary_x_eav_tablename + "." + this.primary_id_name + " in (" + frame_ids + ")";
+		String query = "select" + distinct_str +"eav.eav_id from eav eav, " + get_primary_x_eav_tablename(metadata_level) + " " + get_primary_x_eav_tablename(metadata_level) + 
+		" where " + (attribute_ids.equals("null") ? "":("attribute_id in (" + attribute_ids + ") and ")) + get_primary_x_eav_tablename(metadata_level) + ".eav_id = eav.eav_id and " + get_primary_x_eav_tablename(metadata_level) + "." + get_primary_id_name(metadata_level) + " in (" + primary_ids + ")";
 
 		ResultSet rs;
 		try {
@@ -910,15 +1179,15 @@ public class EAVDBServices extends Thread {
 //		}		
 	}
 	
-	synchronized public SingularFrameEAVStructure get_eav_ids_(ArrayList<Integer> frame_ids, ArrayList<Integer> attribute_ids)
+	synchronized public SingularFrameEAVStructure get_eav_ids_(int metadata_level, ArrayList<Integer> primary_ids, ArrayList<Integer> attribute_ids)
 	{		
-		return get_eav_ids_(frame_ids, false, SQL.conc_ids(attribute_ids));
+		return get_eav_ids_(metadata_level, primary_ids, false, SQL.conc_ids(attribute_ids));
 	}	
 
 	
-	synchronized SingularFrameEAVStructure get_eav_ids_(ArrayList<Integer> frame_ids, boolean distinct, String attribute_ids)
+	synchronized SingularFrameEAVStructure get_eav_ids_(int metadata_level, ArrayList<Integer> primary_ids, boolean distinct, String attribute_ids)
 	{
-		String frame_ids_str = SQL.conc_ids(frame_ids);
+		String frame_ids_str = SQL.conc_ids(primary_ids);
 
 		String distinct_str = " ";
 		
@@ -935,7 +1204,7 @@ public class EAVDBServices extends Thread {
 //		String query = "select" + distinct_str + "fxe.frame_id, eav.eav_id from eav eav, frame_x_eav fxe where attribute_id in (" + attribute_ids + ") and fxe.eav_id = eav.eav_id and fxe.frame_id in (" + frame_ids_str + ")";
 		
 				
-		String query = "select" + distinct_str + " fxe." + this.primary_id_name +", eav.eav_id from eav eav, " + primary_x_eav_tablename + " fxe where attribute_id in (" + attribute_ids + ") and fxe.eav_id = eav.eav_id and fxe." + this.primary_id_name + " in (" + frame_ids_str + ")";
+		String query = "select" + distinct_str + " fxe." + get_primary_id_name(metadata_level) +", eav.eav_id from eav eav, " + get_primary_x_eav_tablename(metadata_level) + " fxe where attribute_id in (" + attribute_ids + ") and fxe.eav_id = eav.eav_id and fxe." + get_primary_id_name(metadata_level) + " in (" + frame_ids_str + ")";
 
 		//System.out.println(query);
 		
@@ -973,20 +1242,20 @@ public class EAVDBServices extends Thread {
 	}
 		
 	
-	synchronized public ArrayList<Integer> get_statistic_frame_ids(int frame_id)
+	synchronized public ArrayList<Integer> get_statistic_frame_ids(int metadata_level, int primary_id)
 	{	
 		ArrayList<Integer> ids = new ArrayList<Integer>();
-		ids.add(frame_id);
-		return get_statistic_frame_ids(ids);
+		ids.add(primary_id);
+		return get_statistic_frame_ids(metadata_level, ids);
 	}
 
 	
-	synchronized public ArrayList<Integer> get_statistic_frame_ids(ArrayList<Integer> frame_ids)
+	synchronized public ArrayList<Integer> get_statistic_frame_ids(int metadata_level, ArrayList<Integer> primary_ids)
 	{
 		ArrayList<Integer> stat_ids = new ArrayList<Integer>();
 		
 		
-		ArrayList<Integer> stat_eav_ids = get_eav_ids(frame_ids, ATR.get_attribute_id("mean"), ATR.get_attribute_id("stdev"));
+		ArrayList<Integer> stat_eav_ids = get_eav_ids(metadata_level, primary_ids, ATR.get_attribute_id("mean"), ATR.get_attribute_id("stdev"));
 			
 			//String query = "select frame_id from frame_x_eav where eav_id in (select eav2_id from eav_x_eav where eav1_id in (select eav.eav_id from frame_x_eav fex, eav eav where frame_id = " + this.frame_id + " and fex.eav_id = eav.eav_id and attribute_id in (select attribute_id from attribute where category_id in (select category_id from category where name = 'statistic'))))";
 		
@@ -1017,19 +1286,19 @@ public class EAVDBServices extends Thread {
 	}
 	
 	
-	synchronized public ArrayList<Integer> filter_by_eav(ArrayList<Integer> frame_ids, int attribute_id, String field, Object value, ProgressListener pr)
+	synchronized public ArrayList<Integer> filter_by_eav(int metadata_level, ArrayList<Integer> primary_ids, int attribute_id, String field, Object value, ProgressListener pr)
 	{
 		if (pr != null)
 		{
 			pr.setVisible(true);
 			
-			pr.set_operation("Selecting data (" + frame_ids.size() + "records) ...");
+			pr.set_operation("Selecting data (" + primary_ids.size() + "records) ...");
 		}		
 		
 		
 		ArrayList<Integer> filtered = new ArrayList<Integer>();
 		
-		String query = "select frame_x_eav." + this.primary_id_name + ", eav." + field + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";		
+		String query = "select frame_x_eav." + get_primary_id_name(metadata_level) + ", eav." + field + " from " + get_primary_x_eav_tablename(metadata_level) + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + get_primary_id_name(metadata_level) + " in (" + SQL.conc_ids(primary_ids)  + ")";		
 			
 		int cnt = 1;
 		
@@ -1049,7 +1318,7 @@ public class EAVDBServices extends Thread {
 					filtered.add(rs.getInt(1));
 				}
 				
-				if (pr != null) pr.set_progress(cnt++ * 100.0 / (frame_ids.size()-1));
+				if (pr != null) pr.set_progress(cnt++ * 100.0 / (primary_ids.size()-1));
 		
 				
 			}
@@ -1074,16 +1343,16 @@ public class EAVDBServices extends Thread {
 	
 	
 	
-	synchronized public ArrayList<Integer> filter_by_eav(ArrayList<Integer> frame_ids, int attribute_id, String field, Object value)
+	synchronized public ArrayList<Integer> filter_by_eav(int metadata_level, ArrayList<Integer> primary_ids, int attribute_id, String field, Object value)
 	{
-		return filter_by_eav(frame_ids, attribute_id, field, value, null);
+		return filter_by_eav(metadata_level, primary_ids, attribute_id, field, value, null);
 	}
 
-	synchronized public ArrayList<Integer> filter_by_eav(ArrayList<Integer> frame_ids, int attribute_id)
+	synchronized public ArrayList<Integer> filter_by_eav(int metadata_level, ArrayList<Integer> primary_ids, int attribute_id)
 	{	
 		ArrayList<Integer> filtered = new ArrayList<Integer>();
 		
-		String query = "select frame_x_eav." + this.primary_id_name + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";
+		String query = "select frame_x_eav." + get_primary_id_name(metadata_level) + " from " + get_primary_x_eav_tablename(metadata_level) + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and frame_x_eav." + get_primary_id_name(metadata_level) + " in (" + SQL.conc_ids(primary_ids)  + ")";
 		
 		ResultSet rs;
 		try {
@@ -1108,11 +1377,11 @@ public class EAVDBServices extends Thread {
 	}
 	
 	
-	synchronized public ArrayList<Integer> filter_by_eav(ArrayList<Integer> frame_ids, int attribute_id, int unit_id)
+	synchronized public ArrayList<Integer> filter_by_eav(int metadata_level, ArrayList<Integer> primary_ids, int attribute_id, int unit_id)
 	{
 		ArrayList<Integer> filtered = new ArrayList<Integer>();
 		
-		String query = "select frame_x_eav." + this.primary_id_name + " from " + this.primary_x_eav_tablename + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and eav.unit_id = " + unit_id + " and frame_x_eav." + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids)  + ")";
+		String query = "select frame_x_eav." + get_primary_id_name(metadata_level) + " from " + get_primary_x_eav_tablename(metadata_level) + " frame_x_eav, eav eav where eav.eav_id = frame_x_eav.eav_id and eav.attribute_id = " + attribute_id + " and eav.unit_id = " + unit_id + " and frame_x_eav." + get_primary_id_name(metadata_level) + " in (" + SQL.conc_ids(primary_ids)  + ")";
 		
 		ResultSet rs;
 		try {
@@ -1137,13 +1406,13 @@ public class EAVDBServices extends Thread {
 	}	
 	
 	
-	synchronized public ArrayList<Integer> filter_by_attribute_NOT(ArrayList<Integer> frame_ids, int attribute_id)
+	synchronized public ArrayList<Integer> filter_by_attribute_NOT(int metadata_level, ArrayList<Integer> primary_ids, int attribute_id)
 	{		
 		
-		ArrayList<Integer> positive_finds = filter_by_eav(frame_ids, attribute_id);
+		ArrayList<Integer> positive_finds = filter_by_eav(metadata_level, primary_ids, attribute_id);
 		
 		
-		ArrayList<Integer> filtered = new ArrayList<Integer>(frame_ids); // copy
+		ArrayList<Integer> filtered = new ArrayList<Integer>(primary_ids); // copy
 		
 		filtered.removeAll(positive_finds);
 		
@@ -1155,7 +1424,7 @@ public class EAVDBServices extends Thread {
 	
 	
 	
-	synchronized public ArrayList<FrameMetaparameterStructure> load_metaparameters(ArrayList<Integer> frame_ids, int ... attribute_ids)
+	synchronized public ArrayList<FrameMetaparameterStructure> load_metaparameters(int metadata_level, ArrayList<Integer> primary_ids, int ... attribute_ids)
 	{
 		ArrayList<FrameMetaparameterStructure> fmps_list = new ArrayList<FrameMetaparameterStructure>();
 		
@@ -1168,7 +1437,7 @@ public class EAVDBServices extends Thread {
 		}				
 		
 		// get the eav_ids for the given frames and attribute
-		SingularFrameEAVStructure frame_eav_ids = get_eav_ids_(frame_ids, attr_id_list);
+		SingularFrameEAVStructure frame_eav_ids = get_eav_ids_(metadata_level, primary_ids, attr_id_list);
 		
 		// carry out a bulk load for the meta parameters
 		Metadata md = new Metadata();
@@ -1372,8 +1641,9 @@ public class EAVDBServices extends Thread {
 		
 		
 		// non-lazy loading first ...
-		query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, OCTET_LENGTH(eav.binary_val), eav.binary_val, eav.datetime_val, eav.taxonomy_id, eav.spectrum_id, " + (this.spatially_enabled==true ? "ST_AsText(spatial_val)," : "") + " unit.short_name, unit.unit_id, attr.attribute_id from eav eav, attribute attr, unit unit, category cat where " +
-		"eav.eav_id in (" + SQL.conc_ids(standard_metaparameter_ids) + ") and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id";
+		query = "select eav.eav_id, eav.int_val, eav.double_val, eav.string_val, OCTET_LENGTH(eav.binary_val), eav.binary_val, eav.datetime_val, eav.taxonomy_id, eav.spectrum_id, " + 
+		(this.spatially_enabled==true ? "ST_AsText(spatial_val)," : "") + " unit.short_name, unit.unit_id, attr.attribute_id, count(hierarchy_level_id) from (eav eav, attribute attr, unit unit, category cat) left join hierarchy_x_eav hxe on hxe.eav_id = eav.eav_id where " +
+		"eav.eav_id in (" + SQL.conc_ids(standard_metaparameter_ids) + ") and eav.attribute_id = attr.attribute_id and eav.unit_id = unit.unit_id and attr.category_id = cat.category_id group by eav.eav_id";
 		
 
 		stmt = SQL.createStatement();
@@ -1423,11 +1693,13 @@ public class EAVDBServices extends Thread {
 			String unit_name = rs.getString(ind++);
 			int unit_id = rs.getInt(ind++);
 			int attribute_id = rs.getInt(ind++);
+			int hierarchy_id_count = rs.getInt(ind++);
 			//String category_name = rs.getString(ind++);
 			//String category_value = rs.getString(ind++);
 			//String description = rs.getString(ind++);
 			
 			attribute attr = this.ATR.get_attribute_info(attribute_id);
+			
 			
 			try {
 				if (int_val != null)
@@ -1531,6 +1803,7 @@ public class EAVDBServices extends Thread {
 				mp.setAttributeId(attribute_id);
 				mp.setUnitId(unit_id);
 				mp.setDescription(attr.description);
+				mp.setLevel((hierarchy_id_count == 0) ? MetaParameter.SPECTRUM_LEVEL:MetaParameter.HIERARCHY_LEVEL);
 				
 				md.addEntry(mp);
 				md.addEntryId(mp.getEavId());								
@@ -1663,41 +1936,41 @@ public class EAVDBServices extends Thread {
 		
 	}
 	
-	public void delete_primary_x_eav(Integer frame_id, Integer eav_id, boolean is_admin) {
+	public void delete_primary_x_eav(int metadata_level, Integer primary_id, Integer eav_id, boolean is_admin) {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
-		delete_primary_x_eav(frame_id, eav_ids, is_admin);
+		delete_primary_x_eav(metadata_level, primary_id, eav_ids, is_admin);
 		
 	}
 	
-	public void delete_primary_x_eav(Integer[] frame_ids, Integer eav_id, boolean is_admin) {
+	public void delete_primary_x_eav(int metadata_level, Integer[] primary_ids, Integer eav_id, boolean is_admin) {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
 		
-		ArrayList<Integer> frame_ids_list = new ArrayList<Integer>(frame_ids.length);
-		for (Integer frame_id : frame_ids) {
-			frame_ids_list.add(frame_id);
+		ArrayList<Integer> primary_ids_list = new ArrayList<Integer>(primary_ids.length);
+		for (Integer frame_id : primary_ids) {
+			primary_ids_list.add(frame_id);
 		}
 		
-		delete_primary_x_eav(frame_ids_list, eav_ids, is_admin);
+		delete_primary_x_eav(metadata_level, primary_ids_list, eav_ids, is_admin);
 		
 	}
 	
-	public void delete_primary_x_eav(ArrayList<Integer> frame_ids, Integer eav_id, boolean is_admin) {
+	public void delete_primary_x_eav(int metadata_level, ArrayList<Integer> primary_ids, Integer eav_id, boolean is_admin) {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
-		delete_primary_x_eav(frame_ids, eav_ids, is_admin);
+		delete_primary_x_eav(metadata_level, primary_ids, eav_ids, is_admin);
 		
 	}
 	
-	public void delete_primary_x_eav(Integer frame_id, ArrayList<Integer> eav_ids, boolean is_admin) {
+	public void delete_primary_x_eav(int metadata_level, Integer primary_id, ArrayList<Integer> eav_ids, boolean is_admin) {
 		
-		String table_name = (is_admin)? this.primary_x_eav_tablename : this.primary_x_eav_viewname;
+		String table_name = (is_admin)? get_primary_x_eav_tablename(metadata_level) : get_primary_x_eav_viewname(metadata_level);
 		
-		String cmd = "delete from " + table_name + " where " + this.primary_id_name + " = " + frame_id + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
+		String cmd = "delete from " + table_name + " where " + get_primary_id_name(metadata_level) + " = " + primary_id + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
 		
 		try {
 			Statement stmt = SQL.createStatement();
@@ -1710,10 +1983,10 @@ public class EAVDBServices extends Thread {
 		
 	}
 	
-	public void delete_primary_x_eav(ArrayList<Integer> frame_ids, ArrayList<Integer> eav_ids, boolean is_admin) {
+	public void delete_primary_x_eav(int metadata_level, ArrayList<Integer> frame_ids, ArrayList<Integer> eav_ids, boolean is_admin) {
 		
-		String table_name = (is_admin)? this.primary_x_eav_tablename : this.primary_x_eav_viewname;
-		String cmd = "delete from " + table_name + " where " + this.primary_id_name + " in (" + SQL.conc_ids(frame_ids) +")" + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
+		String table_name = (is_admin)? get_primary_x_eav_tablename(metadata_level) : get_primary_x_eav_viewname(metadata_level);
+		String cmd = "delete from " + table_name + " where " + get_primary_id_name(metadata_level) + " in (" + SQL.conc_ids(frame_ids) +")" + " and eav_id in (" + SQL.conc_ids(eav_ids) +")"; // avoid deleting eav links for other frames (shared data!)
 		
 		try {
 			Statement stmt = SQL.createStatement();
@@ -1727,19 +2000,19 @@ public class EAVDBServices extends Thread {
 	}
 	
 	
-	public ArrayList<Integer> getPrimaryIds(Integer eav_id) {
+	public ArrayList<Integer> getPrimaryIds(int metadata_level, Integer eav_id) {
 		
 		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 		eav_ids.add(eav_id);
 		
-		return getPrimaryIds(eav_ids);
+		return getPrimaryIds(metadata_level, eav_ids);
 		
 	}
 	
 	
-	public ArrayList<Integer> getPrimaryIds(ArrayList<Integer> eav_ids)
+	public ArrayList<Integer> getPrimaryIds(int metadata_level, ArrayList<Integer> eav_ids)
 	{
-		String query = "select " + this.primary_id_name + " from " + this.primary_x_eav_tablename + " where eav_id in (" + SQL.conc_ids(eav_ids) +")";
+		String query = "select " + get_primary_id_name(metadata_level) + " from " + get_primary_x_eav_tablename(metadata_level) + " where eav_id in (" + SQL.conc_ids(eav_ids) +")";
 		
 		ArrayList<Integer> primary_ids = new ArrayList<Integer>();
 		
@@ -1867,6 +2140,8 @@ class SingularFrameEAVStructure
 		eav_ids.add(eav_id);
 	}
 }
+
+
 
 
 //@SuppressWarnings("hiding")
