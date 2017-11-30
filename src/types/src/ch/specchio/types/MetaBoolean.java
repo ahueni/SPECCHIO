@@ -39,6 +39,12 @@ public class MetaBoolean extends MetaParameter {
 		// TODO Auto-generated method stub
 		return true;
 	}
+	
+	@Override
+	public boolean hasEqualValue(MetaParameter mp)
+	{
+		return mp.getValue().equals(getValue());
+	}		
 
 	@Override
 	public void setEmptyValue() {
