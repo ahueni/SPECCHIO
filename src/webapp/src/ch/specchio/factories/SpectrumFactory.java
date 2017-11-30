@@ -22,6 +22,7 @@ import ch.specchio.queries.Query;
 import ch.specchio.queries.QueryCondition;
 import ch.specchio.types.AVMatchingList;
 import ch.specchio.types.AVMatchingListCollection;
+import ch.specchio.types.EAVTableAndRelationsInfoStructure;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.MetaDatatype;
 import ch.specchio.types.MetaDate;
@@ -45,6 +46,13 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	
 	/** metadata factory for loading spectrum metadata */
 	private MetadataFactory MF;
+	private Integer current_spectrum_collection_table_no;
+	private String current_spectrum_collection_source_table;
+	private String current_spectrum_collection_target_table;
+	private boolean iteration_result_exists;
+	private Integer current_hierarchy_collection_table_no;
+	private String current_hierarchy_collection_source_table;
+	private String current_hierarchy_collection_target_table;
 	
 	
 	/**
@@ -233,8 +241,8 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			
 			
 			// copy all eav references
-			ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(spectrum_id);			
-			getEavServices().insert_primary_x_eav(copy_spectrum_id, eav_ids);
+			ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(MetaParameter.SPECTRUM_LEVEL, spectrum_id);			
+			getEavServices().insert_primary_x_eav(MetaParameter.SPECTRUM_LEVEL, copy_spectrum_id, eav_ids);
 			
 			// exchange hierarchy id
 			query = "update spectrum_view set hierarchy_level_id = " + target_hierarchy_id + " where spectrum_id = " + copy_spectrum_id;
@@ -305,7 +313,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	public ArrayList<Integer> filterSpectrumIdsByHavingAttribute(MetadataSelectionDescriptor mds) throws SPECCHIOFactoryException {
 		
 		EAVDBServices eav = getEavServices();					
-		return eav.filter_by_eav(mds.getIds(), mds.getAttribute_id());		
+		return eav.filter_by_eav(MetaParameter.SPECTRUM_LEVEL, mds.getIds(), mds.getAttribute_id());		
 	}	
 		
 	
@@ -321,7 +329,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	public ArrayList<Integer> filterSpectrumIdsByNotHavingAttribute(MetadataSelectionDescriptor mds) throws SPECCHIOFactoryException {
 		
 		EAVDBServices eav = getEavServices();					
-		return eav.filter_by_attribute_NOT(mds.getIds(), mds.getAttribute_id());		
+		return eav.filter_by_attribute_NOT(MetaParameter.SPECTRUM_LEVEL, mds.getIds(), mds.getAttribute_id());		
 	}	
 	
 	
@@ -337,7 +345,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	public ArrayList<Integer> filterSpectrumIdsByHavingAttributeValue(MetadataSelectionDescriptor mds) throws SPECCHIOFactoryException {
 		
 		EAVDBServices eav = getEavServices();					
-		return eav.filter_by_eav(mds.getIds(), mds.getAttribute_id(), eav.ATR.get_default_storage_field(mds.getAttribute_id()), mds.getValue());		
+		return eav.filter_by_eav(MetaParameter.SPECTRUM_LEVEL, mds.getIds(), mds.getAttribute_id(), eav.ATR.get_default_storage_field(mds.getAttribute_id()), mds.getValue());		
 	}	
 		
 	
@@ -398,29 +406,50 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			
 			// iterative querying
 			// ==================
-			Integer current_collection_table_no = 0;
-			String current_current_collection_target_table = SB.prefix(getTempDatabaseName(), "spectrum_collection" + current_collection_table_no.toString());
-			String current_current_collection_source_table = "";	
+			current_spectrum_collection_table_no = 0;
+			current_spectrum_collection_target_table = SB.prefix(getTempDatabaseName(), "spectrum_collection" + current_spectrum_collection_table_no.toString());
+			current_spectrum_collection_source_table = "";	
+			
+			current_hierarchy_collection_table_no = 0;
+			current_hierarchy_collection_target_table = SB.prefix(getTempDatabaseName(), "hierarchy_collection" + current_hierarchy_collection_table_no.toString());
+			current_hierarchy_collection_source_table = "";	
+			
+			EAVTableAndRelationsInfoStructure eav_info_0 = new EAVTableAndRelationsInfoStructure(this.getEavServices().getEAVTableAndRelationsInfoStructure(MetaParameter.SPECTRUM_LEVEL));
+			EAVTableAndRelationsInfoStructure eav_info_1 = new EAVTableAndRelationsInfoStructure(this.getEavServices().getEAVTableAndRelationsInfoStructure(MetaParameter.HIERARCHY_LEVEL));
 			
 			// create temporary tables
-			String primary_key_name = SB.get_primary_key_name(query.getTableName()); 
+
 			String ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " +
 					SB.prefix(getTempDatabaseName(), "spectrum_collection0") +
-					"(" + primary_key_name + " INT NOT NULL, PRIMARY KEY (" + primary_key_name + "))";
+					"(" + eav_info_0.primary_id_name + " INT NOT NULL, PRIMARY KEY (" + eav_info_0.primary_id_name + "))";
 			stmt.executeUpdate(ddl_string);
 			
 			ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " +
 					SB.prefix(getTempDatabaseName(), "spectrum_collection1") +
-					"(" + primary_key_name + " INT NOT NULL, PRIMARY KEY (" + primary_key_name + "))";
+					"(" + eav_info_0.primary_id_name + " INT NOT NULL, PRIMARY KEY (" + eav_info_0.primary_id_name + "))";
 			stmt.executeUpdate(ddl_string);
+			
+			ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " +
+					SB.prefix(getTempDatabaseName(), "hierarchy_collection0") +
+					"(" + eav_info_1.primary_id_name + " INT NOT NULL, PRIMARY KEY (" + eav_info_1.primary_id_name + "))";
+			stmt.executeUpdate(ddl_string);
+			
+			ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " +
+					SB.prefix(getTempDatabaseName(), "hierarchy_collection1") +
+					"(" + eav_info_1.primary_id_name + " INT NOT NULL, PRIMARY KEY (" + eav_info_1.primary_id_name + "))";
+			stmt.executeUpdate(ddl_string);			
 			
 			// clear temporary tables (in case they already existed)
 			String delete_string = "delete from " + SB.prefix(getTempDatabaseName(), "spectrum_collection0");
 			stmt.executeUpdate(delete_string);
 			delete_string = "delete from " + SB.prefix(getTempDatabaseName(), "spectrum_collection1");
-			stmt.executeUpdate(delete_string);			
+			stmt.executeUpdate(delete_string);		
+			delete_string = "delete from " + SB.prefix(getTempDatabaseName(), "hierarchy_collection0");
+			stmt.executeUpdate(delete_string);
+			delete_string = "delete from " + SB.prefix(getTempDatabaseName(), "hierarchy_collection1");
+			stmt.executeUpdate(delete_string);						
 			
-			Boolean iteration_result_exists = true;
+			iteration_result_exists = true;
 
 			
 			// step 1: use standard field query, if there are any standard conditions at all
@@ -432,11 +461,11 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				
 				if(!standardQueryString.equals(""))
 				{
-					standardQueryString = "insert into " + current_current_collection_target_table + "("+ primary_key_name + ") " + standardQueryString;
+					standardQueryString = "insert into " + current_spectrum_collection_target_table + "("+ eav_info_0.primary_id_name + ") " + standardQueryString;
 					stmt.executeUpdate(standardQueryString);
 					
 					// count ids for that standard query
-					ResultSet rs = stmt.executeQuery("select count(*) from " + current_current_collection_target_table);
+					ResultSet rs = stmt.executeQuery("select count(*) from " + current_spectrum_collection_target_table);
 					while (rs.next()) {
 					count = rs.getInt(1);
 					}
@@ -456,84 +485,19 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				iteration_result_exists = false;
 			}
 			
-			// step 2: EAV iterations over all conditions
 			
-			for (QueryCondition cond : query.getEAVConditionFields())
-			{
-				// switch between source and target temp tables
-				current_collection_table_no = (current_collection_table_no + 1) % 2;
-				current_current_collection_source_table = current_current_collection_target_table;
-				current_current_collection_target_table = SB.prefix(getTempDatabaseName(), "spectrum_collection" + current_collection_table_no.toString());
-				
-				
-				EAVQueryConditionObject co = (EAVQueryConditionObject)cond;
-				
-				// build query for current cond
-				ArrayList<String> tables = co.get_tablenames();
-				if (!tables.contains(query.getTableName())) {
-					tables.add(query.getTableName());
-				}
-				
-				String eav_table_name = "eav";
-				String spectrum_x_eav_table_name = "spectrum_x_eav";
-				if (!tables.contains(eav_table_name)) {
-					tables.add(eav_table_name);
-				}
-				if (!tables.contains(spectrum_x_eav_table_name)) {
-					tables.add(spectrum_x_eav_table_name);
-				}
-				
-				
-				String curr_cond;
-				
-				if(co.getFieldName().equals("spatial_val"))
-				{
-					curr_cond = SB.prefix(eav_table_name, "attribute_id") + " = " + getAttributes().get_attribute_id(co.getAttributeName()) +
-							" and " + co.getOperator() + "( " + co.getStringValue() + ", " + SB.prefix(eav_table_name, co.getFieldName()) + ") = 1" +
-							" and " + eav_table_name + ".eav_id = " + spectrum_x_eav_table_name + ".eav_id" +
-							" and " + SB.prefix(query.getTableName(), primary_key_name) + " = " + spectrum_x_eav_table_name + "." + primary_key_name
-							;
-					
-				}
-				else
-				{
-					curr_cond = SB.prefix(eav_table_name, "attribute_id") + " = " + getAttributes().get_attribute_id(co.getAttributeName()) +
-							" and " + SB.prefix(eav_table_name, co.getFieldName()) + " " + co.getOperator() + " " + SB.quote_string(co.getStringValue()) +
-							" and " + eav_table_name + ".eav_id = " + spectrum_x_eav_table_name + ".eav_id" +
-							" and " + SB.prefix(query.getTableName(), primary_key_name) + " = " + spectrum_x_eav_table_name + "." + primary_key_name
-							;
-				}
-
-				if(iteration_result_exists)
-				{
-					curr_cond = curr_cond + " and " + SB.prefix(query.getTableName(), primary_key_name) + " = " + current_current_collection_source_table + "." + primary_key_name;
-					
-					tables.add(current_current_collection_source_table);
-					
-				}
-				
-				iteration_result_exists = true; // true for all further queries
-				
-				String queryString = getStatementBuilder().assemble_sql_select_distinct_query(
-						SB.prefix(query.getTableName(), primary_key_name),
-						getStatementBuilder().conc_tables(tables),
-						curr_cond);
-				
-				
-				// clear target temp table
-				delete_string = "delete from " + current_current_collection_target_table;
-				stmt.executeUpdate(delete_string);				
-				
-				
-				// put results into current target table
-				queryString = "insert into " + current_current_collection_target_table + "("+ primary_key_name + ") " + queryString;
-				stmt.executeUpdate(queryString);
-
-			}
+			// step 2: EAV iterations over all conditions for the hierarchy based EAVs
+			getSpectraMatchingQuery(query, MetaParameter.HIERARCHY_LEVEL);
 			
+			
+			
+			// step 3: EAV iterations over all conditions
+			getSpectraMatchingQuery(query, MetaParameter.SPECTRUM_LEVEL);
+			
+
 			if(query.getQueryType().equals(Query.COUNT_QUERY))
 			{				
-				ResultSet rs = stmt.executeQuery("select count(*) from " + current_current_collection_target_table);
+				ResultSet rs = stmt.executeQuery("select count(*) from " + current_spectrum_collection_target_table);
 				while (rs.next()) {
 					count = rs.getInt(1);
 				}
@@ -545,9 +509,9 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				StringBuffer queryBuffer = new StringBuffer();
 				queryBuffer.append(
 					"select " +
-					SB.prefix(current_current_collection_target_table, primary_key_name) +
+					SB.prefix(current_spectrum_collection_target_table, eav_info_0.primary_id_name) +
 					" from " +
-					current_current_collection_target_table
+					current_spectrum_collection_target_table
 				);
 				
 				if (query.getOrderBy() != null) {
@@ -562,9 +526,9 @@ public class SpectrumFactory extends SPECCHIOFactory {
 								"and eav.attribute_id = " + order_by_attribute_id +
 						") t " +
 						"on " +
-							SB.prefix("t", primary_key_name) +
+							SB.prefix("t", eav_info_0.primary_id_name) +
 							"=" +
-							SB.prefix(current_current_collection_target_table, primary_key_name)
+							SB.prefix(current_spectrum_collection_target_table, eav_info_0.primary_id_name)
 					);
 					
 					// add "order by" clause
@@ -602,6 +566,210 @@ public class SpectrumFactory extends SPECCHIOFactory {
 	
 	}
 		
+
+
+	private void getSpectraMatchingQuery(Query query, int metadata_level) {
+		
+		Integer current_collection_table_no;
+		String current_collection_source_table;	
+		String current_collection_target_table;
+		String current_collection_table_name;
+		boolean update_collection = true;
+		
+		try {
+			SQL_StatementBuilder SB = getStatementBuilder();
+			Statement stmt = getStatementBuilder().createStatement();
+			
+			if(metadata_level == MetaParameter.SPECTRUM_LEVEL)
+			{
+				current_collection_table_no = this.current_spectrum_collection_table_no;
+				current_collection_source_table = this.current_spectrum_collection_source_table;
+				current_collection_target_table = this.current_spectrum_collection_target_table;
+				current_collection_table_name = "spectrum_collection";
+			}
+			else
+			{
+				current_collection_table_no = this.current_hierarchy_collection_table_no;
+				current_collection_source_table = this.current_hierarchy_collection_source_table;
+				current_collection_target_table = this.current_hierarchy_collection_target_table;			
+				current_collection_table_name = "hierarchy_collection";
+			}
+			
+			
+			
+			EAVTableAndRelationsInfoStructure eav_info = new EAVTableAndRelationsInfoStructure(this.getEavServices().getEAVTableAndRelationsInfoStructure(metadata_level));
+			
+			String primary_key_name = eav_info.primary_id_name;
+
+
+			for (QueryCondition cond : query.getEAVConditionFields())
+			{
+				EAVQueryConditionObject co = (EAVQueryConditionObject)cond;
+
+				if(!co.isCondition_handled_at_hierarchy_level())
+				{
+
+					// switch between source and target temp tables
+					current_collection_table_no = (current_collection_table_no + 1) % 2;
+					current_collection_source_table = current_collection_target_table;
+					current_collection_target_table = SB.prefix(getTempDatabaseName(), current_collection_table_name + current_collection_table_no.toString());
+
+					
+					// build query for current cond
+					ArrayList<String> tables = new ArrayList<String>();
+
+					String eav_table_name = "eav";
+					String primary_x_eav_table_name = eav_info.primary_x_eav_tablename;
+					tables.add(eav_table_name);
+					tables.add(primary_x_eav_table_name);
+
+
+
+					String curr_cond;
+
+					if(co.getFieldName().equals("spatial_val"))
+					{
+						curr_cond = SB.prefix(eav_table_name, "attribute_id") + " = " + getAttributes().get_attribute_id(co.getAttributeName()) +
+								" and " + co.getOperator() + "( " + co.getStringValue() + ", " + SB.prefix(eav_table_name, co.getFieldName()) + ") = 1" +
+								" and " + eav_table_name + ".eav_id = " + primary_x_eav_table_name + ".eav_id"
+								;					
+
+					}
+					else
+					{
+						curr_cond = SB.prefix(eav_table_name, "attribute_id") + " = " + getAttributes().get_attribute_id(co.getAttributeName()) +
+								" and " + SB.prefix(eav_table_name, co.getFieldName()) + " " + co.getOperator() + " " + SB.quote_string(co.getStringValue()) +
+								" and " + eav_table_name + ".eav_id = " + primary_x_eav_table_name + ".eav_id"
+								;					
+					}
+
+					if(iteration_result_exists)
+					{
+						curr_cond = curr_cond + " and " + SB.prefix(primary_x_eav_table_name, primary_key_name) + " = " + current_collection_source_table + "." + primary_key_name;
+
+						tables.add(current_collection_source_table);
+
+					}
+
+					iteration_result_exists = true; // true for all further queries
+
+					String queryString = getStatementBuilder().assemble_sql_select_distinct_query(
+							SB.prefix(primary_x_eav_table_name, primary_key_name),
+							getStatementBuilder().conc_tables(tables),
+							curr_cond);
+
+
+					// hierarchies can only positively restrict; if a condition is not met, then it is checked again on spectrum level
+					if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+					{
+						String countqueryString = getStatementBuilder().assemble_sql_select_query(
+								"count(" + SB.prefix(primary_x_eav_table_name, primary_key_name) + ")",
+								getStatementBuilder().conc_tables(tables),
+								curr_cond);
+
+						int count = 0;
+						ResultSet rs = stmt.executeQuery(countqueryString);
+						while (rs.next()) {
+							count =rs.getInt(1);
+						}
+						rs.close();		
+
+						if(count > 0)
+						{
+							// this a a positive restriction: enter hierarchy ids in temporary table						
+							update_collection = true;
+
+							// inform condition that it has been met on hierarchy level
+							co.setCondition_handled_at_hierarchy_level(true);
+
+						}
+						else
+						{
+							// not found; keep the current correction table by effecting a double switch
+							current_collection_table_no = (current_collection_table_no + 1) % 2;
+							update_collection = false;
+						}
+
+
+					}
+
+
+					// clear target temp table
+					if(update_collection)
+					{
+						String delete_string = "delete from " + current_collection_target_table;
+						stmt.executeUpdate(delete_string);				
+
+
+						// put results into current target table
+						queryString = "insert into " + current_collection_target_table + "("+ primary_key_name + ") " + queryString;
+						stmt.executeUpdate(queryString);
+					}
+
+				}
+
+				// convert hierarchy ids into spectrum ids
+				if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+				{
+
+					// insert into spectrum collection table if any matches were found on hierarchy level
+					try {
+						int count = 0;
+						String queryString = "select count(spectrum_id) from hierarchy_level_x_spectrum where hierarchy_level_id in (select " + primary_key_name + " from " + current_collection_target_table + ")";
+						ResultSet rs = stmt.executeQuery(queryString.toString());
+						while (rs.next()) {
+							count =rs.getInt(1);
+						}
+						rs.close();								
+
+						if(count > 0)
+						{
+							iteration_result_exists = true; // true for all further queries
+
+							queryString = "insert into " + this.current_spectrum_collection_target_table + "(spectrum_id) " 
+									+ "select distinct spectrum_id from hierarchy_level_x_spectrum where hierarchy_level_id in (select " + primary_key_name + " from " + current_collection_target_table + ")";
+							stmt.executeUpdate(queryString);						
+						}
+						else
+							iteration_result_exists = false;
+
+					}
+					catch (SQLException ex) {
+						ex.printStackTrace();
+					}				
+
+				}
+
+
+				// set fields in instance
+				if(metadata_level == MetaParameter.SPECTRUM_LEVEL)
+				{
+					this.current_spectrum_collection_table_no = current_collection_table_no;
+					this.current_spectrum_collection_source_table = current_collection_source_table;
+					this.current_spectrum_collection_target_table = current_collection_target_table;
+				}
+				else
+				{
+					this.current_hierarchy_collection_table_no = current_collection_table_no;
+					this.current_hierarchy_collection_source_table = current_collection_source_table;
+					this.current_hierarchy_collection_target_table = current_collection_target_table;			
+				}		
+
+			}
+			
+			stmt.close();
+
+		}
+		catch (SQLException ex) {
+			// database error
+			System.out.println(ex.toString());
+			throw new SPECCHIOFactoryException(ex);
+		}	
+
+
+	}
+
+
 	/**
 	 * Get the identifiers of all spectra that match a given query.
 	 * 
@@ -685,12 +853,12 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			String query;
 			ResultSet rs;
 			
-			query = "select is_reference, campaign_id, hierarchy_level_id from spectrum where spectrum_id = " + Integer.toString(spectrum_id);
+			query = "select campaign_id, hierarchy_level_id from spectrum where spectrum_id = " + Integer.toString(spectrum_id);
 			rs = stmt.executeQuery(query);
 			while (rs.next()) {
-				s.setIsReference(new MetaDatatype<Boolean>("Is reference", rs.getBoolean(1)));
-				s.setCampaignId(rs.getInt(2));
-				s.setHierarchyLevelId(rs.getInt(3));
+				//s.setIsReference(new MetaDatatype<Boolean>("Is reference", rs.getBoolean(1)));
+				s.setCampaignId(rs.getInt(1));
+				s.setHierarchyLevelId(rs.getInt(2));
 			}
 			rs.close();
 			
@@ -715,26 +883,26 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			if(prepare_metadata)
 			{
 				// set file name and comments from metadata
-				MetaParameter mp;
-				mp = s.getMetadata().get_first_entry("File Name");
-				if (mp != null) {
-					MetaDatatype<String> mds = new MetaDatatype<String>("File Name");
-					mds.set_value((String)mp.getValue());
-					s.setFileName(mds);
-				}
-				mp = s.getMetadata().get_first_entry("File Comments");
-				if (mp != null) {
-					MetaDatatype<String> mds = new MetaDatatype<String>("File Comments");
-					mds.set_value((String)mp.getValue());
-					s.setFileComment(mds);
-				}
-			
-				// get the capture date from date and time
-				s.setCaptureDate(new MetaDatatype<Date>("Capture Date", SQL.get_java_date_time(s.getCaptureDateTime())));		
-					
-				// get the loading date from date and time
-				s.setLoadingDate(new MetaDatatype<Date>("Loading Date", SQL.get_java_date_time(s.getLoadDateTime())));
-				
+//				MetaParameter mp;
+//				mp = s.getMetadata().get_first_entry("File Name");
+//				if (mp != null) {
+//					MetaDatatype<String> mds = new MetaDatatype<String>("File Name");
+//					mds.set_value((String)mp.getValue());
+//					s.setFileName(mds);
+//				}
+//				mp = s.getMetadata().get_first_entry("File Comments");
+//				if (mp != null) {
+//					MetaDatatype<String> mds = new MetaDatatype<String>("File Comments");
+//					mds.set_value((String)mp.getValue());
+//					s.setFileComment(mds);
+//				}
+//			
+//				// get the capture date from date and time
+//				s.setCaptureDate(new MetaDatatype<Date>("Capture Date", SQL.get_java_date_time(s.getCaptureDateTime())));		
+//					
+//				// get the loading date from date and time
+//				s.setLoadingDate(new MetaDatatype<Date>("Loading Date", SQL.get_java_date_time(s.getLoadDateTime())));
+//				
 				
 				ArrayList<Integer> id = new ArrayList<Integer>();
 				id.add(spectrum_id);
@@ -754,52 +922,52 @@ public class SpectrumFactory extends SPECCHIOFactory {
 				
 				
 				// quality levels
-				s.setRequiredQualityLevel(new MetaDatatype<String>("Required quality level"));
-				s.setAttainedQualityLevel(new MetaDatatype<String>("Attained quality level"));
-				if(s.getQualityLevelId() != 0)
-				{
-					query = SQB.get_quality_query(id);
-					
-					rs = stmt.executeQuery(query);
-					
-					while (rs.next()) {
-						s.getAttainedQualityLevel().set_value(rs.getString(1));
-					}
-					rs.close();						
-				}
+//				s.setRequiredQualityLevel(new MetaDatatype<String>("Required quality level"));
+//				s.setAttainedQualityLevel(new MetaDatatype<String>("Attained quality level"));
+//				if(s.getQualityLevelId() != 0)
+//				{
+//					query = SQB.get_quality_query(id);
+//					
+//					rs = stmt.executeQuery(query);
+//					
+//					while (rs.next()) {
+//						s.getAttainedQualityLevel().set_value(rs.getString(1));
+//					}
+//					rs.close();						
+//				}
 				
-				if(s.getRequiredQualityLevelId() != 0)
-				{
-					query = SQB.get_required_quality_query(id);
-					
-					rs = stmt.executeQuery(query);
-					
-					while (rs.next()) {
-						s.getRequiredQualityLevel().set_value(rs.getString(1));
-					}
-					rs.close();						
-				}
+//				if(s.getRequiredQualityLevelId() != 0)
+//				{
+//					query = SQB.get_required_quality_query(id);
+//					
+//					rs = stmt.executeQuery(query);
+//					
+//					while (rs.next()) {
+//						s.getRequiredQualityLevel().set_value(rs.getString(1));
+//					}
+//					rs.close();						
+//				}
 				
 				
 				// create position attributes
-				s.setLatitude(new MetaDatatype<Double>("Latitude"));
-				s.setLongitude(new MetaDatatype<Double>("Longitude"));
-				s.setAltitude(new MetaDatatype<Double>("Altitude"));	
-				s.setLocationName(new MetaDatatype<String>("Location"));
-				
-				if(s.getPositionId() != 0)
-				{
-					query = SQB.get_position_query(id);				
-					rs = stmt.executeQuery(query);
-					
-					while (rs.next()) {
-						s.getLatitude().value = rs.getDouble(1);
-						s.getLongitude().value = rs.getDouble(2);
-						s.getAltitude().value = rs.getDouble(3);
-						s.getLocationName().value = rs.getString(4);
-					}
-					rs.close();						
-				}
+//				s.setLatitude(new MetaDatatype<Double>("Latitude"));
+//				s.setLongitude(new MetaDatatype<Double>("Longitude"));
+//				s.setAltitude(new MetaDatatype<Double>("Altitude"));	
+//				s.setLocationName(new MetaDatatype<String>("Location"));
+//				
+//				if(s.getPositionId() != 0)
+//				{
+//					query = SQB.get_position_query(id);				
+//					rs = stmt.executeQuery(query);
+//					
+//					while (rs.next()) {
+//						s.getLatitude().value = rs.getDouble(1);
+//						s.getLongitude().value = rs.getDouble(2);
+//						s.getAltitude().value = rs.getDouble(3);
+//						s.getLocationName().value = rs.getString(4);
+//					}
+//					rs.close();						
+//				}
 				
 				
 				if(s.getSensorId() != 0)
@@ -809,20 +977,20 @@ public class SpectrumFactory extends SPECCHIOFactory {
 					
 				
 				// campaign
-				s.setCampaignName(new MetaDatatype<String>("Campaign name"));
-				s.setCampaignDescription(new MetaDatatype<String>("Campaign desc"));
+//				s.setCampaignName(new MetaDatatype<String>("Campaign name"));
+//				s.setCampaignDescription(new MetaDatatype<String>("Campaign desc"));
 				
-				if(s.getCampaignId() != 0)
-				{
-					query = SQB.get_campaign_query(id);				
-					rs = stmt.executeQuery(query);
-					
-					while (rs.next()) {
-						s.getCampaignName().value = rs.getString(1);
-						s.getCampaignDescription().value = rs.getString(2);
-					}
-					rs.close();						
-				}		
+//				if(s.getCampaignId() != 0)
+//				{
+//					query = SQB.get_campaign_query(id);				
+//					rs = stmt.executeQuery(query);
+//					
+//					while (rs.next()) {
+//						s.getCampaignName().value = rs.getString(1);
+//						s.getCampaignDescription().value = rs.getString(2);
+//					}
+//					rs.close();						
+//				}		
 				
 				// landcover
 //				s.setLandcover(new MetaDatatype<String>("Landcover"));
@@ -1182,7 +1350,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			ArrayList<Integer> reference_ids_ = new ArrayList<Integer>();
 
 			// get target acquisition time for easier query formulation below
-			ArrayList<Integer> time_ids = this.getEavServices().get_eav_ids(target_id, "Acquisition Time");
+			ArrayList<Integer> time_ids = this.getEavServices().get_eav_ids(MetaParameter.SPECTRUM_LEVEL, target_id, "Acquisition Time");
 			MetaDate target_time = (MetaDate) this.getEavServices().load_metaparameter(time_ids.get(0));
 			
 			String target_time_str = MetaDate.formatDate((DateTime)target_time.getValue()); // ensure we are getting the time stamp correctly formatted as inserted into the database
@@ -1238,18 +1406,21 @@ public class SpectrumFactory extends SPECCHIOFactory {
 					MetaParameter mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Target Data Link", "Data Links"));
 					mp.setValue(target_id);
 					
-					Integer[] spectrum_id_array = new Integer[1];
-					spectrum_id_array[0]=reference_id;
+//					Integer[] spectrum_id_array = new Integer[1];
+//					spectrum_id_array[0]=reference_id;
+					ArrayList<Integer> ids = new ArrayList<Integer>();
+					ids.add(reference_id);
 					
-					MF.updateMetadata(mp, spectrum_id_array);
+					MF.updateMetadata(mp, ids);
 					
 					// link reference to target
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Reference Data Link", "Data Links"));
 					mp.setValue(reference_id);
 					
-					spectrum_id_array[0]=target_id;
+					ids.clear();
+					ids.add(target_id);
 					
-					MF.updateMetadata(mp, spectrum_id_array);
+					MF.updateMetadata(mp, ids);
 					
 					num++;
 				}
