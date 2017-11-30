@@ -25,11 +25,13 @@ import ch.specchio.types.Category;
 import ch.specchio.types.CategoryTable;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.Country;
+import ch.specchio.types.Hierarchy;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.InstrumentDescriptor;
 import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.Reference;
@@ -381,11 +383,12 @@ public interface SPECCHIOClient {
 	/**
 	 * Get a conflicts in the EAV metadata for a set of spectra.
 	 * 
-	 * @param spectrum_ids	the spectrum identifiers
+	 * @param metadata_level		storage level identifier
+	 * @param ids	the primary entity identifiers
 	 * 
 	 * @return a ConflictTable object containing all of the conflicts
 	 */
-	public ConflictTable getEavMetadataConflicts(ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException;
+	public ConflictTable getEavMetadataConflicts(int metadata_level, ArrayList<Integer> ids) throws SPECCHIOClientException;
 
 	
 	/**
@@ -417,6 +420,16 @@ public interface SPECCHIOClient {
 	 * @return the identifier associated with the specified file format, or -1 if file format is not recognised
 	 */
 	public int getFileFormatId(String format) throws SPECCHIOClientException;
+	
+	
+	/**
+	 * Get the hierarchy object for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return the hierarchy object, or -1 if the node does not exist
+	 */	
+	public Hierarchy getHierarchy(Integer hierarchy_id) throws SPECCHIOWebClientException ;
 	
 	
 	/**
@@ -576,7 +589,17 @@ public interface SPECCHIOClient {
 	 * @return list of metaparameters, or null if the field does not exist	 
 	 */
 	public ArrayList<MetaParameter> getMetaparameters(ArrayList<Integer> ids, String attribute_name) throws SPECCHIOWebClientException;
+		
 	
+	/**
+	 * Get metaparameter for spectrum id and EAV attribute
+	 * 
+	 * @param id		spectrum id
+	 * @param attribute_name		attribute name
+	 * 
+	 * @return metaparameter, or null if the field does not exist	 
+	 */
+	public MetaParameter getMetaparameter(Integer id, String attribute_name) throws SPECCHIOWebClientException;
 	
 	/**
 	 * Get list of metaparameters for spectrum ids and EAV attributes
@@ -1312,16 +1335,6 @@ public interface SPECCHIOClient {
 	 * @throws SPECCHIOClientException
 	 */
 	public void updateUser(User user) throws SPECCHIOClientException;
-
-
-
-
-
-
-
-	
-
-	
 
 
 

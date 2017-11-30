@@ -43,6 +43,7 @@ import ch.specchio.types.CategoryTable;
 import ch.specchio.types.ConflictDetectionDescriptor;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.Country;
+import ch.specchio.types.Hierarchy;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.InstrumentDescriptor;
@@ -737,13 +738,15 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	/**
 	 * Get a conflicts in the EAV metadata for a set of spectra.
 	 * 
-	 * @param spectrum_ids	the spectrum identifiers
+	 * @param metadata_level		storage level identifier
+	 * @param ids	the primary entity identifiers
 	 * 
 	 * @return a ConflictTable object containing all of the conflicts
 	 */
-	public ConflictTable getEavMetadataConflicts(ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
+	public ConflictTable getEavMetadataConflicts(int metadata_level, ArrayList<Integer> ids) throws SPECCHIOWebClientException {
 
-		ConflictDetectionDescriptor cd_d = new ConflictDetectionDescriptor(spectrum_ids);
+		ConflictDetectionDescriptor cd_d = new ConflictDetectionDescriptor(ids);
+		cd_d.setLevel(metadata_level);
 		
 		return postForObject(ConflictTable.class, "metadata", "conflicts_eav", cd_d);
 		
@@ -795,6 +798,18 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return getInteger("spectral_file", "file_format_id", format);
 		
 	}
+	
+	/**
+	 * Get the hierarchy object for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return the hierarchy object, or -1 if the node does not exist
+	 */	
+	public Hierarchy getHierarchy(Integer hierarchy_id) throws SPECCHIOWebClientException 
+	{
+		return getObject(Hierarchy.class, "campaign", "getHierarchy", Integer.toString(hierarchy_id));
+	}	
 	
 	
 	/**
@@ -1062,6 +1077,31 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		return postForObject(ConflictTable.class,  "metadata", "conflicts", cd_d);
 		
 	}
+	
+
+	
+	/**
+	 * Get metaparameter for spectrum id and EAV attribute
+	 * 
+	 * @param id		spectrum id
+	 * @param attribute_name		attribute name
+	 * 
+	 * @return metaparameter, or null if the field does not exist	 
+	 */
+	public MetaParameter getMetaparameter(Integer id, String attribute_name) throws SPECCHIOWebClientException {
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		ids.add(id);
+		
+		MetadataSelectionDescriptor mds = new MetadataSelectionDescriptor(ids, attribute_name);
+		
+		MetaParameter[] mps = postForArray(MetaParameter.class, "metadata", "get_list_of_metaparameter_vals", mds);
+		
+		if(mps.length > 0 && mps[0].getValue() != null)
+			return mps[0];		
+		else
+			return null;
+	}			
 	
 	
 	/**
