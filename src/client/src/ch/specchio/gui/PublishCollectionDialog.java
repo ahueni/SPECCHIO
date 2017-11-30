@@ -277,7 +277,7 @@ public class PublishCollectionDialog extends JDialog implements ActionListener {
 	private void prepopulate() throws SPECCHIOClientException {
 
 		// get the conflict data for the selected spectra
-		ConflictTable conflicts = specchioClient.getEavMetadataConflicts(ids);
+		ConflictTable conflicts = specchioClient.getEavMetadataConflicts(MetaParameter.SPECTRUM_LEVEL, ids);
 		
 		// get the first spectrum in the list for possible use in pre-population
 		Spectrum s = specchioClient.getSpectrum(ids.get(0), true);
