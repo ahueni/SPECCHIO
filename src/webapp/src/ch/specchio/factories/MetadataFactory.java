@@ -5,8 +5,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -20,6 +27,7 @@ import ch.specchio.types.CategoryTable;
 import ch.specchio.types.ConflictInfo;
 import ch.specchio.types.ConflictStruct;
 import ch.specchio.types.ConflictTable;
+import ch.specchio.types.EAVTableAndRelationsInfoStructure;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
@@ -76,7 +84,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	could not connect to the database
 	 */
-	public ConflictTable detectConflicts(Integer[] ids, String[] fieldnames) throws SPECCHIOFactoryException {
+	public ConflictTable detectConflicts(List<Integer> list, String[] fieldnames) throws SPECCHIOFactoryException {
 		
 		
 		ConflictTable stati = new ConflictTable();
@@ -94,7 +102,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			
 			
 			String query = getStatementBuilder().assemble_sql_select_query(getStatementBuilder().conc_cols(field_cnt_strings), "spectrum", "spectrum_id in (" + 
-					getStatementBuilder().conc_ids(ids) +
+					getStatementBuilder().conc_ids((ArrayList<Integer>) list) +
 					")");
 
 	
@@ -140,15 +148,41 @@ public class MetadataFactory extends SPECCHIOFactory {
 	/**
 	 * Check for conflicts in EAV metadata.
 	 * 
+	 * @param metadata_level		storage level to be checked
 	 * @param ids	the attribute identifiers to be checked
 	 * 
 	 * @return a hash mapping attribute id to conflict information structures
 	 * 
 	 * @throws SPECCHIOFactoryException	could not connect to the database
 	 */
-	public ConflictTable detectEavConflicts(Integer[] ids) throws SPECCHIOFactoryException
+	public ConflictTable detectEavConflicts(int metadata_level, ArrayList<Integer> ids) throws SPECCHIOFactoryException
 	{
-		ConflictTable stati = new ConflictTable();
+		ConflictTable statuses = new ConflictTable();
+		
+		if(metadata_level == MetaParameter.SPECTRUM_LEVEL)
+		{
+			statuses = detectEavConflicts(metadata_level, ids, MetaParameter.SPECTRUM_LEVEL);
+			
+			ArrayList<Integer> hierarchy_ids = getEavServices().getDirectHierarchyIds(ids);
+			
+			
+			ConflictTable h_stati = detectEavConflicts(MetaParameter.HIERARCHY_LEVEL, hierarchy_ids, MetaParameter.SPECTRUM_LEVEL);
+			statuses.addConflictTable(h_stati);
+		}
+		
+		if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+		{		
+			statuses = detectEavConflicts(metadata_level, ids, MetaParameter.HIERARCHY_LEVEL);				
+		}
+		
+		return statuses;
+	}
+	
+	private ConflictTable detectEavConflicts(int metadata_level, ArrayList<Integer> ids, int calling_level) throws SPECCHIOFactoryException
+	{	
+		ConflictTable statuses = new ConflictTable();
+		
+		EAVTableAndRelationsInfoStructure eav_info = new EAVTableAndRelationsInfoStructure(this.getEavServices().getEAVTableAndRelationsInfoStructure(metadata_level));
 
 		try {
 			Statement stmt = getStatementBuilder().createStatement();
@@ -160,12 +194,155 @@ public class MetadataFactory extends SPECCHIOFactory {
 			double multi_value_cnt;
 			Integer attribute_id;
 			Integer eav_id;
-			Integer no_of_spectra = ids.length;
+			Integer no_of_spectra = ids.size();
+			Integer hierarchy_string_count= 0;
 //			Integer eav_id_cnt_dist;
 			ConflictStruct conflict;
 			ArrayList<Integer> eav_ids_to_double_check = new ArrayList<Integer>();
 			ArrayList<Integer> single_attributes = new ArrayList<Integer>();
 			ArrayList<Integer> multi_attributes = new ArrayList<Integer>();
+			ArrayList<Integer> inherited_eav_ids = new ArrayList<Integer>(); // inherited at hierarchy level
+			ArrayList<Integer> all_hierarchies = null;
+			
+			String conc_ids = getStatementBuilder().conc_ids(ids);
+			
+			// Number of hierarchy strings:
+			if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+			{
+
+				String query = "select count(*) from hierarchy_level where hierarchy_level_id in (" + conc_ids + ") and parent_level_id is null";
+			
+				ResultSet rs;
+				
+				rs = stmt.executeQuery(query);
+
+				while (rs.next()) {
+					hierarchy_string_count = rs.getInt(1);
+				}
+					
+				rs.close();
+				
+				
+				// a vertical integration of metaparameters is needed here
+				 HashMap<Integer, ArrayList<Integer>> parent_hierarchies_grouped = getEavServices().getGroupedParentHierarchyIds(ids);
+				
+				ArrayList<Integer> parent_hierarchies = new ArrayList<Integer>();
+
+				Set<Entry<Integer, ArrayList<Integer>>> set = parent_hierarchies_grouped.entrySet();
+				Iterator<Entry<Integer, ArrayList<Integer>>> iterator = set.iterator();
+				while(iterator.hasNext()) {
+					Map.Entry<Integer, ArrayList<Integer>> mentry = (Map.Entry<Integer, ArrayList<Integer>>) iterator.next();
+					parent_hierarchies.addAll((Collection<? extends Integer>) mentry.getValue());
+				}
+				
+				all_hierarchies = new ArrayList<Integer>(parent_hierarchies);
+				all_hierarchies.addAll(ids);
+
+				int count = getEavServices().count_metaparameters(metadata_level, all_hierarchies);
+				
+				// avoid calls if there are no metadata attached to hierarchy
+				if(count == 0)			
+					return statuses;
+				
+			
+				// create temporary links between all hierarchies and eav entries to support generic conflict detection
+				
+				// create temp table
+				eav_info.primary_x_eav_tablename = getStatementBuilder().prefix(getTempDatabaseName(), "primary_x_eav");
+				
+					// create temporary table
+				String ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " + eav_info.primary_x_eav_tablename + " " +
+						"(" + eav_info.primary_id_name + " INT NOT NULL, " +
+						"eav_id INT NOT NULL)";
+				stmt.executeUpdate(ddl_string);		
+				
+				// ensure table is empty
+				query = "delete from " + eav_info.primary_x_eav_tablename;
+				stmt.executeUpdate(query);
+				
+				
+				// fill temp table: down-propagation of eav_ids
+				
+				//ArrayList<Integer> metaparameter_ids;				
+					
+				
+				// down propagation for each selected hierarchy
+				iterator = set.iterator();
+				while(iterator.hasNext()) {
+					
+					Map.Entry<Integer, ArrayList<Integer>> mentry = (Map.Entry<Integer, ArrayList<Integer>>) iterator.next();
+					
+					query = "insert into " + eav_info.primary_x_eav_tablename + " values ";
+					
+					ArrayList<String> values = new ArrayList<String>();					
+					ArrayList<Integer> propagated_eav_ids;	
+					
+					// add bottom hierarchy to start of hierarchy list: ensures that in the following propagation all hierarchies are considered
+					mentry.getValue().add(0, mentry.getKey());
+					
+					// propagation of current hierarchy
+					for (ListIterator<Integer> it = mentry.getValue().listIterator(mentry.getValue().size()); it.hasPrevious();) {
+						  Integer hierarchy_id = it.previous();
+						  
+						// get eav ids of current hierarchy
+						propagated_eav_ids= getEavServices().get_eav_ids(MetaParameter.HIERARCHY_LEVEL, hierarchy_id);	
+						  
+						for(int eav_id_ : propagated_eav_ids)
+						{
+							values.add("(" + hierarchy_id + "," + eav_id_ +")");
+							
+							// store eav_ids that were inherited by the current hierarchies: used in the client for field colouring in metadata editor
+							if(calling_level == MetaParameter.HIERARCHY_LEVEL)
+							{
+								if(parent_hierarchies.contains(hierarchy_id))
+									inherited_eav_ids.add(eav_id_);
+							}
+							else
+							{
+								// spectra inherit also from their immediate hierarchy
+								inherited_eav_ids.add(eav_id_);
+							}
+								
+							
+						}
+
+					}
+					
+					query = query + getStatementBuilder().conc_values(values, false);
+
+					stmt.executeUpdate(query);					
+
+					
+					
+				}
+				
+//				for(int id : all_hierarchies)
+//				{
+//					query = "insert into " + eav_info.primary_x_eav_tablename + " values ";
+//					
+//					ArrayList<String> values = new ArrayList<String>();
+//					
+//					for(int eav_id_ : metaparameter_ids)
+//					{
+//						values.add("(" + id + "," + eav_id_ +")");
+//						
+//						// store eav_ids that were inherited by the current hierarchies: used in the client for field colouring in metadata editor
+//						if(parent_hierarchies.contains(id))
+//							inherited_eav_ids.add(eav_id_);
+//					}
+//					
+//					query = query + getStatementBuilder().conc_values(values, false);
+//					
+//					stmt.executeUpdate(query);
+//					
+//				}
+				
+				
+				
+				
+
+				
+			}
 			
 //			ArrayList<Integer> eav_ids_first_spectrum = this.getEavServices().get_eav_ids(ids[0]);
 			
@@ -188,11 +365,17 @@ public class MetadataFactory extends SPECCHIOFactory {
 			
 			
 			
+//			String query = "insert into " + temp_tablename + " " +
+//			"(eav_id_cnt, attr_id) " + "SELECT count(eav.eav_id), attribute_id " +
+//			"from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+//			getStatementBuilder().conc_ids(ids) +
+//			") and sxe.eav_id = eav.eav_id group by attribute_id, sxe.spectrum_id order by attribute_id";	
+			
 			String query = "insert into " + temp_tablename + " " +
-			"(eav_id_cnt, attr_id) " + "SELECT count(eav.eav_id), attribute_id " +
-			"from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-			getStatementBuilder().conc_ids(ids) +
-			") and sxe.eav_id = eav.eav_id group by attribute_id, sxe.spectrum_id order by attribute_id";	
+					"(eav_id_cnt, attr_id) " + "SELECT count(eav.eav_id), attribute_id " +
+					"from " + eav_info.primary_x_eav_tablename + " sxe, eav eav where sxe." + eav_info.primary_id_name + " in (" +
+					conc_ids +
+					") and sxe.eav_id = eav.eav_id group by attribute_id, sxe." + eav_info.primary_id_name + " order by attribute_id";				
 		
 			stmt.executeUpdate(query);
 			
@@ -217,307 +400,352 @@ public class MetadataFactory extends SPECCHIOFactory {
 			stmt.executeUpdate(query);
 			
 			// deal with single metaparameters per attribute first
-			// Note: a conflict is detect if the attribute has a count different from the spectrum count; this is also happening  even if the value is the same but stored in different eav entries.
-//			query = "SELECT count(eav.binary_val), count(distinct OCTET_LENGTH(eav.binary_val)), " +
-//					"count(eav.int_val), count(distinct eav.int_val)," +
-//					"count(eav.string_val), count(distinct eav.string_val), " +
-//					"count(eav.double_val), count(distinct eav.double_val)," +
-//					"count(eav.datetime_val), count(distinct eav.datetime_val), " +
-//					"count(eav.taxonomy_id), count(distinct eav.taxonomy_id), " +
-//					(getEavServices().isSpatially_enabled()==true ? "count(eav.spatial_val), count(distinct eav.spatial_val), ST_GeometryType(spatial_val), " : "") +
-//					"count(distinct sxe.spectrum_id), eav.attribute_id, eav.eav_id, count(distinct eav.eav_id)" +
-//					" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-//					getStatementBuilder().conc_ids(ids) +
-//				") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
-//				getStatementBuilder().conc_ids(single_attributes) + ") " +
-//				"group by attribute_id, eav_id order by attribute_id";	
 			
-			// solves the issue of same value stored in different eav entries.
-			query = "SELECT count(eav.binary_val), count(distinct OCTET_LENGTH(eav.binary_val)), " +
-					"count(eav.int_val), count(distinct eav.int_val)," +
-					"count(eav.string_val), count(distinct eav.string_val), " +
-					"count(eav.double_val), count(distinct eav.double_val)," +
-					"count(eav.datetime_val), count(distinct eav.datetime_val), " +
-					"count(eav.taxonomy_id), count(distinct eav.taxonomy_id), " +
-					(getEavServices().isSpatially_enabled()==true ? "count(eav.spatial_val), count(distinct eav.spatial_val), " : "") +
-					"count(distinct sxe.spectrum_id), eav.attribute_id, count(distinct eav.eav_id)" +
-					" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-					getStatementBuilder().conc_ids(ids) +
-				") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
-				getStatementBuilder().conc_ids(single_attributes) + ") " +
-				"group by attribute_id order by attribute_id";	
-
-			
-
-			
-			rs = stmt.executeQuery(query);
-			int i = 1;
-			int status = -1;
-			Integer int_val_max = null;
-			Integer int_val_min = null;
-			Double double_val_max = null;
-			Double double_val_min = null;
-			Double spat_val_x_min = null;
-			Double spat_val_y_min = null;
-			Double spat_val_x_max = null;
-			Double spat_val_y_max = null;
-			
-			int spatial_val_cnt = 0;
-			int spatial_val_cnt_dist = 0;
-			String spatial_val_geom_type = "";
-			
-			ArrayList<Integer> conflicting_int_and_double_attribute_ids = new ArrayList<Integer>();
-			
-//			ArrayList<ConflictStruct> all_conflicts = new ArrayList<ConflictStruct>();
-//			ArrayList<ConflictStruct> no_conflicts = new ArrayList<ConflictStruct>();
-			
-			ArrayList<Integer> no_conflict_attributes = new ArrayList<Integer>();
-			
-			Hashtable<Integer, ConflictStruct> attr_id_conflict_hash = new Hashtable<Integer, ConflictStruct>();
-			
-
-			while (rs.next()) {
-				i = 1;
-				
-				int binary_val_cnt = rs.getInt(i++);
-				int  binary_val_cnt_dist = rs.getInt(i++);				
-				int int_val_cnt = rs.getInt(i++);
-				int int_val_cnt_dist = rs.getInt(i++);
-				int string_val_cnt = rs.getInt(i++);
-				int string_val_cnt_dist = rs.getInt(i++);
-				int double_val_cnt = rs.getInt(i++);
-				int double_val_cnt_dist = rs.getInt(i++);			
-				int datetime_val_cnt = rs.getInt(i++);
-				int datetime_val_cnt_dist = rs.getInt(i++);				
-				int taxonomy_val_cnt = rs.getInt(i++);
-				int taxonomy_val_cnt_dist = rs.getInt(i++);
-				if(getEavServices().isSpatially_enabled()==true)
-				{
-					spatial_val_cnt = rs.getInt(i++);
-					spatial_val_cnt_dist = rs.getInt(i++);	
-//					spatial_val_geom_type = rs.getString(i++);	
-				}				
-				int spectrum_cnt = rs.getInt(i++);
-				attribute_id = rs.getInt(i++);
-//				eav_id = rs.getInt(i++);
-//				int eav_id_cnt_dist = rs.getInt(i++);
-				
-				
-//				ConflictInfo conflict_info = stati.get(attribute_id);	
-//				if(conflict_info == null)
-//					conflict_info = new ConflictInfo();
-
-				attribute attr = null;
-				try{
-				attr = this.getAttributes().get_attribute_info(attribute_id);
-				}catch(java.lang.NullPointerException e) 
-				{
-					int x=1;
-				}
-				
-				if(attr.default_storage_field.equals(attribute.INT_VAL))
-				{
-					status = getConflictStatus(int_val_cnt, int_val_cnt_dist, spectrum_cnt, no_of_spectra);	
-					if (status == ConflictInfo.conflict)					
-						conflicting_int_and_double_attribute_ids.add(attribute_id);
-				}
-				if(attr.default_storage_field.equals(attribute.STRING_VAL))
-					status = getConflictStatus(string_val_cnt, string_val_cnt_dist, spectrum_cnt, no_of_spectra);
-				if(attr.default_storage_field.equals(attribute.DOUBLE_VAL))
-				{
-					status = getConflictStatus(double_val_cnt, double_val_cnt_dist, spectrum_cnt, no_of_spectra);
-					if (status == ConflictInfo.conflict)		
-						conflicting_int_and_double_attribute_ids.add(attribute_id);			
-				}
-				if(attr.default_storage_field.equals(attribute.DATETIME_VAL))
-					status = getConflictStatus(datetime_val_cnt, datetime_val_cnt_dist, spectrum_cnt, no_of_spectra);				
-				if(attr.default_storage_field.equals(attribute.TAXONOMY_VAL))
-					status = getConflictStatus(taxonomy_val_cnt, taxonomy_val_cnt_dist, spectrum_cnt, no_of_spectra);
-				if(attr.default_storage_field.equals(attribute.BINARY_VAL))
-					status = getConflictStatus(binary_val_cnt, binary_val_cnt_dist, spectrum_cnt, no_of_spectra);
-				if(attr.default_storage_field.equals(attribute.SPATIAL_VAL))
-				{
-					status = getConflictStatus(spatial_val_cnt, spatial_val_cnt_dist, spectrum_cnt, no_of_spectra);
-					if (status == ConflictInfo.conflict)		//  && spatial_val_geom_type.equals("POINT") -> only do this for points, but check that later as not possible in this query
-						conflicting_int_and_double_attribute_ids.add(attribute_id);								
-				}
-				
-				
-//				System.out.print(attr.getName() + ": " + status);
-				
-				conflict = new ConflictStruct(status, 1, ids.length);
-
-//				all_conflicts.add(conflict);
-				
-				attr_id_conflict_hash.put(attribute_id, conflict);
-				
-				if(status == ConflictInfo.no_conflict)
-				{
-					double_check = true;
-					no_conflict_attributes.add(attribute_id);
-				}
-				else
-					double_check = false;
-				
-				
-				
-//				// check if the first spectrum is actually having this attribute
-//				if(eav_ids_first_spectrum.contains(eav_id))
-//				{
-//					conflict_info.addConflict(eav_id, conflict);
-//				}
-//				else
-//				{
-//					//System.out.print("Could not find " + attr.getName() + " for first spectrum");
-//					conflict_info.addConflict(eav_id, conflict);
-//				}
-//				
-//				
-//				
-//				
-//				stati.put(attribute_id, conflict_info);
-//					
-//				if(double_check)
-//					eav_ids_to_double_check.add(eav_id);
-								
-				
-
-			}
-			
-			rs.close();
-			
-			// get the eav_ids for all conflicts
-			query = "select attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-					getStatementBuilder().conc_ids(ids) +
-				") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
-				getStatementBuilder().conc_ids(single_attributes) + ") " +
-				"group by attribute_id, eav.eav_id order by attribute_id";	
-			
-			
-			rs = stmt.executeQuery(query);
-			
-			
-			while (rs.next()) {
-				i = 1;
-				
-				attribute_id = rs.getInt(i++);
-				eav_id = rs.getInt(i++);
-				
-				conflict = attr_id_conflict_hash.get(attribute_id);
-				
-				// add conflict info for this eav_id
-				ConflictInfo conflict_info = stati.get(attribute_id);	
-				if(conflict_info == null)
-					conflict_info = new ConflictInfo();				
-				conflict_info.addConflict(eav_id, conflict);
-				
-				stati.put(attribute_id, conflict_info);
-				
-				if(no_conflict_attributes.contains(attribute_id))
-				{
-					eav_ids_to_double_check.add(eav_id);
-				}
-				
-			}
-			
-			rs.close();
-			
-			// get min/max values for numerical values
-			if(conflicting_int_and_double_attribute_ids.size()>0)
+			if(single_attributes.size() > 0)
 			{
-				
-				boolean spat_val_is_null = false;
-				
-				query = "select attribute_id, min(int_val), max(int_val),  min(double_val), max(double_val) " +
-						(getEavServices().isSpatially_enabled()==true ? ", max(ST_x(spatial_val)),min(ST_x(spatial_val)),max(ST_y(spatial_val)),min(ST_y(spatial_val)), ST_GeometryType(spatial_val)" : "") +
-						" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-						getStatementBuilder().conc_ids(ids) +
-					") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
-					getStatementBuilder().conc_ids(conflicting_int_and_double_attribute_ids) + ") " +
-					"group by attribute_id" + (getEavServices().isSpatially_enabled()==true ?", ST_GeometryType(spatial_val)" : "") + " order by attribute_id";
-				
+
+				// Note: a conflict is detect if the attribute has a count different from the spectrum count; this is also happening  even if the value is the same but stored in different eav entries.
+				//			query = "SELECT count(eav.binary_val), count(distinct OCTET_LENGTH(eav.binary_val)), " +
+				//					"count(eav.int_val), count(distinct eav.int_val)," +
+				//					"count(eav.string_val), count(distinct eav.string_val), " +
+				//					"count(eav.double_val), count(distinct eav.double_val)," +
+				//					"count(eav.datetime_val), count(distinct eav.datetime_val), " +
+				//					"count(eav.taxonomy_id), count(distinct eav.taxonomy_id), " +
+				//					(getEavServices().isSpatially_enabled()==true ? "count(eav.spatial_val), count(distinct eav.spatial_val), ST_GeometryType(spatial_val), " : "") +
+				//					"count(distinct sxe.spectrum_id), eav.attribute_id, eav.eav_id, count(distinct eav.eav_id)" +
+				//					" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+				//					getStatementBuilder().conc_ids(ids) +
+				//				") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
+				//				getStatementBuilder().conc_ids(single_attributes) + ") " +
+				//				"group by attribute_id, eav_id order by attribute_id";	
+
+				// solves the issue of same value stored in different eav entries.
+				//			query = "SELECT count(eav.binary_val), count(distinct OCTET_LENGTH(eav.binary_val)), " +
+				//					"count(eav.int_val), count(distinct eav.int_val)," +
+				//					"count(eav.string_val), count(distinct eav.string_val), " +
+				//					"count(eav.double_val), count(distinct eav.double_val)," +
+				//					"count(eav.datetime_val), count(distinct eav.datetime_val), " +
+				//					"count(eav.taxonomy_id), count(distinct eav.taxonomy_id), " +
+				//					(getEavServices().isSpatially_enabled()==true ? "count(eav.spatial_val), count(distinct eav.spatial_val), " : "") +
+				//					"count(distinct sxe.spectrum_id), eav.attribute_id, count(distinct eav.eav_id)" +
+				//					" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+				//					getStatementBuilder().conc_ids(ids) +
+				//				") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
+				//				getStatementBuilder().conc_ids(single_attributes) + ") " +
+				//				"group by attribute_id order by attribute_id";	
+
+				query = "SELECT count(eav.binary_val), count(distinct OCTET_LENGTH(eav.binary_val)), " +
+						"count(eav.int_val), count(distinct eav.int_val)," +
+						"count(eav.string_val), count(distinct eav.string_val), " +
+						"count(eav.double_val), count(distinct eav.double_val)," +
+						"count(eav.datetime_val), count(distinct eav.datetime_val), " +
+						"count(eav.taxonomy_id), count(distinct eav.taxonomy_id), " +
+						(getEavServices().isSpatially_enabled()==true ? "count(eav.spatial_val), count(distinct eav.spatial_val), " : "") +
+						"count(distinct sxe." + eav_info.primary_id_name + "), eav.attribute_id, count(distinct eav.eav_id)" +
+						" from " + eav_info.primary_x_eav_tablename + " sxe, eav eav where sxe." + eav_info.primary_id_name + " in (" +
+						conc_ids +
+						") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
+						getStatementBuilder().conc_ids(single_attributes) + ") " +
+						"group by attribute_id order by attribute_id";	
+
+
+
 				rs = stmt.executeQuery(query);
-				
+				int i = 1;
+				int status = -1;
+				Integer int_val_max = null;
+				Integer int_val_min = null;
+				Double double_val_max = null;
+				Double double_val_min = null;
+				Double spat_val_x_min = null;
+				Double spat_val_y_min = null;
+				Double spat_val_x_max = null;
+				Double spat_val_y_max = null;
+
+				int spatial_val_cnt = 0;
+				int spatial_val_cnt_dist = 0;
+				String spatial_val_geom_type = "";
+
+				ArrayList<Integer> conflicting_int_and_double_attribute_ids = new ArrayList<Integer>();
+
+				//			ArrayList<ConflictStruct> all_conflicts = new ArrayList<ConflictStruct>();
+				//			ArrayList<ConflictStruct> no_conflicts = new ArrayList<ConflictStruct>();
+
+				ArrayList<Integer> no_conflict_attributes = new ArrayList<Integer>();
+
+				Hashtable<Integer, ConflictStruct> attr_id_conflict_hash = new Hashtable<Integer, ConflictStruct>();
+
+
 				while (rs.next()) {
 					i = 1;
-					
-					attribute_id = rs.getInt(i++);
-					int_val_min =  rs.getInt(i++);
-					boolean int_is_null = rs.wasNull();
-					int_val_max =  rs.getInt(i++);
-					double_val_min = rs.getDouble(i++);
-					boolean double_is_null = rs.wasNull();
-					double_val_max = rs.getDouble(i++);
+
+					int binary_val_cnt = rs.getInt(i++);
+					int  binary_val_cnt_dist = rs.getInt(i++);				
+					int int_val_cnt = rs.getInt(i++);
+					int int_val_cnt_dist = rs.getInt(i++);
+					int string_val_cnt = rs.getInt(i++);
+					int string_val_cnt_dist = rs.getInt(i++);
+					int double_val_cnt = rs.getInt(i++);
+					int double_val_cnt_dist = rs.getInt(i++);			
+					int datetime_val_cnt = rs.getInt(i++);
+					int datetime_val_cnt_dist = rs.getInt(i++);				
+					int taxonomy_val_cnt = rs.getInt(i++);
+					int taxonomy_val_cnt_dist = rs.getInt(i++);
 					if(getEavServices().isSpatially_enabled()==true)
 					{
-						spat_val_x_max = rs.getDouble(i++);
-						spat_val_is_null = rs.wasNull();
-						spat_val_x_min = rs.getDouble(i++);
-						spat_val_y_max = rs.getDouble(i++);
-						spat_val_y_min = rs.getDouble(i++);
-						spatial_val_geom_type = rs.getString(i++);	
+						spatial_val_cnt = rs.getInt(i++);
+						spatial_val_cnt_dist = rs.getInt(i++);	
+						//					spatial_val_geom_type = rs.getString(i++);	
+					}				
+					int spectrum_cnt = rs.getInt(i++);
+					attribute_id = rs.getInt(i++);
+					//				eav_id = rs.getInt(i++);
+					//				int eav_id_cnt_dist = rs.getInt(i++);
+
+
+					//				ConflictInfo conflict_info = stati.get(attribute_id);	
+					//				if(conflict_info == null)
+					//					conflict_info = new ConflictInfo();
+
+					attribute attr = null;
+					try{
+						attr = this.getAttributes().get_attribute_info(attribute_id);
+					}catch(java.lang.NullPointerException e) 
+					{
+						int x=1;
 					}
 
-					ConflictInfo conflict_info = stati.get(attribute_id);
-					
-					if(!int_is_null)
+					if(attr.default_storage_field.equals(attribute.INT_VAL))
 					{
-						conflict_info.int_val_min = int_val_min;
-						conflict_info.int_val_max = int_val_max;
-					}					
-					
-					if(!double_is_null)
-					{
-						conflict_info.double_val_min = double_val_min;
-						conflict_info.double_val_max = double_val_max;
+						status = getConflictStatus(int_val_cnt, int_val_cnt_dist, spectrum_cnt, no_of_spectra);	
+						if (status == ConflictInfo.conflict)					
+							conflicting_int_and_double_attribute_ids.add(attribute_id);
 					}
-					
-					if(!spat_val_is_null && spatial_val_geom_type.equals("POINT"))
+					if(attr.default_storage_field.equals(attribute.STRING_VAL))
+						status = getConflictStatus(string_val_cnt, string_val_cnt_dist, spectrum_cnt, no_of_spectra);
+					if(attr.default_storage_field.equals(attribute.DOUBLE_VAL))
 					{
-						conflict_info.spat_val_x_max = spat_val_x_max;
-						conflict_info.spat_val_y_max = spat_val_y_max;
-						conflict_info.spat_val_x_min = spat_val_x_min;
-						conflict_info.spat_val_y_min = spat_val_y_min;
-					}					
-					
-					stati.put(attribute_id, conflict_info);
-										
+						status = getConflictStatus(double_val_cnt, double_val_cnt_dist, spectrum_cnt, no_of_spectra);
+						if (status == ConflictInfo.conflict)		
+							conflicting_int_and_double_attribute_ids.add(attribute_id);			
+					}
+					if(attr.default_storage_field.equals(attribute.DATETIME_VAL))
+						status = getConflictStatus(datetime_val_cnt, datetime_val_cnt_dist, spectrum_cnt, no_of_spectra);				
+					if(attr.default_storage_field.equals(attribute.TAXONOMY_VAL))
+						status = getConflictStatus(taxonomy_val_cnt, taxonomy_val_cnt_dist, spectrum_cnt, no_of_spectra);
+					if(attr.default_storage_field.equals(attribute.BINARY_VAL))
+						status = getConflictStatus(binary_val_cnt, binary_val_cnt_dist, spectrum_cnt, no_of_spectra);
+					if(attr.default_storage_field.equals(attribute.SPATIAL_VAL))
+					{
+						status = getConflictStatus(spatial_val_cnt, spatial_val_cnt_dist, spectrum_cnt, no_of_spectra);
+						if (status == ConflictInfo.conflict)		//  && spatial_val_geom_type.equals("POINT") -> only do this for points, but check that later as not possible in this query
+							conflicting_int_and_double_attribute_ids.add(attribute_id);								
+					}
+
+
+
+					//				System.out.print(attr.getName() + ": " + status);
+
+					conflict = new ConflictStruct(status, 1, ids.size());
+
+
+					//				all_conflicts.add(conflict);
+
+					attr_id_conflict_hash.put(attribute_id, conflict);
+
+					if(status == ConflictInfo.no_conflict)
+					{
+						double_check = true;
+						no_conflict_attributes.add(attribute_id);
+					}
+					else
+						double_check = false;
+
+
+
+					//				// check if the first spectrum is actually having this attribute
+					//				if(eav_ids_first_spectrum.contains(eav_id))
+					//				{
+					//					conflict_info.addConflict(eav_id, conflict);
+					//				}
+					//				else
+					//				{
+					//					//System.out.print("Could not find " + attr.getName() + " for first spectrum");
+					//					conflict_info.addConflict(eav_id, conflict);
+					//				}
+					//				
+					//				
+					//				
+					//				
+					//				stati.put(attribute_id, conflict_info);
+					//					
+					//				if(double_check)
+					//					eav_ids_to_double_check.add(eav_id);
+
+
+
 				}
-				
-				
-				
+
 				rs.close();
-				
+
+				// get the eav_ids for all conflicts
+				//			query = "select attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+				//					getStatementBuilder().conc_ids(ids) +
+				//				") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
+				//				getStatementBuilder().conc_ids(single_attributes) + ") " +
+				//				"group by attribute_id, eav.eav_id order by attribute_id";	
+
+				query = "select attribute_id, eav.eav_id from " + eav_info.primary_x_eav_tablename + " sxe, eav eav where sxe." + eav_info.primary_id_name + " in (" +
+						conc_ids +
+						") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
+						getStatementBuilder().conc_ids(single_attributes) + ") " +
+						"group by attribute_id, eav.eav_id order by attribute_id";	
+
+
+				rs = stmt.executeQuery(query);
+
+
+				while (rs.next()) {
+					i = 1;
+
+					attribute_id = rs.getInt(i++);
+					eav_id = rs.getInt(i++);
+
+					conflict = attr_id_conflict_hash.get(attribute_id);
+
+					// for hierarchies: insert information if this is a inherited parameter 
+					if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+					{
+						if(inherited_eav_ids.contains(eav_id))
+							conflict.setInherited(true);
+					}					
+
+					// add conflict info for this eav_id
+					ConflictInfo conflict_info = statuses.get(attribute_id);	
+					if(conflict_info == null)
+						conflict_info = new ConflictInfo();				
+					conflict_info.addConflict(eav_id, conflict);
+
+					statuses.put(attribute_id, conflict_info);
+
+					if(no_conflict_attributes.contains(attribute_id))
+					{
+						eav_ids_to_double_check.add(eav_id);
+					}
+
+				}
+
+				rs.close();
+
+				// get min/max values for numerical values
+				if(conflicting_int_and_double_attribute_ids.size()>0)
+				{
+
+					boolean spat_val_is_null = false;
+
+					//				query = "select attribute_id, min(int_val), max(int_val),  min(double_val), max(double_val) " +
+					//						(getEavServices().isSpatially_enabled()==true ? ", max(ST_x(spatial_val)),min(ST_x(spatial_val)),max(ST_y(spatial_val)),min(ST_y(spatial_val)), ST_GeometryType(spatial_val)" : "") +
+					//						" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+					//						getStatementBuilder().conc_ids(ids) +
+					//					") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
+					//					getStatementBuilder().conc_ids(conflicting_int_and_double_attribute_ids) + ") " +
+					//					"group by attribute_id" + (getEavServices().isSpatially_enabled()==true ?", ST_GeometryType(spatial_val)" : "") + " order by attribute_id";
+
+					query = "select attribute_id, min(int_val), max(int_val),  min(double_val), max(double_val) " +
+							(getEavServices().isSpatially_enabled()==true ? ", max(ST_x(spatial_val)),min(ST_x(spatial_val)),max(ST_y(spatial_val)),min(ST_y(spatial_val)), ST_GeometryType(spatial_val)" : "") +
+							" from " + eav_info.primary_x_eav_tablename + " sxe, eav eav where sxe." + eav_info.primary_id_name + " in (" +
+							conc_ids +
+							") and sxe.eav_id = eav.eav_id and eav.attribute_id in (" +
+							getStatementBuilder().conc_ids(conflicting_int_and_double_attribute_ids) + ") " +
+							"group by attribute_id" + (getEavServices().isSpatially_enabled()==true ?", ST_GeometryType(spatial_val)" : "") + " order by attribute_id";
+
+					rs = stmt.executeQuery(query);
+
+					while (rs.next()) {
+						i = 1;
+
+						attribute_id = rs.getInt(i++);
+						int_val_min =  rs.getInt(i++);
+						boolean int_is_null = rs.wasNull();
+						int_val_max =  rs.getInt(i++);
+						double_val_min = rs.getDouble(i++);
+						boolean double_is_null = rs.wasNull();
+						double_val_max = rs.getDouble(i++);
+						if(getEavServices().isSpatially_enabled()==true)
+						{
+							spat_val_x_max = rs.getDouble(i++);
+							spat_val_is_null = rs.wasNull();
+							spat_val_x_min = rs.getDouble(i++);
+							spat_val_y_max = rs.getDouble(i++);
+							spat_val_y_min = rs.getDouble(i++);
+							spatial_val_geom_type = rs.getString(i++);	
+						}
+
+						ConflictInfo conflict_info = statuses.get(attribute_id);
+
+						if(!int_is_null)
+						{
+							conflict_info.int_val_min = int_val_min;
+							conflict_info.int_val_max = int_val_max;
+						}					
+
+						if(!double_is_null)
+						{
+							conflict_info.double_val_min = double_val_min;
+							conflict_info.double_val_max = double_val_max;
+						}
+
+						if(!spat_val_is_null && spatial_val_geom_type.equals("POINT"))
+						{
+							conflict_info.spat_val_x_max = spat_val_x_max;
+							conflict_info.spat_val_y_max = spat_val_y_max;
+							conflict_info.spat_val_x_min = spat_val_x_min;
+							conflict_info.spat_val_y_min = spat_val_y_min;
+						}					
+
+						statuses.put(attribute_id, conflict_info);
+
+					}
+
+
+
+					rs.close();
+
+				}
 			}
 			
 			// deal with multiple metaparameters per attribute
 			// Check each attribute exclusively
 			for(Integer attr_id : multi_attributes)
 			{
-				ArrayList<Integer> ids_as_list = new ArrayList<Integer>(ids.length); 
-				for (Integer id : ids) {
-					ids_as_list.add(id);
-				}
 				
 				attribute attr = this.getAttributes().get_attribute_info(attr_id);
 				// get all eav_ids for this attribute from all spectra
-				ArrayList<Integer> eav_ids = this.getEavServices().get_eav_ids(ids_as_list, true, attr_id);
+				ArrayList<Integer> eav_ids = this.getEavServices().get_eav_ids(metadata_level, (metadata_level == MetaParameter.HIERARCHY_LEVEL ? all_hierarchies : ids), true, attr_id);
 				
 				for(int eav_id_ : eav_ids)
 				{
 				
+//					query = "SELECT count(eav." + attr.getDefaultStorageField() + "), count(distinct eav." + attr.getDefaultStorageField() + "), " +
+//							"count(distinct sxe.spectrum_id), eav.attribute_id, eav.eav_id, count(distinct eav.eav_id)" +
+//							", eav." + attr.getDefaultStorageField() + 
+//							" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
+//							getStatementBuilder().conc_ids(ids) +
+//						") and sxe.eav_id = eav.eav_id and eav.attribute_id = " + attr_id +
+//						 " and eav." + attr.getDefaultStorageField() + " = (select " + attr.getDefaultStorageField() + " from eav where eav_id = " + eav_id_ + ")  group by eav.eav_id";	
+
 					query = "SELECT count(eav." + attr.getDefaultStorageField() + "), count(distinct eav." + attr.getDefaultStorageField() + "), " +
-							"count(distinct sxe.spectrum_id), eav.attribute_id, eav.eav_id, count(distinct eav.eav_id)" +
+							"count(distinct sxe." + eav_info.primary_id_name + "), eav.attribute_id, eav.eav_id, count(distinct eav.eav_id)" +
 							", eav." + attr.getDefaultStorageField() + 
-							" from spectrum_x_eav sxe, eav eav where sxe.spectrum_id in (" +
-							getStatementBuilder().conc_ids(ids) +
+							" from " + eav_info.primary_x_eav_tablename + " sxe, eav eav where sxe." + eav_info.primary_id_name + " in (" +
+							conc_ids +
 						") and sxe.eav_id = eav.eav_id and eav.attribute_id = " + attr_id +
 						 " and eav." + attr.getDefaultStorageField() + " = (select " + attr.getDefaultStorageField() + " from eav where eav_id = " + eav_id_ + ")  group by eav.eav_id";	
 					
 					rs = stmt.executeQuery(query);
 
 					while (rs.next()) {
-						i = 1;
+						int i = 1;
 						
 						int val_cnt = rs.getInt(i++);
 						int val_cnt_dist = rs.getInt(i++);
@@ -536,12 +764,12 @@ public class MetadataFactory extends SPECCHIOFactory {
 //						else
 //							status = ConflictInfo.conflict;		
 						
-						status = getConflictStatus(val_cnt, val_cnt_dist, spectrum_cnt, no_of_spectra);
+						int status = getConflictStatus(val_cnt, val_cnt_dist, spectrum_cnt, no_of_spectra);
 						
 						
 //						System.out.print(attr.getName() + " / " + value.toString() + ": " + status);
 						
-						conflict = new ConflictStruct(status, 1, ids.length);
+						conflict = new ConflictStruct(status, 1, ids.size());
 
 						
 						if(status == ConflictInfo.no_conflict)
@@ -550,13 +778,20 @@ public class MetadataFactory extends SPECCHIOFactory {
 							double_check = false;
 						
 						
-						ConflictInfo conflict_info = stati.get(attribute_id);	
+						ConflictInfo conflict_info = statuses.get(attribute_id);	
 						if(conflict_info == null)
 							conflict_info = new ConflictInfo();
 						
+						// for hierarchies: insert information if this is a inherited parameter 
+						if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+						{
+							if(inherited_eav_ids.contains(eav_id))
+								conflict.setInherited(true);
+						}											
+						
 						conflict_info.addConflict(eav_id_, conflict);
 												
-						stati.put(attribute_id, conflict_info);
+						statuses.put(attribute_id, conflict_info);
 						
 						if(double_check)
 							eav_ids_to_double_check.add(eav_id_);
@@ -622,7 +857,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 
 					
 				// second query to figure out the number of total spectra referring to the eav entries (number of shared records)
-				query = "SELECT count(sxe.spectrum_id), attribute_id, eav.eav_id from spectrum_x_eav sxe, eav eav where sxe.eav_id in (" +
+				query = "SELECT count(sxe." + eav_info.primary_id_name + "), attribute_id, eav.eav_id from " + eav_info.primary_x_eav_tablename + " sxe, eav eav where sxe.eav_id in (" +
 				getStatementBuilder().conc_ids(eav_ids_to_double_check) +
 					") and sxe.eav_id = eav.eav_id group by eav.eav_id order by attribute_id";			
 				
@@ -637,7 +872,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 					if(multi_value_cnt > 1)
 					{
 						// update existing conflict data
-						ConflictInfo conflict_info = stati.get(attribute_id);
+						ConflictInfo conflict_info = statuses.get(attribute_id);
 						
 						conflict = conflict_info.getConflictData(eav_id);
 						conflict.setStatus(ConflictInfo.no_conflict); // used to be set to a value of 3 ... I wonder why (AH, 12.07.2017)
@@ -659,7 +894,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 		}
 		
 		
-		return stati;
+		return statuses;
 		
 	}
 	
@@ -899,21 +1134,21 @@ public class MetadataFactory extends SPECCHIOFactory {
 	/**
 	 * Get the metadata for a given spectrum.
 	 * 
-	 * @param spectrum_id	the identifier of the spectrum
+	 * @param hierarchy_id	the identifier of the hierarchy
 	 * 
-	 * @return the metadata for the specific spectrum
+	 * @return the metadata for the specific hierarchy
 	 * 
-	 * @throws SPECCHIOFactoryException the spectrum does not exist
+	 * @throws SPECCHIOFactoryException the hierarchy does not exist
 	 */
-	public Metadata getMetadataForSpectrum(int spectrum_id) throws SPECCHIOFactoryException {
+	public Metadata getMetadataForHierarchy(int hierarchy_id) throws SPECCHIOFactoryException {
 		
 		Metadata md = new Metadata();
 			
-		md.setFrameId(spectrum_id);
+		md.setFrameId(hierarchy_id);
 			
 		ArrayList<Integer> metaparameter_ids = new ArrayList<Integer>();
 		
-		metaparameter_ids = getEavServices().get_eav_ids(spectrum_id);		
+		metaparameter_ids = getEavServices().get_eav_ids(MetaParameter.HIERARCHY_LEVEL, hierarchy_id);		
 		
 //		ArrayList<Integer> attr_ids_for_lazyloading = new ArrayList<Integer>();
 		
@@ -931,6 +1166,43 @@ public class MetadataFactory extends SPECCHIOFactory {
 		return md;
 			
 	}
+	
+	
+	/**
+	 * Get the metadata for a given spectrum.
+	 * 
+	 * @param spectrum_id	the identifier of the spectrum
+	 * 
+	 * @return the metadata for the specific spectrum
+	 * 
+	 * @throws SPECCHIOFactoryException the spectrum does not exist
+	 */
+	public Metadata getMetadataForSpectrum(int spectrum_id) throws SPECCHIOFactoryException {
+		
+		Metadata md = new Metadata();
+			
+		md.setFrameId(spectrum_id);
+			
+		ArrayList<Integer> metaparameter_ids = new ArrayList<Integer>();
+		
+		metaparameter_ids = getEavServices().get_eav_ids(MetaParameter.SPECTRUM_LEVEL, spectrum_id);		
+		
+//		ArrayList<Integer> attr_ids_for_lazyloading = new ArrayList<Integer>();
+		
+//		attr_ids_for_lazyloading.add(this.getAttributes().get_attribute_id("Field Protocol"));
+//		attr_ids_for_lazyloading.add(this.getAttributes().get_attribute_id("Experimental Design"));
+
+		// bulk reading of metaparameters
+		try {
+			getEavServices().metadata_bulk_loader(md, metaparameter_ids);
+		} catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}
+
+		return md;
+			
+	}	
 	
 	
 	/**
@@ -958,7 +1230,8 @@ public class MetadataFactory extends SPECCHIOFactory {
 	/**
 	 * Get the meta-parameters of the given attributes for a list of spectrum identifiers.
 	 * 
-	 * @param id		the spectrum identifiers for which to retrieve metadata
+	 * @param metadata_level		storage level to be checked
+	 * @param ids		the spectrum identifiers for which to retrieve metadata
 	 * @param attrId	the attribute id
 	 * @param distinct	if true, return distinct values only
 	 * 
@@ -966,13 +1239,13 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 *
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public ArrayList<ArrayList<MetaParameter>> getMetaParameters(ArrayList<Integer> ids, ArrayList<Integer> attrIds) throws SPECCHIOFactoryException {
+	public ArrayList<ArrayList<MetaParameter>> getMetaParameters(int metadata_level, ArrayList<Integer> ids, ArrayList<Integer> attrIds) throws SPECCHIOFactoryException {
 
 		ArrayList<ArrayList<MetaParameter>> mp_lists = new ArrayList<ArrayList<MetaParameter>>();
 		
 		for(Integer attr_id : attrIds)
 		{
-			mp_lists.add(this.getMetaParameters(ids, attr_id, false));			
+			mp_lists.add(this.getMetaParameters(metadata_level, ids, attr_id, false));			
 		}				
 		
 		return mp_lists;
@@ -981,6 +1254,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	/**
 	 * Get the meta-parameters of a given attribute for a list of spectrum identifiers.
 	 * 
+	 * @param metadata_level		storage level to be checked
 	 * @param id		the spectrum identifiers for which to retrieve metadata
 	 * @param attrId	the attribute id
 	 * @param distinct	if true, return distinct values only
@@ -989,7 +1263,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 *
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public ArrayList<MetaParameter> getMetaParameters(ArrayList<Integer> ids, Integer attrId, boolean distinct) throws SPECCHIOFactoryException {
+	public ArrayList<MetaParameter> getMetaParameters(int metadata_level, ArrayList<Integer> ids, Integer attrId, boolean distinct) throws SPECCHIOFactoryException {
 		
 		ArrayList<MetaParameter> mp_list = new ArrayList<MetaParameter>(ids.size());
 		
@@ -1005,8 +1279,8 @@ public class MetadataFactory extends SPECCHIOFactory {
 			// create SQL-building objects
 			SQL_StatementBuilder SQL = getStatementBuilder();
 			Statement stmt = SQL.createStatement();
-			String primary_id_name = getEavServices().get_primary_id_name();
-			String primary_x_eav_tablename = getEavServices().get_primary_x_eav_tablename();
+			String primary_id_name = getEavServices().get_primary_id_name(metadata_level);
+			String primary_x_eav_tablename = getEavServices().get_primary_x_eav_tablename(metadata_level);
 //			String temp_tablename = SQL.prefix(getTempDatabaseName(), "eav_frame_compilation");
 			
 			
@@ -1162,7 +1436,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 *
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public ArrayList<MetaParameter> getMetaParameters(int ids[], Integer attrId, boolean distinct) throws SPECCHIOFactoryException {
+	public ArrayList<MetaParameter> getMetaParameters(int metadata_level, int ids[], Integer attrId, boolean distinct) throws SPECCHIOFactoryException {
 		
 		// convert the array to a list
 		ArrayList<Integer> ids_list = new ArrayList<Integer>(ids.length);
@@ -1170,7 +1444,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			ids_list.add(i);
 		}
 		
-		return getMetaParameters(ids_list, attrId, distinct);
+		return getMetaParameters(metadata_level, ids_list, attrId, distinct);
 		
 	}
 
@@ -1186,9 +1460,9 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 *
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public ArrayList<MetaParameter> getMetaParameters(ArrayList<Integer> ids, String attrName, boolean distinct) throws SPECCHIOFactoryException {
+	public ArrayList<MetaParameter> getMetaParameters(int metadata_level, ArrayList<Integer> ids, String attrName, boolean distinct) throws SPECCHIOFactoryException {
 		
-		return getMetaParameters(ids, getAttributes().get_attribute_id(attrName), distinct);
+		return getMetaParameters(metadata_level, ids, getAttributes().get_attribute_id(attrName), distinct);
 		
 	}
 
@@ -1204,9 +1478,9 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 *
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public ArrayList<MetaParameter> getMetaParameters(int ids[], String attrName, boolean distinct) throws SPECCHIOFactoryException {
+	public ArrayList<MetaParameter> getMetaParameters(int metadata_level, int ids[], String attrName, boolean distinct) throws SPECCHIOFactoryException {
 		
-		return getMetaParameters(ids, getAttributes().get_attribute_id(attrName), distinct);
+		return getMetaParameters(metadata_level, ids, getAttributes().get_attribute_id(attrName), distinct);
 		
 	}
 	
@@ -1215,7 +1489,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	/**
 	 * Get the data policies for a collection of space.
 	 * 
-	 * @param spaces	the spaces
+	 * @param space	the space
 	 * 
 	 * @return a list of Strings representing the policies that apply to the input spae
 	 * 
@@ -1225,12 +1499,12 @@ public class MetadataFactory extends SPECCHIOFactory {
 		
 		// get a list of spectrum identifiers associated with policies
 		int data_policy_attr_id = getAttributes().get_attribute_id("Data Usage Policy");
-		ArrayList<Integer> spectra_with_policies = getEavServices().filter_by_eav(space.getSpectrumIds(), data_policy_attr_id);
+		ArrayList<Integer> spectra_with_policies = getEavServices().filter_by_eav(MetaParameter.SPECTRUM_LEVEL, space.getSpectrumIds(), data_policy_attr_id);
 		
 		// retrieve the policy objects and convert to strings
 		ArrayList<String> policies = new ArrayList<String>();
 		if(spectra_with_policies.size() > 0) {
-			for (Object value : getMetaParameters(spectra_with_policies, data_policy_attr_id, true)) {
+			for (Object value : getMetaParameters(MetaParameter.SPECTRUM_LEVEL, spectra_with_policies, data_policy_attr_id, true)) {
 				policies.add(((MetaParameter) value).getValue().toString());
 			}
 		}
@@ -1404,26 +1678,26 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 * @param mp	the item of metadata to be removed
 	 * @param ids	the list of spectra from which the metadata is to be removed (null for all spectra)
 	 */
-	public void removeMetadata(MetaParameter mp, Integer[] ids) {
+	public void removeMetadata(MetaParameter mp, ArrayList<Integer> ids) {
 		
-		getEavServices().delete_primary_x_eav(ids, mp.getEavId(), this.Is_admin());
+		getEavServices().delete_primary_x_eav(mp.getLevel(), ids, mp.getEavId(), this.Is_admin());
 		
 	}
 	
 	/**
-	 * Remove metaparameters of given attribute id from all spectra.
+	 * Remove metaparameters of given attribute id from all primary entities.
 	 * 
 	 * @param mp	the attribute id of the metaparameters to be removed
-	 * @param ids	the list of spectra from which the metadata is to be removed (null for all spectra)
+	 * @param ids	the list of primary entities from which the metadata is to be removed (null for all primary entities)
 	 */
-	public void removeMetadata(int attribute_id, ArrayList<Integer> ids) {
+	public void removeMetadata(int metadata_level, int attribute_id, ArrayList<Integer> ids) {
 		
 		// get all eav ids for that attribute and spectra ids
-		ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(ids, attribute_id);
+		ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(metadata_level, ids, attribute_id);
 		
 		for(int eav_id : eav_ids)
 		{
-			getEavServices().delete_primary_x_eav(ids, eav_id, this.Is_admin());
+			getEavServices().delete_primary_x_eav(metadata_level, ids, eav_id, this.Is_admin());
 		}
 		
 	}
@@ -1433,7 +1707,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	/**
 	 * Remove metadata from all spectra.
 	 * 
-	 * @param mp	the item of metadata to be removed
+	 * @param mp		the item of metadata to be removed
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
@@ -1441,8 +1715,11 @@ public class MetadataFactory extends SPECCHIOFactory {
 		
 		try {
 			EAVDBServices eav = getEavServices();
-			ArrayList<Integer> spectrum_ids = eav.getPrimaryIds(mp.getEavId());
-			eav.delete_primary_x_eav(spectrum_ids, mp.getEavId(), this.Is_admin());
+			ArrayList<Integer> spectrum_ids = eav.getPrimaryIds(MetaParameter.SPECTRUM_LEVEL, mp.getEavId());
+			eav.delete_primary_x_eav(mp.getLevel(), spectrum_ids, mp.getEavId(), this.Is_admin());
+			ArrayList<Integer> hierarchy_ids = eav.getPrimaryIds(MetaParameter.HIERARCHY_LEVEL, mp.getEavId());
+			eav.delete_primary_x_eav(mp.getLevel(), hierarchy_ids, mp.getEavId(), this.Is_admin());
+			
 			eav.delete_eav(mp.getEavId(), this.Is_admin());
 		}
 		catch (SQLException ex) {
@@ -1457,13 +1734,13 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 * Update an item of metadata for a given set of identifiers.
 	 * 
 	 * @param mp		the new metadata
-	 * @param ids		the identifiers of the spectra to be updated
+	 * @param spectrumIds		the identifiers of the spectra to be updated
 	 * 
 	 * @return the identifier of the inserted metadata
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public int updateMetadata(MetaParameter mp, Integer[] ids) throws SPECCHIOFactoryException {
+	public int updateMetadata(MetaParameter mp, ArrayList<Integer> spectrumIds) throws SPECCHIOFactoryException {
 		
 		int eav_id = 0;
 
@@ -1473,19 +1750,19 @@ public class MetadataFactory extends SPECCHIOFactory {
 			{
 				// get the campaign to which these metaparameters belong
 				int campaign_id = 0;
-				if (ids.length > 0) {
-					SpecchioCampaignFactory scf = new SpecchioCampaignFactory(this);
+				if (spectrumIds.size() > 0) {
+					SpecchioCampaignFactory scf = new SpecchioCampaignFactory(this);		
+					if(mp.getLevel() == MetaParameter.SPECTRUM_LEVEL)
+						campaign_id = scf.getCampaignIdForSpectrum(spectrumIds.get(0));
+					if(mp.getLevel() == MetaParameter.HIERARCHY_LEVEL)
+						campaign_id = scf.getCampaignIdForHierarchy(spectrumIds.get(0));
 					
-					campaign_id = scf.getCampaignIdForSpectrum(ids[0]);
-//					SpectrumFactory sf = new SpectrumFactory(this);
-//					Spectrum s = sf.getSpectrum(ids[0], false);
-//					campaign_id = s.getCampaignId();
+					
 					scf.dispose();
 				}
 				
-				//mp = eav.reduce_redundancy(mp);
-				eav_id = eav.insert_metaparameter_into_db(campaign_id, mp, true); // reduce redundancy 
-				eav.insert_primary_x_eav(ids, eav_id);
+				eav_id = eav.insert_metaparameter_into_db(campaign_id, mp, true); // reduce redundancy is included in this call
+				eav.insert_primary_x_eav(mp.getLevel(), spectrumIds, eav_id);
 			}
 			else
 			{
@@ -1517,7 +1794,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	 * 
 	 * @throws SPECCHIOFactoryException	database error
 	 */
-	public int updateMetadataWithNewId(MetaParameter mp, Integer[] ids) throws SPECCHIOFactoryException {
+	public int updateMetadataWithNewId(MetaParameter mp, ArrayList<Integer> ids) throws SPECCHIOFactoryException {
 		
 		int eav_id;
 
@@ -1533,8 +1810,8 @@ public class MetadataFactory extends SPECCHIOFactory {
 			eav_id = eav.insert_metaparameter_into_db(old_campaign_id, mp, false); // no redundancy reduction
 			
 			// insert the new id and remove the old one
-			eav.insert_primary_x_eav(ids, mp.getEavId());			
-			eav.delete_primary_x_eav(ids, old_eav_id, this.Is_admin());
+			eav.insert_primary_x_eav(mp.getLevel(), ids, mp.getEavId());			
+			eav.delete_primary_x_eav(mp.getLevel(), ids, old_eav_id, this.Is_admin());
 		}
 		catch (IOException ex) {
 			// database error
@@ -1550,7 +1827,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	}
 
 
-	public int updateMetadataAnnotation(MetaParameter mp, Integer[] ids)  throws SPECCHIOFactoryException {
+	public int updateMetadataAnnotation(MetaParameter mp, ArrayList<Integer> arrayList)  throws SPECCHIOFactoryException {
 
 		try {
 			
