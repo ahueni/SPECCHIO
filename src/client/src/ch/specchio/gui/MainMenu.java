@@ -179,7 +179,7 @@ private JMenuItem dbConfigmenuItem;
       menuBar.add(menu);
            
       // Data Output 
-      menu = new JMenu("Data Processing & Output");
+      menu = new JMenu("Data Selection & Output");
       
       menuItem = new JMenuItem(this.data_browser);
       menuItem.addActionListener(this);
@@ -536,7 +536,7 @@ private JMenuItem dbConfigmenuItem;
       if(metadata_editor.equals(e.getActionCommand()))
       {
     	  try {
-    		  new MetaDataEditorView();
+    		  new MetaDataEditorView(SPECCHIOApplication.getInstance().get_frame());
     	  }
     	  catch (SPECCHIOClientException ex) {
     		  JOptionPane.showMessageDialog(
