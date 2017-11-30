@@ -16,6 +16,7 @@ import ch.specchio.db_import_export.CampaignImport;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.eav_db.id_and_op_struct;
 import ch.specchio.types.Campaign;
+import ch.specchio.types.Hierarchy;
 import ch.specchio.types.ResearchGroup;
 import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.User;
@@ -202,7 +203,7 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 	/**
 	 * Get the campaign id for a given spectrum identifier.
 	 * 
-	 * @param int spectrum_id	the identifier of the desired campaign
+	 * @param int spectrum_id	the identifier of the spectrum
 	 * 
 	 * @return id of the campaign
 	 */
@@ -238,6 +239,46 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 		}
 		
 	}	
+	
+	/**
+	 * Get the hierarchy id for a given spectrum identifier.
+	 * 
+	 * @param int hierarchy_id	the identifier of the hierarchy
+	 * 
+	 * @return id of the campaign
+	 */
+	public Integer getCampaignIdForHierarchy(int hierarchy_id) throws SPECCHIOFactoryException {
+		
+		try {
+			
+			Integer campaign_id = 0;
+			
+			// create SQL-building objects
+			Statement stmt = getConnection().createStatement();
+			String query;
+			ResultSet rs;
+			
+			// load campaign data from the database
+			query = "SELECT campaign_id FROM hierarchy_level WHERE hierarchy_level_id=" + hierarchy_id; 
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				campaign_id = rs.getInt(1);
+			}
+			rs.close();
+
+			
+			// clean up
+			stmt.close();
+
+			return campaign_id;
+			
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+	}		
 	
 	
 	/**
@@ -329,6 +370,29 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 		}
 		
 	}
+	
+	/**
+	 * Get the hierarchy object for a given hierarchy_id
+	 * 
+	 * @param hierarchy_id	the hierarchy_id identifying the required node
+	 * 
+	 * @return the hierarchy object, or -1 if the node does not exist
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */		
+	public Hierarchy getHierarchy(int hierarchy_id, boolean userInRole) {
+
+		Hierarchy h = new Hierarchy(hierarchy_id);
+		h.setHierarchy_name(this.getHierarchyName(hierarchy_id));
+		
+		// get metadata of this hierarchy
+		MetadataFactory MF = new MetadataFactory(this);	
+		h.setMetadata(MF.getMetadataForHierarchy(hierarchy_id));	
+		
+		return h;
+	}
+
+	
 	
 	
 	/**
@@ -1057,6 +1121,7 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 		}
 		
 	}
+
 
 
 
