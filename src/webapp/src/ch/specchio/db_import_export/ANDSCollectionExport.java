@@ -205,7 +205,7 @@ public class ANDSCollectionExport {
 	private List<java.util.Date> obtainFirstLastDates (RDACollectionDescriptor rdaCollectionDescriptor) throws SPECCHIOFactoryException
 	{
 		// get the acquisition times for all spectra in the collection
-		List<MetaParameter> acquisitionTimes = metadataFactory.getMetaParameters(
+		List<MetaParameter> acquisitionTimes = metadataFactory.getMetaParameters(MetaParameter.SPECTRUM_LEVEL, 
 				rdaCollectionDescriptor.getSpectrumIds(),
 				ACQUISITION_TIME_METAPARAMETER,
 				true
@@ -242,11 +242,13 @@ public class ANDSCollectionExport {
 	{
 		
 		// convert int spectrum identifiers to Integer spectrum identifiers... grrr
-		Integer[] spectrumIds = new Integer[rdaCollectionDescriptor.getSpectrumIds().length];
+		//Integer[] spectrumIds = new Integer[rdaCollectionDescriptor.getSpectrumIds().length];
+		ArrayList<Integer> spectrumIds = new ArrayList<Integer>();
 		int i = 0;
 		for(int value : rdaCollectionDescriptor.getSpectrumIds())
 		{
-			spectrumIds[i++] = Integer.valueOf(value);
+			spectrumIds.add(value);
+			//spectrumIds[i++] = Integer.valueOf(value);
 		}
 		
 		MetaParameter andsCollectionKey = updateMetadataWithCreate(ANDS_COLLECTION_KEY_METAPARAMETER, spectrumIds, COLLECTION_PREFIX + EAVID_TOKEN);
@@ -367,7 +369,7 @@ public class ANDSCollectionExport {
 		throws SPECCHIOFactoryException {
 
 		// get the spatial location for all spectra in the collection
-		ArrayList<MetaParameter> locationNameMetaParameters = metadataFactory.getMetaParameters(
+		ArrayList<MetaParameter> locationNameMetaParameters = metadataFactory.getMetaParameters(MetaParameter.SPECTRUM_LEVEL, 
 				rdaCollectionDescriptor.getSpectrumIds(),
 				LOCATION_NAME_METAPARAMETER,
 				true
@@ -443,7 +445,7 @@ public class ANDSCollectionExport {
 		identifierList.add(identifier);	
 		
 		// add DOIs
-		ArrayList<MetaParameter> doiMetaParameters = metadataFactory.getMetaParameters(
+		ArrayList<MetaParameter> doiMetaParameters = metadataFactory.getMetaParameters(MetaParameter.SPECTRUM_LEVEL, 
 				rdaCollectionDescriptor.getSpectrumIds(),
 				DOI_METAPARAMETER,
 				true
@@ -542,7 +544,7 @@ public class ANDSCollectionExport {
 		ArrayList<Rights> rightsList = new ArrayList<Rights>();
 		
 		// get all of the data user policy metaparameters
-		ArrayList<MetaParameter> dataUsagePolicyMetaParameters = metadataFactory.getMetaParameters(
+		ArrayList<MetaParameter> dataUsagePolicyMetaParameters = metadataFactory.getMetaParameters(MetaParameter.SPECTRUM_LEVEL, 
 				rdaCollectionDescriptor.getSpectrumIds(),
 				DATA_USAGE_POLICY_METAPARAMETER,
 				true
@@ -613,7 +615,7 @@ public class ANDSCollectionExport {
 		ArrayList<Subject> subjectList = new ArrayList<Subject>();
 		
 		// get the FOR codes for every spectrum in the collection
-		ArrayList<MetaParameter> forCodeMetaParameters = metadataFactory.getMetaParameters(
+		ArrayList<MetaParameter> forCodeMetaParameters = metadataFactory.getMetaParameters(MetaParameter.SPECTRUM_LEVEL, 
 				rdaCollectionDescriptor.getSpectrumIds(),
 				FOR_CODE_METAPARAMETER,
 				true
@@ -660,7 +662,7 @@ public class ANDSCollectionExport {
 	 * 
 	 * @throws SPECCHIOFactoryException database error
 	 */
-	private MetaParameter updateMetadataWithCreate(String attributeName, Integer spectrumIds[], String value)
+	private MetaParameter updateMetadataWithCreate(String attributeName, ArrayList<Integer> spectrumIds, String value)
 		throws SPECCHIOFactoryException {
 
 		// get the attribute corresponding to the given attribute name
@@ -672,16 +674,16 @@ public class ANDSCollectionExport {
 		
 		// see if the spectra have an existing shared metadata item with this name
 		MetaParameter mp = null;
-		if (spectrumIds.length > 0) {
+		if (spectrumIds.size() > 0) {
 			
 			// start with a set containing all of the metaparameters with the given name for the first spectrum
 			Set<MetaParameter> candidates = new HashSet<MetaParameter>();
-			for (MetaParameter mp1 : metadataFactory.getMetadataForSpectrum(spectrumIds[0]).get_all_entries(attr.id)) {
+			for (MetaParameter mp1 : metadataFactory.getMetadataForSpectrum(spectrumIds.get(0)).get_all_entries(attr.id)) {
 				candidates.add(mp1);
 			}
 			
 			// get the conflict information the given attribute over the given set of spectra
-			ConflictInfo conflicts = metadataFactory.detectEavConflicts(spectrumIds).get(attr.id);
+			ConflictInfo conflicts = metadataFactory.detectEavConflicts(MetaParameter.SPECTRUM_LEVEL, spectrumIds).get(attr.id);
 			
 			if (conflicts != null) {
 				// look for an EAV ID with no conflicts
