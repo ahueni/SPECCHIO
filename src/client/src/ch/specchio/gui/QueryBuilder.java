@@ -55,6 +55,7 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.constants.UserRoles;
 import ch.specchio.metadata.MDE_Controller;
+import ch.specchio.metadata.MDE_Spectrum_Controller;
 import ch.specchio.proc_modules.FileOutputManager;
 import ch.specchio.proc_modules.ModuleException;
 import ch.specchio.proc_modules.RadianceToReflectance;
@@ -73,6 +74,8 @@ import ch.specchio.query_builder.QueryController;
 import ch.specchio.spaces.Space;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.MatlabAdaptedArrayList;
+import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetaSpatialPoint;
 import ch.specchio.types.Spectrum;
 
 public class QueryBuilder extends SpectralMetaDataBase  implements ActionListener, TreeSelectionListener, ChangeListener, ClipboardOwner, QueryConditionChangeInterface, ListSelectionListener 
@@ -315,7 +318,7 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
 		JPanel SQL_query_panel = new JPanel();
 		Border blackline = BorderFactory.createLineBorder(Color.black);
-		TitledBorder tb = BorderFactory.createTitledBorder(blackline, "Matching Spectra");
+		TitledBorder tb = BorderFactory.createTitledBorder(blackline, "Matching Spectrum Identifiers");
 		SQL_query_panel.setBorder(tb);
 		SQL_query = new SQLQueryArea(this, 8, 30);
 		SQL_query.setLineWrap(true);
@@ -428,10 +431,14 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 	    
 	    menuItem = new JMenuItem(VisualisationSelectionDialog.sampling_points_plot);
 	    menuItem.addActionListener(this);
+	    menuItem.setEnabled(false);
+	    menuItem.setToolTipText("Disabled - this feature will reappear in future versions");
 	    menu.add(menuItem);	
 	    
 	    menuItem = new JMenuItem(VisualisationSelectionDialog.gonio_hem_expl);
 	    menuItem.addActionListener(this);
+	    menuItem.setEnabled(false);
+	    menuItem.setToolTipText("Disabled - this feature will reappear in future versions");
 	    menu.add(menuItem);		    
 	    
 	    menuBar.add(menu);
@@ -480,7 +487,7 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 		if (mds_restrictions)
 		{
 			
-			MDE_Controller mdec = new MDE_Controller(specchio_client);
+			MDE_Spectrum_Controller mdec = new MDE_Spectrum_Controller(specchio_client);
 			category_list = new SpectrumMetadataCategoryList(mdec.getFormFactory());
 			category_list.addListSelectionListener(this);			
 
@@ -655,10 +662,10 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 	public void actionPerformed(ActionEvent e) 
 	{
 		
-	      if("run_query".equals(e.getActionCommand()))
-	      {   
-	    	  changed(true);
-	      }
+		if("run_query".equals(e.getActionCommand()))
+		{   
+			changed(true);
+		}
 		
 		// SDB combobox
 		if("comboBoxChanged".equals(e.getActionCommand()))
@@ -884,11 +891,21 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 	      {
 	    	  try {
 	    		  
+	    		  
+	    		  ArrayList<Integer> ids = get_ids_matching_query();
+	    		  
+	    		  MetaSpatialPoint mp1 = (MetaSpatialPoint) specchio_client.getMetaparameter(ids.get(0), "Spatial Position");
+	    		  MetaSpatialPoint mp2 = (MetaSpatialPoint) specchio_client.getMetaparameter(ids.get(1), "Spatial Position");
+	    		  
+	    		  
+	    		  boolean matches = mp1.hasEqualValue(mp2);
+	    		  
+	    		  
 //	    		  MatlabAdaptedArrayList<Object> out = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Site ID");
 	    		  
-	    		  MatlabAdaptedArrayList<Object> joda_time = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Acquisition Time");
+//	    		  MatlabAdaptedArrayList<Object> joda_time = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Acquisition Time");
 	    		  
-	    		  System.out.println(joda_time.size());
+//	    		  System.out.println(joda_time.size());
 	    		  
 	    		  int x = 1;
 				// ArrayList<Integer> ids = specchio_client.getInstrumentIds(ids_matching_query);
