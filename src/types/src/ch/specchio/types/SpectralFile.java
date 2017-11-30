@@ -509,7 +509,7 @@ public class SpectralFile {
 	@XmlElement(name="no_of_channels")
 	public ArrayList<Integer> getNumberOfChannels() { return this.no_of_channels; }
 	public void setNumberOfChannels(ArrayList<Integer> no_of_channels) { this.no_of_channels = no_of_channels; }
-	public Integer getNumberOfChannels(int i) {  if(this.measurements != null){ return measurements[i].length;} else {return this.no_of_channels.get(i);} }
+	public Integer getNumberOfChannels(int i) {  if(this.measurements != null && measurements[i] != null){ return measurements[i].length;} else {return this.no_of_channels.get(i);} }
 	public void addNumberOfChannels(int n) { this.no_of_channels.add(n); }
 	
 	@XmlElement(name="no_of_ind_spectral_scans")
@@ -565,7 +565,17 @@ public class SpectralFile {
 	public void setPos(ArrayList<spatial_pos> pos) { this.pos = pos; }
 	public spatial_pos getPos(int i) { return this.pos.get(i); }
 	public void addPos(spatial_pos pos) { this.pos.add(pos); }
-	public void addPos(int i, spatial_pos pos) { this.pos.add(i, pos); }
+	public void addPos(int i, spatial_pos pos) { 
+		
+		// check if this index exists, otherwise add null values till index is reached
+		while(this.pos.size() < i)
+		{
+			this.pos.add(null);
+		}			
+		
+		this.pos.add(i, pos); 
+		
+	}
 	
 	@XmlElement(name="processing")
 	public String getProcessing() { return this.processing; }
