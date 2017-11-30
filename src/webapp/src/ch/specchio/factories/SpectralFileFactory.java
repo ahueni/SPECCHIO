@@ -493,20 +493,25 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			mp.setValue(dl.getReferencingId());
 
 
-			Integer[] spectrum_id_array = new Integer[1];
-			spectrum_id_array[0]=dl.getReferencedId();
+//			Integer[] spectrum_id_array = new Integer[1];
+//			spectrum_id_array[0]=dl.getReferencedId();
+			ArrayList<Integer> ids = new ArrayList<Integer>();
+			ids.add(dl.getReferencedId());
+			
 
 			MetadataFactory MF = new MetadataFactory(this);
 
-			MF.updateMetadata(mp, spectrum_id_array);
+			MF.updateMetadata(mp, ids);
 
 			// link reference to target
 			mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Reference Data Link", "Data Links"));
 			mp.setValue(dl.getReferencedId());
 
-			spectrum_id_array[0]=dl.getReferencingId();
+			//spectrum_id_array[0]=dl.getReferencingId();
+			ids.clear();
+			ids.add(dl.getReferencingId());			
 
-			MF.updateMetadata(mp, spectrum_id_array);		
+			MF.updateMetadata(mp, ids);		
 
 		} catch (MetaParameterFormatException e) {
 			// TODO Auto-generated catch block
@@ -534,12 +539,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			mp.setValue(dl.getReferencedId());
 
 
-			Integer[] spectrum_id_array = new Integer[1];
-			spectrum_id_array[0]=dl.getReferencingId();
+//			Integer[] spectrum_id_array = new Integer[1];
+//			spectrum_id_array[0]=dl.getReferencingId();
+			ArrayList<Integer> ids = new ArrayList<Integer>();
+			ids.add(dl.getReferencingId());			
 
 			MetadataFactory MF = new MetadataFactory(this);
 
-			MF.updateMetadata(mp, spectrum_id_array);
+			MF.updateMetadata(mp, ids);
 
 
 		} catch (MetaParameterFormatException e) {
@@ -1373,7 +1380,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				// automatic processing of EAV data
 				if (spec_file.getEavMetadata(spec_no) != null) {
 					ArrayList<Integer> eav_ids = getEavServices().insert_metadata_into_db(campaign.getId(), spec_file.getEavMetadata(spec_no));
-					getEavServices().insert_primary_x_eav(id, eav_ids);
+					getEavServices().insert_primary_x_eav(MetaParameter.SPECTRUM_LEVEL, id, eav_ids);
 				}
 		
 				// update of the attribute default storage field information if needed
