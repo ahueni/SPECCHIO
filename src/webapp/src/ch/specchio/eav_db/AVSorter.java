@@ -28,7 +28,7 @@ public class AVSorter {
 		
 		
 		// load all metaparameters
-		ArrayList<FrameMetaparameterStructure> fms_list = eav.load_metaparameters(av_input.getSpectrumIds(), attr_ids);
+		ArrayList<FrameMetaparameterStructure> fms_list = eav.load_metaparameters(MetaParameter.SPECTRUM_LEVEL, av_input.getSpectrumIds(), attr_ids);
 
 		ListIterator<FrameMetaparameterStructure> li = fms_list.listIterator();			
 
