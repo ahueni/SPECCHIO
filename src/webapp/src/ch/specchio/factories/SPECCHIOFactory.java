@@ -239,7 +239,8 @@ public class SPECCHIOFactory {
 		
 		// set up EAV services
 		this.eav = new EAVDBServices(getStatementBuilder(), getAttributes(), getDatabaseUserName());
-		this.eav.set_primary_x_eav_tablename("spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
+		this.eav.set_primary_x_eav_tablename(MetaParameter.SPECTRUM_LEVEL, "spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
+		this.eav.set_primary_x_eav_tablename(MetaParameter.HIERARCHY_LEVEL, "hierarchy_x_eav", "hierarchy_x_eav_view", "hierarchy_level_id", "hierarchy_level");
 		this.eav.set_eav_view_name("eav_view");
 		
 	}
@@ -531,7 +532,8 @@ public class SPECCHIOFactory {
 				
 		// set up EAV services to ensure they have new attribute etc info
 		this.eav = new EAVDBServices(getStatementBuilder(), getAttributes(), getDatabaseUserName());
-		this.eav.set_primary_x_eav_tablename("spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
+		this.eav.set_primary_x_eav_tablename(MetaParameter.SPECTRUM_LEVEL, "spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
+		this.eav.set_primary_x_eav_tablename(MetaParameter.HIERARCHY_LEVEL, "hierarchy_x_eav", "hierarchy_x_eav_view", "hierarchy_level_id", "hierarchy_level");
 		this.eav.set_eav_view_name("eav_view");
 		
 		
@@ -721,7 +723,7 @@ public class SPECCHIOFactory {
 						
 						// insert into eav and link with spectrum
 						int eav_id = getEavServices().insert_metaparameter_into_db(campaign_id, mp, true);
-						getEavServices().insert_primary_x_eav(coord.spectrum_id, eav_id);
+						getEavServices().insert_primary_x_eav(MetaParameter.SPECTRUM_LEVEL, coord.spectrum_id, eav_id);
 
 					}
 
