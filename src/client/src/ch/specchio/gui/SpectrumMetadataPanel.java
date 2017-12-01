@@ -49,6 +49,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
@@ -66,14 +68,17 @@ import org.freixas.jcalendar.JCalendarCombo;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.metadata.MDE_Controller;
 import ch.specchio.metadata.MDE_Form;
 import ch.specchio.metadata.MD_CategoryContainer;
 import ch.specchio.metadata.MD_ChangeListener;
 import ch.specchio.metadata.MD_EAV_Field;
 import ch.specchio.metadata.MD_EAV_Link_Field;
 import ch.specchio.metadata.MD_Field;
+import ch.specchio.metadata.MD_Hierarchy_Field;
 import ch.specchio.metadata.MD_Spectrum_Field;
 import ch.specchio.types.ArrayListWrapper;
+import ch.specchio.types.Campaign;
 import ch.specchio.types.Capabilities;
 import ch.specchio.types.CategoryTable;
 import ch.specchio.types.ConflictInfo;
@@ -106,7 +111,7 @@ import de.micromata.opengis.kml.v_2_2_0.Polygon;
 /**
  * Spectrum metadata panel. This panel displays all of the metadata for a spectrum.
  */
-public class SpectrumMetadataPanel extends JPanel {
+public class SpectrumMetadataPanel extends JPanel implements ListSelectionListener {
 
 	/** serialisation version identifier */
 	private static final long serialVersionUID = 1L;
@@ -128,6 +133,13 @@ public class SpectrumMetadataPanel extends JPanel {
 	
 	private String previous_path = null;
 	
+	private SpectrumMetadataCategoryList category_list;
+	private MDE_Controller mdec;
+	JPanel metadata_panel;
+
+	private JScrollPane spectrum_scroll_pane;
+
+	private JScrollPane category_scroll_pane;
 	
 	/**
 	 * Constructor.
@@ -135,24 +147,48 @@ public class SpectrumMetadataPanel extends JPanel {
 	 * @param owner				the frame that owns this panel
 	 * @param specchioClient	the client object to use for contacting the server
 	 */
-	public SpectrumMetadataPanel(Frame owner, SPECCHIOClient specchioClient) {
+	public SpectrumMetadataPanel(Frame owner, SPECCHIOClient specchioClient, MDE_Controller mdec) {
 		
 		super();
-		
-		// save a reference to the parameters for later
-		this.owner = owner;
-		this.specchioClient = specchioClient;
-		
+				
 		// initialise member variables
 		form = null;
 		listeners = new LinkedList<MD_ChangeListener>();
 		editable = true;
 		
-
+		// save a reference to the parameters for later
+		this.owner = owner;
+		this.specchioClient = specchioClient;
+		this.mdec = mdec;
+		addMetadataChangeListener(mdec);
 		
 		// set up vertical box layout
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		
+		metadata_panel = new JPanel();
+		metadata_panel.setLayout(new BoxLayout(metadata_panel, BoxLayout.Y_AXIS));
+		
+		// Create basic layout
+		spectrum_scroll_pane = new JScrollPane(metadata_panel,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		spectrum_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
+					
+		category_scroll_pane = new JScrollPane();
+		
+		category_scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
+		
+		category_list = new SpectrumMetadataCategoryList(mdec.getFormFactory());
+		category_list.addListSelectionListener(this);
+		mdec.setCategoryList(category_list);
+		
+        Dimension d = new Dimension(category_list.getComponent(0).getPreferredSize());
+        category_scroll_pane.getVerticalScrollBar().setUnitIncrement(d.height);
+        category_scroll_pane.getViewport().setPreferredSize(d);
+        category_scroll_pane.getViewport().add(category_list);
+		
+		add(spectrum_scroll_pane);
+		add(category_scroll_pane);
+
+
 	}
 	
 	
@@ -166,6 +202,39 @@ public class SpectrumMetadataPanel extends JPanel {
 		listeners.add(listener);
 		
 	}
+	
+	
+	private void buildGUI(boolean manual_interaction) throws SPECCHIOClientException
+	{
+		
+		if(!manual_interaction && form != null)
+		{
+
+			MetaTaxonomy ap_domain = (MetaTaxonomy) form.getEavParameterFromContainer("Application Domain", "General");
+
+			if(ap_domain != null)
+			{
+				// control of application domain has moved to MDE_Controller
+			}
+			else
+			{
+				// enable all categories
+				if(category_list.isApplicationDomainEnabled())
+				{
+					category_list.setAllSelected(true);
+					category_list.setApplicationDomain(null);
+					mdec.set_form_descriptor(category_list.getFormDescriptor(), false);
+				}
+			}
+		}
+		
+		
+		form = mdec.getForm();	
+		
+		// set up metadata panel
+		setForm(form);
+		
+	}	
 	
 	
 	/**
@@ -272,7 +341,7 @@ public class SpectrumMetadataPanel extends JPanel {
 	public void setForm(MDE_Form form) throws SPECCHIOClientException {
 		
 		// remove all of the existing components
-		removeAll();
+		metadata_panel.removeAll();
 		
 		if (form != null) {
 			
@@ -280,7 +349,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			for (MD_CategoryContainer mdcc : form.getContainers()) {
 				SpectrumMetadataCategoryContainer panel = new SpectrumMetadataCategoryContainer(mdcc, this.specchioClient);
 				panel.setEditable(editable);
-				add(panel);
+				metadata_panel.add(panel);
 			}
 			
 		}
@@ -292,6 +361,13 @@ public class SpectrumMetadataPanel extends JPanel {
 		revalidate();
 		repaint();
 		
+	}
+	
+	
+	public void updateForm()
+	{
+		form = mdec.getForm();
+		setForm(form);
 	}
 	
 	
@@ -316,7 +392,7 @@ public class SpectrumMetadataPanel extends JPanel {
 		private SpectrumMetadataComponentFactory factory;
 		
 		/** popup menu */
-		private JPopupMenu popupMenu;
+		private ScrollablePopupMenu popupMenu;
 		
 		/** is the container editable? */
 		private boolean editable;
@@ -366,7 +442,8 @@ public class SpectrumMetadataPanel extends JPanel {
 			this.setToolTipText(toolTipText);
 			
 			// set up popup menu
-			popupMenu = new JPopupMenu();
+			popupMenu = new ScrollablePopupMenu();
+			popupMenu.setMaximumVisibleRows(10);
 			for (attribute a : mdcc.getPossibleEAVFields()) {
 				addMenuItem(a);
 			}
@@ -500,7 +577,19 @@ public class SpectrumMetadataPanel extends JPanel {
 					attribute a = (attribute)menuItem.getClientProperty(ATTRIBUTE);
 					MetaParameter mp = MetaParameter.newInstance(a);
 					mp.setUnits(specchioClient.getAttributeUnits(a));
+					
+					if(mdec.getOnlyHierarchiesAreSelected())
+					{
+						mp.setLevel(MetaParameter.HIERARCHY_LEVEL);
+					}
+					
 					MD_EAV_Field field = getForm().createEAVField(mp);
+					
+//					if(mdec.getOnlyHierarchiesAreSelected())
+//					{
+//						field.setLevel();
+//						//field.getConflict().
+//					}
 					
 //					Object value = null;
 					if (mp instanceof MetaFile) {
@@ -598,9 +687,10 @@ public class SpectrumMetadataPanel extends JPanel {
 			
 			if (field instanceof MD_EAV_Field) {
 				// remove this field from the pop-up menu if its cardinality is 1
+				// menu item count starts at 1 (first entry is the scrollbar)
 				MetaParameter mp = ((MD_EAV_Field)field).getMetaParameter();
-				for (int i = 0; i < popupMenu.getComponentCount(); i++) {
-					JMenuItem menuItem = (JMenuItem)popupMenu.getComponent(i);
+				for (int i = 0; i < popupMenu.getComponentCount()-1; i++) {
+					JMenuItem menuItem = popupMenu.getJMenuItem(i);
 					attribute a = (attribute)menuItem.getClientProperty(ATTRIBUTE);
 					if (a.id == mp.getAttributeId() && a.cardinality == 1) {
 						popupMenu.remove(i);
@@ -863,6 +953,9 @@ public class SpectrumMetadataPanel extends JPanel {
 				return newEavComponent((MD_EAV_Field)field);
 			} else if (field instanceof MD_EAV_Link_Field) {
 				return newEavComponent((MD_EAV_Link_Field)field);
+			} else if (field instanceof MD_Hierarchy_Field) {
+				return newFieldComponent((MD_Hierarchy_Field)field);
+				
 			} else {
 				// this should never happen
 				return null;
@@ -922,7 +1015,22 @@ public class SpectrumMetadataPanel extends JPanel {
 			
 		}
 		
+		/**
+		 * Create a new component for a non-EAV field.
+		 * 
+		 * @param field	the metadata field to be represented by the new component
+		 *
+		 * @return a new SpectrumFieldMetadataComponent corresponding to the new field
+		 */
+		private HierarchyFieldMetadataComponent newFieldComponent(MD_Hierarchy_Field field) {
+			
+			return new HierarchyFieldMetadataComponent(container, field);
+			
+		}		
+		
 	}
+	
+	
 	
 	
 	/**
@@ -963,6 +1071,30 @@ public class SpectrumMetadataPanel extends JPanel {
 			label = new JLabel(field.getLabelWithUnit());
 			label.setHorizontalAlignment(JLabel.RIGHT);
 			label.setToolTipText(field.getDescription());
+			
+			try {
+			
+				if(field.getLevel() == MetaParameter.HIERARCHY_LEVEL && field.getClass() == MD_EAV_Field.class && field.getConflict().getConflictData(((MD_EAV_Field)field).getMetaParameter().getEavId()).isInherited())
+				{				
+					label.setForeground(Color.BLUE);
+					label.setToolTipText("This metaparameter is inherited from a hierarchy.");
+				}
+				
+				if(field.getLevel() == MetaParameter.SPECTRUM_LEVEL && field.getClass() == MD_EAV_Field.class && field.getConflict().getConflictData(((MD_EAV_Field)field).getMetaParameter().getEavId()).getNumberOfSharingRecords() > 1)
+				{	
+					Color c = Color.getHSBColor(0.45f, 1f, 0.5f);
+					
+					Color c2 = Color.BLUE;
+					
+					label.setForeground(c);
+					label.setToolTipText("This metaparameter is shared with " + field.getConflict().getConflictData(((MD_EAV_Field)field).getMetaParameter().getEavId()).getNumberOfSharingRecords() + " other spectra.");
+
+				}
+			
+			} catch (java.lang.NullPointerException e)
+			{
+				int x = 0;
+			}
 			add(label);
 			
 		}
@@ -1058,7 +1190,7 @@ public class SpectrumMetadataPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 		
 		/** the combo box, used for an editable field */
-		private JComboBox box;
+		private JComboBox<combo_table_data> box;
 		
 		/** the text field, used for a non-editable field */
 		private JTextField text;
@@ -1074,7 +1206,7 @@ public class SpectrumMetadataPanel extends JPanel {
 			super(container, field);
 			
 			// build combobox
-			box = new JComboBox();
+			box = new JComboBox<combo_table_data>();
 			combo_table_data nil_item = new combo_table_data("NIL", 0);
 			box.addItem(nil_item);
 			
@@ -1088,7 +1220,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				combo_table_data cdt = new combo_table_data(value, key);
 				box.addItem(cdt);
 				//System.out.println(key);
-				if(key.intValue() == field.getId().intValue())
+				if(field.getId() != null && key.intValue() == field.getId().intValue())
 				{
 					box.setSelectedItem(cdt);
 				}
@@ -1170,6 +1302,95 @@ public class SpectrumMetadataPanel extends JPanel {
 	
 	
 	/**
+	 * Component for non-EAV metadata fields.
+	 */
+	private class HierarchyFieldMetadataComponent extends SpectrumMetadataComponent implements ActionListener {
+		
+		/** serialisation version identifier */
+		private static final long serialVersionUID = 1L;
+
+		
+		/** the text field, used for a non-editable field */
+		private JTextField text;
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param container	the category container panel to which this component belongs
+		 * @param field	the field to be represented by this component
+		 */
+		public HierarchyFieldMetadataComponent(SpectrumMetadataCategoryContainer container, MD_Hierarchy_Field field) {
+			
+			super(container, field);
+			
+			
+			text = new JTextField(field.getText(), 20);
+			text.setEditable(false);
+			add(text);
+			
+			
+		}
+		
+		
+		/**
+		 * Combo box selection handler.
+		 * 
+		 * @param	the event
+		 */
+		public void actionPerformed(ActionEvent event) {
+			
+//			combo_table_data cdt = (combo_table_data) box.getSelectedItem();
+//			fireMetadataFieldChanged(getField(), cdt);	
+//			getField().setNewValue(cdt.id);
+			
+		}
+		
+		
+		/**
+		 * Make the field editable or not.
+		 * 
+		 * @param editable true to make the field editable, false otherwise
+		 */
+		public void setEditable(boolean editable) {
+			
+//			if (editable) {
+//				// display the combo box
+//				remove(text);
+//				add(box);
+//			} else {
+//				// display the label
+//				remove(box);
+//				add(text);
+//			}
+			
+			// force re-draw
+			revalidate();
+			repaint();
+			
+		}
+		
+		
+		/**
+		 * Enable or disable the field.
+		 *
+		 * @param enabled	true or false
+		 */
+		public void setEnabled(boolean enabled) {
+			
+			text.setEnabled(enabled);
+			
+		}
+
+
+		@Override
+		public JComponent getInputComponent() {			
+			return this.text;
+		}
+		
+	}	
+	
+	
+	/**
 	 * Base class for EAV metadata components.
 	 */
 	private abstract class SpectrumEavMetadataComponent extends SpectrumMetadataComponent implements ActionListener, MouseListener {
@@ -1178,7 +1399,7 @@ public class SpectrumMetadataPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 
 		/** pop-up menu for deleting the field */
-		protected JPopupMenu popupMenu;
+		protected ScrollablePopupMenu popupMenu;
 		
 		/** is the component editable? */
 		private boolean editable;
@@ -1200,7 +1421,8 @@ public class SpectrumMetadataPanel extends JPanel {
 			editable = true;
 			
 			// create the popup menu and listen for mouse clicks
-			popupMenu = new JPopupMenu();
+			popupMenu = new ScrollablePopupMenu();
+			popupMenu.setMaximumVisibleRows(10);
 			getLabel().addMouseListener(this);
 			
 			// add the "delete" menu option
@@ -2909,6 +3131,7 @@ public class SpectrumMetadataPanel extends JPanel {
 				
 			}
 		}
+			
 		
 		
 		/**
@@ -2946,6 +3169,25 @@ public class SpectrumMetadataPanel extends JPanel {
 			selectButton.setEnabled(enabled && !fieldHasMultipleValues());
 			
 		}
+		
+	}	
+	
+	
+	public void valueChanged(ListSelectionEvent arg0) {
+		
+//		startOperation();
+		try {
+			mdec.set_form_descriptor(category_list.getFormDescriptor(), true);
+			form = mdec.getForm();
+			
+			buildGUI(true);
+		}
+  		catch (SPECCHIOClientException ex) {
+			ErrorDialog error = new ErrorDialog(this.owner, "Error", ex.getUserMessage(), ex);
+			error.setVisible(true);
+
+	    }
+//		endOperation();
 		
 	}	
 
