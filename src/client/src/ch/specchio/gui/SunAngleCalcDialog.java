@@ -22,6 +22,7 @@ import net.e175.klaus.solarpositioning.AzimuthZenithAngle;
 import net.e175.klaus.solarpositioning.Grena3;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
@@ -35,9 +36,7 @@ import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaSimple;
 import ch.specchio.types.MetaSpatialPoint;
 import ch.specchio.types.MetaSpatialPolyline;
-import ch.specchio.types.Metadata;
 import ch.specchio.types.Point2D;
-import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
 
 
@@ -241,6 +240,8 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 			ProgressReportDialog pr = new ProgressReportDialog(SunAngleCalcDialog.this, "Sun Angle Calculator", false, 20);
 			pr.set_operation("Updating illumination angles");
 			pr.setVisible(true);
+			
+			ArrayList<Integer> updatedIds = new ArrayList<Integer>();
 
 			// calculate angles for each identifier
 			int cnt = 0;
@@ -253,8 +254,12 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 				for (Integer id : spectrumIds) {
 					
 					// download spectrum metadata from server
-					Spectrum s = specchioClient.getSpectrum(id, true);
-					Metadata md = s.getMetadata();
+					//Spectrum s = specchioClient.getSpectrum(id, true);
+					//Metadata md = s.getMetadata();
+					//ArrayList<Integer> ids = new ArrayList<Integer>();
+					//ids.add(id);
+					
+					//System.out.println(id);
 					
 					boolean spat_pos_available = false;
 					double lat = 0, lon = 0;
@@ -262,7 +267,11 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 					// get latitude and longitude
 					if(spatial_extension)
 					{
-						MetaSpatialPoint pos = (MetaSpatialPoint)md.get_first_entry("Spatial Position");
+						//ArrayList<MetaParameter> pos_tmp = specchioClient.getMetaparameters(ids, "Spatial Position");
+						//MetaSpatialPoint pos = (MetaSpatialPoint)md.get_first_entry("Spatial Position");
+						//MetaSpatialPoint pos = (MetaSpatialPoint) pos_tmp.get(0);
+//						MetaParameter tmp = specchioClient.getMetaparameter(id, "Spatial Position");
+						MetaSpatialPoint pos = (MetaSpatialPoint)specchioClient.getMetaparameter(id, "Spatial Position");
 						
 						if(pos != null)
 						{
@@ -273,17 +282,24 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						
 						if(!spat_pos_available)
 						{
-							MetaSpatialPolyline t = (MetaSpatialPolyline)md.get_first_entry("Spatial Transect");
+							//MetaSpatialPolyline t = (MetaSpatialPolyline)md.get_first_entry("Spatial Transect");
+							//pos_tmp = specchioClient.getMetaparameters(ids, "Spatial Transect");
+							//MetaSpatialPolyline t = (MetaSpatialPolyline) pos_tmp.get(0);
+							MetaSpatialPolyline t = (MetaSpatialPolyline)specchioClient.getMetaparameter(id, "Spatial Transect");
 							
-							ArrayListWrapper wrapper = (ArrayListWrapper) t.getValue();
-							List coords = wrapper.getList();
+							if(t != null)
+							{
 							
-							Point2D coord1 = (Point2D) coords.get(0);
-							Point2D coord_end = (Point2D) coords.get(coords.size()-1);
-							
-							lat = (coord1.getY() + coord_end.getY()) / 2;
-							lon = (coord1.getX() + coord_end.getX()) / 2;
-							spat_pos_available = true;
+								ArrayListWrapper wrapper = (ArrayListWrapper) t.getValue();
+								List coords = wrapper.getList();
+
+								Point2D coord1 = (Point2D) coords.get(0);
+								Point2D coord_end = (Point2D) coords.get(coords.size()-1);
+
+								lat = (coord1.getY() + coord_end.getY()) / 2;
+								lon = (coord1.getX() + coord_end.getX()) / 2;
+								spat_pos_available = true;
+							}
 							
 							
 						}
@@ -292,9 +308,17 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 					}
 					else
 					{
-						MetaSimple latitude = (MetaSimple)md.get_first_entry("Latitude");
-						MetaSimple longitude = (MetaSimple)md.get_first_entry("Longitude");
+//						ArrayList<MetaParameter> lat_tmp = specchioClient.getMetaparameters(ids, "Latitude");
+//						ArrayList<MetaParameter> lon_tmp = specchioClient.getMetaparameters(ids, "Longitude");
+////						MetaSimple latitude = (MetaSimple)md.get_first_entry("Latitude");
+////						MetaSimple longitude = (MetaSimple)md.get_first_entry("Longitude");
+//						
+//						MetaSimple latitude = (MetaSimple) lat_tmp.get(0);
+//						MetaSimple longitude = (MetaSimple) lon_tmp.get(0);
 						
+						MetaSimple latitude = (MetaSimple) specchioClient.getMetaparameter(id, "Latitude");
+						MetaSimple longitude = (MetaSimple) specchioClient.getMetaparameter(id, "Longitude");
+
 						if (latitude != null && longitude != null)
 						{
 							lat = (Double)latitude.getValue();
@@ -304,12 +328,19 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 					}
 					
 					// get acquisition time
-					MetaDate acquisitionTime = (MetaDate)md.get_first_entry("Acquisition Time (UTC)");
-					
+					//MetaDate acquisitionTime = (MetaDate)md.get_first_entry("Acquisition Time (UTC)");
+//					ArrayList<MetaParameter> utc_tmp = specchioClient.getMetaparameters(ids, "Acquisition Time (UTC)");
+//					MetaDate acquisitionTime = (MetaDate)utc_tmp.get(0);
+					MetaDate acquisitionTime = null;
+					if(spat_pos_available)
+					{
+						acquisitionTime = (MetaDate) specchioClient.getMetaparameter(id, "Acquisition Time (UTC)");
+					}
+							
 					// calculate angles only if we have a position and acquisition time
 					if (spat_pos_available && acquisitionTime != null) {
 						
-						// calculate the angle of the sun at the position and acquistion time
+						// calculate the angle of the sun at the position and acquisition time
 						CelestialAngle angle = calculateSunAngle(
 								lat,
 								lon,
@@ -325,7 +356,8 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						updateIds.add(id);
 						
 						// update azimuth
-						MetaParameter azimuthParameter = md.get_first_entry(azimuthAttribute.getId());
+						MetaParameter azimuthParameter = (MetaParameter) specchioClient.getMetaparameter(id, "Illumination Azimuth");  ; // md.get_first_entry(azimuthAttribute.getId());
+						
 						if (azimuthParameter == null) {
 							azimuthParameter = MetaParameter.newInstance(azimuthAttribute);
 						}
@@ -333,12 +365,16 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 						specchioClient.updateEavMetadata(azimuthParameter, updateIds);
 						
 						// update zenith
-						MetaParameter zenithParameter = md.get_first_entry(zenithAttribute.getId());
+						MetaParameter zenithParameter = (MetaParameter) specchioClient.getMetaparameter(id, "Illumination Zenith");
+						//MetaParameter zenithParameter = md.get_first_entry(zenithAttribute.getId());
 						if (zenithParameter == null) {
 							zenithParameter = MetaParameter.newInstance(zenithAttribute);
 						}
 						zenithParameter.setValue(new Double(zenith));
 						specchioClient.updateEavMetadata(zenithParameter, updateIds);
+						
+						// add the identifier to the list of updated identifiers
+						updatedIds.add(id);									
 						
 						// udpate counter
 						cnt++;
@@ -366,6 +402,34 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 				ErrorDialog error = new ErrorDialog((Frame)SunAngleCalcDialog.this.getOwner(), "Error", "The illumination attributes have the wrong type. Please contact your system administrator.", ex);
 				error.setVisible(true);
 			}
+			
+			if (updatedIds.size() > 0) {
+				
+				attribute attr = specchioClient.getAttributesNameHash().get("Solar Angle Computation");
+							
+				specchioClient.removeEavMetadata(attr, updatedIds); // remove any existing solar angle computation entries
+				
+				// create a metaparameter noting that the time was shifted
+				MetaParameter mpCalcInfo;
+				DateTime dt = new DateTime(DateTimeZone.UTC);
+				try {
+					mpCalcInfo = MetaParameter.newInstance(
+							attr,
+							"Solar angles calculated using the SPECCHIO sun angle function (" + dt.toString() + ")"
+						);
+					
+					// add the metaparameter to the database
+					pr.set_operation("Updating database: adding provenance info ...");
+					specchioClient.updateEavMetadata(mpCalcInfo, updatedIds);
+					
+				} catch (MetaParameterFormatException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+
+				
+			}			
 			
 			// show a completion message
 			StringBuffer message = new StringBuffer();
