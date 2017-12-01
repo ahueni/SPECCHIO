@@ -13,8 +13,7 @@ import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.VectorStatistics;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.SpectralSpace;
-import com.quinncurtis.chart3djava.ChartAttribute;
-import com.quinncurtis.chart3djava.SimplePlot;
+
 
 
 public abstract class SpectralPlot extends JPanel
@@ -26,10 +25,10 @@ public abstract class SpectralPlot extends JPanel
 	int band;
 	int no_of_chunks;
 
-	SimplePlot SpectrumPlots[];
+
 	int numcontourlevels = 13;
 	double contourlevels[];
-	ChartAttribute attribs[];
+
 
 	
 	// Ptolemy plotting
