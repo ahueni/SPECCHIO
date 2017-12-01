@@ -38,17 +38,20 @@ public class MDE_FormFactory {
 		MD_CategoryContainer mdcc = form.addCategoryContainer(name);
 		
 		// add non-EAV fields to the container if appropriate
-		if (name.equals("General")) {
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.MEASUREMENT_UNIT, "Measurement Unit"));
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.FILE_FORMAT, "File Format"));
-		} else if (name.equals("Instrument")) {
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.SENSOR, "Sensor"));
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.INSTRUMENT, "Instrument"));
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.CALIBRATION, "Calibration (internal id)"));
+		if (form.add_spectrum_table_fields)
+		{
+			if (name.equals("General")) {
+				form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.MEASUREMENT_UNIT, "Measurement Unit"));
+				form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.FILE_FORMAT, "File Format"));
+			} else if (name.equals("Instrument")) {
+				form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.SENSOR, "Sensor"));
+				form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.INSTRUMENT, "Instrument"));
+				form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.CALIBRATION, "Calibration (internal id)"));
+			}
+			else if (name.equals("Instrumentation")) {
+				form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.REFERENCE, "Reference"));
+			}	
 		}
-		 else if (name.equals("Instrumentation")) {
-			form.addFieldToContainer(mdcc, new MD_Spectrum_Field(specchioClient, Spectrum.REFERENCE, "Reference"));
-		}	
 		
 	}
 	
@@ -66,6 +69,7 @@ public class MDE_FormFactory {
 	{
 		// create the form
 		MDE_Form f = new MDE_Form(specchioClient);
+		f.setAdd_spectrum_table_fields(d.DoAdd_spectrum_table_fields());
 		
 		// add the categories to the form
 		for (Category category : d.getCategories()) {

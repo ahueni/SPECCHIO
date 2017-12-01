@@ -10,6 +10,7 @@ import ch.specchio.types.ConflictInfo;
 import ch.specchio.types.ConflictStruct;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
+import ch.specchio.types.MetadataInterface;
 import ch.specchio.types.Spectrum;
 import ch.specchio.types.attribute;
 
@@ -19,7 +20,10 @@ public class MDE_Form {
 	SPECCHIOClient specchio_client;
 	ArrayList<MD_CategoryContainer> containers = new ArrayList<MD_CategoryContainer>();
 	ArrayList<Integer> ids;
+	boolean add_spectrum_table_fields = false;
 	
+
+
 	Hashtable<String, MD_Spectrum_Field> spectrum_fields = new Hashtable<String, MD_Spectrum_Field>();
 
 	
@@ -29,6 +33,22 @@ public class MDE_Form {
 		this.specchio_client = specchio_client;
 		this.ids = null;
 	}
+	
+	public MD_CategoryContainer addCategoryContainer(String category, int index) throws SPECCHIOClientException
+	{
+		// create a new category container
+		MD_CategoryContainer cc = new MD_CategoryContainer(category);
+		containers.add(index, cc);
+		
+		// populate the attributes for this category
+		attribute[] attr_array = specchio_client.getAttributesForCategory(cc.getCategoryName());
+		for (attribute attr : attr_array) {
+			cc.addPossibleEAVField(attr);
+		}
+		
+		return cc;
+		
+	}	
 	
 	
 	public MD_CategoryContainer addCategoryContainer(String category) throws SPECCHIOClientException
@@ -98,7 +118,7 @@ public class MDE_Form {
 		return mp;
 	}
 	
-	public void addParametersIntoExistingContainers(Spectrum s,
+	public void addParametersIntoExistingContainers(MetadataInterface s,
 			String[] md_fields, ConflictTable spectrum_md_conflict_stati) {
 		
 		
@@ -198,21 +218,32 @@ public class MDE_Form {
 	}
 	
 	
-	public void set_spectrum_ids(ArrayList<Integer> spectrum_ids)
+	public void set_ids(ArrayList<Integer> ids)
 	{
-		ids = spectrum_ids;
+		this.ids = ids;
 	}
 
 	
 	public MD_EAV_Field createEAVField(MetaParameter mp) {
 		
 		ConflictStruct cs = new ConflictStruct(1, ids.size(), ids.size()); // configure as no conflict with no of sharing and selected records equal to number of currently selected spectra
+		if(mp.getLevel() == MetaParameter.HIERARCHY_LEVEL)
+			cs.setInherited(true);
 		ConflictInfo conflict = new ConflictInfo();
 		conflict.addConflict(mp.getEavId(), cs);
 
 		return new  MD_EAV_Field(mp, conflict);
 		
 	}
+	
+	public boolean DoAdd_spectrum_table_fields() {
+		return add_spectrum_table_fields;
+	}
+
+	public void setAdd_spectrum_table_fields(boolean add_spectrum_table_fields) {
+		this.add_spectrum_table_fields = add_spectrum_table_fields;
+	}
+	
 	
 
 }
