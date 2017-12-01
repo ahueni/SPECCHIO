@@ -20,6 +20,7 @@ public class EAVQueryConditionObject extends QueryCondition {
 	protected Object value = null;
 	protected String operator = "=";
 	protected boolean quote_value = true;
+	protected boolean condition_handled_at_hierarchy_level = false;
 	
 	private Integer integerValue = null;
 	private String stringValue = null;
@@ -169,6 +170,14 @@ public class EAVQueryConditionObject extends QueryCondition {
 
 	public void setQuoteValue(boolean quote_value) {
 		this.quote_value = quote_value;
+	}
+
+	public boolean isCondition_handled_at_hierarchy_level() {
+		return condition_handled_at_hierarchy_level;
+	}
+
+	public void setCondition_handled_at_hierarchy_level(boolean condition_handled_at_hierarchy_level) {
+		this.condition_handled_at_hierarchy_level = condition_handled_at_hierarchy_level;
 	}
 	
 }

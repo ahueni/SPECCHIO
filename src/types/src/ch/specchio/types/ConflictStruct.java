@@ -9,6 +9,7 @@ public 	class ConflictStruct
 	private int no_of_sharing_records;
 	private int no_of_selected_records;	
 	private int attribute_id;	
+	private boolean inherited = false; 
 	
 	public ConflictStruct()
 	{
@@ -50,6 +51,14 @@ public 	class ConflictStruct
 	}
 	public void setAttribute_id(int attribute_id) {
 		this.attribute_id = attribute_id;
+	}
+
+	public boolean isInherited() {
+		return inherited;
+	}
+
+	public void setInherited(boolean inherited) {
+		this.inherited = inherited;
 	}
 	
 }

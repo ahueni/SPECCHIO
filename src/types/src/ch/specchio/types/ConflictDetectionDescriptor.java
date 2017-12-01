@@ -1,5 +1,6 @@
 package ch.specchio.types;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.*;
@@ -13,10 +14,12 @@ import javax.xml.bind.annotation.*;
 public class ConflictDetectionDescriptor {
 	
 	/** the ids to be tested */
-	private Integer[] ids;
+	private ArrayListWrapper<Integer> ids;
 	
 	/** the fields to be tested */
 	private String[] md_fields;
+	
+	private int level = MetaParameter.SPECTRUM_LEVEL; // default value
 	
 	
 	/**
@@ -24,7 +27,7 @@ public class ConflictDetectionDescriptor {
 	 */
 	public ConflictDetectionDescriptor() {
 		
-		this.ids = new Integer[0];
+		this.ids = new ArrayListWrapper<Integer>();
 		this.md_fields = null;
 		
 	}
@@ -33,7 +36,7 @@ public class ConflictDetectionDescriptor {
 	/**
 	 * Constructor.
 	 */
-	public ConflictDetectionDescriptor(Integer[] ids) {
+	public ConflictDetectionDescriptor(ArrayListWrapper<Integer> ids) {
 		
 		this.ids = ids;
 		this.md_fields = null;
@@ -44,19 +47,29 @@ public class ConflictDetectionDescriptor {
 	/**
 	 * Constructor.
 	 */
-	public ConflictDetectionDescriptor(List<Integer> ids) {
+	public ConflictDetectionDescriptor(ArrayList<Integer> ids) {
 		
-		this(ids.toArray(new Integer[0]));
+		this(new ArrayListWrapper<Integer>(ids));
 		
 	}
 	
 	
 	@XmlElement(name="ids")
-	public Integer[] getIds() { return this.ids; }
-	public void setIds(Integer[] ids) { this.ids = ids; }
+	public List<Integer> getIds() { return ids.getList(); }
+	public void setIds(ArrayList<Integer> ids) { this.ids.setList(ids); }
 	
 	@XmlElement(name="md_fields")
 	public String[] getMetadataFields() { return this.md_fields; }
 	public void setMetadataFields(String[] md_fields) { this.md_fields = md_fields; }
+	
+	
+	@XmlElement(name="level")
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}			
 
 }
