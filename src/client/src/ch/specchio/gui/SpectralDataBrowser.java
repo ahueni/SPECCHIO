@@ -44,6 +44,7 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 	private static final long serialVersionUID = 1L;
 	public JTree tree;
 	public SpectralDataBrowserNode root;
+	int directly_select_number_of_spectra = 0;
 	
 	boolean restrict_to_view; // restrict shown nodes to views (i.e. user sees only own data)
 	
@@ -180,6 +181,7 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 	{
 		
 		Set<Integer> ids = new TreeSet<Integer>();
+		directly_select_number_of_spectra = 0;
 		
 		// process all selected nodes
 		TreePath[] paths = tree.getSelectionPaths();
@@ -192,14 +194,15 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 				SpectralDataBrowserNode bn = (SpectralDataBrowserNode)paths[i].getLastPathComponent();
 				spectral_node_object sn = bn.getNode();
 				
-	        	if(sn instanceof spectrum_node)
-	    		{
-	        		ids.add(sn.getId()); // avoid server call
-	    		}
-	        	else
-	        	{
-	        		ids.addAll(specchio_client.getSpectrumIdsForNode(bn.getNode()));
-	        	}
+		        	if(sn instanceof spectrum_node)
+		    		{
+		        		ids.add(sn.getId()); // avoid server call
+		        		directly_select_number_of_spectra++;
+		    		}
+		        	else
+		        	{
+		        		ids.addAll(specchio_client.getSpectrumIdsForNode(bn.getNode()));
+		        	}
 				
 			}
 		}
@@ -422,6 +425,15 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 		
 		}
 		
+	}
+	
+	
+	public boolean onlyHierarchiesAreSelected()
+	{
+		if(this.directly_select_number_of_spectra == 0)
+			return true;
+		else
+			return false;
 	}
 
 
