@@ -10,7 +10,7 @@ import ch.specchio.plots.GonioPosition;
 import ch.specchio.plots.GonioSamplingPoints;
 import ch.specchio.spaces.SpectralSpace;
 
-import com.quinncurtis.chart3djava.*;
+//import com.quinncurtis.chart3djava.*;
 
 import javax.swing.JPanel;
 
@@ -21,14 +21,14 @@ public class DirectionalPlot extends JPanel{
 	SpectralSpace space;
 	int band;
 	GonioSamplingPoints sampling_points;
-	ChartView cv;
-	ContourDataset dataset;
-	ContourPlot thePlot1;
+//	ChartView cv;
+//	ContourDataset dataset;
+//	ContourPlot thePlot1;
 	int numcontourlevels = 50;
 	double contourlevels[];
-	ChartAttribute attribs[];
-	CartesianCoordinates pTransform1;
-	LinearAxis xAxis, yAxis, zAxis;
+//	ChartAttribute attribs[];
+//	CartesianCoordinates pTransform1;
+//	LinearAxis xAxis, yAxis, zAxis;
 	ProgressReportInterface pr;
 	
 	public DirectionalPlot(SpectralSpace space, int x_size, int y_size, ProgressReportInterface pr, SPECCHIOClient specchio_client)
@@ -37,13 +37,13 @@ public class DirectionalPlot extends JPanel{
 		this.pr = pr;
 		pr.set_component("Directional Plot");
 		
-		cv = new ChartView();
-		cv.setPreferredSize(x_size, y_size);
+//		cv = new ChartView();
+//		cv.setPreferredSize(x_size, y_size);
 		
 		pr.set_operation("Loading sampling points");
 		try {
 			sampling_points = specchio_client.getSensorSamplingGeometry(space);
-			attribs = new ChartAttribute[numcontourlevels+1];
+//			attribs = new ChartAttribute[numcontourlevels+1];
 			
 			pr.set_operation("Preparing Z coords");
 			sampling_points.prepare_z_coords(band);
@@ -60,69 +60,69 @@ public class DirectionalPlot extends JPanel{
 	public void plot()
 	{	
 	
-		dataset = getContourDataset();
-
-		pTransform1 = new CartesianCoordinates(-1, -1, sampling_points.get_z_statistics().min, 1, 1, sampling_points.get_z_statistics().max);
-		
-		   pTransform1.setGraphBorderDiagonal(0.10, .10, .8, 0.85) ;
-		   Background background = new Background( pTransform1, ChartConstants.GRAPH_BACKGROUND, Color.white);
-		   cv.addChartObject(background);
-
-		  xAxis = new LinearAxis(pTransform1, ChartConstants.X_AXIS);
-		  cv.addChartObject(xAxis);
-
-
-		  yAxis = new LinearAxis(pTransform1, ChartConstants.Y_AXIS);
-		  cv.addChartObject(yAxis);
-		  
-		  zAxis = new LinearAxis(pTransform1, ChartConstants.Z_AXIS);
-		  cv.addChartObject(zAxis);
-
-		  NumericAxisLabels xAxisLab = new NumericAxisLabels(xAxis );
-		  cv.addChartObject(xAxisLab);
-
-		  NumericAxisLabels yAxisLab = new NumericAxisLabels(yAxis);
-		  cv.addChartObject(yAxisLab);
-		  
-		  NumericAxisLabels zAxisLab = new NumericAxisLabels(zAxis);
-
-		  // dataset specific intervals
-		  create_interval_classes();
-		  
-		  // colouring according to number of intervals
-		  create_colour_table(false);
-
-		  boolean lineflags[] = new boolean[numcontourlevels];
-		  for (int i=0; i < numcontourlevels; i++)
-		    lineflags[i] = false;
-
-		  boolean labelflags[] = new boolean[numcontourlevels];
-		  for (int i=0; i < numcontourlevels; i++)
-		    labelflags[i] = false;
-
-		  thePlot1 = new ContourPlot(pTransform1, dataset, contourlevels, attribs, lineflags, labelflags, numcontourlevels, ChartConstants.CONTOUR_FILL);
-
-		  
-		cv.addChartObject(thePlot1);
-		
-		
-		Font theTitleFont = new Font("SansSerif", Font.BOLD,14);
-
-		ChartTitle mainTitle = new ChartTitle( theTitleFont, "Hemispherical " + space.getMeasurementUnit().getUnitName() + " Plot");
-		  mainTitle.setTitleType(ChartConstants.CHART_HEADER);
-		  mainTitle.setTitlePosition( ChartConstants.CENTER_GRAPH);
-
-		  cv.addChartObject(mainTitle);
-		  
-		// Add a rotate control button to the upper left corner
-		RotateButtonUserControl rotatebutton = new RotateButtonUserControl(pTransform1);
-		cv.setLayout(null);
-		rotatebutton.setSize ( 32,32);
-		rotatebutton.setLocation (8,8);
-		cv.add(rotatebutton);  
-
-
-		  this.add(cv);
+//		dataset = getContourDataset();
+//
+//		pTransform1 = new CartesianCoordinates(-1, -1, sampling_points.get_z_statistics().min, 1, 1, sampling_points.get_z_statistics().max);
+//		
+//		   pTransform1.setGraphBorderDiagonal(0.10, .10, .8, 0.85) ;
+//		   Background background = new Background( pTransform1, ChartConstants.GRAPH_BACKGROUND, Color.white);
+//		   cv.addChartObject(background);
+//
+//		  xAxis = new LinearAxis(pTransform1, ChartConstants.X_AXIS);
+//		  cv.addChartObject(xAxis);
+//
+//
+//		  yAxis = new LinearAxis(pTransform1, ChartConstants.Y_AXIS);
+//		  cv.addChartObject(yAxis);
+//		  
+//		  zAxis = new LinearAxis(pTransform1, ChartConstants.Z_AXIS);
+//		  cv.addChartObject(zAxis);
+//
+//		  NumericAxisLabels xAxisLab = new NumericAxisLabels(xAxis );
+//		  cv.addChartObject(xAxisLab);
+//
+//		  NumericAxisLabels yAxisLab = new NumericAxisLabels(yAxis);
+//		  cv.addChartObject(yAxisLab);
+//		  
+//		  NumericAxisLabels zAxisLab = new NumericAxisLabels(zAxis);
+//
+//		  // dataset specific intervals
+//		  create_interval_classes();
+//		  
+//		  // colouring according to number of intervals
+//		  create_colour_table(false);
+//
+//		  boolean lineflags[] = new boolean[numcontourlevels];
+//		  for (int i=0; i < numcontourlevels; i++)
+//		    lineflags[i] = false;
+//
+//		  boolean labelflags[] = new boolean[numcontourlevels];
+//		  for (int i=0; i < numcontourlevels; i++)
+//		    labelflags[i] = false;
+//
+//		  thePlot1 = new ContourPlot(pTransform1, dataset, contourlevels, attribs, lineflags, labelflags, numcontourlevels, ChartConstants.CONTOUR_FILL);
+//
+//		  
+//		cv.addChartObject(thePlot1);
+//		
+//		
+//		Font theTitleFont = new Font("SansSerif", Font.BOLD,14);
+//
+//		ChartTitle mainTitle = new ChartTitle( theTitleFont, "Hemispherical " + space.getMeasurementUnit().getUnitName() + " Plot");
+//		  mainTitle.setTitleType(ChartConstants.CHART_HEADER);
+//		  mainTitle.setTitlePosition( ChartConstants.CENTER_GRAPH);
+//
+//		  cv.addChartObject(mainTitle);
+//		  
+//		// Add a rotate control button to the upper left corner
+//		RotateButtonUserControl rotatebutton = new RotateButtonUserControl(pTransform1);
+//		cv.setLayout(null);
+//		rotatebutton.setSize ( 32,32);
+//		rotatebutton.setLocation (8,8);
+//		cv.add(rotatebutton);  
+//
+//
+//		  this.add(cv);
 		  
 	}
 	
@@ -147,10 +147,10 @@ public class DirectionalPlot extends JPanel{
 			  
 			  red += red_delta;
 			  //attribs[i] = new ChartAttribute(Color.black,1,ChartConstants.LS_SOLID,color);
-			  attribs[i] = new ChartAttribute(Color.black,1,ChartConstants.LS_SOLID,Color.ORANGE);
-			  //attribs[i].setFillFlag(false);
-			  attribs[i].setFillFlag(true);
-			  attribs[i].setLineFlag(true);
+//			  attribs[i] = new ChartAttribute(Color.black,1,ChartConstants.LS_SOLID,Color.ORANGE);
+//			  //attribs[i].setFillFlag(false);
+//			  attribs[i].setFillFlag(true);
+//			  attribs[i].setLineFlag(true);
 		  }	
 	}
 	
@@ -170,11 +170,11 @@ public class DirectionalPlot extends JPanel{
 	
 	public void change_colour()
 	{
-		 create_colour_table(true);
-
-		  thePlot1.setContourPlotAttributes(contourlevels, attribs, numcontourlevels, ChartConstants.CONTOUR_FILL);
-		  
-		  cv.updateDraw();
+//		 create_colour_table(true);
+//
+//		  thePlot1.setContourPlotAttributes(contourlevels, attribs, numcontourlevels, ChartConstants.CONTOUR_FILL);
+//		  
+//		  cv.updateDraw();
 	}
 	
 	public void change_wavelength(int band)
@@ -183,33 +183,33 @@ public class DirectionalPlot extends JPanel{
 		
 		sampling_points.prepare_z_coords(band);		
 		
-		dataset = getContourDataset();
-		
-		create_interval_classes();
-		
-		thePlot1.setDataset(dataset);
-		
-		update_coord_system();
-		change_colour();
-		
-		cv.updateDraw();
+//		dataset = getContourDataset();
+//		
+//		create_interval_classes();
+//		
+//		thePlot1.setDataset(dataset);
+//		
+//		update_coord_system();
+//		change_colour();
+//		
+//		cv.updateDraw();
 	}
 	
-	private ContourDataset getContourDataset()
-	{
-		GonioPosition[] pos = sampling_points.get_positions();
-		ChartPoint3D[] pointarray = new ChartPoint3D[pos.length];
-		
-		for(int i=0;i<pos.length;i++)
-		{
-			GonioPosition cur_pos = pos[i];
-			ChartPoint3D p = new ChartPoint3D();
-			p.setLocation(cur_pos.x, cur_pos.y);
-			pointarray[i] = p;
-		}
-		
-		return new ContourDataset("Contour Dataset",pointarray);
-	}
+//	private ContourDataset getContourDataset()
+//	{
+//		GonioPosition[] pos = sampling_points.get_positions();
+//		ChartPoint3D[] pointarray = new ChartPoint3D[pos.length];
+//		
+//		for(int i=0;i<pos.length;i++)
+//		{
+//			GonioPosition cur_pos = pos[i];
+//			ChartPoint3D p = new ChartPoint3D();
+//			p.setLocation(cur_pos.x, cur_pos.y);
+//			pointarray[i] = p;
+//		}
+//		
+//		return new ContourDataset("Contour Dataset",pointarray);
+//	}
 	
 
 	class graph_animation extends Thread
@@ -252,11 +252,11 @@ public class DirectionalPlot extends JPanel{
 	
 	void update_coord_system()
 	{
-		this.pTransform1.setCoordinateBounds(-1, -1, sampling_points.get_z_statistics().min, 1, 1, sampling_points.get_z_statistics().max);
-		//zAxis = new LinearAxis(pTransform1, ChartConstants.Z_AXIS);
-		zAxis.calcAutoAxis(sampling_points.get_z_statistics().min, sampling_points.get_z_statistics().max);
-		xAxis.calcAutoAxis();
-		yAxis.calcAutoAxis();
+//		this.pTransform1.setCoordinateBounds(-1, -1, sampling_points.get_z_statistics().min, 1, 1, sampling_points.get_z_statistics().max);
+//		//zAxis = new LinearAxis(pTransform1, ChartConstants.Z_AXIS);
+//		zAxis.calcAutoAxis(sampling_points.get_z_statistics().min, sampling_points.get_z_statistics().max);
+//		xAxis.calcAutoAxis();
+//		yAxis.calcAutoAxis();
 	}
 
 	
