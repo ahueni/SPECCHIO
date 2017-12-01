@@ -17,6 +17,8 @@ public class MD_FormDescriptor {
 	/** the set of categories in this descriptor */
 	private Set<Category> categories;
 	
+	boolean add_spectrum_table_fields = false;
+	
 	
 	/**
 	 * Default constructor. Creates a descriptor with no categories.
@@ -99,6 +101,12 @@ public class MD_FormDescriptor {
 		
 	}
 		
-		
+	public boolean DoAdd_spectrum_table_fields() {
+		return add_spectrum_table_fields;
+	}
+
+	public void setAdd_spectrum_table_fields(boolean add_spectrum_table_fields) {
+		this.add_spectrum_table_fields = add_spectrum_table_fields;
+	}		
 
 }
