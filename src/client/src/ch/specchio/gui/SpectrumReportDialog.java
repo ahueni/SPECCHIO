@@ -24,6 +24,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.metadata.MDE_Controller;
+import ch.specchio.metadata.MDE_Spectrum_Controller;
 import ch.specchio.plots.swing.SpectralLinePlot;
 import ch.specchio.plots.swing.SpectralPlot;
 import ch.specchio.spaces.Space;
@@ -45,7 +46,7 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 	private ProgressReportInterface pr;
 	
 	/** metadata controller */
-	private MDE_Controller mdec;
+	private MDE_Spectrum_Controller mdec;
 	
 	/** an enumeration of the spectrum identifiers in the dialogue */
 	private List<Integer> spectrumEnum;
@@ -117,7 +118,7 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 		}
 		
 		// set up a metadata controller and form
-		mdec = new MDE_Controller(specchioClient);
+		mdec = new MDE_Spectrum_Controller(specchioClient);
 		
 		if (pr != null) {
 			pr.set_operation("Building user interface");
@@ -156,7 +157,7 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 		rootPanel.add(categoryList);
 		
 		// add the spectrum metadata panel
-		spectrumMetadataPanel = new SpectrumMetadataPanel(this, specchioClient);
+		spectrumMetadataPanel = new SpectrumMetadataPanel(this, specchioClient, mdec);
 		spectrumMetadataPanel.setEditable(false);
 		JScrollPane spectrumMetadataScroller = new JScrollPane(spectrumMetadataPanel);
 		spectrumMetadataScroller.getVerticalScrollBar().setUnitIncrement(10);
