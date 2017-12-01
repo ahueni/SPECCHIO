@@ -121,21 +121,19 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 		// File filter
 		// count files that we do not want
+		// build content without unwanted files
+		ArrayList<String> content = new ArrayList<String>();
 		for (int i = 0; i < whole_content.length; i++) {
 			// filter the dot files
 			if (whole_content[i].startsWith(".", 0)) {
 				System.out.println("Filtered .<file>");
 			}
-		}
-
-		ArrayList<String> content = new ArrayList<String>();
-
-		// build content without unwanted files
-		for (int i = 0; i < whole_content.length; i++) {
-			if (!whole_content[i].startsWith(".", 0)) {
+			else
+			{
 				content.add(whole_content[i]);
 			}
 		}
+
 
 		// create array to store the File objects in
 		directories = new ArrayList<File>();
