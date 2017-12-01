@@ -8,10 +8,12 @@ public class MD_EAV_Field extends MD_Field {
 	
 	MetaParameter mp;
 	
+	private int level = MetaParameter.SPECTRUM_LEVEL;
 	
 	public MD_EAV_Field(MetaParameter mp, ConflictInfo conflictInfo)
 	{
 		this.mp = mp;
+		this.level = mp.getLevel();
 		this.conflict = conflictInfo;
 		this.setDescription(mp.getDescription());
 		
@@ -98,6 +100,15 @@ public class MD_EAV_Field extends MD_Field {
 			conflict.removeConflict(old_eav_id);
 		}
 		
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+		mp.setLevel(level);
 	}
 
 

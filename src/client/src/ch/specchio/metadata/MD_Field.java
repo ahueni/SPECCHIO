@@ -1,6 +1,7 @@
 package ch.specchio.metadata;
 
 import ch.specchio.types.ConflictInfo;
+import ch.specchio.types.MetaParameter;
 
 
 
@@ -81,6 +82,10 @@ public abstract class MD_Field implements Comparable<MD_Field> {
 
 	public void setConflict(ConflictInfo conflict) {
 		this.conflict = conflict;
+	}	
+	
+	public int getLevel() {
+		return MetaParameter.SPECTRUM_LEVEL; // default level
 	}	
 	
 //	public boolean matches_db_field(String field){
