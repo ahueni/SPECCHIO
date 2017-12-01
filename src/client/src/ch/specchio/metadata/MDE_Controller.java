@@ -11,19 +11,17 @@ import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.gui.MetaDataEditorView;
 import ch.specchio.gui.SpectrumMetadataCategoryList;
-import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaTaxonomy;
 import ch.specchio.types.Metadata;
-import ch.specchio.types.Point2D;
-import ch.specchio.types.Spectrum;
+import ch.specchio.types.MetadataInterface;
 import ch.specchio.types.TaxonomyNodeObject;
 import ch.specchio.types.attribute;
 
-public class MDE_Controller {
+public abstract class MDE_Controller implements MD_ChangeListener {
 	
 	Metadata eav_md;
 	MDE_FormFactory form_factory;
@@ -34,10 +32,18 @@ public class MDE_Controller {
 	MD_FormDescriptor form_descriptor;
 	Hashtable<Integer, attribute> attributes;
 	Boolean do_conflict_detection = true;
-	private Spectrum first_spectrum;
+	protected MetadataInterface first_entry;
 	ConflictTable eav_conflict_stati;
 	ConflictTable spectrum_md_conflict_stati;
 	MetaDataEditorView mdev;
+	private SpectrumMetadataCategoryList category_list;
+	protected boolean onlyHierarchiesAreSelected = true;
+	
+	ArrayList<MD_Field> changed_fields = new ArrayList<MD_Field>();
+	ArrayList<MD_Field> removed_fields = new ArrayList<MD_Field>();
+	ArrayList<MD_Field> added_fields = new ArrayList<MD_Field>();
+	ArrayList<MD_Field> changed_annotations = new ArrayList<MD_Field>();
+	
 	
 	public MDE_Controller(SPECCHIOClient specchio_client) throws SPECCHIOClientException
 	{
@@ -73,6 +79,22 @@ public class MDE_Controller {
 	}
 	
 	
+	public ArrayList<MD_Field> getChanged_fields() {
+		return changed_fields;
+	}
+
+	public ArrayList<MD_Field> getRemoved_fields() {
+		return removed_fields;
+	}
+
+	public ArrayList<MD_Field> getAdded_fields() {
+		return added_fields;
+	}
+
+	public ArrayList<MD_Field> getChanged_annotations() {
+		return changed_annotations;
+	}
+
 	public void set_campaign(Campaign campaign)
 	{
 		this.campaign = campaign;
@@ -96,56 +118,31 @@ public class MDE_Controller {
 	}
 	
 	
-	public void set_spectrum_ids(ArrayList<Integer> ids) throws SPECCHIOClientException
-	{	
-		this.ids = ids;	
-		
-		// get conflict info ...
-		
-		// need to get the first spectrum so that we can display non-conflicting values
-		if(ids.size() > 0)
-		{
-			first_spectrum = specchio_client.getSpectrum(ids.get(0), false);
+	abstract public ArrayList<Integer> get_hierarchy_ids();		
 	
-			// add EAV parameters including their conflict status
-			if(do_conflict_detection)
-			{
-				eav_conflict_stati = specchio_client.getEavMetadataConflicts(ids);
-			}
-			else
-			{
-				// speedup: simplify conflict detection by supplying only one spectrum
-				ArrayList<Integer> first_id = new ArrayList<Integer>();
-				first_id.add(ids.get(0));
-				eav_conflict_stati = specchio_client.getEavMetadataConflicts(first_id);
-			}		
+	public boolean getOnlyHierarchiesAreSelected() {
+		return this.onlyHierarchiesAreSelected;		
+	}	
 	
-			spectrum_md_conflict_stati = specchio_client.getMetadataConflicts(ids, Spectrum.METADATA_FIELDS);	
-		}
-		
-		update_form(false);
-	}
-	
-	
-	private void update_form(boolean manual_category_selection) throws SPECCHIOClientException
+	protected void update_form(boolean manual_category_selection) throws SPECCHIOClientException
 	{
-		if (ids != null && ids.size() > 0)
+		if (ids != null && ids.size() > 0 && first_entry.getMetadata() != null)
 		{
 			
 			
 			// check if the category list of the container must be updated
-			if(this.mdev != null)
+			if(category_list != null)
 			{
-				MetaTaxonomy ap_domain = (MetaTaxonomy) this.first_spectrum.getMetadata().get_first_entry("Application Domain");
+				MetaTaxonomy ap_domain = (MetaTaxonomy) this.first_entry.getMetadata().get_first_entry("Application Domain");
 
-				if(ap_domain != null && !manual_category_selection) // avoid applying the application domain specific selection of categories if user manual interacted
+				if(ap_domain != null && !manual_category_selection) // avoid applying the application domain specific selection of categories if user manually interacted
 				{
 
 					// update the categories according to the application domain
 					ArrayList<Integer> selected_categories = null;
 					Long taxonomy_id =  (Long) ap_domain.getValue();
 
-					SpectrumMetadataCategoryList category_list = this.mdev.getCategory_list();
+					//SpectrumMetadataCategoryList category_list = this.mdev.getCategory_list();
 
 					selected_categories = specchio_client.getMetadataCategoriesForApplicationDomain(taxonomy_id.intValue());
 					if(selected_categories.size()>0)
@@ -163,19 +160,33 @@ public class MDE_Controller {
 					this.form_descriptor = category_list.getFormDescriptor();	
 
 				}
+				
+				if(ap_domain == null && !manual_category_selection)
+				{
+					
+					// enable all categories
+					if(category_list.isApplicationDomainEnabled())
+					{
+						category_list.setAllSelected(true);
+						category_list.setApplicationDomain(null);
+						//set_form_descriptor(category_list.getFormDescriptor(), false);
+					}
+	
+					
+				}				
 			}
 
 
-			// get form					
-			form = form_factory.getForm(form_descriptor);
-			form.set_spectrum_ids(ids);
+
+			// get form			
+			create_form();
 			
 			Enumeration<String> conflicts = eav_conflict_stati.conflicts();
 			while (conflicts.hasMoreElements()) {
 				try {
 					
 					int attribute_id = Integer.parseInt(conflicts.nextElement());
-					List<MetaParameter> mps = this.first_spectrum.getMetadata().get_all_entries(attribute_id);
+					List<MetaParameter> mps = this.first_entry.getMetadata().get_all_entries(attribute_id);
 										
 					if (mps.size() > 0) {
 						
@@ -199,7 +210,7 @@ public class MDE_Controller {
 				}
 			}
 
-			form.addParametersIntoExistingContainers(this.first_spectrum, Spectrum.METADATA_FIELDS, spectrum_md_conflict_stati);
+			//form.addParametersIntoExistingContainers(this.first_entry, Spectrum.METADATA_FIELDS, spectrum_md_conflict_stati);
 			
 		} else {
 			form = null;
@@ -209,11 +220,26 @@ public class MDE_Controller {
 	
 	
 	
+	abstract void create_form();
+	
+	
+	public void clear_changed_field_lists()
+	{
+		changed_fields.clear();
+		removed_fields.clear();
+		added_fields.clear();		
+		changed_annotations.clear();
+	}
+
 	public MDE_Form getForm()
 	{
 		return form;
 	}
 
+	public boolean hasChanges()
+	{
+		return this.changed_fields.size()>0 || this.removed_fields.size()>0 || this.changed_annotations.size()>0;
+	}
 
 	public void update(ArrayList<MD_Field> changed_fields) throws SPECCHIOClientException {
 		
@@ -240,7 +266,18 @@ public class MDE_Controller {
 				mp.setValue(field.getNewValue());
 
 				int old_eav_id = mp.getEavId();
-				int eav_id = specchio_client.updateEavMetadata(mp, ids);
+				
+				// decide if the update is done on spectrum or hierarchy level
+				ArrayList<Integer> ids_to_update;
+				if(this.onlyHierarchiesAreSelected)
+				{
+					ids_to_update = this.get_hierarchy_ids();
+					mp.setLevel(MetaParameter.HIERARCHY_LEVEL);
+				}
+				else
+					ids_to_update = this.getIds();
+				
+				int eav_id = specchio_client.updateEavMetadata(mp, ids_to_update);
 				eav_field.setEavId(eav_id, old_eav_id);					
 
 
@@ -344,6 +381,60 @@ public class MDE_Controller {
 		}
 	}
 	
+	public void remove_all_added_fields()
+	{
+		ListIterator<MD_Field> li = getAdded_fields().listIterator();
+		
+		while(li.hasNext())
+		{
+			MD_Field field = li.next();
+			form.removeField(field);
+		}
+		
+	}
+
+	public void setCategoryList(SpectrumMetadataCategoryList category_list) {
+		this.category_list = category_list;
+		
+	}
+
+
+	public void metadataFieldAdded(MD_Field field)
+	{
+		this.added_fields.add(field);
+	}
+	
+	
+	public void metadataFieldChanged(MD_Field field, Object new_value)
+	{	
+		field.setNewValue(new_value);
+		
+		if(!changed_fields.contains(field))
+		{
+			changed_fields.add(field);
+		}	
+	}
+	
+	public void metadataFieldRemoved(MD_Field field)
+	{
+				
+		if(!removed_fields.contains(field))
+		{
+			removed_fields.add(field);
+		}	
+	}
+	
+
+	public void metadataFieldAnnotationChanged(MD_Field field, String annotation) {
+		
+		field.setAnnotation(annotation);
+		
+		if(!changed_annotations.contains(field))
+		{
+			changed_annotations.add(field);
+		}	
+		
+	}		
 	
 
 }
