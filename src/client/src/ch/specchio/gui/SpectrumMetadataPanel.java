@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Point;
@@ -16,6 +18,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -2160,7 +2164,12 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 				}
 				else if(field.getMetaParameter().getDefaultStorageField().equals("double_val"))
 				{
-					text.setText("Range: " + field.getConflict().double_val_min + " to " + field.getConflict().double_val_max);
+					DecimalFormat df = new DecimalFormat("#.##########");
+					df.setRoundingMode(RoundingMode.CEILING);
+					
+					// re-create text field to ensure text field is wide enough (dynamaic adjustment seems to fail ...)
+					text = new JTextField("Range: " + df.format(field.getConflict().double_val_min) + " to " + df.format(field.getConflict().double_val_max));
+					
 				}
 				
 				else
