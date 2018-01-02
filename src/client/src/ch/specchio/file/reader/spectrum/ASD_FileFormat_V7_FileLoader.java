@@ -356,7 +356,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		Character first_char = hdr.getComment().charAt(0);
 
 		if (first_char == 0) {
-			hdr.setComment("");
+			hdr.setComment(null);
 		} else {
 			// search for end of string
 			int i = 0;
@@ -534,7 +534,7 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 		skip(in, 1 + 8 + 8);
 		skip(in, 2); // random, educated skip: update: this is actually the length of the following string
 		String useless_description = this.read_string(in,
-				this.spec_file.getComment().length());
+				(this.spec_file.getComment()==null? 0 : this.spec_file.getComment().length()));
 
 	}
 
