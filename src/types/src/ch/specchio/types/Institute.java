@@ -18,6 +18,12 @@ public class Institute {
 	private Country country = null;
 	private String www = null;
 	
+	/** number of spectra loaded: statistics information */
+	private Integer number_of_spectra_loaded;
+	
+	/** number of campaigns: statistics information */
+	private Integer number_of_campaigns;	
+	
 	public Institute() {}
 	public Institute(String name, String department) {
 		this(0, name, department);
@@ -76,6 +82,18 @@ public class Institute {
 			return name;
 		}
 		
+	}
+	public Integer getNumber_of_spectra_loaded() {
+		return number_of_spectra_loaded;
+	}
+	public void setNumber_of_spectra_loaded(Integer number_of_spectra_loaded) {
+		this.number_of_spectra_loaded = number_of_spectra_loaded;
+	}
+	public Integer getNumber_of_campaigns() {
+		return number_of_campaigns;
+	}
+	public void setNumber_of_campaigns(Integer number_of_campaigns) {
+		this.number_of_campaigns = number_of_campaigns;
 	}
 				
 }
