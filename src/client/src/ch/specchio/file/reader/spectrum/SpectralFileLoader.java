@@ -14,6 +14,7 @@ import java.util.Hashtable;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.gui.SPECCHIOApplication;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
@@ -32,14 +33,16 @@ public abstract class SpectralFileLoader {
 	Hashtable<String, attribute> attributes_name_hash;	
 	protected SpectralFile spec_file;
 	public SpectralFileInsertResult insert_result; // field to store the insert result (used for instrument calibration updates)
+	protected SpecchioCampaignDataLoader campaignDataLoader;
 	
-	public SpectralFileLoader(String file_format_name, SPECCHIOClient specchio_client)
+	public SpectralFileLoader(String file_format_name, SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)
 	{
 		this.file_format_name = file_format_name;
 
 		try {
 			this.specchio_client = specchio_client;
 			attributes_name_hash = specchio_client.getAttributesNameHash();
+			this.campaignDataLoader = campaignDataLoader;
 		} catch (SPECCHIOClientException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

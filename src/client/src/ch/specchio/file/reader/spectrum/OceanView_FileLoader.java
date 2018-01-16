@@ -7,14 +7,15 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
 
 public class OceanView_FileLoader extends JAZ_FileLoader{
 	
-	public OceanView_FileLoader(SPECCHIOClient specchio_client) {
-		super("OceanViewTXT", specchio_client);
+	public OceanView_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader) {
+		super("OceanViewTXT", specchio_client, campaignDataLoader);
 		start_of_spectral_data = ">>>>>Begin Spectral Data<<<<<";
 	}	
 	

@@ -14,12 +14,13 @@ import jxl.Workbook;
 import jxl.read.biff.BiffException;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.SpectralFile;
 
 public class XLS_FileLoader extends SpectralFileLoader {
 
-	public XLS_FileLoader(SPECCHIOClient specchio_client) {
-		super("XLS", specchio_client);
+	public XLS_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader) {
+		super("XLS", specchio_client, campaignDataLoader);
 	}
 
 	@Override

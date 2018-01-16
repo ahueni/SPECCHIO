@@ -16,14 +16,15 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.SpectralFile;
 
 public class OO_FileLoader extends SpectralFileLoader {
 	
 	SpectralFile spec_file;
 
-	public OO_FileLoader(SPECCHIOClient specchio_client) {
-		super("OOSpectraSuite", specchio_client);
+	public OO_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader) {
+		super("OOSpectraSuite", specchio_client, campaignDataLoader);
 	}
 
 	public SpectralFile load(File file) throws IOException

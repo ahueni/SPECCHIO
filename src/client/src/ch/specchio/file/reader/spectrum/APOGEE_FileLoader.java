@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.ListIterator;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -19,8 +20,8 @@ public class APOGEE_FileLoader extends SpectralFileLoader {
 	
 	boolean not_eof = true;
 
-	public APOGEE_FileLoader(SPECCHIOClient specchio_client) {
-		super("APOGEE", specchio_client);
+	public APOGEE_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader) {
+		super("APOGEE", specchio_client, campaignDataLoader);
 	}
 	
 	

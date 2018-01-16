@@ -19,6 +19,7 @@ import ch.specchio.types.Metadata;
 import ch.specchio.types.SpectralFile;
 import ch.specchio.types.spatial_pos;
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.file.reader.spectrum.hd5.*;
 
 public class HDF_FGI_FileLoader extends SpectralFileLoader {
@@ -33,8 +34,8 @@ public class HDF_FGI_FileLoader extends SpectralFileLoader {
 	boolean info_as_xml = false; // needed for 2010a data structure version, if
 									// info file is stored as an xml file!
 
-	public HDF_FGI_FileLoader(SPECCHIOClient specchio_client) {
-		super("HDF5 FGI", specchio_client);
+	public HDF_FGI_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader) {
+		super("HDF5 FGI", specchio_client, campaignDataLoader);
 
 	}
 

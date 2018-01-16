@@ -18,6 +18,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.SpecchioMessage;
 import ch.specchio.types.SpectralFile;
 
@@ -25,9 +26,9 @@ public class UniSpec_FileLoader extends SpectralFileLoader {
 	
 	boolean not_eof = true;
 	
-	public UniSpec_FileLoader(SPECCHIOClient specchio_client)
+	public UniSpec_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)
 	{
-		super("UniSpec", specchio_client);
+		super("UniSpec", specchio_client, campaignDataLoader);
 	}
 	
 	

@@ -14,6 +14,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -23,9 +24,9 @@ public class GER_FileLoader extends SpectralFileLoader {
 	
 	Metadata smd;
 	
-	public GER_FileLoader(SPECCHIOClient specchio_client)
+	public GER_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)
 	{
-		super("GER Signature File", specchio_client);
+		super("GER Signature File", specchio_client, campaignDataLoader);
 	}
 
 
