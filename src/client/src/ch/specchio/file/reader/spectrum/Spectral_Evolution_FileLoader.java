@@ -19,6 +19,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.SpectralFile;
@@ -51,8 +52,8 @@ public class Spectral_Evolution_FileLoader extends SpectralFileLoader {
 	private String[] data_headers;
 	private int no_of_bands;
 	
-	public Spectral_Evolution_FileLoader(SPECCHIOClient specchio_client) {
-		super("Spectral Evolution Data File", specchio_client);
+	public Spectral_Evolution_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader) {
+		super("Spectral Evolution Data File", specchio_client, campaignDataLoader);
 	}
 
 

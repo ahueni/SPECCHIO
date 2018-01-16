@@ -11,15 +11,16 @@ import java.util.ArrayList;
 import java.util.ListIterator;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.SpectralFile;
 
 public class TXT_FileLoader extends SpectralFileLoader {
 	
 	boolean not_eof = true;
 	
-	public TXT_FileLoader(SPECCHIOClient specchio_client)
+	public TXT_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)
 	{
-		super("TXT File", specchio_client);
+		super("TXT File", specchio_client, campaignDataLoader);
 	}
 	
 	

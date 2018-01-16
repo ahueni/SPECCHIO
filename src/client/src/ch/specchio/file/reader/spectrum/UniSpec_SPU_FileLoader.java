@@ -14,6 +14,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
@@ -31,9 +32,9 @@ public class UniSpec_SPU_FileLoader extends SpectralFileLoader {
 	Metadata smd_b;
 	
 	
-	public UniSpec_SPU_FileLoader(SPECCHIOClient specchio_client)
+	public UniSpec_SPU_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)
 	{
-		super("UniSpec_SPU", specchio_client);
+		super("UniSpec_SPU", specchio_client, campaignDataLoader);
 	}
 	
 	

@@ -15,6 +15,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.client.SPECCHIOClient;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameter;
@@ -29,8 +30,8 @@ public class Spectra_Vista_HR_1024_FileLoader extends SpectralFileLoader {
 	SpectralFile spec_file;
 	Metadata md_tgt, md_ref;
 
-	public Spectra_Vista_HR_1024_FileLoader(SPECCHIOClient specchio_client)  {
-		super("SVC HR 1024", specchio_client);
+	public Spectra_Vista_HR_1024_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)  {
+		super("SVC HR 1024", specchio_client, campaignDataLoader);
 	}
 
 	public SpectralFile load(File file) throws IOException, MetaParameterFormatException

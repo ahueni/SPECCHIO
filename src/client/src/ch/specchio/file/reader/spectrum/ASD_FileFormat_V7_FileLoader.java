@@ -14,6 +14,7 @@ import org.joda.time.DateTimeZone;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOPreferencesStore;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -101,8 +102,8 @@ public class ASD_FileFormat_V7_FileLoader extends SpectralFileLoader {
 	private DateTime gps_date_time;
 	private int file_version_number;
 
-	public ASD_FileFormat_V7_FileLoader(SPECCHIOClient specchio_client) {
-		super("ASD Binary", specchio_client);
+	public ASD_FileFormat_V7_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader) {
+		super("ASD Binary", specchio_client, campaignDataLoader);
 
 
 	}

@@ -17,6 +17,7 @@ import org.joda.time.Seconds;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOPreferencesStore;
+import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Metadata;
@@ -29,9 +30,9 @@ public class ASD_FileLoader extends SpectralFileLoader {
 	Metadata smd = new Metadata();
 	private DateTime capture_date;
 	
-	public ASD_FileLoader(SPECCHIOClient specchio_client)
+	public ASD_FileLoader(SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)
 	{
-		super("ASD Binary", specchio_client);
+		super("ASD Binary", specchio_client, campaignDataLoader);
 		
 		asd_file = new SpectralFile(); // requires this when determining the file type by reading the header
 		asd_file.setNumberOfSpectra(1);	
