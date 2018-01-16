@@ -124,10 +124,10 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 				if (rec_index != 0 && title.contains(specpr_file.getSpectrumFilename(rec_index - 1)
 						.substring(0, ext_at-1))) {
 					specpr_file.setSpecprExtNumber(rec_index, specpr_file.getSpecprExtNumber(rec_index - 1) + 1);
-					specpr_file.setSpectrumFilename(rec_index, title + 
+					specpr_file.addSpectrumFilename(title + 
 							"_" + Integer.toString(specpr_file.getSpecprExtNumber(rec_index)));
 				} else {
-					specpr_file.setSpectrumFilename(rec_index, title + "_"+ Integer.toString(specpr_file.getSpecprExtNumber(rec_index)));
+					specpr_file.addSpectrumFilename(title + "_"+ Integer.toString(specpr_file.getSpecprExtNumber(rec_index)));
 				}
 
 				if (title.contains("Wavelengths") || title.contains("Bandpass")
@@ -152,7 +152,7 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 				specpr_file.setAuthor(rec_index, read_string(data_in, 8));
 
 				// specpr files usually store reflectance data
-				specpr_file.setMeasurementUnits(rec_index, 1); // reflectance by
+				specpr_file.addMeasurementUnits(1); // reflectance by
 																// default
 
 				// Time, when data was last processed (civil or universal)
@@ -322,6 +322,8 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 					data = new Float[no_of_values_left];
 					for (int j = 0; j < data.length; j++) {
 						data[j] = data_in.readFloat();
+						if(data[j] <= -1.23e+34 ||data[j] >= 1.23e+34)
+							data[j] = Float.NaN;						
 						no_of_values_left--;
 					}
 					for (int j = 0; j < data.length; j++) {
@@ -332,6 +334,9 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 					data = new Float[256];
 					for (int j = 0; j < data.length; j++) {
 						data[j] = data_in.readFloat();
+						
+						if(data[j] <= -1.23e+34 ||data[j] >= 1.23e+34)
+							data[j] = Float.NaN;
 					}
 					for (int j = 0; j < data.length; j++) {
 						specpr_file.setMeasurement(rec_index, j, data[j]);
@@ -566,11 +571,6 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 	}
 
 	public static DateTime get_capture_date(int jdn, int time) {
-//		Date date = new Date();
-//
-//		TimeZone tz = TimeZone.getTimeZone("UTC");
-//		// TimeZone tz = TimeZone.getDefault();
-//		Calendar cal = Calendar.getInstance(tz);
 
 		float sec_of_day = time / 24000; // stored time value is scaled by 24000
 		float hour_w = sec_of_day / 3600;
@@ -579,7 +579,7 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 		float min_w = (hour_w - hour) * 60;
 		int min_int = (int) min_w;
 		float min = (float) min_int;
-		int sec = Math.round((min_w - min) * 60);
+		int sec = (int) (Math.floor((min_w - min) * 60));
 
 		double hour_part = (hour) / 24.0; // (hour - 12.0)/24.0;
 		double min_part = min / 1440.0;
@@ -590,18 +590,10 @@ public class SPECPR_FileLoader extends SpectralFileLoader {
 		int[] date_table = new int[3];
 
 		date_table = julianToDate(jd);
-
-		// Months start at 0 in calendar class
-//		cal.set(date_table[0], date_table[1] - 1, date_table[2], hour_int,
-//				min_int, sec);
-
-		// SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddhhmm");
-		// formatter.setTimeZone(tz);
-		//
-		// String out = formatter.format(cal.getTime());
-		//
-		// int x = -1;
 		
+		
+
+
 		DateTime dt = new DateTime(date_table[0], date_table[1], date_table[2], hour_int, min_int, sec, DateTimeZone.UTC);
 		
 
