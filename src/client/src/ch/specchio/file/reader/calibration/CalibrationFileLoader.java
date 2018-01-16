@@ -41,7 +41,7 @@ public class CalibrationFileLoader {
 		{
 			file_loaded = true;
 			TXT_FileLoader l;
-			l = new TXT_FileLoader(specchio_client);
+			l = new TXT_FileLoader(specchio_client, null);
 			SpectralFile spec_file = l.load(file);
 				
 			// these measurements are actually reflectances (in ways)
@@ -56,7 +56,7 @@ public class CalibrationFileLoader {
 		{
 			file_loaded = true;
 			UniSpec_SPU_FileLoader l;
-			l = new UniSpec_SPU_FileLoader(specchio_client);
+			l = new UniSpec_SPU_FileLoader(specchio_client, null);
 			SpectralFile spec_file = l.load(file);
 				
 			//spec_file.addMeasurementUnits(MeasurementUnit.Wavelength);
@@ -95,7 +95,7 @@ public class CalibrationFileLoader {
 				d.close();
 				data_in.close();
 
-				Spectra_Vista_HR_1024_FileLoader l = new Spectra_Vista_HR_1024_FileLoader(specchio_client);
+				Spectra_Vista_HR_1024_FileLoader l = new Spectra_Vista_HR_1024_FileLoader(specchio_client, null);
 				SpectralFile spec_file = l.load(file);
 				
 				spec_file.setNumberOfSpectra(1); // override the setting (there are actually 3 spectra)
