@@ -38,7 +38,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		asd_file.setNumberOfSpectra(1);	
 	}
 
-	public SpectralFile load(File file) throws IOException, MetaParameterFormatException
+	public SpectralFile load(File file) throws IOException, MetaParameterFormatException, java.io.EOFException
 	{		
 		smd = new Metadata();
 		asd_file = new SpectralFile();
@@ -78,7 +78,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		return asd_file;
 	}
 	
-	public void read_ASD_header(DataInputStream in, SpectralFile hdr) throws IOException, MetaParameterFormatException
+	public void read_ASD_header(DataInputStream in, SpectralFile hdr) throws IOException, MetaParameterFormatException, java.io.EOFException
 	{
 		
 		// spectrum number is contained in the extension for normal ASD files
@@ -106,6 +106,7 @@ public class ASD_FileLoader extends SpectralFileLoader {
 		
 		hdr.setComment(this.remove_unprintable_chars(hdr.getComment()));
 		
+		if(hdr.getComment().length()==0) hdr.setComment(null);
 		
 		
 //		int last_char = hdr.getComment().charAt(hdr.getComment().length()-1);

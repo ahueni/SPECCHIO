@@ -1,6 +1,6 @@
 
 -- vegetation specific updates
-update specchio.attribute set name = 'Crown Relative Position', description = 'FPMRIS (DELWP) SOP 13 Measuring a Large Tree Plot' where name like 'Crown Class (FPMRIS)';
+update `specchio`.attribute set name = 'Crown Relative Position', description = 'FPMRIS (DELWP) SOP 13 Measuring a Large Tree Plot' where name like 'Crown Class (FPMRIS)';
 
 
 INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `default_unit_id`) VALUES ('Neoxanthin', (select category_id from `specchio`.category where name = 'Vegetation Biophysical Variables'), 'double_val', 'Carotenoid and xanthophyll pigment', (select unit_id from unit where short_name like 'ugrams/cm2'));
@@ -27,7 +27,7 @@ INSERT INTO `specchio`.`taxonomy` (`attribute_id`, `name`, `code`, `description`
 
 -- default unit updates and fixes
 INSERT INTO `specchio`.`unit`(`name`, `description`, `short_name`) values('Seconds', 'Seconds', 's');
-update specchio.attribute set default_unit_id  = (select unit_id from unit where short_name like 's') where name like 'Time since last DC';
+update attribute set default_unit_id  = (select unit_id from unit where short_name like 's') where name like 'Time since last DC';
 
 
 -- blob data type update
@@ -40,6 +40,8 @@ insert into `specchio`.`blob_data_type` (data_type_name) VALUES ('PDF');
 insert into `specchio`.`blob_data_type` (data_type_name) VALUES ('Image');
 
 ALTER TABLE `specchio`.`attribute` ADD COLUMN `blob_data_type_id` INT(10);
+-- Attention: to carry out this next statement the sdb_admin user must have the REFERENCES rights: 
+-- login as root mysql user and set rights: GRANT SELECT, DELETE, INSERT, UPDATE, ALTER, DROP, CREATE, CREATE VIEW, GRANT OPTION, TRIGGER, REFERENCES ON `specchio`.* TO 'sdb_admin'@'localhost';
 ALTER TABLE `specchio`.`attribute` ADD CONSTRAINT `blob_data_type_id_fk` FOREIGN KEY `blob_data_type_id_fk` (`blob_data_type_id`) REFERENCES `blob_data_type` (`blob_data_type_id`);
 
 update `specchio`.`attribute` set blob_data_type_id = (select blob_data_type_id from blob_data_type where data_type_name = 'Image') where name like '%Picture';

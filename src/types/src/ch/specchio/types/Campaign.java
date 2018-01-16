@@ -27,6 +27,9 @@ public abstract class Campaign {
 	/** campaign User */
 	private User user;	
 	
+	/** campaign User ID */
+	private int user_id;		
+	
 	/** path to campaign data */
 	private String path;
 	
@@ -35,6 +38,18 @@ public abstract class Campaign {
 	
 	/** research group */
 	private ResearchGroup research_group;
+	
+	/** research group ID */
+	private int researchGroupId;
+	
+	/** number of spectra */
+	private int number_of_spectra;		
+	
+	/** average spatial location */
+	private Point2D average_location;
+
+	/** metadata space density */
+	private float metadata_space_density;	
 	
 	
 	/**
@@ -291,6 +306,56 @@ public abstract class Campaign {
 		
 		return name;
 		
+	}
+
+
+	public int getUser_id() {
+		return user_id;
+	}
+
+
+	public void setUser_id(int user_id) {
+		this.user_id = user_id;
+	}
+
+
+	public int getResearchGroupId() {
+		return researchGroupId;
+	}
+
+
+	public void setResearchGroupId(int researchGroupId) {
+		this.researchGroupId = researchGroupId;
+	}
+
+
+	public int getNumber_of_spectra() {
+		return number_of_spectra;
+	}
+
+
+	public void setNumber_of_spectra(int number_of_spectra) {
+		this.number_of_spectra = number_of_spectra;
+	}
+
+	
+	public float getMetadata_space_density() {
+		return metadata_space_density;
+	}
+
+
+	public void setMetadata_space_density(float metadata_space_density) {
+		this.metadata_space_density = metadata_space_density;
+	}
+
+
+	public Point2D getAverage_location() {
+		return average_location;
+	}
+
+
+	public void setAverage_location(Point2D average_location) {
+		this.average_location = average_location;
 	}
 
 }

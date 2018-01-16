@@ -44,6 +44,11 @@ public class User {
 	/** external (non-SPECCHIO) identifier */
 	private String externalId;
 	
+	/** number of spectra loaded: statistics information, only filled on special request */
+	private Integer number_of_spectra_loaded;
+	
+	/** number of campaigns: statistics information, only filled on special request */
+	private Integer number_of_campaigns;
 	
 	/** default constructor */
 	public User() {}
@@ -140,6 +145,22 @@ public class User {
 		
 		return this.firstName + " " + this.lastName;
 		
+	}
+
+	public Integer getNumber_of_spectra_loaded() {
+		return number_of_spectra_loaded;
+	}
+
+	public void setNumber_of_spectra_loaded(Integer number_of_spectra_loaded) {
+		this.number_of_spectra_loaded = number_of_spectra_loaded;
+	}
+
+	public Integer getNumber_of_campaigns() {
+		return number_of_campaigns;
+	}
+
+	public void setNumber_of_campaigns(Integer number_of_campaigns) {
+		this.number_of_campaigns = number_of_campaigns;
 	}
 
 }

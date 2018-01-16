@@ -1,6 +1,6 @@
 
 -- Algorithm attribute for sun angle: this will need refining in future versions for proper provenance info
-INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Solar Angle Computation', (select category_id from category where name = 'Processing'), 'string_val', 'Notes produced by the SPECCHIO solar angle computation routine', NULL);
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) values('Solar Angle Computation', (select category_id from category where name = 'Processing'), 'string_val', 'Notes produced by the SPECCHIO solar angle computation routine', NULL);
 
 
 
@@ -71,6 +71,21 @@ CREATE VIEW `specchio`.`campaign_x_eav_view` AS
 	);
 
 
+-- vegetation pigment updates
+update attribute set name = 'Chlorophyll A+B', description = 'Combined Chlorophyll A and B Content' where name like 'Chlorophyll Content';
+
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `default_unit_id`) VALUES ('Chlorophyll A', (select category_id from `specchio`.category where name = 'Vegetation Biophysical Variables'), 'double_val', 'Chlorophyll A pigment', (select unit_id from unit where short_name like 'ugrams/cm2'));
+INSERT INTO `specchio`.`attribute`(`name`, `category_id`, `default_storage_field`, `description`, `default_unit_id`) VALUES ('Chlorophyll B', (select category_id from `specchio`.category where name = 'Vegetation Biophysical Variables'), 'double_val', 'Chlorophyll B pigment', (select unit_id from unit where short_name like 'ugrams/cm2'));
+
+-- correct missing delete from previous spatial upgrade
+delete from attribute where name = 'Latitude' OR name = 'Longitude'
+
+-- remove empty file comments
+CREATE TEMPORARY TABLE IF NOT EXISTS `specchio_temp`.`temp_spectrum_x_eav_table` AS (select * from spectrum_x_eav where eav_id in (select sxe.eav_id from eav eav, spectrum_x_eav sxe where eav.eav_id = sxe.eav_id and attribute_id = (select attribute_id from attribute where name = 'File Comments') and (string_val is null or CHAR_LENGTH(string_val) = 0)));
+delete from spectrum_x_eav where eav_id in (select eav_id from `specchio_temp`.`temp_spectrum_x_eav_table`);
+
+CREATE TEMPORARY TABLE IF NOT EXISTS `specchio_temp`.`temp_eav_table` AS (select * from eav where  eav_id in (select eav_id from eav eav where attribute_id = (select attribute_id from attribute where name = 'File Comments') and (string_val is null or CHAR_LENGTH(string_val) = 0)));
+delete from eav where  eav_id in (select eav_id from `specchio_temp`.`temp_eav_table`);
 
 
 
