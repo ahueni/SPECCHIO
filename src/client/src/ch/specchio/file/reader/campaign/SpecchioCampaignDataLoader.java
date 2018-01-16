@@ -270,13 +270,14 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						else
 							System.out.println(ex.getMessage());
 						
-					}
+					}					
 					catch (MetaParameterFormatException ex) {
 						if(listener != null)
 							listener.campaignDataLoadError(file + ": " + ex.getMessage());
 						else
 							System.out.println(ex.getMessage());						
-					}
+					}				
+					
 				}
 			}
 			
