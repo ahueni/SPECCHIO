@@ -44,7 +44,7 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 	private static final long serialVersionUID = 1L;
 	public JTree tree;
 	public SpectralDataBrowserNode root;
-	int directly_select_number_of_spectra = 0;
+	private int directly_select_number_of_spectra = 0;
 	
 	boolean restrict_to_view; // restrict shown nodes to views (i.e. user sees only own data)
 	
@@ -144,22 +144,12 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 	
 	public Campaign get_selected_campaign() throws SPECCHIOClientException
 	{
-		Campaign campaign = null;
-		
-		TreePath path = tree.getSelectionPath();
-		if (path != null) {
-			// find the campaign node at the root of the selection
-			SpectralDataBrowserNode bn = (SpectralDataBrowserNode)path.getLastPathComponent();
-			while (bn != null && !(bn.getNode() instanceof campaign_node)) {
-				path = path.getParentPath();
-				bn = (path != null)? (SpectralDataBrowserNode)path.getLastPathComponent() : null;
-			}
+		Campaign campaign = null;	
+		campaign_node bn = getCampaignNode();
 			
 			if (bn != null) {
-				campaign = specchio_client.getCampaign(bn.getNodeId());
+				campaign = specchio_client.getCampaign(bn.getId());
 			}
-		}
-		
 		return campaign;
 	}
 	
@@ -176,6 +166,64 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 		
 	}
 
+	public boolean onlyCampaignNodeIsSelected()
+	{
+		
+		TreePath[] paths = tree.getSelectionPaths();
+		
+		if(paths != null && paths.length == 1)
+		{			
+			spectral_node_object sn = ((SpectralDataBrowserNode)paths[0].getLastPathComponent()).getNode();
+			
+			if(sn instanceof campaign_node)
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public campaign_node getCampaignNode()
+	{
+		
+		TreePath path = tree.getSelectionPath();
+		if (path != null) {
+			// find the campaign node at the root of the selection
+			SpectralDataBrowserNode bn = (SpectralDataBrowserNode)path.getLastPathComponent();
+			while (bn != null && !(bn.getNode() instanceof campaign_node)) {
+				path = path.getParentPath();
+				bn = (path != null)? (SpectralDataBrowserNode)path.getLastPathComponent() : null;
+			}
+			
+			return (campaign_node) bn.getNode();
+		}
+		
+		return null;
+
+	}
+	
+	
+	public ArrayList<Integer> get_top_hierarchy_ids_of_campaign() throws SPECCHIOClientException
+	{
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		
+		campaign_node n = getCampaignNode();
+		List<spectral_node_object> children = null;
+		if(n != null)
+		{
+			children = this.specchio_client.getChildrenOfNode(n);
+		}
+		
+		if (children != null)
+		{
+			for(spectral_node_object c : children)
+			{
+				ids.add(c.getId());
+			}
+			
+		}
+		
+		return ids;
+	}
 	
 	public ArrayList<Integer> get_selected_spectrum_ids() throws SPECCHIOClientException
 	{
