@@ -32,6 +32,20 @@ public class SpectralBrowserFactory extends SPECCHIOFactory {
 		
 	}
 	
+	/**
+	 * Copy constructor. Construct a new factory that uses the same database connection
+	 * as an existing factory.
+	 * 
+	 * @param factory	the existing factory
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public SpectralBrowserFactory(SPECCHIOFactory factory) throws SPECCHIOFactoryException {
+		
+		super(factory);
+		
+	}	
+	
 	
 	/**
 	 * Create an internal child node (i.e. not a spectrum) object.
