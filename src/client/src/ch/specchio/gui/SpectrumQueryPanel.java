@@ -7,8 +7,10 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.ListIterator;
 import java.util.TimeZone;
 import java.util.Vector;
@@ -68,8 +70,10 @@ public class SpectrumQueryPanel extends JPanel {
 	/** the query controller */
 	private QueryController controller;
 	
-	/** the query form */
-	private QueryForm form;
+	Hashtable<String, SpectrumQueryCategoryContainer> SpectrumQueryCategoryContainers;
+	
+//	/** the query form */
+//	private QueryForm form;
 	
 	
 	/**
@@ -81,6 +85,8 @@ public class SpectrumQueryPanel extends JPanel {
 	public SpectrumQueryPanel(Frame owner, QueryController qc) {
 		
 		super();
+		
+		SpectrumQueryCategoryContainers = new Hashtable<String, SpectrumQueryCategoryContainer>();
 		
 		// save a reference to the parameters for later
 		this.owner = owner;
@@ -122,15 +128,16 @@ public class SpectrumQueryPanel extends JPanel {
 		if (form != null) {
 			
 			// create and add panels for each category container
-			for (QueryCategoryContainer qcc : form.getContainers()) {
+			for (QueryCategoryContainer qcc : form.getCategoryContainers()) {
 				SpectrumQueryCategoryContainer panel = new SpectrumQueryCategoryContainer(qcc, this.controller.getSpecchio_client());
+				SpectrumQueryCategoryContainers.put(qcc.getCategoryName(), panel);
 				add(panel);
 			}
 			
 		}
 		
 		// save a reference to the new form
-		this.form = form;
+		//this.form = form;
 		
 		// force re-draw
 		revalidate();
@@ -157,7 +164,9 @@ public class SpectrumQueryPanel extends JPanel {
 		private SpectrumQueryComponentFactory factory;
 		
 		/** the client object */
-		public SPECCHIOClient specchioClient;		
+		public SPECCHIOClient specchioClient;	
+		
+		ArrayList<SpectrumQueryComponent> spectrumQueryComponents;
 
 		
 		/**
@@ -173,6 +182,7 @@ public class SpectrumQueryPanel extends JPanel {
 			this.qcc = qcc;
 			
 			this.specchioClient = specchioClient;
+			spectrumQueryComponents = new ArrayList<SpectrumQueryComponent>();
 			
 			// add a border with the category name
 			Border blackline = BorderFactory.createLineBorder(Color.BLACK);
@@ -204,6 +214,7 @@ public class SpectrumQueryPanel extends JPanel {
 				if (c != null) {
 					// add the new component to the panel
 					fieldPanel.add(c);
+					spectrumQueryComponents.add(c);
 				}
 				
 			}
@@ -1278,6 +1289,46 @@ public class SpectrumQueryPanel extends JPanel {
 		}
 			
 			
+		
+	}
+
+
+	public void update() {
+		
+		QueryForm form = controller.getForm();
+		
+		// remove all of the existing components
+		removeAll();
+		
+		if (form != null) {
+			
+			// create and add panels for each category container
+			for (QueryCategoryContainer qcc : form.getCategoryContainers()) {
+				
+				SpectrumQueryCategoryContainer panel = this.SpectrumQueryCategoryContainers.get(qcc.getCategoryName());
+				
+				if(panel == null)
+				{
+					panel = new SpectrumQueryCategoryContainer(qcc, this.controller.getSpecchio_client());
+					SpectrumQueryCategoryContainers.put(qcc.getCategoryName(), panel);
+				}
+				else
+				{
+					// panel already exists, may have preexisting values that need to be added to form
+					
+					
+					int x = 0;
+				}
+				
+				add(panel);
+			}
+			
+		}
+		
+		// force re-draw
+		revalidate();
+		repaint();
+		
 		
 	}	
 	
