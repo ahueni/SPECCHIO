@@ -17,6 +17,7 @@ public class MeasurementUnit {
 	public final static int Transmittance = 6;
 	public final static int DN = 0;
 	public final static int Wavelength = 100;
+	public final static int DN_div_Radiance = 101;
 	
 	public MeasurementUnit()
 	{
