@@ -2,6 +2,8 @@ package ch.specchio.gui;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 
 import javax.swing.*;
 
@@ -168,7 +170,60 @@ public class SPECCHIOApplication {
 		   );
 	   }
 	   
+	   public static void openInDesktop(File temp)
+	   {
+	 	  try {
+			  if (Desktop.isDesktopSupported()) {
+				  Desktop.getDesktop().open(temp);
+			  }
+			  else
+			  {
+				  JOptionPane.showMessageDialog(
+						  SPECCHIOApplication.getInstance().get_frame(),
+						  "This operating system/Java VM does not support the opening of files from Java in the Desktop.\n"
+						  + "Please open this file manually: " + temp.getPath(),
+						  "Error",
+						  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
+						  );    			  
+			  }
+
+	 	  } catch (java.lang.IllegalArgumentException ex)	 
+	 	  {
+	 		  // something wrong with the temporary file
+	 		  ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Could not start viewer", ex.getMessage(), ex);
+	 		  error.setVisible(true);
+	 	  } catch (IOException ex) {
+	 		  // something wrong with the temporary file
+	 		  ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Could not start viewer", ex.getMessage(), ex);
+	 		  error.setVisible(true);
+
+	 	  }catch (UnsupportedOperationException ex) {
+	 		  // platform does not support desktop operations
+	 		  ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Could not start viewer", ex.getMessage(), ex);
+	 		  error.setVisible(true);
+	 	  }
+
+	 	  
+	   }		  	   
 	   
+	   // URL example from: http://stackoverflow.com/questions/527719/how-to-add-hyperlink-in-jlabel	   
+	   public static void openInDesktop(URI uri) {
+		   if (Desktop.isDesktopSupported()) {
+			   try {
+				   Desktop.getDesktop().browse(uri);
+			   } catch (IOException e) { /* TODO: error handling */ }
+		   } else {
+			   JOptionPane.showMessageDialog(
+					   SPECCHIOApplication.getInstance().get_frame(),
+					   "This operating system/Java VM does not support the opening of URLs from Java in the Desktop.\n"
+							   + "Please open this page manually: " + uri,
+							   "Error",
+							   JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
+					   );    			  
+
+		   }
+	   }   	   
+
 	   public void setClient(SPECCHIOClient client) {
 		   
 		   this.client = client;
