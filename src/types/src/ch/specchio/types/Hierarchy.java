@@ -1,15 +1,19 @@
 package ch.specchio.types;
 
+import java.util.ArrayList;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
 
 @XmlRootElement(name="hierarchy")
+@XmlSeeAlso({ArrayList.class,SerialisableBufferedImage.class})
 public class Hierarchy implements MetadataInterface {
 	
 	/** campaign id */
 	int campaign_id;
 	
-	/** ierarchy_level id */
+	/** hierarchy_level id */
 	int hierarchy_level_id;
 	
 	/** hierarchy name */
