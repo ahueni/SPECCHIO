@@ -93,6 +93,7 @@ public class MetaDataFromTabModel {
 	}
 
 	ArrayList<attribute> attribute_of_columns;
+	ArrayList<String> item_name_of_columns = new ArrayList<String>(); // the name shown for the attribute in the GUI, used to deal with special cases like spatial positions that are split into Lon and Lat
 	private java.util.ArrayList<Integer> spectrum_ids;
 	private boolean matching_is_set = false;
 	private Hashtable<Integer, Integer> spectrum_to_table_val_matches;
@@ -174,12 +175,27 @@ public class MetaDataFromTabModel {
 				
 	}	
 	
-	public void setAttributeOfColumn(int col, Integer id)
+	public String getItem_name_of_column(int col) {
+		return item_name_of_columns.get(col);
+	}
+
+
+	public void setAttributeOfColumn(int col, Integer id, String item_name)
 	{		
 		// TODO edit here ...
 		attribute atr = this.attributes_hash.get(id);
 				
 		this.attribute_of_columns.set(col, atr);
+		
+		item_name_of_columns.set(col, item_name);
+	}
+
+	public ArrayList<String> getItem_name_of_columns() {
+		return item_name_of_columns;
+	}
+
+	public void setItem_name_of_columns(ArrayList<String> item_name_of_columns) {
+		this.item_name_of_columns = item_name_of_columns;
 	}
 
 	public ArrayList<attribute> getAttribute_of_columns() {
