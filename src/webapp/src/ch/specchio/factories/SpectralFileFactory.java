@@ -318,6 +318,11 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			getSubHierarchyId(subhierarchies, hierarchy_id, "Total");
 			getSubHierarchyId(subhierarchies, hierarchy_id, "Diffuse");
 		}
+		
+		if (spec_file.getCompany().equals("JB Hyperspectral")) {
+			// Input data are always digital numbers
+			getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
+		}
 
 		if (spec_file.getCompany().equals("FGI")) {
 
@@ -859,6 +864,22 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 			}
 
 		}
+		
+		if (spec_file.getCompany().equals("JB Hyperspectral")) {
+			special_hierarchy_files = true;
+
+			int DN_hierarchy_id = subhierarchies.get("DN");
+			
+			for (int i = 0; i < spec_file.getNumberOfSpectra(); i++) {
+				
+				SpectralFileInsertResult tmp = insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, DN_hierarchy_id));
+				addNonNullSpectrumIds(insert_result,tmp);
+				
+			}
+
+			
+			
+		}
 
 		if (spec_file.getCompany().equals("FGI")) {
 			special_hierarchy_files = true;
@@ -1353,6 +1374,13 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 					md.addEntry(mp);								
 				}
 				
+				if(spec_file.getCalibrationSeries() >= 0)
+				{
+					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("Calibration Number", "Instrument"));
+					mp.setValue(spec_file.getCalibrationSeries());
+					md.addEntry(mp);								
+				}				
+				
 				if(spec_file.getComment() != null)
 				{
 					mp = MetaParameter.newInstance(getAttributes().get_attribute_info("File Comments", "General"));
@@ -1379,7 +1407,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 		
 				// automatic processing of EAV data
 				if (spec_file.getEavMetadata(spec_no) != null) {
-					ArrayList<Integer> eav_ids = getEavServices().insert_metadata_into_db(campaign.getId(), spec_file.getEavMetadata(spec_no));
+					ArrayList<Integer> eav_ids = getEavServices().insert_metadata_into_db(campaign.getId(), spec_file.getEavMetadata(spec_no), this.Is_admin());
 					getEavServices().insert_primary_x_eav(MetaParameter.SPECTRUM_LEVEL, id, eav_ids);
 				}
 		
