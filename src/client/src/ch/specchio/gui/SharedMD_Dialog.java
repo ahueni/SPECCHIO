@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
 import ch.specchio.metadata.MD_Field;
+import ch.specchio.types.MetaParameter;
 
 
 /**
@@ -28,7 +29,7 @@ public class SharedMD_Dialog extends JDialog implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	
 	/** list of fields */
-	private JList fieldList;
+	private JList<String> fieldList;
 	
 	/** "apply to all" button */
 	private JButton applyToAllButton;
@@ -72,10 +73,31 @@ public class SharedMD_Dialog extends JDialog implements ActionListener {
 	 * @param owner		the owner of this dialogue
 	 * @param op		SharedMD_Dialog.UPDATE or SharedMD_Dialog.DELETE
 	 * @param fields	the fields to be updated or deleted
+	 * @param hierarchyLevel 
 	 */
-	public SharedMD_Dialog(Frame owner, int op, List<MD_Field> fields) {
+	public SharedMD_Dialog(Frame owner, int op, List<MD_Field> fields, int hierarchyLevel) {
 		
-		super(owner, ((op == DELETE)? "Delete" : "Update") + " shared record", true);
+		super(owner, ((op == DELETE)? "Delete" : "Update") + " shared metaparameter", true);
+		
+		String verb = (op == DELETE)? "delete" : "update";
+		
+		String level_name, explanation, action, inherit_prefix, inherit_postfix;
+		if(hierarchyLevel == MetaParameter.SPECTRUM_LEVEL)
+		{
+			level_name = "spectra";
+			explanation = "The data in the fields listed below are referred to by multiple " +level_name + ".";
+			action = "You can " + verb + " the metadata of all of these " +level_name + ", or only of the " +level_name + " selected in the browser.";
+			inherit_prefix = "Shared by ";
+			inherit_postfix = "";
+		}
+		else
+		{
+			level_name = "hierarchies";
+			explanation = "The data in the fields listed below are inherited from a hierarchy N levels further up.";
+			action = "You can only " + verb + " the metadata of all spectra.";
+			inherit_prefix = "Inherited from N=";
+			inherit_postfix = " further up";
+		}
 		
 		// set up the root pane with a border layout
 		JPanel rootPanel = new JPanel();
@@ -86,18 +108,18 @@ public class SharedMD_Dialog extends JDialog implements ActionListener {
 		JPanel textPanel = new JPanel();
 		textPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-		String verb = (op == DELETE)? "delete" : "update";
-		textPanel.add(new JLabel("The data in the fields listed below are referred to by multiple records."));
-		textPanel.add(new JLabel("You can " + verb + " metadata for all of these records, or only the records selected in the navigator."));
+		
+		textPanel.add(new JLabel(explanation));
+		textPanel.add(new JLabel(action));
 		rootPanel.add(textPanel, BorderLayout.NORTH);
 		
 		// add the list of fields
 		String fieldDescriptions[] = new String[fields.size()];
 		int i = 0;
 		for (MD_Field field : fields) {
-			fieldDescriptions[i++] = field.getLabel() + " (shared by " + field.getNoOfSharingRecords() + " records)";
+			fieldDescriptions[i++] = field.getLabel() + " (" + inherit_prefix + field.getNoOfSharingRecords() + " " + level_name + inherit_postfix + ")";
 		}
-		fieldList = new JList(fieldDescriptions);
+		fieldList = new JList<String>(fieldDescriptions);
 		fieldList.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		rootPanel.add(fieldList, BorderLayout.CENTER);
 		
@@ -112,10 +134,13 @@ public class SharedMD_Dialog extends JDialog implements ActionListener {
 		buttonPanel.add(applyToAllButton);
 		
 		// create the "apply to selection" button
-		applyToSelectionButton = new JButton(APPLY_TO_SELECTION_CMD);
-		applyToSelectionButton.setActionCommand(APPLY_TO_SELECTION_CMD);
-		applyToSelectionButton.addActionListener(this);
-		buttonPanel.add(applyToSelectionButton);
+		if(hierarchyLevel == MetaParameter.SPECTRUM_LEVEL)
+		{
+			applyToSelectionButton = new JButton(APPLY_TO_SELECTION_CMD);
+			applyToSelectionButton.setActionCommand(APPLY_TO_SELECTION_CMD);
+			applyToSelectionButton.addActionListener(this);
+			buttonPanel.add(applyToSelectionButton);
+		}
 		
 		// create the "apply to none" button
 		applyToNoneButton = new JButton(APPLY_TO_NONE_CMD);
