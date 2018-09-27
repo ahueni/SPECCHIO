@@ -9,6 +9,7 @@ import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -1081,7 +1082,8 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 				if(field.getLevel() == MetaParameter.HIERARCHY_LEVEL && field.getClass() == MD_EAV_Field.class && field.getConflict().getConflictData(((MD_EAV_Field)field).getMetaParameter().getEavId()).isInherited())
 				{				
 					label.setForeground(Color.BLUE);
-					label.setToolTipText("This metaparameter is inherited from a hierarchy.");
+					label.setToolTipText("<html> " + (field.getDescription() != null ? field.getDescription() + "." : "") + "<br>" + "This metaparameter is inherited from a hierarchy." + "</html>");
+					
 				}
 				
 				if(field.getLevel() == MetaParameter.SPECTRUM_LEVEL && field.getClass() == MD_EAV_Field.class && field.getConflict().getConflictData(((MD_EAV_Field)field).getMetaParameter().getEavId()).getNumberOfSharingRecords() > 1)
@@ -1091,7 +1093,7 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 					Color c2 = Color.BLUE;
 					
 					label.setForeground(c);
-					label.setToolTipText("This metaparameter is shared with " + field.getConflict().getConflictData(((MD_EAV_Field)field).getMetaParameter().getEavId()).getNumberOfSharingRecords() + " other spectra.");
+					label.setToolTipText("<html> " + (field.getDescription() != null ? field.getDescription() + "." : "") + "<br>" + "This metaparameter is shared with " + field.getConflict().getConflictData(((MD_EAV_Field)field).getMetaParameter().getEavId()).getNumberOfSharingRecords() + " other spectra." + "</html>");
 
 				}
 			
@@ -1397,7 +1399,7 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 	/**
 	 * Base class for EAV metadata components.
 	 */
-	private abstract class SpectrumEavMetadataComponent extends SpectrumMetadataComponent implements ActionListener, MouseListener {
+	private abstract class SpectrumEavMetadataComponent extends SpectrumMetadataComponent implements ActionListener, MouseListener, ClipboardOwner {
 		
 		/** serialisation version identifier */
 		private static final long serialVersionUID = 1L;
@@ -1408,8 +1410,10 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 		/** is the component editable? */
 		private boolean editable;
 		
-		/** text for the "delete" menu item */
+		/** text for the "delete" and copy menu item */
 		private static final String DELETE = "Delete";
+		private static final String COPY_ATTRIBUTE_NAME = "Copy Attribute Name";
+		
 		
 		/**
 		 * Constructor.
@@ -1432,6 +1436,10 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 			// add the "delete" menu option
 			JMenuItem menuItem = new JMenuItem(DELETE);
 			menuItem.addActionListener(this);
+			popupMenu.add(menuItem);		
+			
+			menuItem = new JMenuItem(COPY_ATTRIBUTE_NAME);
+			menuItem.addActionListener(this);
 			popupMenu.add(menuItem);				
 			
 		}
@@ -1449,6 +1457,13 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 				// remove the component from its container
 				getCategoryContainerPanel().removeField(getField());
 				
+			}
+			
+			if(COPY_ATTRIBUTE_NAME.equals(event.getActionCommand())) {
+								
+				StringSelection stringSelection = new StringSelection(((MD_EAV_Field)getField()).getMetaParameter().getAttributeName());
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			    clipboard.setContents(stringSelection , this);			
 			}
 			
 		}
@@ -1477,6 +1492,10 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 			
 		}
 		
+		public void lostOwnership(Clipboard arg0, Transferable arg1) {
+			// ignore
+			
+		}		
 		
 		/**
 		 * Respond to a mouse click. Does nothing.
@@ -1799,7 +1818,8 @@ public class SpectrumMetadataPanel extends JPanel implements ListSelectionListen
 		    		fos.close();
 
 		    		// launch the external viewer
-		    		Desktop.getDesktop().open(temp);
+		    		SPECCHIOApplication.openInDesktop(temp);
+
 		    	}
 		    	catch (IllegalArgumentException ex) {
 		    		// something wrong with the temporary file
