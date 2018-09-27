@@ -29,6 +29,7 @@ import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.SwingWorker.StateValue;
 
 import ch.specchio.client.SPECCHIOClient;
@@ -70,7 +71,7 @@ public class DbUpgrade extends JFrame  implements ActionListener, PropertyChange
 		super("DB Upgrade");
 
 		String msg = null;
-
+		String manual_action = null;
 
 		constraints = new GridBagConstraints();
 
@@ -108,14 +109,27 @@ public class DbUpgrade extends JFrame  implements ActionListener, PropertyChange
 
 			current_version = Double.valueOf(version_str);
 
-			//current_version = 3.2; // test setup
+//			current_version = 3.2; // test setup
 
 			get_most_recent_version();
 
 			if (current_version < this.most_recent_version)
 			{
 				upgrade_needed = true;
-				msg = "Upgrade from Version " + Double.toString(current_version) + " to Version " + Double.toString(most_recent_version);	
+				msg = "Upgrade from Version " + Double.toString(current_version) + " to Version " + Double.toString(most_recent_version);
+				
+				if(current_version < 3.31 && current_version <= 3.32)
+				{
+					manual_action = "Please update the sdb_admin rights manually before running the automatic update." +
+							"\n" +
+							"Login as MySQL root and execute these statements:"+
+							"\n" +"\n" +
+							"GRANT SELECT, DELETE, INSERT, UPDATE, ALTER, DROP, CREATE, CREATE VIEW, GRANT OPTION, TRIGGER, REFERENCES ON `specchio`.* TO 'sdb_admin'@'localhost';\n" + 
+							"GRANT SELECT, DELETE, INSERT, UPDATE, DROP, CREATE TEMPORARY TABLES, GRANT OPTION ON `specchio_temp`.* TO 'sdb_admin'@'localhost';\n" + 
+							"FLUSH PRIVILEGES;";
+				}
+				
+				
 			}
 			else
 			{
@@ -133,7 +147,7 @@ public class DbUpgrade extends JFrame  implements ActionListener, PropertyChange
 			JPanel control = new JPanel();
 			l = new GridbagLayouter(control);
 
-			ok = new JButton("OK");
+			ok = new JButton("Proceed with upgrade");
 			ok.setActionCommand("ok");
 			//ok.setEnabled(false); // default: not enabled
 			ok.addActionListener(this);		
@@ -165,6 +179,12 @@ public class DbUpgrade extends JFrame  implements ActionListener, PropertyChange
 
 			// add control panel to dialog
 			this.add("Center", cs_panel);
+			
+			if(manual_action != null)
+			{
+				JTextArea jp = new JTextArea(manual_action);
+				this.add("South", jp);
+			}
 
 			pack();	
 		}
