@@ -22,6 +22,7 @@ import javax.swing.JTextField;
 import ch.specchio.client.SPECCHIODatabaseDescriptor;
 import ch.specchio.client.SPECCHIOServerDescriptor;
 import ch.specchio.client.SPECCHIOWebAppDescriptor;
+import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOClientFactory;
@@ -237,7 +238,18 @@ public class DatabaseConnectionDialog extends JFrame implements ActionListener
 	    		SPECCHIOClient specchio_client = cf.createClient(server_d);
 	    		specchio_client.setProgressReport(pr);
 		    	pr.setVisible(true);
-	    		specchio_client.connect();
+		    	
+		    	try
+		    	{
+		    		specchio_client.connect();
+		    	} 
+		    	catch(SPECCHIOWebClientException e)
+		    	{
+		    		// to be tested if this is ever caught ...
+		    		System.out.println("Reloading DB config file due to windows registry issue");
+		    		cf.reloadDBConfigFile();
+		    		specchio_client.connect();
+		    	}
 	    		
 	    		// register the new connection with the application
 	    		SPECCHIOApplication.getInstance().setClient(specchio_client);
