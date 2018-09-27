@@ -850,6 +850,7 @@ public class SpaceFactory extends SPECCHIOFactory {
 			
 			// clear existing data vectors
 			space.clearDataVectors();
+			int curr_id = 0;
 	
 			try {
 				// create SQL-building objects
@@ -876,13 +877,15 @@ public class SpaceFactory extends SPECCHIOFactory {
 					order_by = null;
 					quicker_order_by = "order by FIELD (spectrum_id, "+ conc_ids +")";
 				}
-				String columns[] = new String[] { "measurement" };
+				String columns[] = new String[] { "measurement", id_column };
 				String query = buildSpaceQuery(table, id_column, columns, space.getSpectrumIds(), order_by) + quicker_order_by; 
 				
 				ResultSet rs = stmt.executeQuery(query);
 				while (rs.next()) 
 				{
+					
 					Blob measurement = rs.getBlob(1);
+					curr_id = rs.getInt(2);
 					InputStream binstream = measurement.getBinaryStream();
 					DataInput dis = new DataInputStream(binstream);
 					
@@ -925,6 +928,10 @@ public class SpaceFactory extends SPECCHIOFactory {
 			} catch (SQLException ex) {
 				// database error
 				throw new SPECCHIOFactoryException(ex);
+			}
+			catch (java.lang.NullPointerException ex)
+			{
+				throw new SPECCHIOFactoryException("Found spectrum with a zero binary entry: please delete or reload spectrum with id = " + curr_id);
 			}
 	}
 	
