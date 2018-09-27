@@ -13,6 +13,12 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
+import java.util.Date;
+
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.eav_db.id_and_op_struct;
 import ch.specchio.spaces.Space;
@@ -23,6 +29,7 @@ import ch.specchio.types.CalibrationPlotsMetadata;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.InstrumentDescriptor;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.Reference;
@@ -128,7 +135,10 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 				int picture_id = rs.getInt(1);
 				deletePicture(picture_id);
 			}
-			rs.close();									
+			rs.close();				
+			
+			query = "delete FROM specchio.instrumentation_factors where instrumentation_factors_id in (select cal_factors from calibration where instrument_id = " + instrument_id + ")";
+			stmt.executeUpdate(query);	
 			
 			query = "delete from calibration where instrument_id = " + instrument_id;
 			stmt.executeUpdate(query);			
@@ -318,7 +328,28 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			while (rs.next()) {
 				CalibrationMetadata cm = new CalibrationMetadata(rs.getInt(1));
 				cm.setCalibrationNumber(rs.getInt(2));
-				cm.setCalibrationDate(rs.getDate(3));
+				
+				DateTimeFormatter formatter;
+				String date_str = rs.getString(3);
+				
+
+				
+				
+				if(date_str != null)
+				{	
+					if(date_str.length()==10)
+					{
+						formatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC();
+					}
+					else
+					{
+						formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT + ".S").withZoneUTC();
+					}
+					
+					DateTime d = formatter.parseDateTime(date_str); 
+					cm.setCalibrationDate(d);
+				}
+				
 				cm.setComments(rs.getString(4));
 				cm.setCalFactorsId(rs.getInt(5));
 				cm.setCalibrationFactorsPlot(getCalibrationPlotsMetadata(cm.getCalFactorsId(), "cal_factors"));
@@ -812,10 +843,22 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			id_and_op_struct cal_factor = SQL.is_null_key_get_val_and_op(cal_factor_id);
 			id_and_op_struct cal_uncert = SQL.is_null_key_get_val_and_op(uncert_id);
 			String fov = (cal.getField_of_view() != 0)? Integer.toString(cal.getField_of_view()) : "null";
-			String query = "insert into calibration (" + id_column + ", cal_factors, uncertainty, comments, calibration_no, fov, name) " +
+			
+			String date = "null";
+			if(cal.getCalibrationDate() != null)
+			{
+				DateTimeFormatter fmt = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+				date =  "'" + fmt.print((DateTime)cal.getCalibrationDate()) + "'";
+			}
+			
+			String cal_no = (cal.getCalibrationNumber() != -1)? (new Integer(cal.getCalibrationNumber())).toString() : "null";
+			
+			
+			String query = "insert into calibration (" + id_column + ", cal_factors, uncertainty, comments, calibration_no, fov, name, calibration_date) " +
 					"values (" + referenced_id + "," + cal_factor.id + "," + cal_uncert.id + ", '" 
-					+ cal.getComments() + "'," + cal.getCalibrationNumber() + "," + fov  + ", '" 
-					+ cal.getName() + "'" + ")";
+					+ cal.getComments() + "'," + cal_no + "," + fov  + ", '" 
+					+ cal.getName() + "'" + ", " 
+					+ date  + ")";
 			stmt.executeUpdate(query);
 			
 			// get the identifier of the new instrument
@@ -1178,7 +1221,7 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			Statement stmt = SQL.createStatement();			
 
 			String query = "select count(*) from calibration where instrument_id = " + cal.getInstrumentId() +
-					" and calibration_no = " + cal.getCalibrationNumber() + " and fov " + (cal.getField_of_view() == 0?"is null": " = " + cal.getField_of_view());
+					" and calibration_no = " + cal.getCalibrationNumber() + " and fov " + (cal.getField_of_view() == 0?"is null": " = " + cal.getField_of_view()) + " and calibration_type = " + cal.getCalibration_type();
 			
 						
 			ResultSet rs = stmt.executeQuery(query);
@@ -1462,7 +1505,8 @@ public class InstrumentationFactory extends SPECCHIOFactory {
 			}
 			if (cm.getCalibrationDate() != null) {
 				attr_and_vals.add("calibration_date");
-				attr_and_vals.add(SQL.DateAsString(cm.getCalibrationDate()));
+				DateTimeFormatter fmt = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT);
+				attr_and_vals.add(fmt.print(cm.getCalibrationDate()));
 			}
 			
 			// update database
