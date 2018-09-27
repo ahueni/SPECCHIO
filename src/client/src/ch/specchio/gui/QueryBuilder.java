@@ -443,11 +443,11 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 	    
 	    // test menu for developing and debugging purposes
 	    // TODO the Test menu is here ....
-	    test_menu = new JMenu("Test");
-	    menuItem = new JMenuItem("Test");
-	    menuItem.addActionListener(this);
-	    test_menu.add(menuItem);	    
-	    menuBar.add(test_menu);
+//	    test_menu = new JMenu("Test");
+//	    menuItem = new JMenuItem("Test");
+//	    menuItem.addActionListener(this);
+//	    test_menu.add(menuItem);	    
+//	    menuBar.add(test_menu);
 	    
 	    
 	    this.setJMenuBar(menuBar);		
