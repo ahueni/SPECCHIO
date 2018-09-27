@@ -26,9 +26,10 @@ public class QueryController {
 		
 		this.specchio_client = specchio_client;
 		this.form_descriptor = form_descriptor;
-		form_factory = new QueryFormFactory(specchio_client, new MD_CategoryComparator());
+		form_factory = QueryFormFactory.getInstance(specchio_client, new MD_CategoryComparator(), form_descriptor);
 		form = form_factory.getForm(this.specchio_client, form_descriptor);
-		form.textReport();
+		form.clearSetFields();
+		//form.textReport();
 	}
 
 	public void ConditionChange(QueryField field, Object new_value)
@@ -40,16 +41,20 @@ public class QueryController {
 		
 		field.set_value(string_value);
 		
+		informChangeListeners();
+		
+	}
+	
+	private void informChangeListeners()
+	{
 		// inform all registered listeners
 		ListIterator<QueryConditionChangeInterface> li = change_listeners.listIterator();
 		
 		while(li.hasNext())
 		{
-			QueryConditionChangeInterface listener = li.next();
-			
+			QueryConditionChangeInterface listener = li.next();			
 			listener.changed(this);
-		}
-		
+		}		
 	}
 	
 	public void addChangeListener(QueryConditionChangeInterface listener)
@@ -74,6 +79,14 @@ public class QueryController {
 
 	public void setSpecchio_client(SPECCHIOClient specchio_client) {
 		this.specchio_client = specchio_client;
+	}
+
+	public void updateForm(MD_FormDescriptor formDescriptor) {
+		this.form_descriptor = formDescriptor;
+		//form_factory = new QueryFormFactory(specchio_client, new MD_CategoryComparator(), formDescriptor);
+		form_factory = QueryFormFactory.getInstance();
+		form = form_factory.getForm(this.specchio_client, form_descriptor);
+		informChangeListeners();
 	}
 	
 	

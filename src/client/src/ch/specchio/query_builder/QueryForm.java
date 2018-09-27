@@ -1,6 +1,7 @@
 package ch.specchio.query_builder;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.ListIterator;
 
 import ch.specchio.queries.EAVQueryConditionObject;
@@ -11,7 +12,7 @@ import ch.specchio.queries.SpectrumQueryCondition;
 public class QueryForm {
 	
 	ArrayList<QueryCategoryContainer> containers = new ArrayList<QueryCategoryContainer>();
-	
+	Hashtable<String, QueryCategoryContainer> containers_hash = new Hashtable<String, QueryCategoryContainer>();
 
 	public QueryForm() {
 	}
@@ -20,10 +21,16 @@ public class QueryForm {
 	
 		QueryCategoryContainer cc = new QueryCategoryContainer(category);
 		
-		containers.add(cc);
+		addCategoryContainer(cc);
 		
 		return cc;		
 		
+	}
+	
+	public void addCategoryContainer(QueryCategoryContainer cc)
+	{
+		containers.add(cc);
+		containers_hash.put(cc.category_name, cc);		
 	}
 	
 	public void textReport()
@@ -40,9 +47,14 @@ public class QueryForm {
 		
 	}
 
-	public ArrayList<QueryCategoryContainer> getContainers() {
+	public ArrayList<QueryCategoryContainer> getCategoryContainers() {
 		return containers;
 	}
+	
+	
+	public QueryCategoryContainer getCategoryContainer(String name) {
+		return containers_hash.get(name);
+	}	
 	
 	
 	public ArrayList<QueryCondition> getListOfConditions()
@@ -97,6 +109,18 @@ public class QueryForm {
 		
 		c.addField(spectrum_field);
 		
+	}
+	
+	public void clearSetFields() {
+		// loop over containers
+		ListIterator<QueryCategoryContainer> li = containers.listIterator();
+		
+		while(li.hasNext())
+		{
+			QueryCategoryContainer cc = li.next();
+
+			cc.clearSetFields();
+		}		
 	}
 
 }
