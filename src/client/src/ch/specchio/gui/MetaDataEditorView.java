@@ -73,11 +73,15 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 	String E_W_Switch = "Switch longitude E-W";
 	String RadiometricCalibration = "Radiometric Calibration";
 	private JMenuBar menuBar;
-	private ArrayList<MD_Field> shared_fields;
-	private int shared_field_opt;
+	//private ArrayList<MD_Field> shared_fields;
+	private ArrayList<MD_Field> shared_fields_spectrum_level;
+	//private int shared_field_opt;
+	private ArrayList<MD_Field> shared_fields_hierarchy_level;
+	private ArrayList<MD_Field> nonshared_fields_spectrum_level;
+	private ArrayList<MD_Field> nonshared_fields_hierarchy_level;
 
 	public MetaDataEditorView(JFrame jFrame) throws SPECCHIOClientException {
-		super("Metadata Editor V3");
+		super("Metadata Editor");
 		
 		// set up controllers
 		mdec_s = new MDE_Spectrum_Controller(specchio_client, this);		
@@ -339,67 +343,96 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 		{
 
 			// see if any of the metadata to be changed is shared between record
-			shared_fields = new ArrayList<MD_Field>();
+			shared_fields_spectrum_level = new ArrayList<MD_Field>();
+			shared_fields_hierarchy_level = new ArrayList<MD_Field>();
+			nonshared_fields_spectrum_level = new ArrayList<MD_Field>();
+			nonshared_fields_hierarchy_level = new ArrayList<MD_Field>();			
 			for (MD_Field field : mdec.getChanged_fields()) {
 				if (field.getNoOfSharingRecords() != 1 && field.getNoOfSharingRecords() != field.getSelectedRecords()) {
-					shared_fields.add(field);
+					if(field.getLevel() == MetaParameter.SPECTRUM_LEVEL)
+						shared_fields_spectrum_level.add(field);
+					else
+						shared_fields_hierarchy_level.add(field);
+				}
+				else
+				{
+					if(field.getLevel() == MetaParameter.SPECTRUM_LEVEL)
+						nonshared_fields_spectrum_level.add(field);
+					else
+						nonshared_fields_hierarchy_level.add(field);					
 				}
 			}
 
-			shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
-			if (shared_fields.size() > 0) {
-				// ask the user what to do with the shared fields
-				SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.UPDATE, shared_fields);
-				shared_decision_dialog.setVisible(true);
-				shared_field_opt = shared_decision_dialog.getSelectedAction();
-			}
+//			if(shared_fields_spectrum_level.size() > 0 || mdec.getAdded_fields().size()>0 || nonshared_fields_spectrum_level.size() > 0)
+			if(mdec.getAdded_fields().size()>0 && (shared_fields_spectrum_level.size() > 0 || nonshared_fields_spectrum_level.size() > 0))
+				doUpdate(mdec, shared_fields_spectrum_level, MetaParameter.SPECTRUM_LEVEL);
 
-			if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
+//			if(shared_fields_hierarchy_level.size() > 0 || mdec.getAdded_fields().size()>0 || nonshared_fields_hierarchy_level.size() > 0)
+			if(mdec.getAdded_fields().size()>0 && (shared_fields_hierarchy_level.size() > 0 || nonshared_fields_hierarchy_level.size() > 0))
+				doUpdate(mdec, shared_fields_hierarchy_level, MetaParameter.HIERARCHY_LEVEL);	
+			
 
-				// Exception handling from a thread and GUI update of dialog box using swing worker
-				final UpdateThread thread = new UpdateThread(this, mdec);
-
-				Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
-
-					public void uncaughtException(Thread th, Throwable ex) {
-
-						final SPECCHIOClientException e = (SPECCHIOClientException) ex;
-
-						Runnable r = new Runnable() {
-
-							@Override
-							public void run() {
-								ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Error");
-								error.init(e.getUserMessage(),e);							
-								error.setVisible(true);	
-							}
-
-						};
-
-						javax.swing.SwingUtilities.invokeLater(r) ; // execute r's run method on the swing thread
-
-
-					};
-
-				};					
-
-
-
-
-
-				thread.setUncaughtExceptionHandler(h);
-				thread.start();
-				try {
-					thread.join();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
 		}
 		// update button states
 		setUpdateResetButtonsState();
+		
+	}
+	
+	private void doUpdate(MDE_Controller mdec, ArrayList<MD_Field> shared_fields, int level)
+	{
+		
+		int shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
+		if (shared_fields.size() > 0) {
+			// ask the user what to do with the shared fields
+			SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.UPDATE, shared_fields, level);
+			shared_decision_dialog.setVisible(true);
+			shared_field_opt = shared_decision_dialog.getSelectedAction();
+		}
+
+		if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
+		
+		
+		// Exception handling from a thread and GUI update of dialog box using swing worker
+		final UpdateThread thread = new UpdateThread(this, mdec, shared_field_opt, shared_fields, level);
+
+		Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+
+			public void uncaughtException(Thread th, Throwable ex) {
+
+				final SPECCHIOClientException e = (SPECCHIOClientException) ex;
+
+				Runnable r = new Runnable() {
+
+					@Override
+					public void run() {
+						ErrorDialog error = new ErrorDialog(SPECCHIOApplication.getInstance().get_frame(), "Error");
+						error.init(e.getUserMessage(),e);							
+						error.setVisible(true);	
+					}
+
+				};
+
+				javax.swing.SwingUtilities.invokeLater(r) ; // execute r's run method on the swing thread
+
+
+			};
+
+		};					
+
+
+
+
+
+		thread.setUncaughtExceptionHandler(h);
+		thread.start();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}		
 		
 	}
 	
@@ -428,64 +461,89 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 		for (MDE_Controller mdec : MDE_Controllers)
 		{
 
-			// see if any of the metadata to be changed is shared between record
-			ArrayList<MD_Field> shared_fields = new ArrayList<MD_Field>();
+			// see if any of the metadata to be changed is shared between entities
+			ArrayList<MD_Field> shared_spectrum_fields = new ArrayList<MD_Field>();
+			ArrayList<MD_Field> shared_hierarchy_fields = new ArrayList<MD_Field>();
 			for (MD_Field field : mdec.getRemoved_fields()) {
 				if (field.getNoOfSharingRecords() > 1) {
-					shared_fields.add(field);
-				}
-			}
-
-			int shared_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
-			if (shared_fields.size() > 0) {
-				// ask the user what to do with the shared fields
-				SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.DELETE, shared_fields);
-				shared_decision_dialog.setVisible(true);
-				shared_field_opt = shared_decision_dialog.getSelectedAction();
-			}
-
-
-			if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
-				for (MD_Field field : mdec.getRemoved_fields()) {
-
-					if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() == 1)
-					{
-						mdec.remove(field);
-					}
-					else if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() > 1)
-					{
-						// multiple metaparameters need removing (different parameters per spectrums)
-						mdec.remove_all_mps_of_attribute(field);				
-					}
+					if(field.getLevel() == MetaParameter.SPECTRUM_LEVEL)
+						shared_spectrum_fields.add(field);
 					else
-					{
-						if(shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL)
-						{
-							mdec.remove(field);
-						}
-						else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION)
-						{
-							mdec.remove_selection(field);
-						}
-
-					}
-
+						shared_hierarchy_fields.add(field);
 				}
+			}
 
-				// reset the list of deleted fields
-				mdec.getRemoved_fields().clear();
-
-		}
+			int shared_spectrum_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
+			if (shared_spectrum_fields.size() > 0) {
+				// ask the user what to do with the shared fields
+				SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.DELETE, shared_spectrum_fields, MetaParameter.SPECTRUM_LEVEL);
+				shared_decision_dialog.setVisible(true);
+				shared_spectrum_field_opt = shared_decision_dialog.getSelectedAction();
+			}
 			
-			// reset the redundancy buffer to avoid linking to deleted parameters.
-			// ideally, this should only include the reset for the fields that were removed and not the whole buffer ...
-			this.specchio_client.clearMetaparameterRedundancyList();
+			removeFieldsBasedOnDecision(mdec, shared_spectrum_field_opt, MetaParameter.SPECTRUM_LEVEL);
+			
+			int shared_hierarchy_field_opt = SharedMD_Dialog.APPLY_TO_ALL;
+			if (shared_hierarchy_fields.size() > 0) {
+				// ask the user what to do with the shared fields
+				SharedMD_Dialog shared_decision_dialog = new SharedMD_Dialog(this, SharedMD_Dialog.DELETE, shared_hierarchy_fields, MetaParameter.HIERARCHY_LEVEL);
+				shared_decision_dialog.setVisible(true);
+				shared_hierarchy_field_opt = shared_decision_dialog.getSelectedAction();
+			}
+						
+			removeFieldsBasedOnDecision(mdec, shared_hierarchy_field_opt, MetaParameter.HIERARCHY_LEVEL);
+
+
+
 		}
+		
+		// reset the redundancy buffer to avoid linking to deleted parameters.
+		// ideally, this should only include the reset for the fields that were removed and not the whole buffer ...
+		this.specchio_client.clearMetaparameterRedundancyList();		
 
 		// update button states
 		setUpdateResetButtonsState();
 		
 	}	
+	
+	
+	public void removeFieldsBasedOnDecision(MDE_Controller mdec, int shared_field_opt, int level)
+	{
+		if (shared_field_opt != SharedMD_Dialog.APPLY_TO_NONE) {
+			for (MD_Field field : mdec.getRemoved_fields(level)) {
+
+				if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() == 1)
+				{
+					mdec.remove(field);
+				}
+				else if(field.getNoOfSharingRecords() == 1 && mdec.getIds().size() > 1)
+				{
+					// multiple metaparameters need removing (different parameters per spectrums)
+					mdec.remove_all_mps_of_attribute(field);				
+				}
+				else
+				{
+					if(shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL)
+					{
+						mdec.remove(field);
+					}
+					else if (shared_field_opt == SharedMD_Dialog.APPLY_TO_SELECTION)
+					{
+						mdec.remove_selection(field);
+					}
+
+				}
+
+			}
+
+			// reset the list of deleted fields
+			mdec.clearRemoved_fields(level);
+
+		}		
+		
+		
+	}
+	
 	
 	public ArrayList<Integer> get_ids_matching_query()
 	{
@@ -774,15 +832,13 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 
 
 	private void augment_altitude() {
-		
-		ArrayList<Integer> ids_with_lat = specchio_client.filterSpectrumIdsByHavingAttribute(mdec_s.getIds(), "Latitude");
-		ArrayList<Integer> ids_with_lat_lon = specchio_client.filterSpectrumIdsByHavingAttribute(ids_with_lat, "Longitude");
+				
+		ArrayList<Integer> ids_with_lat_lon = specchio_client.filterSpectrumIdsByHavingAttribute(mdec_s.getIds(), "Spatial Position");
 		
 		if(ids_with_lat_lon.size() > 0)
 		{
 			// get values
-			MatlabAdaptedArrayList<Object> lat = specchio_client.getMetaparameterValues(ids_with_lat_lon, "Latitude");
-			MatlabAdaptedArrayList<Object> lon = specchio_client.getMetaparameterValues(ids_with_lat_lon, "Longitude");
+			MatlabAdaptedArrayList<Object> pos = specchio_client.getMetaparameterValues(ids_with_lat_lon, "Spatial Position");
 			
 			// get existing metaparameters
 			ArrayList<Integer> attribute_ids = new ArrayList<Integer>();
@@ -799,18 +855,22 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 			try {
 				for(int i=0;i<ids_with_lat_lon.size();i++)
 				{
+					
+					@SuppressWarnings("unchecked")
+					ArrayListWrapper<Point2D> cur_pos_wrapper = (ArrayListWrapper<Point2D>) pos.get(i);
+					Point2D cur_pos = cur_pos_wrapper.getList().get(0);
 
-					if(prev_lat == (Double) lat.get(i) && prev_lon == (Double) lon.get(i))
+					if(prev_lat == (Double) cur_pos.getY() && prev_lon == (Double) cur_pos.getX())
 					{
 						prev_alt = altitude;
 						
 					}
 					else
 					{
-						prev_lat = (Double) lat.get(i);
-						prev_lon = (Double) lon.get(i);
+						prev_lat = (Double) cur_pos.getY();
+						prev_lon = (Double) cur_pos.getX();
 
-						url = new URL("http://api.geonames.org/astergdem?lat=" +lat.get(i)+"&lng="+((Double) lon.get(i)*(-1))+"&username=specchio");
+						url = new URL("http://api.geonames.org/astergdem?lat=" +cur_pos.getY()+"&lng="+((Double) cur_pos.getX())+"&username=specchio");
 
 						String alt = new Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next();
 
@@ -1005,7 +1065,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 			
 			if(ids_with_dist_and_zenith_and_fov.size() != mdec_s.getIds().size())
 			{
-				message = message + "\nMeasurement support of " + (mdec_s.getIds().size() - ids_with_dist_and_zenith_and_fov.size()) + " spectra could not be computed due to missing metadata.";
+				message = message + "\nMeasurement support of " + (mdec_s.getIds().size() - ids_with_dist_and_zenith_and_fov.size()) + " spectra could not be computed due to missing metadata \n(Zenith angle, FOV and Sensor Distance are required).";
 			}
 
 			JOptionPane.showMessageDialog(this, message, "Info", JOptionPane.INFORMATION_MESSAGE, SPECCHIOApplication.specchio_icon);
@@ -1056,6 +1116,12 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 			ArrayList<Integer> spectrum_ids = sdb.get_selected_spectrum_ids();
 			ArrayList<Integer> hierarchy_ids = sdb.get_selected_hierarchy_ids();
 			Campaign campaign = sdb.get_selected_campaign();
+			
+			if(sdb.onlyCampaignNodeIsSelected())
+			{
+				// all top hierarchies need selecting
+				hierarchy_ids = sdb.get_top_hierarchy_ids_of_campaign();
+			}
 	
 			ids_matching_query = spectrum_ids;
 			sorted_ids_ready = true;
@@ -1164,17 +1230,24 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 		
 		MetaDataEditorView mde;
 		MDE_Controller mdec;
+		private int shared_field_opt;
+		private ArrayList<MD_Field> shared_fields;
+		private int level;
 		
 		/**
 		 * Constructor.
+		 * @param shared_fields 
 		 * 
 		 * @param spectrumIdsIn	the list of spectrum identifiers to be processed
 		 */
-		public UpdateThread(MetaDataEditorView mde, MDE_Controller mdec) {
+		public UpdateThread(MetaDataEditorView mde, MDE_Controller mdec, int shared_field_opt, ArrayList<MD_Field> shared_fields, int level) {
 						
 			super();
 			this.mde = mde;
 			this.mdec = mdec;
+			this.shared_field_opt = shared_field_opt;
+			this.shared_fields = shared_fields;
+			this.level = level;
 		}
 		
 		
@@ -1194,7 +1267,7 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 			int progress = 0;
 			
 			// perform updates
-			for (MD_Field field : mdec.getChanged_fields()) {
+			for (MD_Field field : mdec.getChanged_fields(level)) {
 				pr.set_component(field.getLabel());
 				
 				if (shared_field_opt == SharedMD_Dialog.APPLY_TO_ALL) {
@@ -1204,14 +1277,27 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 				}
 				pr.set_progress(++progress/mdec.getChanged_fields().size()*100);
 			}
-			
+
+
+			progress = 0;
+
+			// perform updates: it appeared at some point that some added fields were not contained in the changed fields list ....
+//			for (MD_Field field : mdec.getAdded_fields()) {
+//				pr.set_component(field.getLabel());
+//
+//				mdec.update(field);
+//
+//				pr.set_progress(++progress/mdec.getChanged_fields().size()*100);
+//			}			
+
 			pr.setVisible(false);
-			
+
 			sdb.tree.addTreeSelectionListener(mde); 
 			
 			// reset changed lists
-			mdec.getChanged_fields().clear();
-			mdec.getAdded_fields().clear();	
+			mdec.clearChanged_fields(level);
+			mdec.clearAdded_fields(level);
+			
 			
 			
 		}
