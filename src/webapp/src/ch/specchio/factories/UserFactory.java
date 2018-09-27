@@ -508,6 +508,55 @@ public class UserFactory extends SPECCHIOFactory {
 	}
 	
 	
+	
+	public User[] getUsersWithStatistics() {
+
+		
+		User[] users = getUsers();
+		
+		for(int i=0;i< users.length ;i++)
+		{			
+			addStats(users[i]);
+		}
+		
+		return users;
+	}
+	
+	
+	private void addStats(User user) {
+		
+		int total_spectrum_cnt = 0;
+		int campaign_cnt = 0;
+		
+		try {
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			String query = "select c.campaign_id, count(s.spectrum_id) from spectrum s, campaign c where s.campaign_id = c.campaign_id and  c.user_id = " + user.getUserId() + " group by c.campaign_id;";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {				
+				int campaign_id = rs.getInt(1);
+				int spectrum_cnt = rs.getInt(2);
+				total_spectrum_cnt += spectrum_cnt;
+				campaign_cnt++;
+			}
+			
+			user.setNumber_of_spectra_loaded(total_spectrum_cnt);
+			user.setNumber_of_campaigns(campaign_cnt);
+			
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}		
+		
+		
+		
+		
+	}
+
+
 	/**
 	 * Grant administrative rights to a user.
 	 * 
@@ -975,7 +1024,7 @@ public class UserFactory extends SPECCHIOFactory {
 					" where " + userCondition;
 			stmt.executeUpdate(query);
 			
-			// update password
+			// update password: Attention: this appears to create some problems on some MySQL systems: ERROR 1396 (HY000): Operation CREATE USER failed for 'jack'@'localhost'
 			query = "ALTER USER " + SQL.quote_string(user.getUsername()) + " IDENTIFIED BY " + SQL.quote_string(user.getPassword());
 
 			stmt.executeUpdate(query);			
@@ -993,5 +1042,8 @@ public class UserFactory extends SPECCHIOFactory {
 		}
 		
 	}
+
+
+
 
 }
