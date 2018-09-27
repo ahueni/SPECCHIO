@@ -101,5 +101,15 @@ public class QueryCategoryContainer {
 	}
 
 
+	public void clearSetFields() {
+		for(QueryField field : fields)
+		{
+			field.set_value("");
+		}
+		
+	}
+
+
+
 	
 }
