@@ -34,6 +34,7 @@ import ch.specchio.metadata.MetaDataFromTabModel;
 import ch.specchio.queries.Query;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.Category;
+import ch.specchio.types.Institute;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.TaxonomyNodeObject;
@@ -76,6 +77,7 @@ class MainMenu implements ActionListener, ItemListener {
    String info = "About";
    String list_eav_metadata_attributes = "List available Metadata Elements";
    String get_user_contacts = "Get SPECCHIO user contacts";
+   String move_data = "Move data";
    
    /** menu items accessible to all clients */
    Hashtable<String, JMenuItem> public_menu_items;
@@ -200,6 +202,11 @@ private JMenuItem dbConfigmenuItem;
       menuItem.addActionListener(this);
       menu.add(menuItem);
       user_menu_items.put(data_removal, menuItem);
+  
+      menuItem = new JMenuItem(move_data);
+      menuItem.addActionListener(this);
+      menu.add(menuItem);
+      user_menu_items.put(move_data, menuItem);    
       
       menuItem = new JMenuItem(campaign_export);
       menuItem.addActionListener(this);
@@ -451,7 +458,19 @@ private JMenuItem dbConfigmenuItem;
     	  File temp = new File(SPECCHIOClientFactory.getApplicationFilepath("db_config.txt"));
 
     	  try {
-    		  Desktop.getDesktop().open(temp);
+    		  if (Desktop.isDesktopSupported()) {
+    			  Desktop.getDesktop().open(temp);
+    		  }
+    		  else
+    		  {
+    			  JOptionPane.showMessageDialog(
+    					  SPECCHIOApplication.getInstance().get_frame(),
+    					  "This operating system/Java VM does not support the opening of files from Java in the Desktop.\n"
+    					  + "Please open this file manually: " + temp.getPath(),
+    					  "Error",
+    					  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
+    					  );    			  
+    		  }
     		  
     	  } catch (java.lang.IllegalArgumentException ex) {
     		  
@@ -470,7 +489,7 @@ private JMenuItem dbConfigmenuItem;
 					legacy_prefs.addServerDescriptor(pref_it.next());
 				}
 				
-				Desktop.getDesktop().open(temp);
+				SPECCHIOApplication.openInDesktop(temp);
 				
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
@@ -594,6 +613,26 @@ private JMenuItem dbConfigmenuItem;
     			);
     	  }
       }
+      
+      
+      if(move_data.equals(e.getActionCommand()))
+      {
+    	  try {
+    		  DataMoverDialog d = new DataMoverDialog();
+    		  d.setVisible(true);
+    	  }
+    	  catch (SPECCHIOClientException ex) {
+    		  JOptionPane.showMessageDialog(
+    				  SPECCHIOApplication.getInstance().get_frame(),
+    				  ex.getMessage(),
+    				  "Error",
+    				  JOptionPane.ERROR_MESSAGE, SPECCHIOApplication.specchio_icon
+    			);
+    	  }
+      }
+     
+      
+      
 
       if(campaign_export.equals(e.getActionCommand()))
       {
@@ -648,7 +687,7 @@ private JMenuItem dbConfigmenuItem;
       if(query_builder.equals(e.getActionCommand()))
       {
 		try {
-			QueryBuilder d = new QueryBuilder("Query Builder (V3)", "mds_restrictions");
+			QueryBuilder d = new QueryBuilder("Query Builder", "mds_restrictions");
 			d.setVisible(true);
 		} 
 		catch (SPECCHIOClientException ex) {
@@ -841,7 +880,7 @@ private JMenuItem dbConfigmenuItem;
 				fos.close();
 
 				// launch the external viewer
-				Desktop.getDesktop().open(temp);				
+				SPECCHIOApplication.openInDesktop(temp);			
 				
 				
 			} catch (IOException e1) {
@@ -893,7 +932,7 @@ private JMenuItem dbConfigmenuItem;
     		  fos.close();
 
     		  // launch the external viewer
-    		  Desktop.getDesktop().open(temp);				
+    		  SPECCHIOApplication.openInDesktop(temp);				
 
 
     	  } catch (IOException e1) {
@@ -914,22 +953,36 @@ private JMenuItem dbConfigmenuItem;
     	  
     	  try {
     		  
+//    		  User[] users = specchio_client.getUsersWithStatistics();
+    		  
+//    		  Institute[] inst = specchio_client.getInstitutes();
+    		  int attr_id = specchio_client.getAttributesNameHash().get("File Name").getId();
+//    		  
+//    		  ArrayList<Integer> ids = new ArrayList<Integer>();
+//    		  ids.add(251403);
+//    		  specchio_client.getMetaparameters(ids, "File Name");
+//    		  
+    		  ArrayList<MetaParameter> values = specchio_client.getDistinctValuesOfAttribute(attr_id);
+    		  
+//    		  ArrayList<Integer> lists = specchio_client.getNewestSpectra(10);
+//    		  Campaign[] c = specchio_client.getCampaigns();
+    		  
 //    		  Campaign c = specchio_client.getCampaign(1);
     		  
 //    		  TaxonomyNodeObject node = specchio_client.getTaxonomyRootNode(specchio_client.getAttributesNameHash().get("Basic Target Type").getId());
     		  
     		  //Hashtable<String, Integer> hash = specchio_client.getTaxonomyHash(specchio_client.getAttributesNameHash().get("Basic Target Type").getId());
     		  
-    		  ArrayList<Integer> ids = new ArrayList<Integer>();
-    		  ids.add(251403);
-    		  ids.add(251412);
-    		  ids.add(251413);
-    		  
-    		  ArrayList<Integer> attribute_ids = new ArrayList<Integer>();
-    		  attribute_ids.add(specchio_client.getAttributesNameHash().get("Basic Target Type").getId());
-    		  attribute_ids.add(specchio_client.getAttributesNameHash().get("Integration Time").getId());
-    		  
-    		  ArrayList<ArrayList<MetaParameter>> data = specchio_client.getMetaparameters(ids, attribute_ids);
+//    		  ArrayList<Integer> ids = new ArrayList<Integer>();
+//    		  ids.add(251403);
+//    		  ids.add(251412);
+//    		  ids.add(251413);
+//    		  
+//    		  ArrayList<Integer> attribute_ids = new ArrayList<Integer>();
+//    		  attribute_ids.add(specchio_client.getAttributesNameHash().get("Basic Target Type").getId());
+//    		  attribute_ids.add(specchio_client.getAttributesNameHash().get("Integration Time").getId());
+//    		  
+//    		  ArrayList<ArrayList<MetaParameter>> data = specchio_client.getMetaparameters(ids, attribute_ids);
     		  
     	//	  specchio_client.getSpectrumIdsMatchingQuery(null);
     		  
@@ -1042,20 +1095,16 @@ protected ImageIcon createImageIcon(String path) {
 
    }
    
+
+   
    
    // URL example from: http://stackoverflow.com/questions/527719/how-to-add-hyperlink-in-jlabel
    
-   private static void open(URI uri) {
-	    if (Desktop.isDesktopSupported()) {
-	      try {
-	        Desktop.getDesktop().browse(uri);
-	      } catch (IOException e) { /* TODO: error handling */ }
-	    } else { /* TODO: error handling */ }
-	  }   
+
 
    class OpenUrlAction implements ActionListener {
 	      @Override public void actionPerformed(ActionEvent e) {
-	        open(uri);
+	    	  SPECCHIOApplication.openInDesktop(uri);
 	      }
 	    }
 
