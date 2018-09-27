@@ -18,7 +18,7 @@ public class hierarchy_node extends spectral_node_object {
 	}
 	
 	/**
-	 * Consructor.
+	 * Constructor.
 	 */
 	public hierarchy_node(int id, String name, String order_by) {
 		
