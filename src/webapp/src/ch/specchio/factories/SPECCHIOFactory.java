@@ -25,6 +25,7 @@ import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.types.MetaParameter;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.MetaSpatialPoint;
+import ch.specchio.types.User;
 import ch.specchio.types.attribute;
 
 
@@ -582,7 +583,7 @@ public class SPECCHIOFactory {
 				line.replace("\t", "");				
 					
 				// process line
-					process_line(line);	
+				//	process_line(line);	
 			}
 		}
 			
@@ -756,6 +757,59 @@ public class SPECCHIOFactory {
 				e.printStackTrace();
 			}
 			
+		}
+		
+		if (version == 3.32) {	
+			
+			// new rights for existing users on new table and view
+
+
+			System.out.println("===================================");
+			System.out.println("Upgrading user rights for new hierarchy-eav table and view: ");
+			System.out.println("===================================");
+
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt;
+			try {
+				
+				// get users
+				UserFactory uf = new UserFactory(this);
+				User[] users = uf.getUsers();
+				
+				stmt = SQL.createStatement();		
+				
+				for(int i=0;i<users.length;i++)
+				{
+					User user = users[i];
+					
+					String username = user.getUsername();
+					
+					if (!username.equals("sdb_admin"))
+					{
+
+						String sql = "GRANT SELECT, INSERT, UPDATE, DELETE ON " + this.getDatabaseName() + ".hierarchy_x_eav_view  TO '" + username + "'@'localhost'";
+						stmt.execute(sql);
+
+						sql = "GRANT SELECT, INSERT, UPDATE, DELETE ON " + this.getDatabaseName() + ".campaign_x_eav_view  TO '" + username + "'@'localhost'";
+						stmt.execute(sql);
+						
+						sql = "GRANT SELECT ON " + this.getDatabaseName() + ".hierarchy_x_eav  TO '" + username + "'@'localhost'";
+						stmt.execute(sql);
+
+						sql = "GRANT SELECT ON " + this.getDatabaseName() + ".campaign_x_eav  TO '" + username + "'@'localhost'";
+						stmt.execute(sql);
+
+					}
+					
+					stmt.execute("flush privileges");
+					
+				}
+
+
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		
