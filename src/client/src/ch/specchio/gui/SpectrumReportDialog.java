@@ -152,16 +152,17 @@ public class SpectrumReportDialog extends JFrame implements ActionListener, Chan
 		}
 		
 		// add the category selector
-		categoryList = new SpectrumMetadataCategoryList(mdec.getFormFactory(), 3);
-		categoryList.addListSelectionListener(this);
-		rootPanel.add(categoryList);
+//		categoryList = new SpectrumMetadataCategoryList(mdec.getFormFactory(), 3);
+//		categoryList.addListSelectionListener(this);
+//		rootPanel.add(categoryList);
 		
 		// add the spectrum metadata panel
 		spectrumMetadataPanel = new SpectrumMetadataPanel(this, specchioClient, mdec);
 		spectrumMetadataPanel.setEditable(false);
-		JScrollPane spectrumMetadataScroller = new JScrollPane(spectrumMetadataPanel);
-		spectrumMetadataScroller.getVerticalScrollBar().setUnitIncrement(10);
-		rootPanel.add(spectrumMetadataScroller);
+//		JScrollPane spectrumMetadataScroller = new JScrollPane(spectrumMetadataPanel);
+//		spectrumMetadataScroller.getVerticalScrollBar().setUnitIncrement(10);
+//		rootPanel.add(spectrumMetadataScroller);
+		rootPanel.add(spectrumMetadataPanel);
 		
 		// create a panel for the buttons
 		JPanel buttonPanel = new JPanel();
