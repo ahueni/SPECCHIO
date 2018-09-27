@@ -1,5 +1,5 @@
 /* Created by JReleaseInfo AntTask from Open Source Competence Group */
-/* Creation date Wed Sep 13 13:52:47 CEST 2017 */
+/* Creation date Tue Sep 18 15:27:15 CEST 2018 */
 package ch.specchio.gui;
 
 import java.util.Date;
@@ -343,61 +343,14 @@ class JReleaseInfoViewer {
 public class SPECCHIO_ReleaseInfo {
 
 
-   /** buildDate (set during build process to 1505303567699L). */
-   private static Date buildDate = new Date(1505303567699L);
+   /** buildDate (set during build process to 1537277235238L). */
+   private static Date buildDate = new Date(1537277235238L);
 
    /**
-    * Get buildDate (set during build process to Wed Sep 13 13:52:47 CEST 2017).
+    * Get buildDate (set during build process to Tue Sep 18 15:27:15 CEST 2018).
     * @return Date buildDate
     */
    public static final Date getBuildDate() { return buildDate; }
-
-
-   /** mail (set during build process to "${mail}"). */
-   private static String mail = "${mail}";
-
-   /**
-    * Get mail (set during build process to "${mail}").
-    * @return String mail
-    */
-   public static final String getMail() { return mail; }
-
-
-   /** home (set during build process to "http://specchio.ch"). */
-   private static String home = "http://specchio.ch";
-
-   /**
-    * Get home (set during build process to "http://specchio.ch").
-    * @return String home
-    */
-   public static final String getHome() { return home; }
-
-
-   /**
-    * Get buildNumber (set during build process to 277).
-    * @return int buildNumber
-    */
-   public static final int getBuildNumber() { return 277; }
-
-
-   /** company (set during build process to "${company}"). */
-   private static String company = "${company}";
-
-   /**
-    * Get company (set during build process to "${company}").
-    * @return String company
-    */
-   public static final String getCompany() { return company; }
-
-
-   /** buildTimeStamp (set during build process to "20170913-1352"). */
-   private static String buildTimeStamp = "20170913-1352";
-
-   /**
-    * Get buildTimeStamp (set during build process to "20170913-1352").
-    * @return String buildTimeStamp
-    */
-   public static final String getBuildTimeStamp() { return buildTimeStamp; }
 
 
    /** project (set during build process to "SPECCHIO Spectral Information System"). */
@@ -410,6 +363,16 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getProject() { return project; }
 
 
+   /** buildTimeStamp (set during build process to "20180918-1527"). */
+   private static String buildTimeStamp = "20180918-1527";
+
+   /**
+    * Get buildTimeStamp (set during build process to "20180918-1527").
+    * @return String buildTimeStamp
+    */
+   public static final String getBuildTimeStamp() { return buildTimeStamp; }
+
+
    /** copyright (set during build process to "${copyright}"). */
    private static String copyright = "${copyright}";
 
@@ -420,14 +383,51 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getCopyright() { return copyright; }
 
 
-   /** version (set during build process to "3.3.0.0 Beta"). */
-   private static String version = "3.3.0.0 Beta";
+   /** mail (set during build process to "${mail}"). */
+   private static String mail = "${mail}";
 
    /**
-    * Get version (set during build process to "3.3.0.0 Beta").
+    * Get mail (set during build process to "${mail}").
+    * @return String mail
+    */
+   public static final String getMail() { return mail; }
+
+
+   /** version (set during build process to "3.3.0.1"). */
+   private static String version = "3.3.0.1";
+
+   /**
+    * Get version (set during build process to "3.3.0.1").
     * @return String version
     */
    public static final String getVersion() { return version; }
+
+
+   /** company (set during build process to "${company}"). */
+   private static String company = "${company}";
+
+   /**
+    * Get company (set during build process to "${company}").
+    * @return String company
+    */
+   public static final String getCompany() { return company; }
+
+
+   /**
+    * Get buildNumber (set during build process to 376).
+    * @return int buildNumber
+    */
+   public static final int getBuildNumber() { return 376; }
+
+
+   /** home (set during build process to "http://specchio.ch"). */
+   private static String home = "http://specchio.ch";
+
+   /**
+    * Get home (set during build process to "http://specchio.ch").
+    * @return String home
+    */
+   public static final String getHome() { return home; }
 
    /**
     * Main method.
