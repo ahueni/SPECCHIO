@@ -17,12 +17,14 @@ import ch.specchio.jaxb.XmlIntegerAdapter;
 import ch.specchio.jaxb.XmlString;
 import ch.specchio.plots.GonioSamplingPoints;
 import ch.specchio.queries.Query;
+import ch.specchio.spaces.MeasurementUnit;
 import ch.specchio.spaces.ReferenceSpaceStruct;
 import ch.specchio.spaces.Space;
 import ch.specchio.spaces.SpaceQueryDescriptor;
 import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.AVMatchingList;
 import ch.specchio.types.AVMatchingListCollection;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.SpectraMetadataUpdateDescriptor;
@@ -259,6 +261,31 @@ public class SpectrumService extends SPECCHIOService {
 	
 	
 	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	@POST
+	@Path("getHierarchyIdsOfSpectra")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)	
+	public XmlInteger[] getHierarchyIdsOfSpectra(SpectrumIdsDescriptor ids_d)
+	{		
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		List<Integer> ids = factory.getHierarchyIdsOfSpectra(ids_d.getSpectrumIds(1));
+		factory.dispose();
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);				
+		
+	}	
+	
+	/**
 	 * Get the Goniometer sampling points for a space.
 	 * 
 	 * @param space	the space
@@ -281,6 +308,66 @@ public class SpectrumService extends SPECCHIOService {
 		
 	}
 	
+	
+	
+	/**
+	 * Get newest N spectra.
+	 * 
+	 * @param number_of_spectra N
+	 * 
+	 * @return list of spectrum ids ordered by data ingestion time
+	 */	
+	@POST
+	@Path("getNewestSpectra")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public  XmlInteger[] getNewestSpectra(XmlInteger number_of_spectra) {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		
+		ArrayList<Integer> ids = factory.getNewestSpectra(number_of_spectra.getInteger());
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);
+	}	
+	
+	// arraylist wrapper trial: leads to error 500 ...
+//	public ArrayListWrapper<Integer> getNewestSpectra(XmlInteger number_of_spectra) {
+//		
+//		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+//		
+//		ArrayList<Integer> ids = factory.getNewestSpectra(number_of_spectra.getInteger());
+//		
+//		ArrayListWrapper<Integer> l = new ArrayListWrapper<Integer>(ids);
+//		return l;
+//
+//	}		
+	
+	/**
+	 * Get hierarchy ids, directly above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	@POST
+	@Path("getDirectHierarchyIds")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)	
+	public XmlInteger[] getDirectHierarchyIds(SpectrumIdsDescriptor ids_d)
+	{		
+		
+		SpectrumFactory factory = new SpectrumFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		List<Integer> ids = factory.getDirectHierarchyIds(ids_d.getSpectrumIds(1));
+		factory.dispose();
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		return adapter.marshalArray(ids);				
+		
+	}
+
 	
 	/**
 	 * Get a reference space.
