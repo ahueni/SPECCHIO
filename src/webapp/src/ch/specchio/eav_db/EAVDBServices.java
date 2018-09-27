@@ -83,7 +83,7 @@ public class EAVDBServices extends Thread {
 	 * 
 	 * @return the list of all eav_ids, even when not inserted this time
 	 */
-	public ArrayList<Integer> insert_metadata_into_db(int campaign_id, Metadata md) throws SQLException, IOException {
+	public ArrayList<Integer> insert_metadata_into_db(int campaign_id, Metadata md, boolean is_admin) throws SQLException, IOException {
 		
 		// prepare insert statement
 		String query = "insert into eav_view (campaign_id, attribute_id, int_val, double_val, string_val, binary_val, datetime_val, taxonomy_id, " + (isSpatially_enabled() ? "spatial_val," : "") + " unit_id) values";
@@ -112,7 +112,7 @@ public class EAVDBServices extends Thread {
 					}
 					else
 					{
-						int id = insert_metaparameter_into_db(campaign_id, e, false); // redundancy is already reduced
+						int id = insert_metaparameter_into_db(campaign_id, e, false, is_admin); // redundancy is already reduced
 						eav_ids.add(id);
 					}
 				}
@@ -156,7 +156,7 @@ public class EAVDBServices extends Thread {
 	}	
 	
 	
-	public int insert_metaparameter_into_db(int campaign_id, MetaParameter mp, boolean reduce_redundancy) throws SQLException, IOException
+	public int insert_metaparameter_into_db(int campaign_id, MetaParameter mp, boolean reduce_redundancy, boolean is_admin) throws SQLException, IOException
 	{
 		if(reduce_redundancy)
 		{
@@ -175,7 +175,7 @@ public class EAVDBServices extends Thread {
 			}
 			else
 			{
-				eav_id = insert_eav(campaign_id, mp.getDefaultStorageField(), mp.getEAVValue(), mp.getAttributeId(), mp.getUnitId());
+				eav_id = insert_eav(campaign_id, mp.getDefaultStorageField(), mp.getEAVValue(), mp.getAttributeId(), mp.getUnitId(), is_admin);
 			}
 			mp.setEavId(eav_id);
 		}
@@ -183,7 +183,7 @@ public class EAVDBServices extends Thread {
 		
 	}
 	
-	private int insert_eav(int campaign_id, String field_name, Object value, int attribute_id, int unit_id) throws SQLException, IOException
+	private int insert_eav(int campaign_id, String field_name, Object value, int attribute_id, int unit_id, boolean is_admin) throws SQLException, IOException
 	{
 		if (field_name.equals("binary_val"))
 		{
@@ -202,7 +202,7 @@ public class EAVDBServices extends Thread {
 //					")";
 			
 			// switch to prepared statement to avoid SQL injections in strings with e.g. backslashes
-			String query = "insert into " + this.eav_view_name + " (campaign_id, attribute_id, " + field_name + ", unit_id) " +
+			String query = "insert into " + (is_admin?"eav":this.eav_view_name) +  " (campaign_id, attribute_id, " + field_name + ", unit_id) " +
 					"values(" +
 						String.valueOf(campaign_id) + "," +
 						String.valueOf(attribute_id) + "," +
@@ -277,6 +277,7 @@ public class EAVDBServices extends Thread {
 		stmt.close();
 			
 		String update_stm = "UPDATE " + this.eav_view_name + " set " + field + " = ? where eav_id = " + eav_id;
+		//update_stm = "UPDATE eav set " + field + " = ? where eav_id = " + eav_id;
 		PreparedStatement statement = SQL.prepareStatement(update_stm);
 			
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -284,7 +285,8 @@ public class EAVDBServices extends Thread {
 		out.writeObject(value);
 		out.close();
 			
-		statement.setBinaryStream(1, new ByteArrayInputStream(baos.toByteArray()), baos.size());
+		//statement.setBinaryStream(1, new ByteArrayInputStream(baos.toByteArray()), baos.size());
+		statement.setBlob(1, new ByteArrayInputStream(baos.toByteArray()));
 		statement.executeUpdate();			
 			
 		rs.close();
@@ -683,11 +685,11 @@ public class EAVDBServices extends Thread {
 	
 	
 	/**
-	 * Get hierarchy ids, above above these spectra
+	 * Get hierarchy ids, directly above these spectra
 	 * 
 	 * @param spectrum_ids		the identifiers of the desired spectra
 	 * 
-	 * @return hierarchy ida
+	 * @return hierarchy ids
 	 * 
 	 * @throws SPECCHIOFactoryException	
 	 */	
@@ -957,14 +959,19 @@ public class EAVDBServices extends Thread {
 	
 	
 	
-	// return all eav_ids of this frame
+	// return all eav_ids of this primary entity (including inherited metadata ids)
 	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id)
 	{
-		return get_exclusive_eav_ids(metadata_level, primary_id, new ArrayList<Integer>());	
+		return get_exclusive_eav_ids(metadata_level, primary_id, new ArrayList<Integer>(), true);	
 	}
 	
+	synchronized public ArrayList<Integer> get_eav_ids(int metadata_level, int primary_id, boolean inheritance)
+	{
+		return get_exclusive_eav_ids(metadata_level, primary_id, new ArrayList<Integer>(), inheritance);	
+	}	
 	
-	synchronized public ArrayList<Integer> get_exclusive_eav_ids(int metadata_level, Integer primary_id, ArrayList<Integer> exclusive_attribute_ids)
+	// if inheritance == true: return also inherited eav_ids
+	synchronized public ArrayList<Integer> get_exclusive_eav_ids(int metadata_level, Integer primary_id, ArrayList<Integer> exclusive_attribute_ids, boolean inheritance)
 	{
 		
 		ArrayList<Integer> list = new ArrayList<Integer>();
@@ -987,7 +994,7 @@ public class EAVDBServices extends Thread {
 			
 			
 			// if this is at spectrum level then also search all eav_ids that are stored at all parent hierarchies
-			if(metadata_level == MetaParameter.SPECTRUM_LEVEL)
+			if(metadata_level == MetaParameter.SPECTRUM_LEVEL && inheritance)
 			{
 				ArrayList<Integer> hierarchy_ids = getHierarchyIds(primary_id);
 				
@@ -999,7 +1006,7 @@ public class EAVDBServices extends Thread {
 			
 			
 			// if this is at hierarchy level then also search all eav_ids that are stored at all parent hierarchies
-			if(metadata_level == MetaParameter.HIERARCHY_LEVEL)
+			if(metadata_level == MetaParameter.HIERARCHY_LEVEL && inheritance)
 			{
 				ArrayList<Integer> hierarchy_ids = getParentHierarchyIds(primary_id);
 				ArrayList<Integer> hierarchy_eav_ids = get_eav_ids(MetaParameter.HIERARCHY_LEVEL, hierarchy_ids);
@@ -1030,7 +1037,7 @@ public class EAVDBServices extends Thread {
 			attr_id_list.add(exclusive_attribute_ids[i]);		
 		}			
 
-		return get_exclusive_eav_ids(metadata_level, primary_id, attr_id_list);
+		return get_exclusive_eav_ids(metadata_level, primary_id, attr_id_list, true); // by default include inherited metadata
 	}	
 	
 	
@@ -1371,6 +1378,58 @@ public class EAVDBServices extends Thread {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		
+		// for spectrum level queries also add hierarchy level matches: use parent hierarchies of selected spectra
+		// if this is at spectrum level then also search all eav_ids that are stored at all parent hierarchies
+		if(metadata_level == MetaParameter.SPECTRUM_LEVEL)
+		{
+			
+			// OR: get immediate hierarchy and then do a recursive call?
+			
+			ArrayList<Integer> hierarchy_ids = getHierarchyIds(primary_ids);
+			
+			
+			ArrayList<Integer> matching_hierarchy_ids = filter_by_eav(MetaParameter.HIERARCHY_LEVEL, hierarchy_ids, attribute_id);
+			
+			// how to compile? THis should be an OR with the spectrum level metadata (either or is possible)
+			
+			// get spectra of these hierarchies, but then add only the spectrum ids that were in the original list.
+			ArrayList<Integer> matching_spectrum_ids = new ArrayList<Integer>();
+			
+			query = "select spectrum_id from hierarchy_level_x_spectrum where hierarchy_level_id in (" + this.SQL.conc_ids(matching_hierarchy_ids) + ") and spectrum_id in (" + SQL.conc_ids(primary_ids)  + ")"; 
+			
+			
+			try {
+				Statement stmt = SQL.createStatement();
+				rs = stmt.executeQuery(query);	
+			
+				while (rs.next()) {
+					
+						filtered.add(rs.getInt(1));
+				}
+							
+				rs.close();	
+				stmt.close();
+				
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+
+		}
+		
+		
+		// if this is at hierarchy level then also search all eav_ids that are stored at all parent hierarchies
+//		if(metadata_level == MetaParameter.HIERARCHY_LEVEL && inheritance)
+//		{
+//			ArrayList<Integer> hierarchy_ids = getParentHierarchyIds(primary_id);
+//			ArrayList<Integer> hierarchy_eav_ids = get_eav_ids(MetaParameter.HIERARCHY_LEVEL, hierarchy_ids);
+//			list.addAll(hierarchy_eav_ids);
+//		}		
+		
+		
+		
 		
 		return filtered;
 				
@@ -2060,6 +2119,13 @@ public class EAVDBServices extends Thread {
 		
 		String field = ATR.get_default_storage_field(mp.getAttributeId());
 		String table_name = (is_admin)? "eav" : "eav_view";
+		
+		try {
+			get_metaparameter_attribute_and_unit_ids(mp);
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		if(mp instanceof MetaSpatialGeometry)
 		{
