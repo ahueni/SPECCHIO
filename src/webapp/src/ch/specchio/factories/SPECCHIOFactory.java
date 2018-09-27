@@ -120,6 +120,8 @@ public class SPECCHIOFactory {
 			init(getDataSource(ds_name).getConnection(db_user, db_password));
 			this.my_conn = true;
 			this.is_admin = is_admin;
+			String table_name = (is_admin)? "eav" : "eav_view";
+			this.eav.set_eav_view_name(table_name);			
 		}
 		catch (SQLException ex) {
 			// bad username or password
@@ -241,7 +243,6 @@ public class SPECCHIOFactory {
 		this.eav = new EAVDBServices(getStatementBuilder(), getAttributes(), getDatabaseUserName());
 		this.eav.set_primary_x_eav_tablename(MetaParameter.SPECTRUM_LEVEL, "spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
 		this.eav.set_primary_x_eav_tablename(MetaParameter.HIERARCHY_LEVEL, "hierarchy_x_eav", "hierarchy_x_eav_view", "hierarchy_level_id", "hierarchy_level");
-		this.eav.set_eav_view_name("eav_view");
 		
 	}
 	
@@ -306,9 +307,9 @@ public class SPECCHIOFactory {
 	 */
 	public DataCache getDataCache() throws SPECCHIOFactoryException {
 		
-		System.out.println("Get Cache for data source = " + this.getSourceName());
-		DataCache cache = SPECCHIOFactory.caches.get(this.getSourceName());
-		System.out.println("Source of cache:" + cache.datasource_name);
+		//System.out.println("Get Cache for data source = " + this.getSourceName());
+		//DataCache cache = SPECCHIOFactory.caches.get(this.getSourceName());
+		//System.out.println("Source of cache:" + cache.datasource_name);
 		return SPECCHIOFactory.caches.get(this.getSourceName());
 		
 	}
@@ -534,7 +535,8 @@ public class SPECCHIOFactory {
 		this.eav = new EAVDBServices(getStatementBuilder(), getAttributes(), getDatabaseUserName());
 		this.eav.set_primary_x_eav_tablename(MetaParameter.SPECTRUM_LEVEL, "spectrum_x_eav", "spectrum_x_eav_view", "spectrum_id", "spectrum");
 		this.eav.set_primary_x_eav_tablename(MetaParameter.HIERARCHY_LEVEL, "hierarchy_x_eav", "hierarchy_x_eav_view", "hierarchy_level_id", "hierarchy_level");
-		this.eav.set_eav_view_name("eav_view");
+		String table_name = (is_admin)? "eav" : "eav_view";
+		this.eav.set_eav_view_name(table_name);
 		
 		
 	}
@@ -722,7 +724,7 @@ public class SPECCHIOFactory {
 						MetaSpatialPoint mp = (MetaSpatialPoint) MetaParameter.newInstance(point_attr, coord.lat + " " + coord.lon);
 						
 						// insert into eav and link with spectrum
-						int eav_id = getEavServices().insert_metaparameter_into_db(campaign_id, mp, true);
+						int eav_id = getEavServices().insert_metaparameter_into_db(campaign_id, mp, true, this.Is_admin());
 						getEavServices().insert_primary_x_eav(MetaParameter.SPECTRUM_LEVEL, coord.spectrum_id, eav_id);
 
 					}
@@ -731,11 +733,14 @@ public class SPECCHIOFactory {
 				
 
 				stmt = SQL.createStatement();
-				// remove old lat and lon attributes
+				// remove old lat and lon metaparameters and attributes
 				query = "delete from spectrum_x_eav where eav_id in (select eav_id from eav where attribute_id in (select attribute_id from attribute where name = 'Latitude' OR name = 'Longitude'))";
 				stmt.executeUpdate(query);
 				
 				query = "delete from eav where attribute_id in (select attribute_id from attribute where name = 'Latitude' OR name = 'Longitude')";
+				stmt.executeUpdate(query);
+				
+				query = "delete from attribute where name = 'Latitude' OR name = 'Longitude'";
 				stmt.executeUpdate(query);
 				
 				stmt.close();
