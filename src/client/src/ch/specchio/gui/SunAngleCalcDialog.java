@@ -407,7 +407,7 @@ public class SunAngleCalcDialog extends JDialog implements ActionListener, TreeS
 				
 				attribute attr = specchioClient.getAttributesNameHash().get("Solar Angle Computation");
 							
-				specchioClient.removeEavMetadata(attr, updatedIds); // remove any existing solar angle computation entries
+				specchioClient.removeEavMetadata(attr, updatedIds, MetaParameter.SPECTRUM_LEVEL); // remove any existing solar angle computation entries
 				
 				// create a metaparameter noting that the time was shifted
 				MetaParameter mpCalcInfo;
