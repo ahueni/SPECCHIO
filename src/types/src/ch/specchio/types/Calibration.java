@@ -11,8 +11,11 @@ import java.util.Date;
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+import org.joda.time.DateTime;
+
 import ch.specchio.jaxb.XmlDateAdapter;
 //import ch.specchio.jaxb.XmlIntegerAdapter;
+import ch.specchio.jaxb.XmlDateTimeAdapter;
 
 
 /**
@@ -21,13 +24,17 @@ import ch.specchio.jaxb.XmlDateAdapter;
 @XmlRootElement(name="calibration")
 public class Calibration {
 	
+	public static final int SPECTRAL_CALIBRATION = 0;
+	public static final int RADIOMETRIC_CALIBRATION = 1;	
+	
 	private boolean includes_uncertainty = true;
 	private int reference_id; 
 	private int instrument_id; 
 	private SpectralFile spec_file = null; // used for loading calibration data from spectral files
 	private int calibration_number;
+	private int calibration_type;
 	
-	private Date calibration_date;
+	private DateTime calibration_date;
 	protected Integer calibration_id;
 	protected int cal_factors_id;
 	protected int uncertainty_id;		
@@ -79,9 +86,9 @@ public class Calibration {
 		this.calibration_id = calibration_id; }
 	
 	@XmlElement(name="calibration_date")
-	@XmlJavaTypeAdapter(XmlDateAdapter.class)
-	public Date getCalibrationDate() { return this.calibration_date; }
-	public void setCalibrationDate(Date calibration_date) { this.calibration_date = calibration_date; }
+	@XmlJavaTypeAdapter(XmlDateTimeAdapter.class)
+	public DateTime getCalibrationDate() { return this.calibration_date; }
+	public void setCalibrationDate(DateTime date) { this.calibration_date = date; }
 	
 	@XmlElement(name="calibration_id")
 	public Integer getCalibrationId() { return this.calibration_id; }
@@ -193,6 +200,16 @@ public class Calibration {
 		InputStream refl = new ByteArrayInputStream(temp_buf);
 
 		return refl;
+	}
+
+
+	public int getCalibration_type() {
+		return calibration_type;
+	}
+
+
+	public void setCalibration_type(int calibration_type) {
+		this.calibration_type = calibration_type;
 	}
 
 
