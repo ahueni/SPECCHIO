@@ -3,6 +3,7 @@ package ch.specchio.gui;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -50,6 +51,9 @@ public abstract class ServerDescriptorPanel extends JPanel {
 	
 	/** is this panel anonymous? */
 	private boolean anonymous;
+
+	/** defines if the default JVM trust store should be used for encrypted connections */
+	private JCheckBox default_trust_store;
 
 	/**
 	 * Constructor.
@@ -102,6 +106,16 @@ public abstract class ServerDescriptorPanel extends JPanel {
 		constraints.gridx = 1;	
 		l.insertComponent(datasource_name_field, constraints);		
 		
+		if(app == null || app.isEncrypted())
+		{
+			constraints.gridx = 0;
+			constraints.gridy++;
+			l.insertComponent(new JLabel("Trust Store"), constraints);
+			
+			default_trust_store = new  JCheckBox("Use default JVM trust store");
+			constraints.gridx = 1;
+			l.insertComponent(default_trust_store, constraints);
+		}
 		
 		if (!anonymous) {
 			
@@ -211,6 +225,20 @@ public abstract class ServerDescriptorPanel extends JPanel {
 		
 	}
 	
+	/**
+	 * Get the contents of the default trust store field.
+	 * 
+	 * @return the contents of the default trust store field.
+	 */
+	public Boolean getDefaultTrustStoreSetting() {
+		
+		if(default_trust_store == null)
+			return false;
+		else
+			return this.default_trust_store.isSelected();
+		
+	}	
+	
 	
 	/**
 	 * Return "true" if the panel is for an anonymous connection.
@@ -306,6 +334,19 @@ public abstract class ServerDescriptorPanel extends JPanel {
 		user_field.setText(username);
 		
 	}
+	
+	
+	/**
+	 * Set the state of the trust store.
+	 * 
+	 * @param trust_store_setting	boolean, defining if default trust store is used or not
+	 */
+	public void setTrustStoreSetting(Boolean trust_store_setting) {
+		
+		this.default_trust_store.setSelected(trust_store_setting);;
+		
+	}
+	
 
 }
 
@@ -374,7 +415,8 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 				getPath(),
 				getUsername(),
 				getPassword(),
-				getDataSourceName(),
+				getDataSourceName(), 
+				getDefaultTrustStoreSetting(),
 				(this.app != null ? app.getPreferenceNodeName() : "")
 			);
 		} else {
@@ -383,7 +425,8 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 				getServerName(),
 				port,
 				getPath(),
-				getDataSourceName()
+				getDataSourceName(), 
+				getDefaultTrustStoreSetting()
 			);
 		}
 		   
@@ -404,6 +447,8 @@ class WebAppDescriptorPanel extends ServerDescriptorPanel
 		   setPath(app.getPath());
 		   setPort(app.getPort());
 		   setDataSourceName(app.getDataSourceName());
+		   if(app.isEncrypted())
+			   this.setTrustStoreSetting(app.usesDefaultTrustStore());
 		   if (!isAnonymous()) {
 			   setUsername(app.getDisplayUser());
 			   setPassword(app.getPassword());
