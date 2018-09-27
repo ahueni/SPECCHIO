@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -43,6 +45,9 @@ import org.freixas.jcalendar.DateEvent;
 import org.freixas.jcalendar.DateListener;
 import org.freixas.jcalendar.JCalendar;
 import org.freixas.jcalendar.JCalendarCombo;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
@@ -52,6 +57,7 @@ import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.CalibrationPlotsMetadata;
 import ch.specchio.types.Institute;
 import ch.specchio.types.Instrument;
+import ch.specchio.types.MetaDate;
 import ch.specchio.types.MetaParameterFormatException;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
@@ -492,7 +498,7 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 			    false
 			);			
 		calibration_date.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-		calibration_date.setDate(cm.getCalibrationDate());
+		calibration_date.setDate(cm.getCalibrationDate().toDate());
 		calibration_date.addDateListener(this);	
 		constraints.gridx = 1;
 		l.insertComponent(calibration_date, constraints);
@@ -568,7 +574,15 @@ class CalibrationMetadataPanel extends InstrumentationMetadataPanel implements D
 	public CalibrationMetadata getCalibrationMetadata() throws SPECCHIOUserInterfaceException
 	{
 		CalibrationMetadata cm = new CalibrationMetadata(calibration_id);
-		cm.setCalibrationDate(calibration_date.getDate());
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(calibration_date.getDate());
+		SimpleDateFormat formatter_1 = new SimpleDateFormat(MetaDate.DEFAULT_DATE_FORMAT);		
+		String out=formatter_1.format(cal.getTime());	
+		DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT).withZoneUTC();
+		DateTime dt = formatter.parseDateTime(out);	
+		
+		cm.setCalibrationDate(dt);
 		cm.setComments(comment.getText());
 		
 		String calibration_no_text = calibration_no.getText();
