@@ -14,6 +14,7 @@ import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
@@ -94,12 +95,12 @@ public class ImagePanel extends JPanel implements ActionListener, MouseListener{
 	    	}
 	    	catch (IllegalArgumentException ex) {
 	    		// something wrong with the temporary file
-	    		ErrorDialog error = new ErrorDialog(topFrame, "Could not start viewer", ex.getMessage(), ex);
+	    		ErrorDialog error = new ErrorDialog(topFrame, "Could copy to clipboad", ex.getMessage(), ex);
 	    		error.setVisible(true);
 	    	}
 	    	catch (IOException ex) {
 	    		// no viewer found for this file type
-	    		ErrorDialog error = new ErrorDialog(topFrame, "Could not start viewer", ex.getMessage(), ex);
+	    		ErrorDialog error = new ErrorDialog(topFrame, "Could copy to clipboad", ex.getMessage(), ex);
 	    		error.setVisible(true);
 	    	} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -121,16 +122,12 @@ public class ImagePanel extends JPanel implements ActionListener, MouseListener{
 	    		fos.close();
 
 	    		// launch the external viewer
-	    		Desktop.getDesktop().open(temp);
-	    	}
-	    	catch (IllegalArgumentException ex) {
-	    		// something wrong with the temporary file
-	    		ErrorDialog error = new ErrorDialog(topFrame, "Could not start viewer", ex.getMessage(), ex);
-	    		error.setVisible(true);
+	    		SPECCHIOApplication.openInDesktop(temp);
+
 	    	}
 	    	catch (IOException ex) {
 	    		// no viewer found for this file type
-	    		ErrorDialog error = new ErrorDialog(topFrame, "Could not start viewer", ex.getMessage(), ex);
+	    		ErrorDialog error = new ErrorDialog(topFrame, "Could not write temp file", ex.getMessage(), ex);
 	    		error.setVisible(true);
 	    	} 
 
