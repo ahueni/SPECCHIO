@@ -19,6 +19,26 @@ public class UserService extends SPECCHIOService {
 	
 	
 	/**
+	 * List all of the users in the database with user statistics added.
+	 * 
+	 * @return an array of User objects
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("getUsersWithStatistics")
+	public User[] getUsersWithStatistics() throws SPECCHIOFactoryException {
+		
+		UserFactory factory = new UserFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		User users[] = factory.getUsersWithStatistics();
+		factory.dispose();
+		
+		return users;
+		
+	}	
+	
+	/**
 	 * List all of the users in the database.
 	 * 
 	 * @return an array of User objects
