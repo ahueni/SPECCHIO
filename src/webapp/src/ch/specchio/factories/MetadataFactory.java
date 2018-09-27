@@ -1022,6 +1022,48 @@ public class MetadataFactory extends SPECCHIOFactory {
 	}
 
 	
+	/**
+	 * Get distinct values of an attribute
+	 * 
+	 * @param attribute_id	id of the required attribute
+	 * 
+	 * @return array of metaparameters
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	public ArrayList<MetaParameter> getDistinctValuesOfAttribute(int attribute_id) {
+		
+		Metadata md = new Metadata();
+		ArrayList<Integer> eav_ids = new ArrayList<Integer>();
+		
+		attribute attr = this.getAttributes().get_attribute_info(attribute_id);
+		
+		try {
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			
+			// select distinct eav values and get one eav_id as example for the later loading
+			String query = "select " + attr.default_storage_field + ", max(eav_id) from eav where attribute_id = " + attribute_id + " group by string_val;";
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				eav_ids.add(rs.getInt(2));
+			}
+			rs.close();
+			stmt.close();
+
+		
+
+			
+			this.getEavServices().metadata_bulk_loader(md, eav_ids);
+
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}	
+		
+		return md.getEntries();
+	}	
 	
 	
 	/**
@@ -1268,11 +1310,13 @@ public class MetadataFactory extends SPECCHIOFactory {
 		ArrayList<MetaParameter> mp_list = new ArrayList<MetaParameter>(ids.size());
 		
 		// add empty metaparameters where no values were found
-		for(int i=0 ; i < ids.size() ; i++)
+		if(!distinct)
 		{
-			mp_list.add(MetaParameter.newInstance());
+			for(int i=0 ; i < ids.size() ; i++)
+			{
+				mp_list.add(MetaParameter.newInstance());
+			}
 		}
-
 				
 		
 		try {
@@ -1383,8 +1427,15 @@ public class MetadataFactory extends SPECCHIOFactory {
 							MetaParameter mp = MetaParameter.newInstance(attr, o);
 							mp.setEavId(id);
 							mp.setUnitId(unit_id);
-							//mp.setValue(o);
-							mp_list.set(ind, mp);
+
+							if(!distinct)
+							{
+								mp_list.set(ind, mp);
+							}
+							else
+							{
+								mp_list.add(mp);
+							}
 						}
 						catch (MetaParameterFormatException ex) {
 							// should never happen but we'll log an error just in case
@@ -1411,6 +1462,78 @@ public class MetadataFactory extends SPECCHIOFactory {
 				
 				// clean up
 				stmt.close();
+				
+				
+				// if this a specrum level call then metadata stored at hierarchy level must also be added
+				if(metadata_level == MetaParameter.SPECTRUM_LEVEL)
+				{
+
+					stmt = SQL.createStatement();
+					// select eav.double_val, eav.eav_id, hes.spectrum_id, eav.unit_id from eav eav, hierarchy_x_eav hex, hierarchy_level_x_spectrum hes  where hex.eav_id = eav.eav_id and  hex.hierarchy_level_id in (540, 538, 537) and hex.hierarchy_level_id = hes.hierarchy_level_id and hes.spectrum_id in (30546) and eav.attribute_id = 79 order by FIELD (hes.spectrum_id, 30546);
+					
+					primary_x_eav_tablename = getEavServices().get_primary_x_eav_tablename(MetaParameter.HIERARCHY_LEVEL);
+					ArrayList<Integer> hierarchy_ids = getEavServices().getHierarchyIds(ids);
+					
+					query = "select " + ((distinct)? "distinct " : "") + storage_field + ", eav.eav_id, " + SQL.prefix("hxs", primary_id_name) + ", eav.unit_id" +
+							" from " + primary_x_eav_tablename + ", eav eav, hierarchy_level_x_spectrum hxs  where " + SQL.prefix(primary_x_eav_tablename, "hierarchy_level_id") + " in (" + SQL.conc_ids(hierarchy_ids) + ") and " +
+							primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = " + Integer.toString(attrId) + " and " + primary_x_eav_tablename + ".hierarchy_level_id = hxs.hierarchy_level_id and hxs.spectrum_id in (" + conc_ids + ")"   + " order by FIELD (" + SQL.prefix("hxs", primary_id_name) + ", "+ conc_ids +")";
+					
+
+					rs = stmt.executeQuery(query);
+					
+					while (rs.next()) 
+					{
+						if(attr.getDefaultStorageField().equals("datetime_val"))
+						{
+								o = rs.getString(1);
+								DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT + ".S").withZoneUTC();
+								DateTime d = formatter.parseDateTime((String) o); 
+								o = d;
+						}
+						else
+							o = rs.getObject(1);
+							
+
+						Integer id = rs.getInt(2);
+						Integer spectrum_id = rs.getInt(3);
+						Integer unit_id = rs.getInt(4);
+						
+						// get position of this spectrum in the list
+						int ind = ids.indexOf(spectrum_id);
+						
+						
+						if (o != null) {
+							try {
+								MetaParameter mp = MetaParameter.newInstance(attr, o);
+								mp.setEavId(id);
+								mp.setUnitId(unit_id);
+								
+								if(!distinct)
+								{
+									mp_list.set(ind, mp);
+								}
+								else
+								{
+									mp_list.add(mp);
+								}
+							}
+							catch (MetaParameterFormatException ex) {
+								// should never happen but we'll log an error just in case
+								System.err.println("Metaparameter format exception when converting " + attr.getDefaultStorageField() + " attribute.");
+							}
+						}
+
+					}
+					rs.close();		
+					
+					// clean up
+					stmt.close();
+					
+					
+					
+				}
+				
+				
 			}
 		}
 		catch (SQLException ex) {
@@ -1483,6 +1606,40 @@ public class MetadataFactory extends SPECCHIOFactory {
 		return getMetaParameters(metadata_level, ids, getAttributes().get_attribute_id(attrName), distinct);
 		
 	}
+	
+	
+	/**
+	 * Get newest N spectra.
+	 * 
+	 * @param number_of_spectra N
+	 * 
+	 * @return list of spectrum ids ordered by data ingestion time
+	 */	
+	public ArrayList<Integer> getNewestSpectra(int number_of_spectra) {
+
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		
+		
+		try {
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+
+			String query = "select s.spectrum_id, eav.datetime_val from spectrum s, spectrum_x_eav sxe, eav eav where s.spectrum_id = sxe.spectrum_id and sxe.eav_id = eav.eav_id and eav.attribute_id = " + getAttributes().get_attribute_id("Loading Time") + " order by eav.datetime_val desc limit " + number_of_spectra;
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				ids.add(rs.getInt(1));
+			}
+			rs.close();
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			// database error
+			throw new SPECCHIOFactoryException(ex);
+		}	
+		
+		return ids;
+		
+	}	
 	
 	
 	
@@ -1705,7 +1862,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 	
 
 	/**
-	 * Remove metadata from all spectra.
+	 * Remove metadata from all spectra and hierarchies.
 	 * 
 	 * @param mp		the item of metadata to be removed
 	 * 
@@ -1761,7 +1918,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 					scf.dispose();
 				}
 				
-				eav_id = eav.insert_metaparameter_into_db(campaign_id, mp, true); // reduce redundancy is included in this call
+				eav_id = eav.insert_metaparameter_into_db(campaign_id, mp, true, this.Is_admin()); // reduce redundancy is included in this call
 				eav.insert_primary_x_eav(mp.getLevel(), spectrumIds, eav_id);
 			}
 			else
@@ -1807,7 +1964,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 			
 			// force re-insertion of the meta-parameter by setting its eav id to 0
 			mp.setEavId(0);
-			eav_id = eav.insert_metaparameter_into_db(old_campaign_id, mp, false); // no redundancy reduction
+			eav_id = eav.insert_metaparameter_into_db(old_campaign_id, mp, false, this.Is_admin()); // no redundancy reduction
 			
 			// insert the new id and remove the old one
 			eav.insert_primary_x_eav(mp.getLevel(), ids, mp.getEavId());			
@@ -1840,6 +1997,82 @@ public class MetadataFactory extends SPECCHIOFactory {
 
 		return mp.getEavId();
 	}
+
+	/**
+	 * Update or insert EAV metadata. Will automatically update existing entries or insert a new metaparameter if not existing.
+	 * 
+	 * @param mp		the new metadata
+	 * @param ids		the identifiers of the spectra to be updated or inserted
+	 * 
+	 * @return the identifier of the inserted or updated metadata
+	 */	
+	public int updateOrInsertEavMetadata(MetaParameter metaParameter, ArrayList<Integer> ids, int metadata_level) {
+
+		int mp_id = 0;
+		
+		// check if metaparameter(s) exists
+		ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(metadata_level, ids, true, metaParameter.getAttributeId());
+		
+		//ArrayList<MetaParameter> mps = getMetaParameters(metadata_level,ids, metaParameter.getAttributeId(), true);
+		
+		if(eav_ids.size() == 0)
+		{
+			// must be inserted for all ids
+			mp_id = this.updateMetadata(metaParameter, ids);
+			
+		}
+		else
+		{
+			// exists at least for some of the ids
+			MetaParameter mp = null;
+			
+			// update the values of the existing metaparameters
+			for(int eav_id : eav_ids)
+			{
+				try {
+					mp = getEavServices().load_metaparameter(eav_id);
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				try {
+					mp.setValue(metaParameter.getValue());
+				} catch (MetaParameterFormatException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				mp_id = updateMetadata(mp, ids);
+			}
+			
+			
+			
+			
+			// figure out if some ids have no entry yet
+			ArrayList<Integer> to_insert = getEavServices().filter_by_attribute_NOT(metadata_level, ids, metaParameter.getAttributeId());
+			
+			if(to_insert.size() > 0) 
+			{		
+				if(mp.getEavId() == 0)
+					mp_id = updateMetadata(mp, to_insert); // use first entry in existing list to insert where the metaparameter does not yet exist
+				else
+					try {
+						getEavServices().insert_primary_x_eav(mp.getLevel(), to_insert, mp.getEavId());
+					} catch (SQLException e) {
+						throw new SPECCHIOFactoryException(e);
+					}
+			}
+			
+			
+		}
+		
+		
+		
+		return mp_id;
+	}
+
+
+
+
 
 
 
