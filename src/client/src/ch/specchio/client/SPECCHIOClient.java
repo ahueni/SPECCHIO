@@ -7,7 +7,6 @@ import java.util.Hashtable;
 import java.util.List;
 
 import au.ands.org.researchdata.RDACollectionDescriptor;
-
 import ch.specchio.interfaces.ProgressReportInterface;
 import ch.specchio.plots.GonioSamplingPoints;
 import ch.specchio.queries.EAVQueryConditionObject;
@@ -31,7 +30,6 @@ import ch.specchio.types.Instrument;
 import ch.specchio.types.InstrumentDescriptor;
 import ch.specchio.types.MatlabAdaptedArrayList;
 import ch.specchio.types.MetaParameter;
-import ch.specchio.types.MetadataSelectionDescriptor;
 import ch.specchio.types.Picture;
 import ch.specchio.types.PictureTable;
 import ch.specchio.types.Reference;
@@ -78,6 +76,19 @@ public interface SPECCHIOClient {
 	 */
 	public int copySpectrum(int spectrum_id, int target_hierarchy_id) throws SPECCHIOClientException;
 	
+	/**
+	 * Copy a hierarchy to a specified hierarchy with a new name.
+	 * 
+	 * @param hierarchy_id		the hierarchy_id of the hierarchy to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * @param new_name			new name for the copied hierarchy
+	 * 
+	 * @return new hierarchy_id
+	 * 
+	 * @throws SPECCHIOClientException could not log in
+	 */
+	public int copyHierarchy(int hierarchy_id, int target_hierarchy_id, String new_name) throws SPECCHIOClientException;
+		
 	
 	/**
 	 * Clears the known metaparameter list held by the server for this user
@@ -214,6 +225,17 @@ public interface SPECCHIOClient {
 	
 	public ArrayList<Integer> filterSpectrumIdsByHavingAttributeValue(ArrayList<Integer> spectrum_ids, String attribute_name, Object value) throws SPECCHIOClientException;
 	
+	
+	/**
+	 * Get hierarchy ids, directly above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getDirectHierarchyIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException;			
 	
 	/**
 	 * Get the metadata categories per application domain
@@ -380,6 +402,17 @@ public interface SPECCHIOClient {
 	public database_node getDatabaseNode(String order_by, boolean restrict_to_view) throws SPECCHIOClientException;
 	
 	
+	
+	/**
+	 * Get distinct values of an attribute
+	 * 
+	 * @param attribute_id	id of the required attribute
+	 * 
+	 * @return arraylist of metaparameters	
+	 */
+	public ArrayList<MetaParameter> getDistinctValuesOfAttribute(int attribute_id) throws SPECCHIOClientException;
+	
+	
 	/**
 	 * Get a conflicts in the EAV metadata for a set of spectra.
 	 * 
@@ -443,6 +476,17 @@ public interface SPECCHIOClient {
 	 */
 	public int getHierarchyId(Campaign campaign, String name, int parent_id) throws SPECCHIOClientException;
 
+	
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getHierarchyIdsOfSpectra(ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException;				
 	
 	
 	/**
@@ -531,7 +575,7 @@ public interface SPECCHIOClient {
 	 * @return a new Instrument object
 	 */	
 	public Instrument getInstrumentForSpectralFile(SpectralFile spec_file) throws SPECCHIOClientException;
-	
+		
 	
 	/**
 	 * Get all of the pictures for an instrument.
@@ -654,7 +698,14 @@ public interface SPECCHIOClient {
 	public MeasurementUnit getMeasurementUnitFromCoding(int coding) throws SPECCHIOWebClientException;
 	
 	
-
+	/**
+	 * Get newest N spectra.
+	 * 
+	 * @param N	
+	 * 
+	 * @return list of spectrum ids ordered by data ingestion time
+	 */	
+	public ArrayList<Integer> getNewestSpectra(int number_of_spectra) throws SPECCHIOWebClientException;
 	
 	
 	/**
@@ -939,6 +990,15 @@ public interface SPECCHIOClient {
 	
 	
 	/**
+	 * Get a list of all of the users in the database with added user statistics (number of loaded spectra, number of campaigns).
+	 * 
+	 * @return an array of User objects
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public User[] getUsersWithStatistics() throws SPECCHIOWebClientException;	
+	
+	/**
 	 * Import a campaign.
 	 * 
 	 * @param user_id	the identifier of the user to whom the campaign will belong
@@ -1104,6 +1164,19 @@ public interface SPECCHIOClient {
 	 */
 	public Space loadSpace(Space space) throws SPECCHIOClientException;
 	
+	
+	/**
+	 * Move a hierarchy to a new parent hierarchy within the same campaign. If a hierarchy of the same name exists in the target hierarchy then the hierarchies are merged.
+	 * 
+	 * @param source_hierarchy_id	hierarchy id of the hierarchy to move
+	 * @param target_parent_hierarchy	hierarchy id of the new parent hierarchy
+	 * 
+	 * return true if move was done
+	 */
+	public boolean moveHierarchy(int source_hierarchy_id, int target_parent_hierarchy) throws SPECCHIOClientException;
+	
+	
+	
 	/**
 	 * Causes the client to reload data values the specified category upon next request.
 	 * 
@@ -1129,12 +1202,13 @@ public interface SPECCHIOClient {
 	public void removeEavMetadata(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException;
 
 	/**
-	 * Remove one or more items of EAV metadata for a collection of spectra.
+	 * Remove one or more items of EAV metadata for a collection of spectra for a defined attribute.
 	 * 
 	 * @param attr			the attribute to be removed
 	 * @param spectrum_ids	the spectrum identifiers
+	 * @param metadata_level		storage level identifier
 	 */	
-	public void removeEavMetadata(attribute attr, ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException;
+	public void removeEavMetadata(attribute attr, ArrayList<Integer> spectrum_ids, int metadata_level) throws SPECCHIOClientException;
 	
 	
 	
@@ -1255,6 +1329,16 @@ public interface SPECCHIOClient {
 	 * @return the identifier of the inserted metadata
 	 */
 	public int updateEavMetadataAnnotation(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException;	
+	
+	/**
+	 * Update or insert EAV metadata. Will automatically update existing entries or insert a new metaparameter if not existing.
+	 * 
+	 * @param mp			the meta-parameter to update or insert
+	 * @param spectrum_ids	the identifiers for which to update or insert the parameter
+	 * 
+	 * @return the identifier of the inserted or updated metadata
+	 */
+	public int updateOrInsertEavMetadata(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException;			
 	
 	
 	/**

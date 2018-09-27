@@ -34,12 +34,14 @@ import ch.specchio.spaces.SpectralSpace;
 import ch.specchio.types.AVMatchingList;
 import ch.specchio.types.AVMatchingListCollection;
 import ch.specchio.types.ApplicationDomainCategories;
+import ch.specchio.types.ArrayListWrapper;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.CalibrationMetadata;
 import ch.specchio.types.Campaign;
 import ch.specchio.types.Category;
 import ch.specchio.types.Capabilities;
 import ch.specchio.types.CategoryTable;
+import ch.specchio.types.ChildParentIdContainer;
 import ch.specchio.types.ConflictDetectionDescriptor;
 import ch.specchio.types.ConflictTable;
 import ch.specchio.types.Country;
@@ -120,16 +122,21 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 
 	private String dataSourceName;
 	
+	/** trust store configuration */
+	private boolean uses_default_trust_store;
+	
+	
 	/**
 	 * Construct an anonymous connection to the web application server.
 	 * 
 	 * @param url		the URL of the SPECCHIO web application
+	 * @param default_trust_store 
 	 * 
 	 * @throws SPECCHIOClientException	invalid URL
 	 */
-	SPECCHIOWebClient(URL url, String dataSourceName) throws SPECCHIOClientException {
+	SPECCHIOWebClient(URL url, String dataSourceName, boolean uses_default_trust_store) throws SPECCHIOClientException {
 		
-		this(url, null, null, dataSourceName);
+		this(url, null, null, dataSourceName, uses_default_trust_store);
 		
 	}
 	
@@ -143,12 +150,13 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @throws SPECCHIOClientException	invalid URL
 	 */
-	SPECCHIOWebClient(URL url, String username, String password, String dataSourceName) throws SPECCHIOClientException {
+	SPECCHIOWebClient(URL url, String username, String password, String dataSourceName, boolean uses_default_trust_store) throws SPECCHIOClientException {
 		
 		// configure member variables
 		this.url = url;
 		this.username = username;
 		this.dataSourceName = dataSourceName;
+		this.uses_default_trust_store = uses_default_trust_store;
 		
 		// create the web services client configuration
 		ClientConfig config = new DefaultClientConfig();
@@ -201,6 +209,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 */
 	public void connect() throws SPECCHIOWebClientException, SPECCHIOClientException {
 		
+
+		
 		// reset the capabilities for a possible new server
 		capabilities = null;
 		
@@ -230,6 +240,24 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		int new_spectrum_id = getInteger("spectrum", "copySpectrum", Integer.toString(spectrum_id), Integer.toString(target_hierarchy_id));
 		return new_spectrum_id;
 	}	
+	
+	/**
+	 * Copy a hierarchy to a specified hierarchy with a new name.
+	 * 
+	 * @param hierarchy_id		the hierarchy_id of the hierarchy to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * @param new_name			new name for the copied hierarchy
+	 * 
+	 * @return new hierarchy_id
+	 * 
+	 * @throws SPECCHIOClientException could not log in
+	 */
+	public int copyHierarchy(int hierarchy_id, int target_hierarchy_id, String new_name) throws SPECCHIOClientException {
+		
+		int new_hierarchy_id = getInteger("campaign", "copyHierarchy", Integer.toString(hierarchy_id), Integer.toString(target_hierarchy_id), new_name);
+		return new_hierarchy_id;
+	}
+	
 	
 
 	/**
@@ -736,6 +764,66 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get hierarchy ids, directly above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getDirectHierarchyIds(ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException {
+		
+		SpectrumIdsDescriptor d = new SpectrumIdsDescriptor(spectrum_ids);
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "spectrum", "getDirectHierarchyIds", d));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}	
+		
+		return ids;				
+		
+	}
+	
+	
+	/**
+	 * Get distinct values of an attribute
+	 * 
+	 * @param attribute_id	id of the required attribute
+	 * 
+	 * @return arraylist of metaparameters	
+	 */
+	public ArrayList<MetaParameter> getDistinctValuesOfAttribute(int attribute_id) {	// throws SPECCHIOWebClientException {
+		
+		//return (ArrayList<MetaParameter>) postForList(MetaParameter.class, "metadata", "getDistinctValuesOfAttribute", new XmlInteger(attribute_id) );
+		ArrayList<MetaParameter> out_list = new ArrayList<MetaParameter>();
+		try {
+		
+		MetaParameter[] mps = postForArray(MetaParameter.class, "metadata", "getDistinctValuesOfAttribute", new XmlInteger(attribute_id));
+		
+		
+		
+		
+		for (int i = 0; i < mps.length; i++) {
+			out_list.add(mps[i]);
+		}		
+		
+		
+		
+		
+		}catch(ch.specchio.client.SPECCHIOWebClientException e)
+		{
+			int x=0;
+		}
+		
+		return out_list;		
+				
+	}
+	
+	/**
 	 * Get a conflicts in the EAV metadata for a set of spectra.
 	 * 
 	 * @param metadata_level		storage level identifier
@@ -829,6 +917,33 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 			);
 		
 	}
+	
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getHierarchyIdsOfSpectra(ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException {
+		
+		SpectrumIdsDescriptor d = new SpectrumIdsDescriptor(spectrum_ids);
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "spectrum", "getHierarchyIdsOfSpectra", d));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}	
+		
+		return ids;					
+		
+	}
+	
+	
 	
 	/**
 	 * Get the file path of a hierarchy.
@@ -1236,6 +1351,36 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	}
 	
 	/**
+	 * Get newest N spectra.
+	 * 
+	 * @param N	
+	 * 
+	 * @return list of spectrum ids ordered by data ingestion time
+	 */	
+	public ArrayList<Integer> getNewestSpectra(int number_of_spectra) throws SPECCHIOWebClientException
+	{
+		// arraylist wrapper trial: leads to error 500 ...
+//		XmlInteger xml_int = new XmlInteger(number_of_spectra);
+//		ArrayListWrapper<Integer> l = postForObject(ArrayListWrapper.class, "spectrum", "getNewestSpectra", xml_int);
+//		
+//		return (ArrayList<Integer>) l.getList();		
+		
+		XmlInteger xml_int = new XmlInteger(number_of_spectra);
+		
+		XmlIntegerAdapter adapter = new XmlIntegerAdapter();
+		Integer[] id_array = adapter.unmarshalArray(postForArray(XmlInteger.class, "spectrum", "getNewestSpectra", xml_int));
+		
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int id : id_array) {
+			ids.add(id);
+		}	
+
+		
+		return ids;		
+	}
+	
+	
+	/**
 	 * Get the data usage policies for a space.
 	 * 
 	 * @param space	the space
@@ -1359,7 +1504,8 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 				url.getHost(),
 				url.getPort(),
 				url.getPath(),
-				dataSourceName
+				dataSourceName,
+				uses_default_trust_store
 			);
 		if (user != null) {
 			d.setUser(user);
@@ -1695,6 +1841,19 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	
 	
 	/**
+	 * Get a list of all of the users in the database with added user statistics (number of loaded spectra, number of campaigns).
+	 * 
+	 * @return an array of User objects
+	 * 
+	 * @throws SPECCHIOClientException
+	 */
+	public User[] getUsersWithStatistics() throws SPECCHIOWebClientException {
+		
+		return getArray(User.class, "user", "getUsersWithStatistics");
+		
+	}	
+	
+	/**
 	 * Insert a new campaign into the database
 	 * 
 	 * @param campaign	the campaign
@@ -1913,6 +2072,21 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 	}
 	
+	/**
+	 * Move a hierarchy to a new parent hierarchy within the same campaign. If a hierarchy of the same name exists in the target hierarchy then the hierarchies are merged.
+	 * 
+	 * @param source_hierarchy_id	hierarchy id of the hierarchy to move
+	 * @param target_parent_hierarchy	hierarchy id of the new parent hierarchy
+	 * 
+	 * return true if move was done
+	 */
+	public boolean moveHierarchy(int source_hierarchy_id, int target_parent_hierarchy) throws SPECCHIOClientException {
+				
+		return postForBoolean("campaign", "moveHierarchy", new ChildParentIdContainer(source_hierarchy_id, target_parent_hierarchy));		
+		
+	}
+	
+	
 	
 	/**
 	 * Causes the client to reload data values the specified category upon next request.
@@ -1957,12 +2131,17 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 	 * 
 	 * @param attr			the attribute to be removed
 	 * @param spectrum_ids	the spectrum identifiers
+	 * @param metadata_level		storage level identifier
 	 */	
-	public void removeEavMetadata(attribute attr, ArrayList<Integer> spectrum_ids) throws SPECCHIOClientException
+	public void removeEavMetadata(attribute attr, ArrayList<Integer> spectrum_ids, int metadata_level) throws SPECCHIOClientException
 	{
 		MetaParameter mp = MetaParameter.newInstance(attr);
+		mp.setLevel(metadata_level);
 		
-		postForInteger("metadata", "remove_metaparameters_of_given_attribute", new MetadataUpdateDescriptor(mp, spectrum_ids));
+		MetadataUpdateDescriptor md = new MetadataUpdateDescriptor(mp, spectrum_ids);
+		md.setLevel(metadata_level);
+		
+		postForInteger("metadata", "remove_metaparameters_of_given_attribute", md);
 				
 	}
 	
@@ -2242,6 +2421,25 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		
 		int eav_id = postForInteger("metadata", "update_annotation", new MetadataUpdateDescriptor(mp_, spectrum_ids));
 
+		
+		return eav_id;
+		
+	}	
+	
+	/**
+	 * Update or insert EAV metadata. Will automatically update existing entries or insert a new metaparameter if not existing.
+	 * 
+	 * @param mp			the meta-parameter to update or insert
+	 * @param spectrum_ids	the identifiers for which to update or insert the parameter
+	 * 
+	 * @return the identifier of the inserted or updated metadata
+	 */
+	public int updateOrInsertEavMetadata(MetaParameter mp, ArrayList<Integer> spectrum_ids) throws SPECCHIOWebClientException {
+		
+		int eav_id = postForInteger("metadata", "update_or_insert", new MetadataUpdateDescriptor(mp, spectrum_ids));
+		if (mp.getEavId() == 0) {
+			mp.setEavId(eav_id);
+		}
 		
 		return eav_id;
 		
@@ -2665,6 +2863,7 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		}
 		catch (UniformInterfaceException ex) {
 			// could represent any kind of HTTP error
+			System.out.println(ex.getMessage());
 			throw new SPECCHIOWebClientException(ex);
 		}
 		catch (ClientHandlerException ex) {
@@ -2891,6 +3090,24 @@ public class SPECCHIOWebClient implements SPECCHIOClient {
 		}
 		
 	}
+	
+	
+//	static {
+//	    //for localhost testing only
+//	    javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(
+//	    new javax.net.ssl.HostnameVerifier(){
+//
+//	        public boolean verify(String hostname,
+//	                javax.net.ssl.SSLSession sslSession) {
+//	            if (hostname.equals("localhost")) {
+//	                return true;
+//	            }
+//	            return false;
+//	        }
+//	    });
+//	}	
+	
+
 		
 	
 }
