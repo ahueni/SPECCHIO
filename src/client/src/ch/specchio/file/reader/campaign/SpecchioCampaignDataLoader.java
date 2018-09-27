@@ -10,6 +10,7 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.file.reader.spectrum.*;
 import ch.specchio.spaces.MeasurementUnit;
+import ch.specchio.spaces.Space;
 import ch.specchio.types.Calibration;
 import ch.specchio.types.Instrument;
 import ch.specchio.types.InstrumentDescriptor;
@@ -157,8 +158,8 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 			{
 				files.add(f);
 				
-				// FloX/RoX specific identification of cal files
-				if(f.getName().equals("cal.csv"))
+				// FloX/RoX specific identification of cal files (for the RoX example this used to be cal.csv)
+				if(f.getName().matches("CAL_.*_JB.*\\.csv"))
 				{
 					setFlox_rox_cal_file(f);
 				}
@@ -198,7 +199,7 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 			ArrayList<SpectralFile> spectral_file_list = new ArrayList<SpectralFile>();		
 			//ArrayList<SpectralFileLoader> spectral_file_loader_list = new ArrayList<SpectralFileLoader>();	
-			Hashtable<Integer, SpectralFileLoader> spectral_file_loader_hash = new Hashtable<Integer, SpectralFileLoader>();
+			Hashtable<String, SpectralFileLoader> spectral_file_loader_hash = new Hashtable<String, SpectralFileLoader>();
 
 			// iterate over the files
 			ListIterator<File> file_li = files.listIterator();
@@ -235,10 +236,19 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 								// keep a copy of the file loader for new ASD files to insert calibration data later on
 								if(spec_file.getAsdV7())
 								{
-									int id = spec_file.get_asd_instr_and_cal_fov_identifier();
-									if(!spectral_file_loader_hash.containsKey(id))
-										spectral_file_loader_hash.put(id, sfl);
+									Integer id = spec_file.get_asd_instr_and_cal_fov_identifier();
+									if(!spectral_file_loader_hash.containsKey(id.toString()))
+										spectral_file_loader_hash.put(id.toString(), sfl);
 								
+								}
+								
+								// keep a copy of the file loader for FLoX and RoX instruments
+								if(sfl instanceof JB_FileLoader)
+								{
+									String instrument_name = spec_file.getInstrumentName();
+									
+									if(!spectral_file_loader_hash.containsKey(instrument_name))
+										spectral_file_loader_hash.put(instrument_name, sfl);
 								}
 
 							}
@@ -339,9 +349,9 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 						// can only do so for radiances
 						if(spec_file.getAsdV7() && spec_file.getAsdV7RadianceFlag() && !insert_result.getAdded_new_instrument().isEmpty() && insert_result.getAdded_new_instrument().get(0)) // currently only for new ASD files, hence, always first entry
 						{
-							int id = spec_file.get_asd_instr_and_cal_fov_identifier();
+							Integer id = spec_file.get_asd_instr_and_cal_fov_identifier();
 							
-							SpectralFileLoader loader = spectral_file_loader_hash.get(id);
+							SpectralFileLoader loader = spectral_file_loader_hash.get(id.toString());
 							loader.insert_result = insert_result;
 							
 							loaders_of_new_instruments.add(loader);
@@ -441,13 +451,18 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 //					
 //				}
 				
-				// check if new calibrations must be added for ASDs
-				Enumeration<SpectralFileLoader> asd_file_loaders = spectral_file_loader_hash.elements();
-				while(asd_file_loaders.hasMoreElements())
+				// check if new calibrations must be added for ASDs and other instruments that have gains included (like the FLoX)
+				Enumeration<SpectralFileLoader> file_loaders = spectral_file_loader_hash.elements();
+				while(file_loaders.hasMoreElements())
 				{					
-					SpectralFileLoader loader = asd_file_loaders.nextElement();
+					SpectralFileLoader loader = file_loaders.nextElement();
 					if(loader.getSpec_file().getAsdV7RadianceFlag()) // only for radiance data
 						insert_instrument_calibration_if_required(loader);
+					
+					if(loader instanceof JB_FileLoader)
+					{
+						insert_instrument_calibration_if_required(loader);
+					}
 				}
 				
 				
@@ -502,36 +517,46 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 	public void insert_instrument_calibration_if_required(SpectralFileLoader loader)
 	{
 		
-
-		ASD_FileFormat_V7_FileLoader loader_ = (ASD_FileFormat_V7_FileLoader) loader;
 							
-		Instrument instr = specchio_client.getInstrumentForSpectralFile(loader_.getSpec_file());
+		Instrument instr = specchio_client.getInstrumentForSpectralFile(loader.getSpec_file());
 		
 		Calibration c = new Calibration();	
 		c.setInstrumentId(instr.getInstrumentId());
-		c.setCalibrationNumber(loader_.getSpec_file().getCalibrationSeries());
+		c.setCalibrationNumber(loader.getSpec_file().getCalibrationSeries());
+		c.setCalibration_type(Calibration.RADIOMETRIC_CALIBRATION);
 		
 		boolean exists = specchio_client.instrumentCalibrationExists(c);
 		
 		if(!exists)
 		{
 			// insert new calibration
-			insert_asd_instrument_calibration(loader_, instr, "LMP");
-			insert_asd_instrument_calibration(loader_, instr, "BSE");
-			insert_asd_instrument_calibration(loader_, instr, "DN");			
+			if(loader instanceof ASD_FileFormat_V7_FileLoader)
+			{
+				insert_asd_instrument_calibration((ASD_FileFormat_V7_FileLoader)loader, instr, "LMP");
+				insert_asd_instrument_calibration((ASD_FileFormat_V7_FileLoader)loader, instr, "BSE");
+				insert_asd_instrument_calibration((ASD_FileFormat_V7_FileLoader)loader, instr, "DN");		
+			}
+			
+			if(loader instanceof JB_FileLoader)
+			{
+				insert_JB_instrument_calibration((JB_FileLoader)loader, instr);
+			}
 		}	
 		else
 		{
 			// calibration exists, now check if that particular foreoptic exists
-			c.setField_of_view(loader_.getSpec_file().getForeopticDegrees());
-			
-			exists = specchio_client.instrumentCalibrationExists(c);
-			
-			if(!exists)
+			if (loader instanceof ASD_FileFormat_V7_FileLoader)
 			{
-				// this foreoptic calibration does not yet exist
-				insert_asd_instrument_calibration(loader_, instr, "DN");
-				
+				c.setField_of_view(loader.getSpec_file().getForeopticDegrees());
+
+				exists = specchio_client.instrumentCalibrationExists(c);
+
+				if(!exists)
+				{
+					// this foreoptic calibration does not yet exist
+					insert_asd_instrument_calibration((ASD_FileFormat_V7_FileLoader)loader, instr, "DN");
+
+				}
 			}
 		}
 		
@@ -597,6 +622,44 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 		return doubleArray;
 	}
 	
+	private void insert_JB_instrument_calibration(JB_FileLoader loader, Instrument instr)
+	{
+		if(loader.is_fluoresence_sensor())
+		{
+			if(!loader.getDw_coef_fluorescence().isEmpty()) insertInstrumentCalibration(loader, loader.getDw_coef_fluorescence(), instr, "dw_coef", "Downwelling channel - radiometric gain");
+			if(!loader.getUp_coef_fluorescence().isEmpty()) insertInstrumentCalibration(loader, loader.getUp_coef_fluorescence(), instr, "up_coef", "Upwelling channel - radiometric gain");			
+		}
+		else
+		{
+			if(!loader.getDw_coef_broadrange().isEmpty()) insertInstrumentCalibration(loader, loader.getDw_coef_broadrange(), instr, "dw_coef", "Downwelling channel - radiometric gain");
+			if(!loader.getUp_coef_broadrange().isEmpty()) insertInstrumentCalibration(loader, loader.getUp_coef_broadrange(), instr, "up_coef", "Upwelling channel - radiometric gain");
+		}		
+		
+	}
+	
+	
+	
+	
+
+	private void insertInstrumentCalibration(SpectralFileLoader loader, ArrayList<Float> coeffs, Instrument instr, String name, String comment) {
+		
+		Calibration c = new Calibration();																		
+		c.setInstrumentId(instr.getInstrumentId());
+		c.setCalibrationNumber(loader.getSpec_file().getCalibrationSeries());	
+		c.setCalibrationDate(loader.getCalibration_date());
+		c.setName(name);
+		c.setComments(comment);
+		c.setMeasurement_unit_id(specchio_client.getMeasurementUnitFromCoding(MeasurementUnit.DN_div_Radiance).getUnitId()); // should be L/DN
+		
+		
+		double[] doubleArray = new double[coeffs.size()];
+		for (int i = 0; i < coeffs.size(); i++) {
+		    doubleArray[i] = coeffs.get(i);  // no casting needed
+		}	
+				
+		c.setFactors(doubleArray);								
+		specchio_client.insertInstrumentCalibration(c);			
+	}
 
 	public int insert_hierarchy(String name, Integer parent_id) throws SPECCHIOClientException {
 		
@@ -613,11 +676,12 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 
 	SpectralFileLoader get_spectral_file_loader(ArrayList<File> files) throws SPECCHIOClientException {
 		ArrayList<String> exts = new ArrayList<String>();
+		String filename = "";
 
 		// first thing we do is to get a distinct list of all file extensions
 		ListIterator<File> li = files.listIterator();
 		while(li.hasNext()) {
-			String filename =li.next().getName();
+			filename =li.next().getName();
 			String[] tokens = filename.split("\\.");
 
 			String ext = "";
@@ -764,10 +828,16 @@ public class SpecchioCampaignDataLoader extends CampaignDataLoader {
 				loader = new GER_FileLoader(specchio_client, this);
 				}
 				
-				// cx if we got FloX/RoX files
-				else if ((exts.contains("csv") || exts.contains("CSV")) && line.contains("D-FloX")) {
+				// cx if we got FloX files
+				else if ((exts.contains("csv") || exts.contains("CSV")) && line.contains("D-FloX") && filename.charAt(0) != 'F') {
 					loader = new FloX_FileLoader(specchio_client, this);	
 				}	
+				
+				// cx if we got RoX files: Full range instruments like the RoX start with an 'F' in the filename.
+				// also, if the instrument number would be higher than 100 it would be a RoX
+				else if ((exts.contains("csv") || exts.contains("CSV")) && line.contains("D-FloX") && filename.charAt(0) == 'F') {
+					loader = new RoX_FileLoader(specchio_client, this);	
+				}					
 				
 				// ignore FloX/RoX calibration files
 				else if ((exts.contains("csv") || exts.contains("CSV")) && line.contains("wl_F;up_coef_F;dw_coef_F;wl_F;up_coef_F;dw_coef_F;Device ID")) {
