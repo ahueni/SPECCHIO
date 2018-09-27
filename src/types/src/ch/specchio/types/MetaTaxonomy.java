@@ -80,7 +80,7 @@ public class MetaTaxonomy extends MetaParameter {
 	
 	public static boolean supportsValue(Object value) {
 		
-		return value != null && value instanceof Long;
+		return value != null && (value instanceof Long || value instanceof Integer);
 		
 	}
 
