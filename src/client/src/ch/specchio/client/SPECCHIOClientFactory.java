@@ -3,6 +3,8 @@ package ch.specchio.client;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
@@ -24,6 +26,9 @@ public class SPECCHIOClientFactory {
 	/** the current client object */
 	private SPECCHIOClient current_client;
 	
+	private String default_trust_store;
+	private String default_trust_store_password = null;
+
 	/**
 	 * Constructor.
 	 * 
@@ -35,8 +40,33 @@ public class SPECCHIOClientFactory {
 		apps = new LinkedList<SPECCHIOServerDescriptor>();
 		
 		// set up SSL trust store
-		System.setProperty("javax.net.ssl.trustStore", SPECCHIOClientFactory.getApplicationFilepath("specchio.keystore"));
-		System.setProperty("javax.net.ssl.trustStorePassword", "specchio");
+		
+        Path location = null;
+        
+        String locationProperty = System.getProperty("javax.net.ssl.trustStore");
+        if ((null != locationProperty) && (locationProperty.length() > 0)) {
+            Path p = Paths.get(locationProperty);
+            File f = p.toFile();
+            if (f.exists() && f.isFile() && f.canRead()) {
+                location = p;
+            }
+        } else {
+            String javaHome = System.getProperty("java.home");
+            location = Paths.get(javaHome, "lib", "security", "jssecacerts");
+            if (!location.toFile().exists()) {
+                location = Paths.get(javaHome, "lib", "security", "cacerts");
+            }
+        }
+        
+        default_trust_store = location.toString();
+
+        String passwordProperty = System.getProperty("javax.net.ssl.trustStorePassword");
+        if ((null != passwordProperty) && (passwordProperty.length() > 0)) {
+        	default_trust_store_password = passwordProperty;
+        } else {
+        	default_trust_store_password = "changeit";
+        }		
+		
 		
 		loadServerDescriptors();
 		
@@ -185,6 +215,19 @@ public class SPECCHIOClientFactory {
 	 * @throws SPECCHIOClientConnection	could not create the client
 	 */
 	public SPECCHIOClient createClient(SPECCHIOServerDescriptor app) throws SPECCHIOClientException {
+		
+		
+		// trust store settings (depending on descriptor configuration)
+		if(app.usesDefaultTrustStore())
+		{
+			System.setProperty("javax.net.ssl.trustStore", this.default_trust_store);
+			System.setProperty("javax.net.ssl.trustStorePassword", this.default_trust_store_password);				
+		}
+		else
+		{
+			System.setProperty("javax.net.ssl.trustStore", SPECCHIOClientFactory.getApplicationFilepath("specchio.keystore"));
+			System.setProperty("javax.net.ssl.trustStorePassword", "specchio");			
+		}
 		
 		current_client = new SPECCHIOClientCache(app.createClient());
 		((SPECCHIOClientCache) current_client).setServerDescriptor(app);
