@@ -13,6 +13,7 @@ import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import ch.specchio.eav_db.AVSorter;
 import ch.specchio.eav_db.EAVDBServices;
@@ -223,7 +224,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		+ " hierarchy_level_id, sensor_id, campaign_id, "
 		+ "file_format_id, instrument_id, calibration_id, "
 		+ "measurement_unit_id, measurement "
-		+ " from spectrum_view where spectrum_id = " + spectrum_id;
+		+ " from " + (this.Is_admin()?"spectrum":"spectrum_view") + " where spectrum_id = " + spectrum_id;
 		
 		Statement stmt;
 		try {
@@ -240,12 +241,12 @@ public class SpectrumFactory extends SPECCHIOFactory {
 			stmt.close();		
 			
 			
-			// copy all eav references
-			ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(MetaParameter.SPECTRUM_LEVEL, spectrum_id);			
+			// copy all eav references at spectrum level without inherited eav data 
+			ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(MetaParameter.SPECTRUM_LEVEL, spectrum_id, false); // false = no inheritance
 			getEavServices().insert_primary_x_eav(MetaParameter.SPECTRUM_LEVEL, copy_spectrum_id, eav_ids);
 			
 			// exchange hierarchy id
-			query = "update spectrum_view set hierarchy_level_id = " + target_hierarchy_id + " where spectrum_id = " + copy_spectrum_id;
+			query = "update " + (this.Is_admin()?"spectrum":"spectrum_view") + " set hierarchy_level_id = " + target_hierarchy_id + " where spectrum_id = " + copy_spectrum_id;
 			
 			stmt = getStatementBuilder().createStatement();
 			stmt.executeUpdate(query);
@@ -347,6 +348,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		EAVDBServices eav = getEavServices();					
 		return eav.filter_by_eav(MetaParameter.SPECTRUM_LEVEL, mds.getIds(), mds.getAttribute_id(), eav.ATR.get_default_storage_field(mds.getAttribute_id()), mds.getValue());		
 	}	
+	
 		
 	
 	/**																																																																																																												/**
@@ -651,7 +653,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 
 					}
 
-					iteration_result_exists = true; // true for all further queries
+					
 
 					String queryString = getStatementBuilder().assemble_sql_select_distinct_query(
 							SB.prefix(primary_x_eav_table_name, primary_key_name),
@@ -682,6 +684,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 							// inform condition that it has been met on hierarchy level
 							co.setCondition_handled_at_hierarchy_level(true);
 
+							iteration_result_exists = true; // true for all further queries
 						}
 						else
 						{
@@ -704,6 +707,22 @@ public class SpectrumFactory extends SPECCHIOFactory {
 						// put results into current target table
 						queryString = "insert into " + current_collection_target_table + "("+ primary_key_name + ") " + queryString;
 						stmt.executeUpdate(queryString);
+						
+
+//													
+//						queryString = "select count(*) from " + current_collection_target_table;
+//						
+//						int count = 0;
+//						ResultSet rs = stmt.executeQuery(queryString);
+//						while (rs.next()) {
+//							count =rs.getInt(1);
+//						}		
+//						rs.close();	
+//						
+//						if(count > 0)
+//						{								
+							iteration_result_exists = true; // true for all further queries
+//						}
 					}
 
 				}
@@ -730,8 +749,9 @@ public class SpectrumFactory extends SPECCHIOFactory {
 									+ "select distinct spectrum_id from hierarchy_level_x_spectrum where hierarchy_level_id in (select " + primary_key_name + " from " + current_collection_target_table + ")";
 							stmt.executeUpdate(queryString);						
 						}
-						else
-							iteration_result_exists = false;
+						// the iteration result status must not be changed here; in case the hierarchies did not turn up a result, the variable iteration_result_exists must remain unchanged
+//						else
+//							iteration_result_exists = false;
 
 					}
 					catch (SQLException ex) {
@@ -790,6 +810,35 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		
 	}
 
+	/**
+	 * Get hierarchy ids, directly above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public ArrayList<Integer> getDirectHierarchyIds(ArrayList<Integer> spectrum_ids)
+	{		
+		return this.getEavServices().getDirectHierarchyIds(spectrum_ids);
+	}
+	
+	
+	/**
+	 * Get a list of hierarchy ids, covering all hierarchies above these spectra
+	 * 
+	 * @param spectrum_ids		the identifiers of the desired spectra
+	 * 
+	 * @return hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	
+	 */	
+	public List<Integer> getHierarchyIdsOfSpectra(ArrayList<Integer> spectrum_ids) {
+
+		return this.getEavServices().getHierarchyIds(spectrum_ids);
+	}	
+	
 	
 	/**
 	 * Get the pictures associated with a given spectrum.
@@ -1542,7 +1591,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 					// SQLException msg = ex;
 				}
 				
-				// get eav_ids of the datalinks
+				// get eav_ids of the datalinks: -> why is this actually needed and not part of the general EAV deletion?!?
 				String query = "select eav_id from eav where spectrum_id in (" + ids + ")"; // restricting by attribute id not needed as only data links have the spectrum_id field filled.
 				ArrayList<Integer> eav_ids = new ArrayList<Integer>();
 				
@@ -1566,18 +1615,49 @@ public class SpectrumFactory extends SPECCHIOFactory {
 
 				// EAV
 				// remove entries from eav x table
+				eav_ids.clear();
+				query = "select eav_id from spectrum_x_eav where spectrum_id in (" + ids + ")"; 
+				
+				rs = stmt.executeQuery(query);
+				while (rs.next()) {
+					eav_ids.add(rs.getInt(1));	
+				}			
+				rs.close();	
+				
+				
 				table_name = (is_admin)? "spectrum_x_eav" : "spectrum_x_eav_view";
 				cmd = "delete from "+table_name+" where " +
 						"spectrum_id in (" + ids + ")";	
 				stmt.executeUpdate(cmd); 	
-
-				String spectrum_x_eav_table_or_view = table_name;
-
-				// remove zombie eav
+				
+				// remove eav's that are no longer referenced
 				table_name = (is_admin)? "eav" : "eav_view";
+				
+				// get eav_ids that are no longer referenced by other spectra
+				ArrayList<Integer> eav_ids_to_delete = new ArrayList<Integer>();
+				query = "    select eav.eav_id, count(sxe.spectrum_id) from eav eav LEFT JOIN spectrum_x_eav sxe" + 
+						"     ON sxe.eav_id = eav.eav_id where eav.eav_id in (" + getStatementBuilder().conc_ids(eav_ids) + ")  group by eav_id;"; 
+				
+				rs = stmt.executeQuery(query);
+				while (rs.next()) {
+					
+					int cnt = rs.getInt(2);
+					if(cnt == 0) eav_ids_to_delete.add(rs.getInt(1));	
+				}			
+				rs.close();	
+				
+				
+				cmd = "delete from "+table_name+" where " +
+						"eav_id in (" + getStatementBuilder().conc_ids(eav_ids_to_delete) + ")";	
+				stmt.executeUpdate(cmd); 						
 
-				cmd = "delete from "+table_name+" where eav_id not in (select eav_id from " +spectrum_x_eav_table_or_view+");";
-				stmt.executeUpdate(cmd);					
+//				String spectrum_x_eav_table_or_view = table_name;
+
+				// remove zombie eav: no longer appropriate due to metadata at hierarchy level
+//				table_name = (is_admin)? "eav" : "eav_view";
+//
+//				cmd = "delete from "+table_name+" where eav_id not in (select eav_id from " +spectrum_x_eav_table_or_view+");";
+//				stmt.executeUpdate(cmd);					
 
 				// remove entries from hierarchy_level_x_spectrum
 				table_name = (is_admin)? "hierarchy_level_x_spectrum" : "hierarchy_level_x_spectrum_view";
@@ -1647,7 +1727,7 @@ public class SpectrumFactory extends SPECCHIOFactory {
 		try {
 
 			// insert the measurement blob
-			String update_stm = "UPDATE spectrum_view set measurement = ? where spectrum_id = "
+			String update_stm = "UPDATE " + (this.Is_admin()?"spectrum":"spectrum_view") + " set measurement = ? where spectrum_id = "
 					+ s.getSpectrumId();
 			PreparedStatement statement = SQL.prepareStatement(update_stm);
 
@@ -1684,6 +1764,8 @@ public class SpectrumFactory extends SPECCHIOFactory {
 
 		
 	}
+
+
 
 
 }
