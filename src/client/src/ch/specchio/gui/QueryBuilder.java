@@ -22,7 +22,6 @@ import java.util.ListIterator;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -33,7 +32,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
@@ -54,13 +52,10 @@ import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.client.SPECCHIOWebClientException;
 import ch.specchio.constants.UserRoles;
-import ch.specchio.metadata.MDE_Controller;
 import ch.specchio.metadata.MDE_Spectrum_Controller;
 import ch.specchio.proc_modules.FileOutputManager;
-import ch.specchio.proc_modules.ModuleException;
 import ch.specchio.proc_modules.RadianceToReflectance;
 import ch.specchio.proc_modules.SpaceProcessingChainComponent;
-import ch.specchio.proc_modules.VisualisationModule;
 import ch.specchio.proc_modules.VisualisationSelectionDialog;
 import ch.specchio.processing_plane.ProcessingPlane;
 import ch.specchio.processors.DataProcessor;
@@ -73,9 +68,6 @@ import ch.specchio.queries.RQueryBuilder;
 import ch.specchio.query_builder.QueryController;
 import ch.specchio.spaces.Space;
 import ch.specchio.types.Campaign;
-import ch.specchio.types.MatlabAdaptedArrayList;
-import ch.specchio.types.MetaParameter;
-import ch.specchio.types.MetaSpatialPoint;
 import ch.specchio.types.Spectrum;
 
 public class QueryBuilder extends SpectralMetaDataBase  implements ActionListener, TreeSelectionListener, ChangeListener, ClipboardOwner, QueryConditionChangeInterface, ListSelectionListener 
@@ -123,6 +115,12 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 
 
 	private JScrollPane scroll_pane;
+
+
+	private SpectrumQueryPanel query_condition_panel;
+
+
+	private QueryController qc;
 	
 	
 	// new class for a JTextArea to include a popup listener
@@ -242,7 +240,7 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 	
 	public QueryBuilder() throws SPECCHIOClientException
 	{
-		this("Query Builder (V3)");
+		this("Query Builder");
 	}
 	
 
@@ -449,7 +447,7 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 	    menuItem = new JMenuItem("Test");
 	    menuItem.addActionListener(this);
 	    test_menu.add(menuItem);	    
-	    //menuBar.add(test_menu);
+	    menuBar.add(test_menu);
 	    
 	    
 	    this.setJMenuBar(menuBar);		
@@ -491,9 +489,9 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 			category_list = new SpectrumMetadataCategoryList(mdec.getFormFactory());
 			category_list.addListSelectionListener(this);			
 
-			QueryController qc = new QueryController(this.specchio_client, "Standard", category_list.getFormDescriptor());
+			qc = new QueryController(this.specchio_client, "Standard", category_list.getFormDescriptor());
 			qc.addChangeListener(this);
-			SpectrumQueryPanel query_condition_panel = new SpectrumQueryPanel(this, qc);
+			query_condition_panel = new SpectrumQueryPanel(this, qc);
 			scroll_pane = new JScrollPane(query_condition_panel);
 			scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
 			data_selection_tabs.addTab("Query conditions", scroll_pane);		
@@ -510,7 +508,7 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 		add("Center", data_selection_tabs);
 		
 		if (category_list != null)
-			add("West", category_list);
+			add("West", new JScrollPane(category_list));
 		
 		
 		
@@ -892,13 +890,16 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 	    	  try {
 	    		  
 	    		  
-	    		  ArrayList<Integer> ids = get_ids_matching_query();
 	    		  
-	    		  MetaSpatialPoint mp1 = (MetaSpatialPoint) specchio_client.getMetaparameter(ids.get(0), "Spatial Position");
-	    		  MetaSpatialPoint mp2 = (MetaSpatialPoint) specchio_client.getMetaparameter(ids.get(1), "Spatial Position");
+	    		  specchio_client.copyHierarchy(540, 538, "New Name");
 	    		  
-	    		  
-	    		  boolean matches = mp1.hasEqualValue(mp2);
+//	    		  ArrayList<Integer> ids = get_ids_matching_query();
+//	    		  
+//	    		  MetaSpatialPoint mp1 = (MetaSpatialPoint) specchio_client.getMetaparameter(ids.get(0), "Spatial Position");
+//	    		  MetaSpatialPoint mp2 = (MetaSpatialPoint) specchio_client.getMetaparameter(ids.get(1), "Spatial Position");
+//	    		  
+//	    		  
+//	    		  boolean matches = mp1.hasEqualValue(mp2);
 	    		  
 	    		  
 //	    		  MatlabAdaptedArrayList<Object> out = specchio_client.getMetaparameterValues(get_ids_matching_query(), "Site ID");
@@ -1180,10 +1181,9 @@ public class QueryBuilder extends SpectralMetaDataBase  implements ActionListene
 
 		data_selection_tabs.remove(scroll_pane);
 
-		QueryController qc = new QueryController(this.specchio_client, "Standard", category_list.getFormDescriptor());
-		qc.addChangeListener(this);
+		qc.updateForm(category_list.getFormDescriptor());
+		query_condition_panel.update();
 		
-		SpectrumQueryPanel query_condition_panel = new SpectrumQueryPanel(this, qc);
 		scroll_pane = new JScrollPane(query_condition_panel);
 		scroll_pane.getVerticalScrollBar().setUnitIncrement(10);
 		data_selection_tabs.addTab("Query conditions", scroll_pane);		
