@@ -59,5 +59,22 @@ public interface SPECCHIOServerDescriptor {
 	 */
 	
 	public String getPreferenceNodeName();	
+	
+	/**
+	 * Defines if this connection relies on the default JVM trust store
+	 * 
+	 * @return true is default trust store is used
+	 */
+	
+	public Boolean usesDefaultTrustStore();		
+	
+	
+	/**
+	 * Defines if this connection is encrypted
+	 * 
+	 * @return true if this is a HTTPS connection
+	 */
+	
+	public Boolean isEncrypted();		
 
 }

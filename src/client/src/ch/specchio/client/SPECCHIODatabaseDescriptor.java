@@ -239,4 +239,20 @@ public class SPECCHIODatabaseDescriptor implements SPECCHIOServerDescriptor {
 		return null;
 	}
 
+
+	@Override
+	public Boolean usesDefaultTrustStore() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+	@Override
+	public Boolean isEncrypted() {
+	
+//		if(this.)
+		
+		return null;
+	}
+
 }

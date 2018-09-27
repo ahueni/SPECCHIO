@@ -186,6 +186,9 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 
 		/** key for the jdbc datasource name */
 		private static final String PREFS_KEY_WEBAPP_DATASOURCE = "datasource";
+		
+		/** key for the trust store setting name */
+		private static final String PREFS_KEY_WEBAPP_TRUST_STORE_SETTING = "truststore_setting";		
 
 		
 		/**
@@ -197,6 +200,8 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 		 */
 		public SPECCHIOServerDescriptor buildServerDescriptor(Preferences node) {
 			
+			
+			
 			return new SPECCHIOWebAppDescriptor(
 				node.get(PREFS_KEY_PROTOCOL, ""),
 				node.get(PREFS_KEY_WEBAPP_SERVER, ""),
@@ -205,6 +210,7 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 				node.get(PREFS_KEY_WEBAPP_USERNAME, ""),
 				node.get(PREFS_KEY_WEBAPP_PASSWORD, ""),
 				node.get(PREFS_KEY_WEBAPP_DATASOURCE, ""),
+				node.getBoolean(PREFS_KEY_WEBAPP_TRUST_STORE_SETTING, false), // default trust store is not used by default
 				node.name()
 			);
 			
@@ -227,6 +233,7 @@ public class SPECCHIOServerDescriptorPreferencesStore extends SPECCHIOServerDesc
 			node.put(PREFS_KEY_WEBAPP_USERNAME, d.getDisplayUser());
 			node.put(PREFS_KEY_WEBAPP_PASSWORD, d.getPassword());
 			node.put(PREFS_KEY_WEBAPP_DATASOURCE, d.getDataSourceName());
+			node.putBoolean(PREFS_KEY_WEBAPP_TRUST_STORE_SETTING, d.usesDefaultTrustStore());
 			
 		}
 		

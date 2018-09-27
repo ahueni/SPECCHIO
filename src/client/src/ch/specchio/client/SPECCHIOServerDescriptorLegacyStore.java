@@ -247,8 +247,15 @@ public class SPECCHIOServerDescriptorLegacyStore extends SPECCHIOServerDescripto
 				String user = tokens[4];
 				String password = tokens[5];
 				String dataSourceName = tokens[6];
+				boolean default_trust_store = false; // SPECCHIO trust store is used by default
 				
-				return new SPECCHIOWebAppDescriptor(protocol, server, port, path, user, password, dataSourceName, Integer.toString(line_no));
+				if(tokens.length == 8)
+				{
+					// trust store configuration: use default trust store defined during JVM start
+					default_trust_store = tokens[7].equals("true");
+				}
+				
+				return new SPECCHIOWebAppDescriptor(protocol, server, port, path, user, password, dataSourceName, default_trust_store, Integer.toString(line_no));
 			}
 			catch (NumberFormatException ex) {
 				// invalid port number

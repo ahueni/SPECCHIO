@@ -36,6 +36,9 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	/** node name in preferences or line number in legacy file */
 	private String preferenceNodeName;
 	
+	/** trust store configuration */
+	private boolean uses_default_trust_store;
+	
 	
 	/**
 	 * Constructor.
@@ -46,8 +49,9 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 * @param port		the port number
 	 * @param user		the username
 	 * @param password	the password
+	 * @param default_trust_store 
 	 */
-	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String user, String password, String dataSourceName, String preferenceNodeName) {
+	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String user, String password, String dataSourceName, boolean uses_default_trust_store, String preferenceNodeName) {
 		   
 		this.protocol = protocol;
 		this.server = server;
@@ -57,6 +61,7 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		this.password = password;
 		this.dataSourceName = dataSourceName;
 		this.preferenceNodeName = preferenceNodeName;
+		this.uses_default_trust_store = uses_default_trust_store;
 	}
 	
 	
@@ -67,10 +72,11 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 	 * @param server	the server host name
 	 * @param path		the path to the web application
 	 * @param port		the port number
+	 * @param boolean 
 	 */
-	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String dataSourceName) {
+	public SPECCHIOWebAppDescriptor(String protocol, String server, int port, String path, String dataSourceName, Boolean default_trust_store) {
 		
-		this(protocol, server, port, path, null, null, dataSourceName, "");
+		this(protocol, server, port, path, null, null, dataSourceName, default_trust_store, "");
 		
 	}
 	
@@ -109,6 +115,13 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 				// new format including the datasource name
 				this.dataSourceName = tokens[6];
 			}
+			
+			if(tokens.length == 8)
+			{
+				// trust store configuration: use default trust store defined during JVM start
+				uses_default_trust_store = Boolean.getBoolean(tokens[7]);
+			}
+			
 
 		}
 		catch (NumberFormatException ex) {
@@ -134,10 +147,10 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 		
 		if (user == null) {
 			// create an anonymous client
-			return new SPECCHIOWebClient(getUrl(), getDataSourceName());
+			return new SPECCHIOWebClient(getUrl(), getDataSourceName(), uses_default_trust_store);
 		} else {
 			// create a named client
-			return new SPECCHIOWebClient(getUrl(), getDisplayUser(), getPassword(), getDataSourceName());
+			return new SPECCHIOWebClient(getUrl(), getDisplayUser(), getPassword(), getDataSourceName(), uses_default_trust_store);
 		}
 		
 	}
@@ -308,6 +321,21 @@ public class SPECCHIOWebAppDescriptor implements SPECCHIOServerDescriptor {
 
 	public void setPreferenceNodeName(String preferenceNodeName) {
 		this.preferenceNodeName = preferenceNodeName;
+	}
+
+
+	@Override
+	public Boolean usesDefaultTrustStore() {
+		return this.uses_default_trust_store;
+	}
+
+
+	@Override
+	public Boolean isEncrypted() {
+		if(this.protocol.equals("https"))
+			return true;
+		else
+			return false;
 	}
 
 }
