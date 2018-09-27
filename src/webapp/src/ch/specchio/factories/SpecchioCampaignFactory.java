@@ -8,18 +8,25 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.specchio.constants.UserRoles;
 import ch.specchio.db_import_export.CampaignExport;
 import ch.specchio.db_import_export.CampaignImport;
 import ch.specchio.eav_db.SQL_StatementBuilder;
 import ch.specchio.eav_db.id_and_op_struct;
 import ch.specchio.types.Campaign;
+import ch.specchio.types.ChildParentIdContainer;
 import ch.specchio.types.Hierarchy;
+import ch.specchio.types.MetaParameter;
+import ch.specchio.types.Point2D;
 import ch.specchio.types.ResearchGroup;
 import ch.specchio.types.SpecchioCampaign;
 import ch.specchio.types.User;
+import ch.specchio.types.hierarchy_node;
+import ch.specchio.types.spectral_node_object;
 
 public class SpecchioCampaignFactory extends SPECCHIOFactory {
 	
@@ -54,6 +61,60 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 		super(factory);
 		
 	}
+	
+	/**
+	 * Copy a hierarchy to a specified hierarchy with a new name.
+	 * 
+	 * @param hierarchy_id		the hierarchy_id of the hierarchy to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * @param new_name			new name for the copied hierarchy
+	 * 
+	 * @return new hierarchy_id
+	 * 
+	 * @throws SPECCHIOClientException could not log in
+	 */	
+	public int copyHierarchy(int hierarchy_id, int target_hierarchy_id, String new_name) {
+		
+		
+		int copy_hierarchy_id = 0;
+		
+				
+		
+		String query = "INSERT INTO hierarchy_level_view ("
+		+ "name, parent_level_id, campaign_id) "
+		+ "select "
+		+ this.getStatementBuilder().quote_string(new_name) + ", " + target_hierarchy_id + ", campaign_id"
+		+ " from hierarchy_level where hierarchy_level_id = " + hierarchy_id;
+		
+		Statement stmt;
+		try {
+			stmt = getStatementBuilder().createStatement();
+			
+			
+			stmt.executeUpdate(query);
+			
+			ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+			while (rs.next())
+				copy_hierarchy_id = rs.getInt(1);
+			rs.close();
+			
+			stmt.close();		
+			
+			
+			// copy all eav references
+			ArrayList<Integer> eav_ids = getEavServices().get_eav_ids(MetaParameter.HIERARCHY_LEVEL, hierarchy_id, false); // only get metadata of this hierarchy			
+			getEavServices().insert_primary_x_eav(MetaParameter.HIERARCHY_LEVEL, copy_hierarchy_id, eav_ids);					
+			
+			
+		} catch (SQLException e) {
+			throw new SPECCHIOFactoryException(e);
+		}		
+		
+		
+		return copy_hierarchy_id;
+	}
+
+	
 	
 	
 	/**
@@ -146,45 +207,18 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 			ResultSet rs;
 			
 			// load campaign data from the database
-			int userId = 0;
-			int researchGroupId = 0;
 			query = "SELECT name,description,path,user_id,research_group_id FROM " + ((is_admin)? "campaign" : "campaign_view") + " WHERE campaign_id=" + campaign_id; 
 			rs = stmt.executeQuery(query);
 			while (rs.next()) {
 				campaign.setName(rs.getString(1));
 				campaign.setDescription(rs.getString(2));
 				campaign.setPath(rs.getString(3));
-				userId = rs.getInt(4);
-				researchGroupId = rs.getInt(5);
+				campaign.setUser_id(rs.getInt(4));
+				campaign.setResearchGroupId(rs.getInt(5));
 			}
 			rs.close();
 			
-			// set the campaign paths
-			query = "SELECT path FROM campaign_path_view WHERE campaign_id=" + campaign_id;
-			rs = stmt.executeQuery(query);
-			while (rs.next()) {
-				campaign.addKnownPath(rs.getString(1));
-			}
-			rs.close();
-			
-			// set the campaign investigator
-			if (userId != 0) {
-				UserFactory uf = new UserFactory(this);
-				User investigator = uf.getUser(userId);
-				if (investigator != null) {
-					campaign.setInvestigator(investigator.toString());
-					campaign.setUser(investigator);
-				}
-				uf.dispose();
-			}
-			
-			// set the research group
-			if (researchGroupId != 0) {
-				ResearchGroup rg = getResearchGroup(researchGroupId);
-				if (rg != null) {
-					campaign.setResearchGroup(rg);
-				}
-			}
+			setCampaignMetadata(campaign);
 			
 			// clean up
 			stmt.close();
@@ -196,6 +230,179 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 			// bad SQL
 			throw new SPECCHIOFactoryException(ex);
 		}
+		
+	}
+	
+	
+	private void setCampaignMetadata(Campaign campaign)
+	{
+		try {
+
+			// set the campaign paths
+			
+			Statement stmt = getConnection().createStatement();
+			String query = "SELECT path FROM campaign_path_view WHERE campaign_id=" + campaign.getId();
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				campaign.addKnownPath(rs.getString(1));
+			}
+			rs.close();
+
+			// set the campaign investigator
+			if (campaign.getUser_id() != 0) {
+				UserFactory uf = new UserFactory(this);
+				User investigator = uf.getUser(campaign.getUser_id());
+				if (investigator != null) {
+					campaign.setInvestigator(investigator.toString());
+					campaign.setUser(investigator);
+				}
+				uf.dispose();
+			}
+
+			// set the research group
+			if (campaign.getResearchGroupId() != 0) {
+				ResearchGroup rg = getResearchGroup(campaign.getResearchGroupId());
+				if (rg != null) {
+					campaign.setResearchGroup(rg);
+				}
+			}	
+			
+			
+			// get  spatial average
+			query = "SELECT path FROM campaign_path_view WHERE campaign_id=" + campaign.getId();
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				campaign.addKnownPath(rs.getString(1));
+			}
+			rs.close();
+			
+			// get  number of spectra
+			query = "select count(s.spectrum_id) from spectrum s where s.campaign_id = " + campaign.getId();
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				campaign.setNumber_of_spectra(rs.getInt(1));
+			}
+			rs.close();
+			
+
+			// get metadata space density for spectra
+			int eav_spectrum_link_count = 0;
+			float spectrum_MSD = 0;
+			query = "select count(sxe.spectrum_id) from spectrum_x_eav sxe where sxe.campaign_id = " + campaign.getId();
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				eav_spectrum_link_count = rs.getInt(1);
+				spectrum_MSD = ((float) eav_spectrum_link_count) / campaign.getNumber_of_spectra();
+			}
+			rs.close();
+			
+			// get metadata space density for hierarchy: per hierarchy get number of eav entries and number of spectra per hierarchy
+			
+			ArrayList<Integer> hierarchy_ids = getHierarchyIds( campaign.getId());
+			ArrayList<Float> msd_contributions = new ArrayList<Float>();
+			ArrayList<Integer> eav_hierarchy_link_counts = new ArrayList<Integer>();
+			ArrayList<Integer> spectrum_in_hierarchy_counts = new ArrayList<Integer>();
+			float msd_contribution_sum = 0;
+			float msd_contribution = 0;
+			
+//			for(int h_id : hierarchy_ids)
+//			{
+				
+//				int eav_hierarchy_link_count = 0;
+//				int spectrum_in_hierarchy_count = 0;
+				//query = "select count(hierarchy_level_id) from hierarchy_x_eav where hierarchy_level_id = " + h_id;
+				query = "select count(eav_id), hl.hierarchy_level_id from hierarchy_level hl left join hierarchy_x_eav hxe on hl.hierarchy_level_id = hxe.hierarchy_level_id where hl.hierarchy_level_id in (" + this.getEavServices().SQL.conc_ids(hierarchy_ids) + ") group by hl.hierarchy_level_id";
+				rs = stmt.executeQuery(query);
+				while (rs.next()) {
+					eav_hierarchy_link_counts.add(rs.getInt(1));
+				}
+				rs.close();
+				
+//				query = "select count(spectrum_id) from hierarchy_level_x_spectrum  where hierarchy_level_id = " + h_id;
+				query = "select count(spectrum_id), hl.hierarchy_level_id from hierarchy_level hl left join hierarchy_level_x_spectrum hxs on hl.hierarchy_level_id = hxs.hierarchy_level_id where hl.hierarchy_level_id in (" + this.getEavServices().SQL.conc_ids(hierarchy_ids) + ") group by hl.hierarchy_level_id";
+				rs = stmt.executeQuery(query);
+				while (rs.next()) {
+					spectrum_in_hierarchy_counts.add(rs.getInt(1));
+				}
+				rs.close();
+			
+//			query = "select count(hxs.spectrum_id) , hxs.hierarchy_level_id, count(hxe.eav_id) from hierarchy_level_x_spectrum hxs LEFT JOIN  hierarchy_x_eav hxe on hxe.hierarchy_level_id = hxs.hierarchy_level_id where  hxs.hierarchy_level_id in (" + this.getEavServices().SQL.conc_ids(hierarchy_ids) + ") group by hierarchy_level_id";
+//			rs = stmt.executeQuery(query);
+//			while (rs.next()) {
+//				spectrum_in_hierarchy_counts.add(rs.getInt(1));
+//				int hierarchy_level_id = (rs.getInt(2));
+//				int eav_hierarchy_link_count = rs.getInt(3);
+//				eav_hierarchy_link_counts.add(eav_hierarchy_link_count);
+//				
+//				if(eav_hierarchy_link_count > 0)
+//				{
+//					int x = 1;
+//				}
+//			}
+//			rs.close();
+			
+				
+				// hierarchy contribution of MSD is given by number of spectra under hierarchy normalised by total number of spectra in campaign
+				Iterator<Integer> spectrum_in_hierarchy_counts_it = spectrum_in_hierarchy_counts.iterator();
+				for(int eav_hierarchy_link_count : eav_hierarchy_link_counts)
+				{
+					try {
+						//					msd_contribution = ((float) (eav_hierarchy_link_count)*spectrum_in_hierarchy_count/campaign.getNumber_of_spectra());
+						int spectrum_in_hierarchy_count = spectrum_in_hierarchy_counts_it.next();
+						msd_contribution = ((float) (eav_hierarchy_link_count)*spectrum_in_hierarchy_count/campaign.getNumber_of_spectra());
+
+//						if(msd_contribution > 0)
+//						{
+//							int x = 1;
+//						}
+					}
+					catch(java.lang.ArithmeticException e)
+					{
+						msd_contribution = 0.0f;
+					}
+					
+//					if(msd_contribution > 0)
+//					{
+//						int x = 0;
+//					}
+
+					msd_contributions.add(msd_contribution);
+					msd_contribution_sum = msd_contribution_sum + msd_contribution;
+				}
+				
+//			}
+			
+			campaign.setMetadata_space_density(spectrum_MSD + msd_contribution_sum);
+			
+			
+			// get average location of campaign
+			
+			
+			query = "select avg(ST_X(spatial_val)), avg(ST_Y(spatial_val)) from eav where campaign_id = " + campaign.getId() + " and attribute_id in (" + this.getAttributes().get_attribute_id("Spatial Position") + ")";
+			
+			
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				double lon = rs.getDouble(1);
+				double lat = rs.getDouble(2);
+				
+				Point2D p = new Point2D(lon, lat);
+				campaign.setAverage_location(p);
+			}
+			rs.close();
+			
+			
+			
+			// clean up
+			stmt.close();
+			
+
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+
 		
 	}
 	
@@ -290,38 +497,43 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 	 */
 	public Campaign[] getCampaigns(boolean is_admin) throws SPECCHIOFactoryException {
 		
+
+		ArrayList<Campaign> campaigns= new ArrayList<Campaign>();
+
 		try {
-			
+
 			// create an SQL statement
 			Statement stmt = getConnection().createStatement();
-			
-			// get the list of campaign names from the database
-			ResultSet rs = stmt.executeQuery("SELECT campaign_id,name,path FROM " + ((is_admin)? "campaign" : "campaign_view") + "");
-			
-			// put the results into a list
-			List<Campaign> results = new LinkedList<Campaign>();
+
+			// get the list of campaign info from the database
+			String query = "SELECT campaign_id, name,description,path,user_id,research_group_id FROM " + ((is_admin)? "campaign" : "campaign_view"); 
+			ResultSet rs = stmt.executeQuery(query);
 			while (rs.next()) {
+				Campaign campaign = new SpecchioCampaign();
+				campaign.setId(rs.getInt(1));
+				campaign.setName(rs.getString(2));
+				campaign.setDescription(rs.getString(3));
+				campaign.setPath(rs.getString(4));
+				campaign.setUser_id(rs.getInt(5));
+				campaign.setResearchGroupId(rs.getInt(6));
 				
-				// create a new campaign object
-				Campaign c = new SpecchioCampaign();
-				c.setId(rs.getInt(1));
-				c.setName(rs.getString(2));
-				c.setPath(rs.getString(3));
-				
-				// add the object to the list
-				results.add(c);
+				setCampaignMetadata(campaign);
+
+				campaigns.add(campaign);
 				
 			}
-			
-			// convert the list into an array
-			return results.toArray(new Campaign[0]);
-			
+
 		}
 		catch (SQLException ex) {
 			// bad SQL
 			throw new SPECCHIOFactoryException(ex);
 		}
-		
+
+
+
+		return campaigns.toArray(new Campaign[0]);
+
+
 	}
 	
 
@@ -504,6 +716,49 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 
 	}	
 	
+	
+	/**
+	 * Get list of ids of campaign's hierarchies.
+	 * 
+	 * @param campaign_id	the identifier of the campaign
+	 * 
+	 * @returns list of hierarchy ids
+	 * 
+	 * @throws SPECCHIOFactoryException	the database could not accessed
+	 */
+	public ArrayList<Integer> getHierarchyIds(int campaign_id) throws SPECCHIOFactoryException {
+		
+		try {
+			
+			ArrayList<Integer> ids = new ArrayList<Integer>();
+			
+			// create an SQL statement
+			SQL_StatementBuilder SQL = getStatementBuilder();
+			Statement stmt = SQL.createStatement();
+			
+			// build a statement that will find any existing hierarchy nodes
+			String query = "SELECT hierarchy_level_id from hierarchy_level where "
+					+ "campaign_id = " + campaign_id;
+			
+			// execute the statement
+			int id = -1;
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				ids.add(rs.getInt(1));
+			}
+			
+			rs.close();
+			stmt.close();
+			
+			return ids;
+			
+		}
+		catch (SQLException ex) {
+			// bad SQL
+			throw new SPECCHIOFactoryException(ex);
+		}
+		
+	}	
 	
 	
 	/**
@@ -708,6 +963,115 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 	
 	
 	/**
+	 * Move a hierarchy to a new parent hierarchy within the same campaign. If a hierarchy of the same name exists in the target hierarchy then the hierarchies are merged.
+	 * 
+	 * @param source_and_target_ids		Structure containing source and target hierarchy ids
+	 * 
+	 * return true if move was done
+	 */	
+	public boolean moveHierarchy(ChildParentIdContainer source_and_target_ids, boolean is_admin) {
+
+		// check if source and target are in same campaign
+		if(getCampaignIdForHierarchy(source_and_target_ids.getChild_id()) != getCampaignIdForHierarchy(source_and_target_ids.getParent_id()))
+			return false;
+		
+		
+		
+		// figure out if we do a re-linking of the source hierarchy content or if the source is linked into the target
+		// the criterion is if hierarchy of the same name as the source exists in the target hierarchy
+		SpectralBrowserFactory sbf = new SpectralBrowserFactory(this);
+		boolean link_content = false;
+		int target_sub_hierarchy_id = 0;
+		
+		List<spectral_node_object> target_children = sbf.getChildNodes(new hierarchy_node(source_and_target_ids.getParent_id(), this.getHierarchyName(source_and_target_ids.getParent_id()), ""));
+		
+		for(spectral_node_object node : target_children)
+		{
+			if(node instanceof hierarchy_node && node.getName().equals(getHierarchyName(source_and_target_ids.getChild_id())))
+			{
+				link_content = true;
+				target_sub_hierarchy_id = node.getId();
+			}
+			
+		}
+		
+		SpectralFileFactory sf_factory = new SpectralFileFactory(this);
+
+		String update_str = "";
+		try {
+			Statement stmt = getStatementBuilder().createStatement();
+
+
+			if(link_content)
+				// re-link content of source hierarchy
+			{
+				List<spectral_node_object> source_children = sbf.getChildNodes(new hierarchy_node(source_and_target_ids.getChild_id(), this.getHierarchyName(source_and_target_ids.getChild_id()), ""));
+
+				for(spectral_node_object node : source_children)
+				{
+					if(node instanceof hierarchy_node)
+					{
+						update_str = "update hierarchy_level set parent_level_id = " + target_sub_hierarchy_id + " where hierarchy_level_id = " + node.getId();
+						stmt.executeUpdate(update_str);
+						
+						// all data below this hierarchy must also be moved (otherwise the spectra of the sub hierarchies will remain linked to original hierarchy tree)
+						// Recursion! Yay!
+						ChildParentIdContainer sub_source_and_target_ids = new ChildParentIdContainer(node.getId(), target_sub_hierarchy_id);
+						moveHierarchy(sub_source_and_target_ids, is_admin);
+						
+						
+					}
+					else
+					{
+						// remove all links of this spectrum to all upper hierarchies
+						String table_name = (is_admin)? "hierarchy_level_x_spectrum" : "hierarchy_level_x_spectrum_view";
+						update_str = "delete from " + table_name + " where spectrum_id = " + node.getId();
+						stmt.executeUpdate(update_str);
+						
+						// register in new hierarchy
+						sf_factory.insertHierarchySpectrumReferences(target_sub_hierarchy_id, node.getId());
+						
+					
+						table_name = (is_admin)? "spectrum" : "spectrum_view";
+						update_str = "update " + table_name + " set hierarchy_level_id = " + target_sub_hierarchy_id + " where spectrum_id = " + node.getId();
+						stmt.executeUpdate(update_str);
+
+					}
+
+				}
+
+			}
+			else
+				// link source hierarchy to target hierarchy
+			{
+				
+				//sbf.getDescendentSpectrumIds(new hierarchy_node(source_and_target_ids.getChild_id(), this.getHierarchyName(source_and_target_ids.getChild_id()), ""));
+				String table_name = (is_admin)? "hierarchy_level" : "hierarchy_level_view";
+				update_str = "update " + table_name + " set parent_level_id = " + source_and_target_ids.getParent_id() + " where hierarchy_level_id = " + source_and_target_ids.getChild_id();
+				stmt.executeUpdate(update_str);
+				
+				// update all spectra and hierarchies under this hierarchy by recursion
+				ChildParentIdContainer sub_source_and_target_ids = new ChildParentIdContainer(source_and_target_ids.getChild_id(), source_and_target_ids.getParent_id());
+				moveHierarchy(sub_source_and_target_ids, is_admin);				
+
+			}
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		sf_factory.dispose();
+
+		return true;
+	}
+
+
+	
+	
+	
+	
+	/**
 	 * Remove a campaign from the database.
 	 * 
 	 * @param id		the identifier of the campaign to be removed
@@ -866,6 +1230,46 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 			}	
 			rs.close();		
 			
+			// remove eav data stored at hierarchy level
+			// EAV
+			// remove entries from eav x table
+			
+			ArrayList<Integer> eav_ids = new ArrayList<Integer>();
+			query = "select eav_id from hierarchy_x_eav where hierarchy_level_id = " + hierarchy_id + ""; 
+			
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				eav_ids.add(rs.getInt(1));	
+			}			
+			rs.close();	
+			
+
+			
+			table_name = (is_admin)? "hierarchy_x_eav" : "hierarchy_x_eav_view";
+			cmd = "delete from "+table_name+" where " +
+					"hierarchy_level_id = " + hierarchy_id + "";	
+			stmt.executeUpdate(cmd); 	
+			
+			
+			// get eav_ids that are no longer referenced by other spectra
+			ArrayList<Integer> eav_ids_to_delete = new ArrayList<Integer>();
+			query = "    select eav.eav_id, count(hxe.hierarchy_level_id) from eav eav LEFT JOIN hierarchy_x_eav hxe" + 
+					"     ON hxe.eav_id = eav.eav_id where eav.eav_id in (" + getStatementBuilder().conc_ids(eav_ids) + ")  group by eav_id;"; 
+			
+			rs = stmt.executeQuery(query);
+			while (rs.next()) {
+				
+				int cnt = rs.getInt(2);
+				if(cnt == 0) eav_ids_to_delete.add(rs.getInt(1));	
+			}			
+			rs.close();	
+			
+			
+			cmd = "delete from "+table_name+" where " +
+					"eav_id in (" + getStatementBuilder().conc_ids(eav_ids_to_delete) + ")";	
+			stmt.executeUpdate(cmd); 						
+										
+			
 			table_name = (is_admin)? "hierarchy_level" : "hierarchy_level_view";
 	
 			// remove hierarchy itself
@@ -895,8 +1299,6 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 		try {
 			
 			Statement stmt = getStatementBuilder().createStatement();
-			String table_name;
-			String cmd;
 			
 			ArrayList<Integer> spectrum_ids = new ArrayList<Integer>();
 			
@@ -920,11 +1322,12 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 			}	
 			rs.close();		
 			
-			table_name = (is_admin)? "hierarchy_level" : "hierarchy_level_view";
 	
 			// remove hierarchy itself
-			cmd = "delete from "+table_name+" where hierarchy_level_id in (" + getStatementBuilder().conc_ids(ids) + ")";
-			stmt.executeUpdate(cmd); 
+			for(int h_id : ids)
+			{
+				removeHierarchyNode(h_id, is_admin);
+			}
 			
 			stmt.close();
 			
@@ -1121,6 +1524,7 @@ public class SpecchioCampaignFactory extends SPECCHIOFactory {
 		}
 		
 	}
+
 
 
 
