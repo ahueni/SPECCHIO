@@ -1,5 +1,5 @@
 /* Created by JReleaseInfo AntTask from Open Source Competence Group */
-/* Creation date Tue Nov 07 15:49:31 CET 2017 */
+/* Creation date Tue Jul 10 16:59:46 CEST 2018 */
 package ch.specchio.services;
 
 import java.util.Date;
@@ -343,11 +343,11 @@ class JReleaseInfoViewer {
 public class SPECCHIO_ReleaseInfo {
 
 
-   /** buildDate (set during build process to 1510066171713L). */
-   private static Date buildDate = new Date(1510066171713L);
+   /** buildDate (set during build process to 1531234786329L). */
+   private static Date buildDate = new Date(1531234786329L);
 
    /**
-    * Get buildDate (set during build process to Tue Nov 07 15:49:31 CET 2017).
+    * Get buildDate (set during build process to Tue Jul 10 16:59:46 CEST 2018).
     * @return Date buildDate
     */
    public static final Date getBuildDate() { return buildDate; }
@@ -363,11 +363,11 @@ public class SPECCHIO_ReleaseInfo {
    public static final String getProject() { return project; }
 
 
-   /** buildTimeStamp (set during build process to "20171107-1549"). */
-   private static String buildTimeStamp = "20171107-1549";
+   /** buildTimeStamp (set during build process to "20180710-1659"). */
+   private static String buildTimeStamp = "20180710-1659";
 
    /**
-    * Get buildTimeStamp (set during build process to "20171107-1549").
+    * Get buildTimeStamp (set during build process to "20180710-1659").
     * @return String buildTimeStamp
     */
    public static final String getBuildTimeStamp() { return buildTimeStamp; }
@@ -414,10 +414,10 @@ public class SPECCHIO_ReleaseInfo {
 
 
    /**
-    * Get buildNumber (set during build process to 45).
+    * Get buildNumber (set during build process to 75).
     * @return int buildNumber
     */
-   public static final int getBuildNumber() { return 45; }
+   public static final int getBuildNumber() { return 75; }
 
 
    /** home (set during build process to "http://specchio.ch"). */
