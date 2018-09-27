@@ -109,7 +109,7 @@ public class DbUpgrade extends JFrame  implements ActionListener, PropertyChange
 
 			current_version = Double.valueOf(version_str);
 
-//			current_version = 3.2; // test setup
+//			current_version = 3.31; // test setup
 
 			get_most_recent_version();
 
@@ -118,7 +118,7 @@ public class DbUpgrade extends JFrame  implements ActionListener, PropertyChange
 				upgrade_needed = true;
 				msg = "Upgrade from Version " + Double.toString(current_version) + " to Version " + Double.toString(most_recent_version);
 				
-				if(current_version < 3.31 && current_version <= 3.32)
+				if(current_version > 3.31 && current_version <= 3.32)
 				{
 					manual_action = "Please update the sdb_admin rights manually before running the automatic update." +
 							"\n" +
