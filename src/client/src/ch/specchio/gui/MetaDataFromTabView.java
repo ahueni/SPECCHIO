@@ -108,9 +108,9 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 	
 	JButton insert;
 	
-	ArrayList<JComboBox> matching_columns_combos = new ArrayList<JComboBox>();
-	ArrayList<JComboBox> category_columns_combos = new ArrayList<JComboBox>();
-	ArrayList<JComboBox> attribute_columns_combos = new ArrayList<JComboBox>();
+	ArrayList<JComboBox<combo_table_data>> matching_columns_combos = new ArrayList<JComboBox<combo_table_data>>();
+	ArrayList<JComboBox<combo_table_data>> category_columns_combos = new ArrayList<JComboBox<combo_table_data>>();
+	ArrayList<JComboBox<combo_table_data>> attribute_columns_combos = new ArrayList<JComboBox<combo_table_data>>();
 	
 	private boolean combobox_user_update = true; // used to control the handling of events when combo values are modified internally by the controller
 	private boolean model_element_update = true;
@@ -152,7 +152,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		this.setLayout(new BorderLayout());
 
 		// create browser and add to control panel			
-		sdb = new SpectralDataBrowser(specchio_client, true);
+		sdb = new SpectralDataBrowser(specchio_client, !specchio_client.getLoggedInUser().isInRole("admin")); // show data of all users if this is an admin account
 			
 		// load currently selected campaign
 		sdb.build_tree();
@@ -284,7 +284,8 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 			try {
 				combobox_user_update = false;
 				
-				JComboBox source = (JComboBox) arg0.getSource();
+				@SuppressWarnings("unchecked")
+				JComboBox<combo_table_data> source = ((JComboBox<combo_table_data>) arg0.getSource());
 				
 				int col = (Integer) source.getClientProperty("Column Number");
 				
@@ -310,7 +311,8 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		{
 			combobox_user_update = false;
 			
-			JComboBox source = (JComboBox) arg0.getSource();
+			@SuppressWarnings("unchecked")
+			JComboBox<combo_table_data> source = (JComboBox<combo_table_data>) arg0.getSource();
 			
 //			ActionListener[] listeners = source.getActionListeners();
 			
@@ -324,7 +326,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 			
 			if(model_element_update) // switch to prevent overwriting of elements when automatching is applied
 			{
-				JComboBox element_combo = this.attribute_columns_combos.get(col);
+				JComboBox<combo_table_data> element_combo = this.attribute_columns_combos.get(col);
 			
 				updateMetadataElementCombo(element_combo, model.getCategoryOfColumn(col).name);
 				
@@ -340,11 +342,13 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		if(arg0.getActionCommand().equals("Change Attribute for Data Column")  && combobox_user_update)
 		{
 			try {
-				JComboBox source = (JComboBox) arg0.getSource();
+				@SuppressWarnings("unchecked")
+				JComboBox<combo_table_data> source = (JComboBox<combo_table_data>) arg0.getSource();
 				
 				System.out.println("attribute change");
 			
 				int col = (Integer) source.getClientProperty("Column Number");
+				
 				controller.setAttributeAtColumn(col, (combo_table_data) source.getSelectedItem());
 					
 				if(col == model.getMatching_col()) updateMatchingInfoPanel();
@@ -387,14 +391,14 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		
 		
 		
-		for(JComboBox combo : this.category_columns_combos)
+		for(JComboBox<combo_table_data> combo : this.category_columns_combos)
 		{
 			Category cat = model.getCategoryOfColumn(i);
 
 			updateSelectionOfCategoriesCombo(combo, cat.category_id);	
 			
 			// update the values of the related element combo
-			JComboBox element_combo = attribute_columns_combos.get(i);
+			JComboBox<combo_table_data> element_combo = attribute_columns_combos.get(i);
 			updateMetadataElementCombo(element_combo, cat.name);
 				
 			i++;
@@ -527,7 +531,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 			int selected_index = matching_columns_combos.get(selected_col).getSelectedIndex();
 
 			// reset all to NIL
-			for(JComboBox combo : this.matching_columns_combos)
+			for(JComboBox<combo_table_data> combo : this.matching_columns_combos)
 			{
 				combo.setSelectedIndex(0);
 			}
@@ -540,10 +544,11 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 	private void updateElementComboxes()
 	{
 		int i = 0;
-		for(JComboBox combo : this.attribute_columns_combos)
+		for(JComboBox<combo_table_data> combo : this.attribute_columns_combos)
 		{
 			int attr_id = model.getAttributeOfColumn(i).getId();
-			this.updateSelectionOfMetadataElementCombo(combo, attr_id);			
+			String elementName = model.getItem_name_of_column(i);
+			this.updateSelectionOfMetadataElementCombo(combo, attr_id, elementName);			
 			i++;
 		}		
 		
@@ -581,7 +586,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 
 			for(int i=0;i<sheet.getColumns();i++)
 			{
-				JComboBox box = new JComboBox();
+				JComboBox<combo_table_data> box = new JComboBox<combo_table_data>();
 				combo_table_data item = new combo_table_data("NIL", 0);
 				box.addItem(item);
 				item = new combo_table_data("Matching Column", 1);
@@ -610,7 +615,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 
 			for(int i=0;i<sheet.getColumns();i++)
 			{
-				JComboBox box = getCategoriesCombo(categories, i);
+				JComboBox<combo_table_data> box = getCategoriesCombo(categories, i);
 				
 				sheet_control_panel_l.insertComponent(box, constraints);
 				constraints.gridx++;		
@@ -632,10 +637,11 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 			NIL_attribute.name = "NIL";
 			
 			ArrayList<attribute> attributes_init = new ArrayList<attribute>();
+			ArrayList<String> item_name_of_columns_init = new ArrayList<String>();
 			
 			for(int i=0;i<sheet.getColumns();i++)
 			{
-				JComboBox box = getMetadataElementCombo(categories.get(0).name, i); // use first element by default
+				JComboBox<combo_table_data> box = getMetadataElementCombo(categories.get(0).name, i); // use first element by default
 				box.addActionListener(this);
 				
 //				ActionListener[] listeners = box.getActionListeners();
@@ -644,9 +650,11 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 				constraints.gridx++;					
 				
 				attributes_init.add(NIL_attribute);
+				item_name_of_columns_init.add("NIL");
 			}
 
 			model.setAttribute_of_columns(attributes_init);	
+			model.setItem_name_of_columns(item_name_of_columns_init);
 			
 			// create sheet panel 
 			// ------------------
@@ -821,9 +829,9 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		
 	}
 
-	private JComboBox getCategoriesCombo(ArrayList<Category> categories, int col)
+	private JComboBox<combo_table_data> getCategoriesCombo(ArrayList<Category> categories, int col)
 	{
-		JComboBox box = new JComboBox();
+		JComboBox<combo_table_data> box = new JComboBox<combo_table_data>();
 		ListIterator<Category> li = categories.listIterator();
 	
 		
@@ -843,7 +851,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 	}
 	
 	
-	private void updateSelectionOfCategoriesCombo(JComboBox box, int cat_id)
+	private void updateSelectionOfCategoriesCombo(JComboBox<?> box, int cat_id)
 	{
 		
 		int cnt = box.getItemCount();
@@ -861,9 +869,9 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		
 	}	
 
-	private JComboBox getMetadataElementCombo(String category_name, int col) throws SPECCHIOClientException
+	private JComboBox<combo_table_data> getMetadataElementCombo(String category_name, int col) throws SPECCHIOClientException
 	{
-		JComboBox box = new JComboBox();
+		JComboBox<combo_table_data> box = new JComboBox<combo_table_data>();
 		
 		fillMetadataElementCombo(box, category_name);
 		
@@ -877,7 +885,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 	}
 	
 	
-	private void updateSelectionOfMetadataElementCombo(JComboBox box, int attr_id)
+	private void updateSelectionOfMetadataElementCombo(JComboBox<?> box, int attr_id, String item_name)
 	{
 		
 		int cnt = box.getItemCount();
@@ -886,7 +894,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		{
 			combo_table_data item = (combo_table_data) box.getItemAt(i);
 			
-			if(item.id == attr_id)
+			if(item.id == attr_id && item.name.equals(item_name))
 			{
 				box.setSelectedIndex(i);
 			}
@@ -895,7 +903,7 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		
 	}
 	
-	private void updateMetadataElementCombo(JComboBox box, String category_name)
+	private void updateMetadataElementCombo(JComboBox<combo_table_data> box, String category_name)
 	{
 		combobox_user_update = false;
 		
@@ -911,16 +919,30 @@ public class MetaDataFromTabView extends JFrame implements ActionListener, Prope
 		combobox_user_update = true;
 	}
 	
-	private void fillMetadataElementCombo(JComboBox box, String category_name) throws SPECCHIOClientException
+	private void fillMetadataElementCombo(JComboBox<combo_table_data> box, String category_name) throws SPECCHIOClientException
 	{
 		attribute[] attr_array = specchio_client.getAttributesForCategory(category_name);
 		
 		combo_table_data item = new combo_table_data("NIL", 0);
 		box.addItem(item);	
 		
-		for (attribute attr : attr_array) {			
-			item = new combo_table_data(attr.name, attr.id);
-			box.addItem(item);		
+		for (attribute attr : attr_array) {		
+			if(attr.name.equals("Spatial Position"))
+			{
+				item = new combo_table_data(attr.name + " (Lon)", attr.id);
+				box.addItem(item);	
+				item = new combo_table_data(attr.name + " (Lat)", attr.id);
+				box.addItem(item);				
+			}
+			else if(attr.name.equals("Spatial Extent") || attr.name.equals("Spatial Transect"))
+			{
+				// these are not added as they can't be specified right now in XLS ...
+			}
+			else
+			{
+				item = new combo_table_data(attr.name, attr.id);
+				box.addItem(item);		
+			}
 		}	
 	
 		
