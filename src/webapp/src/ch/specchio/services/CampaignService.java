@@ -7,19 +7,24 @@ import java.io.OutputStream;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.annotation.security.*;
+
 
 //import com.sun.jersey.api.client.ClientResponse;
 
 import ch.specchio.constants.UserRoles;
+import ch.specchio.factories.InstrumentationFactory;
 import ch.specchio.factories.SPECCHIOFactoryException;
 import ch.specchio.factories.SpecchioCampaignFactory;
 import ch.specchio.factories.SpectralFileFactory;
+import ch.specchio.jaxb.XmlBoolean;
 import ch.specchio.jaxb.XmlInteger;
 import ch.specchio.types.Campaign;
+import ch.specchio.types.ChildParentIdContainer;
 import ch.specchio.types.Hierarchy;
+import ch.specchio.types.Instrument;
+import ch.specchio.types.SpectralFile;
 import ch.specchio.types.SpectrumIdsDescriptor;
 
 /**
@@ -29,6 +34,35 @@ import ch.specchio.types.SpectrumIdsDescriptor;
 @DeclareRoles({UserRoles.ADMIN, UserRoles.USER})
 public class CampaignService extends SPECCHIOService {
 	
+	
+	
+	/**
+	 * Copy a hierarchy to a specified hierarchy with a new name.
+	 * 
+	 * @param hierarchy_id		the hierarchy_id of the hierarchy to copy
+	 * @param target_hierarchy_id	the hierarchy_id where the copy is to be stored
+	 * @param new_name			new name for the copied hierarchy
+	 * 
+	 * @return new hierarchy_id
+	 * 
+	 * @throws SPECCHIOClientException could not log in
+	 */
+	@GET
+	@Path("copyHierarchy/{hierarchy_id: [0-9]+}/{target_hierarchy_id: [0-9]+}/{new_name}")
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlInteger copySpectrum(
+			@PathParam("hierarchy_id") int hierarchy_id,
+			@PathParam("target_hierarchy_id") int target_hierarchy_id,
+			@PathParam("new_name") String new_name
+		) throws SPECCHIOFactoryException {
+		
+		SpecchioCampaignFactory factory = new SpecchioCampaignFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		int new_hierarchy_id = factory.copyHierarchy(hierarchy_id, target_hierarchy_id, new_name);
+		factory.dispose();
+		
+		return new XmlInteger(new_hierarchy_id);
+		
+	}		
 	
 	/**
 	 * Export a campaign.
@@ -413,6 +447,33 @@ public class CampaignService extends SPECCHIOService {
 		return campaigns;
 		
 	}
+	
+	/**
+	 * Move a hierarchy to a new parent hierarchy within the same campaign. If a hierarchy of the same name exists in the target hierarchy then the hierarchies are merged.
+	 * 
+	 * @param source_and_target_parent_hierarchy_ids		Structure containing source and target hierarchy ids
+	 * 
+	 * return true if move was done
+	 */
+	@POST
+	@Path("moveHierarchy")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public XmlBoolean moveHierarchy(ChildParentIdContainer source_and_target_parent_hierarchy_ids) throws SPECCHIOFactoryException {
+		
+		SpecchioCampaignFactory factory = new SpecchioCampaignFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		
+		boolean b = factory.moveHierarchy(source_and_target_parent_hierarchy_ids, isAdmin());
+		
+		factory.dispose();
+		
+		
+		return  new XmlBoolean(b);
+	}			
+	
+	
+
+	
 	
 	
 	/**
