@@ -401,6 +401,38 @@ public class MetadataService extends SPECCHIOService {
 	}	
 	
 	
+	/**
+	 * Get distinct values of an attribute
+	 * 
+	 * @param attribute_id	id of the required attribute
+	 * 
+	 * @return array of metaparameters
+	 * 
+	 * @throws SPECCHIOFactoryException	database error
+	 */
+	@POST
+	@Path("getDistinctValuesOfAttribute")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)	
+	public MetaParameter[] getDistinctValuesOfAttribute(XmlInteger attribute_id) {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());
+		
+		ArrayList<MetaParameter> mp_list = factory.getDistinctValuesOfAttribute(attribute_id.getInteger());
+		factory.dispose();
+		
+		
+//		MetaParameter[] mp_array= new MetaParameter[mp_lists.size()];
+		
+
+		MetaParameter[] mp_array = mp_list.toArray(new MetaParameter[mp_list.size()]);
+
+		
+		return mp_array;		
+		
+		
+	}
+	
 	
 	/**
 	 * Get the root node of a taxonomy
@@ -697,6 +729,30 @@ public class MetadataService extends SPECCHIOService {
 		return new XmlInteger(eavId);
 		
 	}	
+	
+	/**
+	 * Update or insert EAV metadata. Will automatically update existing entries or insert a new metaparameter if not existing.
+	 * 
+	 * @param update_d	the update descriptor
+	 * 
+	 * @return the identifier of the inserted or updated metadata
+	 */	
+	@POST
+	@Path("update_or_insert")
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	public XmlInteger update_or_insert(MetadataUpdateDescriptor update_d) {
+		
+		MetadataFactory factory = new MetadataFactory(getClientUsername(), getClientPassword(), getDataSourceName(), isAdmin());		
+		
+		int eavId = factory.updateOrInsertEavMetadata(update_d.getMetaParameter(), (ArrayList<Integer>) update_d.getIds(), update_d.getLevel());
+		
+		factory.dispose();
+		
+		return new XmlInteger(eavId);
+		
+	}	
+	
 			
 
 }
