@@ -12,6 +12,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Hashtable;
 
+import org.joda.time.DateTime;
+
 import ch.specchio.client.SPECCHIOClient;
 import ch.specchio.client.SPECCHIOClientException;
 import ch.specchio.file.reader.campaign.SpecchioCampaignDataLoader;
@@ -34,6 +36,7 @@ public abstract class SpectralFileLoader {
 	protected SpectralFile spec_file;
 	public SpectralFileInsertResult insert_result; // field to store the insert result (used for instrument calibration updates)
 	protected SpecchioCampaignDataLoader campaignDataLoader;
+	private DateTime calibration_date; // calibration date of the instrument loaded by this loader
 	
 	public SpectralFileLoader(String file_format_name, SPECCHIOClient specchio_client, SpecchioCampaignDataLoader campaignDataLoader)
 	{
@@ -334,6 +337,14 @@ public abstract class SpectralFileLoader {
 		
 		return value;
 	}		
+	
+	public DateTime getCalibration_date() {
+		return calibration_date;
+	}
+
+	public void setCalibration_date(DateTime calibration_date) {
+		this.calibration_date = calibration_date;
+	}	
 
 }
 
