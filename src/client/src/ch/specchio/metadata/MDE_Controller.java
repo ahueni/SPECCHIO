@@ -3,6 +3,7 @@ package ch.specchio.metadata;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -38,6 +39,7 @@ public abstract class MDE_Controller implements MD_ChangeListener {
 	MetaDataEditorView mdev;
 	private SpectrumMetadataCategoryList category_list;
 	protected boolean onlyHierarchiesAreSelected = true;
+	protected int metadata_level;
 	
 	ArrayList<MD_Field> changed_fields = new ArrayList<MD_Field>();
 	ArrayList<MD_Field> removed_fields = new ArrayList<MD_Field>();
@@ -82,10 +84,39 @@ public abstract class MDE_Controller implements MD_ChangeListener {
 	public ArrayList<MD_Field> getChanged_fields() {
 		return changed_fields;
 	}
+	
+	public ArrayList<MD_Field> getChanged_fields(int level) {
+
+		ArrayList<MD_Field> fields = new ArrayList<MD_Field>();
+		for (MD_Field field : getChanged_fields()) {
+			if(field.getLevel() == level)
+				fields.add(field);
+		}
+
+		return fields;
+		
+	}			
 
 	public ArrayList<MD_Field> getRemoved_fields() {
 		return removed_fields;
 	}
+	
+	/**
+	 * Get removed fields of a metaparameter storage level
+	 * @param level
+	 * @return parameter list of required level
+	 */
+	public ArrayList<MD_Field> getRemoved_fields(int level) {
+		
+		ArrayList<MD_Field> removed_fields_of_level = new ArrayList<MD_Field>();
+		
+		for(MD_Field f : removed_fields)
+		{
+			if(f.getLevel() == level) removed_fields_of_level.add(f);
+		}		
+		
+		return removed_fields_of_level;
+	}	
 
 	public ArrayList<MD_Field> getAdded_fields() {
 		return added_fields;
@@ -123,6 +154,11 @@ public abstract class MDE_Controller implements MD_ChangeListener {
 	public boolean getOnlyHierarchiesAreSelected() {
 		return this.onlyHierarchiesAreSelected;		
 	}	
+	
+	public int getMetadataLevel()
+	{
+		return this.metadata_level;
+	}
 	
 	protected void update_form(boolean manual_category_selection) throws SPECCHIOClientException
 	{
@@ -358,24 +394,16 @@ public abstract class MDE_Controller implements MD_ChangeListener {
 			form.removeField(field);
 		}
 	}
+	
+	abstract public void remove_selection(MD_Field field) throws SPECCHIOClientException;
 
-
-	public void remove_selection(MD_Field field) throws SPECCHIOClientException {
-		
-		MetaParameter mp = ((MD_EAV_Field) field).getMetaParameter();
-		specchio_client.removeEavMetadata(mp, ids);
-		if (form != null) {
-			form.removeField(field);
-		}
-				
-	}
 
 
 	public void remove_all_mps_of_attribute(MD_Field field) throws SPECCHIOClientException {
 		
 		MetaParameter mp = ((MD_EAV_Field) field).getMetaParameter();
 		attribute attr = specchio_client.getAttributesIdHash().get(mp.getAttributeId());
-		specchio_client.removeEavMetadata(attr, ids);
+		specchio_client.removeEavMetadata(attr, ids, field.getLevel());
 		if (form != null) {
 			form.removeField(field);
 		}
@@ -434,7 +462,47 @@ public abstract class MDE_Controller implements MD_ChangeListener {
 			changed_annotations.add(field);
 		}	
 		
-	}		
+	}
+
+	public void clearRemoved_fields(int level) {
+		
+		// use iterator to remove fields from list
+		Iterator<MD_Field> it = removed_fields.iterator();
+		
+		while(it.hasNext())
+		{
+			MD_Field f = it.next();
+			if(f.getLevel() == level) it.remove();
+		}				
+		
+	}
+	
+	
+	public void clearChanged_fields(int level) {
+		
+		// use iterator to remove fields from list
+		Iterator<MD_Field> it = this.changed_fields.iterator();
+		
+		while(it.hasNext())
+		{
+			MD_Field f = it.next();
+			if(f.getLevel() == level) it.remove();
+		}				
+		
+	}
+
+	public void clearAdded_fields(int level) {
+		// use iterator to remove fields from list
+		Iterator<MD_Field> it = this.added_fields.iterator();
+		
+		while(it.hasNext())
+		{
+			MD_Field f = it.next();
+			if(f.getLevel() == level) it.remove();
+		}	
+	}	
+
+
 	
 
 }

@@ -14,11 +14,12 @@ public class MDE_Hierarchy_Controller extends MDE_Controller {
 
 	public MDE_Hierarchy_Controller(SPECCHIOClient specchio_client) throws SPECCHIOClientException {
 		super(specchio_client);
-		// TODO Auto-generated constructor stub
+		this.metadata_level = MetaParameter.HIERARCHY_LEVEL;
 	}
 
 	public MDE_Hierarchy_Controller(SPECCHIOClient specchio_client, MetaDataEditorView metaDataEditorView) {
 		super(specchio_client, metaDataEditorView);
+		this.metadata_level = MetaParameter.HIERARCHY_LEVEL;
 	}
 	
 	
@@ -104,6 +105,10 @@ public class MDE_Hierarchy_Controller extends MDE_Controller {
 			c.addField(f);
 
 		}
+		else
+		{
+			form = null;
+		}
 		
 	}
 	
@@ -126,6 +131,15 @@ public class MDE_Hierarchy_Controller extends MDE_Controller {
 		this.added_fields.add(field);
 	}	
 	
+	public void remove_selection(MD_Field field) throws SPECCHIOClientException {
+
+		MetaParameter mp = ((MD_EAV_Field) field).getMetaParameter();
+		specchio_client.removeEavMetadata(mp, ids);
+		if (form != null) {
+			form.removeField(field);
+		}
+
+	}	
 		
 
 }

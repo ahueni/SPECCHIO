@@ -16,12 +16,13 @@ public class MDE_Spectrum_Controller extends MDE_Controller {
 
 	public MDE_Spectrum_Controller(SPECCHIOClient specchio_client) throws SPECCHIOClientException {
 		super(specchio_client);
-		// TODO Auto-generated constructor stub
+		this.metadata_level = MetaParameter.SPECTRUM_LEVEL;
 	}
 	
 	
 	public MDE_Spectrum_Controller(SPECCHIOClient specchio_client, MetaDataEditorView metaDataEditorView) {
 		super(specchio_client, metaDataEditorView);
+		this.metadata_level = MetaParameter.SPECTRUM_LEVEL;
 	}
 
 	public void set_hierarchy_ids(ArrayList<Integer> ids) {
@@ -95,6 +96,26 @@ public class MDE_Spectrum_Controller extends MDE_Controller {
 		this.added_fields.add(field);
 	}
 
+	public void remove_selection(MD_Field field) throws SPECCHIOClientException {
+
+		MetaParameter mp = ((MD_EAV_Field) field).getMetaParameter();
+		
+		if(mp.getLevel() == MetaParameter.HIERARCHY_LEVEL)
+		{
+			// data must be removed at hierarchy levels of the selected spectra
+			ArrayList<Integer> h_ids = this.specchio_client.getHierarchyIdsOfSpectra(this.getIds());
+			specchio_client.removeEavMetadata(mp, h_ids);			
+		}
+		else
+		{				
+			specchio_client.removeEavMetadata(mp, ids);
+		}
+		
+		if (form != null) {
+			form.removeField(field);
+		}
+
+	}	
 
 	public void setOnlyHierarchiesAreSelected(boolean onlyHierarchiesAreSelected) {
 		this.onlyHierarchiesAreSelected = onlyHierarchiesAreSelected;
