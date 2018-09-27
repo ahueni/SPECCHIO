@@ -25,7 +25,7 @@ VIEW `specchio`.`eav_view` AS
 -- Spatial Attributes
 INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) VALUES ('Spatial Position', (select category_id from category where name = 'Location'), 'spatial_val', 'Spatial location of a spectrum in 2D space as latitude and longitude', 1);
 INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) VALUES ('Spatial Extent', (select category_id from category where name = 'Location'), 'spatial_val', 'Spatial extent of a spectrum in 2D space as a polygon defined by vertices given as latitude and longitude', 1);
-INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) VALUES ('Spatial Transect', (select category_id from category where name = 'Location'), 'spatial_val', 'Spatial extent of a spectrum in 2D space as a polygon defined by vertices given as latitude and longitude', 1);
+INSERT INTO `attribute`(`name`, `category_id`, `default_storage_field`, `description`, `cardinality`) VALUES ('Spatial Transect', (select category_id from category where name = 'Location'), 'spatial_val', 'Spatial extent of a spectrum in 2D space as a polyline defined by vertices given as latitude and longitude', 1);
 
 
 
