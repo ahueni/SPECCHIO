@@ -351,9 +351,14 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 						ArrayList<Integer> tmpId = new ArrayList<Integer>();
 						tmpId.add(spectrum_li.next());
 						
-						MetaParameter existing_utc = utcmp_li.next();
+						MetaParameter existing_utc = null;
+						if(utcmp_li.hasNext())
+						{
+							existing_utc = utcmp_li.next();
+						}
 						
-						if (existing_utc.getEavId() == 0)
+
+						if (existing_utc == null || existing_utc.getEavId() == 0)
 						{
 							attribute utc_attribute = specchioClient.getAttributesNameHash().get("Acquisition Time (UTC)");
 							existing_utc = MetaParameter.newInstance(utc_attribute);						
@@ -376,7 +381,7 @@ public class TimeShiftDialog extends JFrame implements ActionListener, TreeSelec
 					
 					attribute attr = specchioClient.getAttributesNameHash().get("UTC Time Computation");
 					
-					specchioClient.removeEavMetadata(attr, updatedIds); // remove any existing UTC time computation entries
+					specchioClient.removeEavMetadata(attr, updatedIds, MetaParameter.SPECTRUM_LEVEL); // remove any existing UTC time computation entries
 					
 					// create a metaparameter noting that the time was shifted
 					MetaParameter mpShift = MetaParameter.newInstance(
