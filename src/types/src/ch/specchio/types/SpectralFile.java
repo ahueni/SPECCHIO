@@ -57,6 +57,7 @@ public class SpectralFile {
 	private boolean has_standardised_wavelengths = false; // this is true for e.g. the ASDs where all instruments are resampled to same wavelengths
 	private int foreoptic_degrees; // e.g. available for ASD
 	private int calibration_series = -1; // e.g. available for ASD
+	private DateTime calibration_date = null; // e.g. available for the FLoX
 	private String instrument_number = null; // e.g. available for ASD
 	private int instrument_type_number = -1; // e.g. available for ASD
 	private ArrayList<Integer> measurement_units  = new ArrayList<Integer>(); // a number code that defines: refl, rad,
@@ -828,6 +829,15 @@ public class SpectralFile {
 
 	public void setHas_standardised_wavelengths(boolean has_standardised_wavelengths) {
 		this.has_standardised_wavelengths = has_standardised_wavelengths;
+	}
+
+	@XmlElement(name="calibration_date")
+	@XmlJavaTypeAdapter(XmlDateTimeAdapter.class)
+	public DateTime getCalibration_date() {
+		return calibration_date;
+	}
+	public void setCalibration_date(DateTime calibration_date) {
+		this.calibration_date = calibration_date;
 	}
 
 }
