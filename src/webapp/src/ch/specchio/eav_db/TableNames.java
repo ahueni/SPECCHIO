@@ -39,7 +39,9 @@ public class TableNames {
 		"hierarchy_level_x_spectrum",
 		"taxonomy",
 		"research_group",
-		"research_group_members"
+		"research_group_members",
+		"hierarchy_x_eav",
+		"campaign_x_eav"
 	};
 	
 	/** view names */
@@ -51,7 +53,9 @@ public class TableNames {
 		"spectrum_x_eav_view",
 		"eav_view",
 		"research_group_view",
-		"research_group_members_view"
+		"research_group_members_view",
+		"hierarchy_x_eav_view",
+		"campaign_x_eav_view"
 	};
 	
 
