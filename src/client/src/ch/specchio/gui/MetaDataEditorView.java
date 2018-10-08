@@ -364,11 +364,11 @@ public class MetaDataEditorView extends MetaDataEditorBase implements MD_ChangeL
 			}
 
 //			if(shared_fields_spectrum_level.size() > 0 || mdec.getAdded_fields().size()>0 || nonshared_fields_spectrum_level.size() > 0)
-			if(mdec.getAdded_fields().size()>0 && (shared_fields_spectrum_level.size() > 0 || nonshared_fields_spectrum_level.size() > 0))
+			if((mdec.getAdded_fields().size()>0 || mdec.getChanged_fields().size() > 0) && (shared_fields_spectrum_level.size() > 0 || nonshared_fields_spectrum_level.size() > 0))
 				doUpdate(mdec, shared_fields_spectrum_level, MetaParameter.SPECTRUM_LEVEL);
 
 //			if(shared_fields_hierarchy_level.size() > 0 || mdec.getAdded_fields().size()>0 || nonshared_fields_hierarchy_level.size() > 0)
-			if(mdec.getAdded_fields().size()>0 && (shared_fields_hierarchy_level.size() > 0 || nonshared_fields_hierarchy_level.size() > 0))
+			if((mdec.getAdded_fields().size()>0  || mdec.getChanged_fields().size() > 0) && (shared_fields_hierarchy_level.size() > 0 || nonshared_fields_hierarchy_level.size() > 0))
 				doUpdate(mdec, shared_fields_hierarchy_level, MetaParameter.HIERARCHY_LEVEL);	
 			
 
