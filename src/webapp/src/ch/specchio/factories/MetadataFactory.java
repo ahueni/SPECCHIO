@@ -1428,18 +1428,21 @@ public class MetadataFactory extends SPECCHIOFactory {
 				if(attr.getDefaultStorageField().equals("spatial_val"))
 					storage_field = "ST_AsText(" + SQL.prefix("eav", "spatial_val") + ")";				
 				
-				String query = "select " + ((distinct)? "distinct " : "") + storage_field + ", eav.eav_id, " + SQL.prefix(primary_x_eav_tablename, primary_id_name) + ", eav.unit_id" +
+				String query = "select " + ((distinct)? "distinct " : "") + storage_field + ", eav.eav_id " + ((!distinct)? "," + SQL.prefix(primary_x_eav_tablename, primary_id_name) : "") + ", eav.unit_id" +
 						" from " + primary_x_eav_tablename + ", eav eav  where " + SQL.prefix(primary_x_eav_tablename, primary_id_name) + " in (" + conc_ids + ") and " +
-						primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = "  + Integer.toString(attrId) + " order by FIELD (" + SQL.prefix(primary_x_eav_tablename, primary_id_name) + ", "+ conc_ids +")";
+						primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = "  + Integer.toString(attrId) + ((!distinct)? " order by FIELD (" + SQL.prefix(primary_x_eav_tablename, primary_id_name) + ", "+ conc_ids +")" : "");
 
 				
 				
 				ResultSet rs = stmt.executeQuery(query);
 				
 				Object o;
+				Integer spectrum_id = 0;
+				int ind;
 
 				while (rs.next()) 
 				{
+					int i = 1;
 					if(attr.getDefaultStorageField().equals("datetime_val"))
 					{
 							o = rs.getString(1);
@@ -1464,15 +1467,20 @@ public class MetadataFactory extends SPECCHIOFactory {
 //						
 //					}
 					else
-						o = rs.getObject(1);
+						o = rs.getObject(i++);
 						
 
-					Integer id = rs.getInt(2);
-					Integer spectrum_id = rs.getInt(3);
-					Integer unit_id = rs.getInt(4);
+					Integer id = rs.getInt(i++);
+					if(!distinct)
+					{
+						spectrum_id = rs.getInt(i++);
+						// get position of this spectrum in the list
+						ind = ids.indexOf(spectrum_id);
+					}
+					Integer unit_id = rs.getInt(i++);
 					
 					// get position of this spectrum in the list
-					int ind = ids.indexOf(spectrum_id);
+					ind = ids.indexOf(spectrum_id);
 					
 					
 					if (o != null) {
@@ -1527,15 +1535,19 @@ public class MetadataFactory extends SPECCHIOFactory {
 					primary_x_eav_tablename = getEavServices().get_primary_x_eav_tablename(MetaParameter.HIERARCHY_LEVEL);
 					ArrayList<Integer> hierarchy_ids = getEavServices().getHierarchyIds(ids);
 					
-					query = "select " + ((distinct)? "distinct " : "") + storage_field + ", eav.eav_id, " + SQL.prefix("hxs", primary_id_name) + ", eav.unit_id" +
+					query = "select " + ((distinct)? "distinct " : "") + storage_field + ", eav.eav_id " + ((!distinct)? SQL.prefix(", hxs", primary_id_name) : "") + ", eav.unit_id" +
 							" from " + primary_x_eav_tablename + ", eav eav, hierarchy_level_x_spectrum hxs  where " + SQL.prefix(primary_x_eav_tablename, "hierarchy_level_id") + " in (" + SQL.conc_ids(hierarchy_ids) + ") and " +
-							primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = " + Integer.toString(attrId) + " and " + primary_x_eav_tablename + ".hierarchy_level_id = hxs.hierarchy_level_id and hxs.spectrum_id in (" + conc_ids + ")"   + " order by FIELD (" + SQL.prefix("hxs", primary_id_name) + ", "+ conc_ids +")";
+							primary_x_eav_tablename + ".eav_id =" + " eav.eav_id and eav.attribute_id = " + Integer.toString(attrId) + " and " + primary_x_eav_tablename + ".hierarchy_level_id = hxs.hierarchy_level_id and hxs.spectrum_id in (" + conc_ids + ")"   + ((!distinct)? " order by FIELD (" + SQL.prefix("hxs", primary_id_name) + ", "+ conc_ids +")" : "");
 					
 
 					rs = stmt.executeQuery(query);
 					
+					spectrum_id = 0;
+					ind = 0;
+					
 					while (rs.next()) 
 					{
+						int i = 1;
 						if(attr.getDefaultStorageField().equals("datetime_val"))
 						{
 								o = rs.getString(1);
@@ -1544,15 +1556,17 @@ public class MetadataFactory extends SPECCHIOFactory {
 								o = d;
 						}
 						else
-							o = rs.getObject(1);
+							o = rs.getObject(i++);
 							
 
-						Integer id = rs.getInt(2);
-						Integer spectrum_id = rs.getInt(3);
-						Integer unit_id = rs.getInt(4);
-						
-						// get position of this spectrum in the list
-						int ind = ids.indexOf(spectrum_id);
+						Integer id = rs.getInt(i++);
+						if(!distinct)
+						{
+							spectrum_id = rs.getInt(i++);
+							// get position of this spectrum in the list
+							ind = ids.indexOf(spectrum_id);
+						}
+						Integer unit_id = rs.getInt(i++);
 						
 						
 						if (o != null) {
