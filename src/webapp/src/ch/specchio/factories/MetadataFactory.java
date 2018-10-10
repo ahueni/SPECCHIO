@@ -308,9 +308,12 @@ public class MetadataFactory extends SPECCHIOFactory {
 
 					}
 					
-					query = query + getStatementBuilder().conc_values(values, false);
-
-					stmt.executeUpdate(query);					
+					// only insert into temporary table if any propagated values exist
+					if(values.size() > 0)
+					{
+						query = query + getStatementBuilder().conc_values(values, false);
+						stmt.executeUpdate(query);	
+					}
 
 					
 					
@@ -636,6 +639,54 @@ public class MetadataFactory extends SPECCHIOFactory {
 				}
 
 				rs.close();
+				
+				
+				// for hierarchies: figure out if these data are shared by parallel hierarchies that are not selected
+				if (metadata_level == MetaParameter.HIERARCHY_LEVEL && calling_level == MetaParameter.HIERARCHY_LEVEL)
+				{
+
+					temp_tablename = getStatementBuilder().prefix(getTempDatabaseName(), "parallel_eav_entries");
+
+
+					// create temporary table: counting in left joins did somehow now work due to grouping issues; this way is also more transparent ...
+					ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " + temp_tablename + " " +
+							"(eav_id INT NOT NULL, " +
+							"attr_id INT NOT NULL, " +
+							"hierarchy_level_id INT NOT NULL)";
+					stmt.executeUpdate(ddl_string);		
+					
+
+					query = "insert into " + temp_tablename + " " +
+							"select distinct hxe.eav_id, eav.attribute_id, hxe.hierarchy_level_id from specchio_temp.primary_x_eav sxe left join eav eav on sxe.eav_id = eav.eav_id left join hierarchy_x_eav hxe on (sxe.eav_id = hxe.eav_id and hxe.hierarchy_level_id <> sxe.hierarchy_level_id) where hxe.hierarchy_level_id not in" + " (" +	conc_ids +")";				
+				
+					stmt.executeUpdate(query);
+					
+					
+					query = "select attr_id, eav_id, count(hierarchy_level_id) from specchio_temp.parallel_eav_entries group by eav_id, attr_id";
+
+					rs = stmt.executeQuery(query);
+					
+					while (rs.next()) {
+						i = 1;
+						attribute_id = rs.getInt(i++);
+						eav_id = rs.getInt(i++);
+						int parallel_sharing_cnt = rs.getInt(i++);
+
+						conflict = attr_id_conflict_hash.get(attribute_id);
+						
+						conflict.setNumberOfSharingRecords(parallel_sharing_cnt + conflict.getNumberOfSelectedRecords());
+						
+						int x = 1;
+						
+						
+					}
+					
+					query = "delete from " + temp_tablename;
+					stmt.executeUpdate(query);
+					
+				}
+				
+				
 
 				// get min/max values for numerical values
 				if(conflicting_int_and_double_attribute_ids.size()>0)
@@ -857,35 +908,37 @@ public class MetadataFactory extends SPECCHIOFactory {
 
 					
 				// second query to figure out the number of total spectra referring to the eav entries (number of shared records)
+			if (metadata_level == MetaParameter.SPECTRUM_LEVEL)
+			{
 				query = "SELECT count(sxe." + eav_info.primary_id_name + "), attribute_id, eav.eav_id from " + eav_info.primary_x_eav_tablename + " sxe, eav eav where sxe.eav_id in (" +
-				getStatementBuilder().conc_ids(eav_ids_to_double_check) +
-					") and sxe.eav_id = eav.eav_id group by eav.eav_id order by attribute_id";			
-				
+						getStatementBuilder().conc_ids(eav_ids_to_double_check) +
+						") and sxe.eav_id = eav.eav_id group by eav.eav_id order by attribute_id";			
+
 				rs = stmt.executeQuery(query);
-	
+
 				while (rs.next()) {
-					
+
 					multi_value_cnt = rs.getDouble(1);	
 					attribute_id  = rs.getInt(2);				
 					eav_id = rs.getInt(3);		
-					
+
 					if(multi_value_cnt > 1)
 					{
 						// update existing conflict data
 						ConflictInfo conflict_info = statuses.get(attribute_id);
-						
+
 						conflict = conflict_info.getConflictData(eav_id);
 						conflict.setStatus(ConflictInfo.no_conflict); // used to be set to a value of 3 ... I wonder why (AH, 12.07.2017)
 						conflict.setNumberOfSharingRecords((int) multi_value_cnt);
-	
+
 					}					
-						
+
 				}				
-					
+
 				rs.close();						
 				stmt.close();
-				
-		
+			}
+
 			
 			
 		} catch (SQLException ex) {
