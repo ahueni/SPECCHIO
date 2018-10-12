@@ -644,11 +644,11 @@ public class MetadataFactory extends SPECCHIOFactory {
 				// for hierarchies: figure out if these data are shared by parallel hierarchies that are not selected
 				if (metadata_level == MetaParameter.HIERARCHY_LEVEL && calling_level == MetaParameter.HIERARCHY_LEVEL)
 				{
-
+										
 					temp_tablename = getStatementBuilder().prefix(getTempDatabaseName(), "parallel_eav_entries");
 
 
-					// create temporary table: counting in left joins did somehow now work due to grouping issues; this way is also more transparent ...
+					// create temporary table: counting in left joins did somehow not work due to grouping issues; this way is also more transparent ...
 					ddl_string = "CREATE TEMPORARY TABLE IF NOT EXISTS " + temp_tablename + " " +
 							"(eav_id INT NOT NULL, " +
 							"attr_id INT NOT NULL, " +
@@ -657,12 +657,12 @@ public class MetadataFactory extends SPECCHIOFactory {
 					
 
 					query = "insert into " + temp_tablename + " " +
-							"select distinct hxe.eav_id, eav.attribute_id, hxe.hierarchy_level_id from specchio_temp.primary_x_eav sxe left join eav eav on sxe.eav_id = eav.eav_id left join hierarchy_x_eav hxe on (sxe.eav_id = hxe.eav_id and hxe.hierarchy_level_id <> sxe.hierarchy_level_id) where hxe.hierarchy_level_id not in" + " (" +	conc_ids +")";				
+							"select distinct hxe.eav_id, eav.attribute_id, hxe.hierarchy_level_id from " + eav_info.primary_x_eav_tablename + " sxe left join eav eav on sxe.eav_id = eav.eav_id left join hierarchy_x_eav hxe on (sxe.eav_id = hxe.eav_id and hxe.hierarchy_level_id <> sxe.hierarchy_level_id) where hxe.hierarchy_level_id not in" + " (" +	conc_ids +")";				
 				
 					stmt.executeUpdate(query);
 					
 					
-					query = "select attr_id, eav_id, count(hierarchy_level_id) from specchio_temp.parallel_eav_entries group by eav_id, attr_id";
+					query = "select attr_id, eav_id, count(hierarchy_level_id) from " + temp_tablename + " group by eav_id, attr_id";
 
 					rs = stmt.executeQuery(query);
 					
