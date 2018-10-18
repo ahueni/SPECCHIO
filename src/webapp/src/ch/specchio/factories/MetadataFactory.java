@@ -1445,7 +1445,7 @@ public class MetadataFactory extends SPECCHIOFactory {
 					int i = 1;
 					if(attr.getDefaultStorageField().equals("datetime_val"))
 					{
-							o = rs.getString(1);
+							o = rs.getString(i++);
 							DateTimeFormatter formatter = DateTimeFormat.forPattern(MetaDate.DEFAULT_DATE_FORMAT + ".S").withZoneUTC();
 							DateTime d = formatter.parseDateTime((String) o); 
 							o = d;
