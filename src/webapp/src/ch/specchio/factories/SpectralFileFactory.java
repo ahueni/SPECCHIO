@@ -870,9 +870,11 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 
 			int DN_hierarchy_id = subhierarchies.get("DN");
 			
+			hierarchy_existence_data exists_info = spectrumExists_(spec_file, DN_hierarchy_id);
+			
 			for (int i = 0; i < spec_file.getNumberOfSpectra(); i++) {
 				
-				SpectralFileInsertResult tmp = insertSpectrumAndHierarchyLink(spec_file, i, spectrumExists_(spec_file, DN_hierarchy_id));
+				SpectralFileInsertResult tmp = insertSpectrumAndHierarchyLink(spec_file, i, exists_info);
 				addNonNullSpectrumIds(insert_result,tmp);
 				
 			}
