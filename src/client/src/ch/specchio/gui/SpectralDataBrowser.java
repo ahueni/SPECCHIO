@@ -519,13 +519,18 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 		 */
 		private static final long serialVersionUID = 1L;
 		JPopupMenu popup = new JPopupMenu();
-		JMenuItem mi = new JMenuItem("Copy hierarchy name to clipboard");
+		JMenuItem cp_name = new JMenuItem("Copy hierarchy name to clipboard");
+		JMenuItem cp_path = new JMenuItem("Copy hierarchy path to clipboard");
 		SpectralDataBrowserNode last_menu_clicked_node = null;
+		TreePath last_menu_clicked_path = null;
 
 		SpectralJTree() {
-			mi.addActionListener(this);
-			mi.setActionCommand("CopyName");
-			popup.add(mi);
+			cp_name.addActionListener(this);
+			cp_name.setActionCommand("CopyName");
+			popup.add(cp_name);
+			cp_path.addActionListener(this);
+			cp_path.setActionCommand("CopyPath");
+			popup.add(cp_path);			
 			addMouseListener(new MouseAdapter() {
 				// listen for both for pressed and released due to differnt platform support (In Mac OS X, the pop-up trigger is set on MOUSE_PRESSED.In Windows it is set on MOUSE_RELEASED.)
 				// https://github.com/zaproxy/zaproxy/issues/131
@@ -537,9 +542,9 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 				public void mousePressed(MouseEvent e) {
 					if (e.isPopupTrigger()) {
 						// set selected path based on path of node that was clicked on
-						TreePath selPath = tree.getPathForLocation(e.getX(), e.getY());
+						last_menu_clicked_path = tree.getPathForLocation(e.getX(), e.getY());
 
-						last_menu_clicked_node = (SpectralDataBrowserNode) selPath.getLastPathComponent();
+						last_menu_clicked_node = (SpectralDataBrowserNode) last_menu_clicked_path.getLastPathComponent();
 
 						popup.show((JComponent) e.getSource(), e.getX(), e.getY());
 					}
@@ -556,6 +561,14 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			    clipboard.setContents(stringSelection , null );		    		
 		    }
+		    
+		    if (ae.getActionCommand().equals("CopyPath")) {
+		    	
+				StringSelection stringSelection = new StringSelection(last_menu_clicked_path.toString());
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			    clipboard.setContents(stringSelection , null );		    		
+		    }		    
+		    
 		  }	
 		  
 	}
