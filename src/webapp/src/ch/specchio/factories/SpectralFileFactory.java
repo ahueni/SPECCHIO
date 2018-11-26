@@ -237,14 +237,14 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				contains_several_units = true;
 			}
 			
-			// contains targets and references if there duplication of units
+			// contains targets and references if there are duplication of units
 			if(hs.size() < spec_file.getMeasurementUnits().size())
 			{
 				contains_targets_and_references = true;
 			}
 			
 			
-			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.DN) && contains_several_units)
+			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.DN))// && !contains_several_units)
 			{
 				getSubHierarchyId(subhierarchies, hierarchy_id, "DN");
 				
@@ -256,7 +256,7 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				
 			}
 			
-			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.Radiance) && contains_several_units)
+			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.Radiance))// && !contains_several_units)
 			{
 				getSubHierarchyId(subhierarchies, hierarchy_id, "Radiance");
 				
@@ -268,17 +268,18 @@ public class SpectralFileFactory extends SPECCHIOFactory {
 				
 			}	
 			
-			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.Reflectance) && contains_targets_and_references)
+			if(spec_file.getMeasurementUnits().contains(MeasurementUnit.Reflectance))// && !contains_several_units)
 			{
 				getSubHierarchyId(subhierarchies, hierarchy_id, "Reflectance");
+							
 			}
 			
 			
-			if(contains_targets_and_references && !contains_several_units)
-			{
-				getSubHierarchyId(subhierarchies, hierarchy_id, "Targets");
-				getSubHierarchyId(subhierarchies, hierarchy_id, "References");
-			}
+//			if(contains_targets_and_references && contains_several_units)
+//			{
+//				getSubHierarchyId(subhierarchies, hierarchy_id, "Targets");
+//				getSubHierarchyId(subhierarchies, hierarchy_id, "References");
+//			}
 			
 			
 		}
