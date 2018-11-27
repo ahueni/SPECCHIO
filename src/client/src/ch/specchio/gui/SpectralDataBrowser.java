@@ -521,6 +521,7 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 		JPopupMenu popup = new JPopupMenu();
 		JMenuItem cp_name = new JMenuItem("Copy hierarchy name to clipboard");
 		JMenuItem cp_path = new JMenuItem("Copy hierarchy path to clipboard");
+		JMenuItem cp_id = new JMenuItem("Copy hierarchy id to clipboard");
 		SpectralDataBrowserNode last_menu_clicked_node = null;
 		TreePath last_menu_clicked_path = null;
 
@@ -530,7 +531,10 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 			popup.add(cp_name);
 			cp_path.addActionListener(this);
 			cp_path.setActionCommand("CopyPath");
-			popup.add(cp_path);			
+			popup.add(cp_path);		
+			cp_id.addActionListener(this);
+			cp_id.setActionCommand("CopyID");
+			popup.add(cp_id);				
 			addMouseListener(new MouseAdapter() {
 				// listen for both for pressed and released due to differnt platform support (In Mac OS X, the pop-up trigger is set on MOUSE_PRESSED.In Windows it is set on MOUSE_RELEASED.)
 				// https://github.com/zaproxy/zaproxy/issues/131
@@ -568,6 +572,14 @@ public class SpectralDataBrowser extends JScrollPane implements ActionListener, 
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			    clipboard.setContents(stringSelection , null );		    		
 		    }		    
+		    
+		    if (ae.getActionCommand().equals("CopyID")) {
+		    	
+		    	Integer id = last_menu_clicked_node.getNodeId();
+				StringSelection stringSelection = new StringSelection(id.toString());
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			    clipboard.setContents(stringSelection , null );		    		
+		    }		    		    
 		    
 		  }	
 		  
