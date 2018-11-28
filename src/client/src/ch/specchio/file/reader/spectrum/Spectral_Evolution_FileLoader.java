@@ -307,9 +307,9 @@ public class Spectral_Evolution_FileLoader extends SpectralFileLoader {
 		else
 		{
 			if(time_str.contains("."))
-				hour_format =" hh:mm:ss.SS";
+				hour_format =" HH:mm:ss.SS";
 			else
-				hour_format =" hh:mm:ss";
+				hour_format =" HH:mm:ss";
 		}
 		
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("MM/dd/yyyy" +  hour_format).withZoneUTC();
