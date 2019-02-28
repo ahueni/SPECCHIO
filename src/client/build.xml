@@ -41,7 +41,7 @@
     
     	<!-- compile class files -->
         <mkdir dir="${build.dir}" />
-        <javac target="1.6" source="1.6" srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false">
+        <javac target="1.8" source="1.8" srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false">
             <classpath refid="build.classpath" />
         </javac>
         
